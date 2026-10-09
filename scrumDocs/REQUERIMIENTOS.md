@@ -1,6 +1,6 @@
 # Requerimientos -- mant_asc
 
-_Generado automaticamente el 2026-10-09T15:47:11.011Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-09T15:48:22.181Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

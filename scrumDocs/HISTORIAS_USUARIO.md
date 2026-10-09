@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-09T15:48:21.012Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-09T16:57:59.251Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de Consorcios y Máquinas
 

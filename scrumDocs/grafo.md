@@ -1,5 +1,10 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-10-09T15:23:36.475Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-09T15:47:12.180Z -- no editar a mano, se sobreescribe en cada publicacion._
 
-_Todavia no hay Requerimientos cargados._
+```mermaid
+graph TD
+  subgraph US_1791560828588["RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable"]
+    REQ_1791560828605["RF-01: RO-01: Setup del proyecto y entorno de desarrollo verificable"]
+  end
+```

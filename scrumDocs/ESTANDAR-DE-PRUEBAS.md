@@ -1,6 +1,6 @@
 # 📋 Estándar de pruebas y evidencias
 
-_Generado automáticamente el 2026-10-09T15:23:39.975Z -- no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-10-09T15:48:27.356Z -- no editar a mano, se sobreescribe en cada publicación._
 
 Esto es **cómo se redacta y se certifica una prueba en este proyecto**. Aplica a quien
 desarrolla (etapa `desarrollo`) y a quien hace QA (etapa `integracion`): los dos cargan
@@ -53,10 +53,9 @@ mirando la pantalla, y trazable** entre el código, la documentación y el gesto
 
 ## 🧩 Contra qué se prueba, en ESTE proyecto
 
-**Este proyecto todavía no tiene entornos cargados**, así que no hay URL contra la
-que probar ni para escribir en el Test. Pedísela al Project Manager: los carga en
-"Editar Proyecto" → "Entornos de verificación". Mientras no estén, no inventes una
-URL ni la pongas en `localhost`: la prueba tiene que poder correrla otra persona.
+**Entornos** (de acá sale el `🌐 Probar en:` y la URL de las condiciones previas):
+
+- **Desarrollo**: https://localhost:8050
 
 **Repositorio**: https://github.com/fiemcasals/pm_asc — rama de integración `dev`.
 

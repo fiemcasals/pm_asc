@@ -1,12 +1,12 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-10-13T16:10:17.438Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-10-13T16:16:47.430Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
 | Orden | Código | Tarea | Historia de Usuario | Módulo | Sprint | Estado | Desarrollador | Depende de | Rechazos |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | Hacer | pm_asc | — | — |
+| 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | Hacer | dev | — | — |
 
 ## Detalle
 

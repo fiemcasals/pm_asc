@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-10-13T16:16:49.912Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-13T16:17:26.153Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

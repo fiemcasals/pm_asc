@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-10-13T16:39:47.423Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-13T16:40:53.976Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -10,4 +10,5 @@ graph TD
   subgraph US_1791560828711["HU-01: HU-01: Gestión y Alta de Consorcios y Máquinas"]
     REQ_1791909582859["RF-01: API y Modelo de Datos de Consorcios y Máquinas"]
   end
+  REQ_1791560828605 --> REQ_1791909582859
 ```

@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:47:44.250Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:48:24.860Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -54,8 +54,8 @@ Como Secretaria quiero recibir alertas sonoras inmediatas ante fallas críticas 
 
 ### Criterios de Aceptacion
 
-1. Dado que un RT de calle carga una Falla Crítica en su informe, cuando se recibe en el panel de secretaría, entonces se dispara una notificación emergente visual y sonora.
-2. Dado el informe de falla crítica abierto, cuando la secretaria presiona el botón de generación, entonces el sistema genera un PDF con membrete de MAICON S.R.L. y lo envía automáticamente por email a la ECA contratante.
+- 1. Dado que un RT de calle carga una Falla Crítica en su informe, cuando se recibe en el panel de secretaría, entonces se dispara una notificación emergente visual y sonora.
+- 2. Dado el informe de falla crítica abierto, cuando la secretaria presiona el botón de generación, entonces el sistema genera un PDF con membrete de MAICON S.R.L. y lo envía automáticamente por email a la ECA contratante.
 
 ## HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita
 

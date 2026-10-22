@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:48:24.860Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:48:34.423Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -45,8 +45,8 @@ Como Secretaria quiero contar con una tabla dinámica con filtros de búsqueda r
 
 ### Criterios de Aceptacion
 
-1. Dado el tablero de monitoreo, cuando la secretaria filtra por dirección, ECA o inspector, entonces la grilla muestra en tiempo real las filas correspondientes con sus estados (Cumplida, Pendiente, Advertencias).
-2. Dado un registro con visita cumplida, cuando la secretaria interactúa con la fila, entonces permite ver fotos/informe y ejecutar el envío de remito a la ECA.
+- 1. Dado el tablero de monitoreo, cuando la secretaria filtra por dirección, ECA o inspector, entonces la grilla muestra en tiempo real las filas correspondientes con sus estados (Cumplida, Pendiente, Advertencias).
+- 2. Dado un registro con visita cumplida, cuando la secretaria interactúa con la fila, entonces permite ver fotos/informe y ejecutar el envío de remito a la ECA.
 
 ## HU-06: HU-06: Gestión de Fallas Críticas y Deslinde Legal
 

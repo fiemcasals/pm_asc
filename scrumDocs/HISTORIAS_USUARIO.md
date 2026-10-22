@@ -1,15 +1,15 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-13T17:00:38.314Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:40:08.765Z -- no editar a mano, se sobreescribe en cada publicacion._
 
-## HU-01: HU-01: Gestión y Alta de Consorcios y Máquinas
+## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
-Como Secretaria quiero cargar edificios, consorcios y sus máquinas con referencias AGC (M1, M2, etc.) para mantener el inventario técnico actualizado.
+Como Secretaria quiero cargar empresas conservadoras (ECA), edificios y sus máquinas con referencias AGC (M1, M2, etc.) para mantener el inventario técnico actualizado.
 
 ### Criterios de Aceptacion
 
-1. Dado que la secretaria accede a la pestaña de Carga de Edificios, cuando ingresa los datos del consorcio y sus máquinas con nomenclatura AGC (ej. M1: Derecha, M2: Izquierda), entonces el sistema los guarda y lista correctamente.
-2. Dado un edificio con máquinas registradas, cuando se consulta su ficha, entonces muestra la dirección, datos de administración y máquinas asociadas.
+- 1. Dado que la secretaria accede a la pestaña de Carga de Empresas, cuando ingresa los datos de la ECA y sus máquinas con nomenclatura AGC (ej. M1: Derecha, M2: Izquierda), entonces el sistema los guarda y lista correctamente.
+- 2. Dado un edificio con máquinas registradas, cuando se consulta su ficha, entonces muestra la dirección, datos de administración y máquinas asociadas.
 
 ## HU-02: HU-02: Asignación de Roles Tripartitos por Edificio
 

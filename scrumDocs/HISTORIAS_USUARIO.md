@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:43:48.172Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:44:31.730Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -72,9 +72,9 @@ Como Usuario Firmante (RT Legal) quiero acceder a una lista limpia de mis máqui
 
 ### Criterios de Aceptacion
 
-1. Dado que el Usuario Firmante inicia sesión, cuando accede a su panel, entonces visualiza la lista vertical de sus máquinas con su estado (Recorrida, Pendiente de Visita, Advertencia).
-2. Dado un registro en estado Pendiente de Visita, cuando el usuario mira los controles, entonces el botón de autorizar se encuentra bloqueado.
-3. Dado un registro en estado Recorrida, cuando el firmante abre el informe, revisa las fotos obligatorias (cables, frente) y firma del encargado, entonces se habilita el botón Autorizar Firma AGC para dar conformidad legal.
+- 1. Dado que el Usuario Firmante inicia sesión, cuando accede a su panel, entonces visualiza la lista vertical de sus máquinas con su estado (Recorrida, Pendiente de Visita, Advertencia).
+- 2. Dado un registro en estado Pendiente de Visita, cuando el usuario mira los controles, entonces el botón de autorizar se encuentra bloqueado.
+- 3. Dado un registro en estado Recorrida, cuando el firmante abre el informe, revisa las fotos obligatorias (cables, frente) y firma del encargado, entonces se habilita el botón Autorizar Firma AGC para dar conformidad legal.
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 

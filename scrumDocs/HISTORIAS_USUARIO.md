@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:48:34.423Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:48:56.251Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -63,8 +63,8 @@ Como Secretaria quiero registrar advertencias por visitas fallidas con foto y GP
 
 ### Criterios de Aceptacion
 
-1. Dado que el RT reporta No se pudo realizar la inspección con foto de frente y GPS congelado (Advertencia 1 o 2), cuando la secretaria lo valida, entonces el sistema envía un email formal a la administración del consorcio dejando constancia de la ausencia.
-2. Dado un edificio que acumula la Advertencia 3, cuando el sistema la registra, entonces bloquea el edificio, muestra el cartel Cobro de Tercer Visita Habilitado y suma automáticamente el recargo del 45% extra a la facturación mensual.
+- 1. Dado que el RT reporta No se pudo realizar la inspección con foto de frente y GPS congelado (Advertencia 1 o 2), cuando la secretaria lo valida, entonces el sistema envía un email formal a la administración del consorcio dejando constancia de la ausencia.
+- 2. Dado un edificio que acumula la Advertencia 3, cuando el sistema la registra, entonces bloquea el edificio, muestra el cartel Cobro de Tercer Visita Habilitado y suma automáticamente el recargo del 45% extra a la facturación mensual.
 
 ## HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC
 

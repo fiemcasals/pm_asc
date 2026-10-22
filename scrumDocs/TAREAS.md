@@ -1,8 +1,8 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-10-13T17:00:39.441Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:40:10.218Z -- no editar a mano, se sobreescribe en cada publicacion._
 
-## HU-01: HU-01: Gestión y Alta de Consorcios y Máquinas
+## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
 ### RF-01: API y Modelo de Datos de Consorcios y Máquinas (Funcional)
 

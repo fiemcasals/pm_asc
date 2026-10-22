@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:40:08.765Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:41:40.172Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -13,12 +13,12 @@ Como Secretaria quiero cargar empresas conservadoras (ECA), edificios y sus máq
 
 ## HU-02: HU-02: Asignación de Roles Tripartitos por Edificio
 
-Como Secretaria quiero asignar a cada edificio el RT de Calle (60%), el Usuario Firmante / RT Legal (25%) y la ECA Responsable para definir las responsabilidades operativas y legales.
+Como Secretaria quiero asignar a cada edificio (con sus máquinas) el RT de Calle, el Usuario Firmante / RT Legal y la ECA Responsable para definir las responsabilidades operativas y legales.
 
 ### Criterios de Aceptacion
 
-1. Dado un edificio registrado, cuando la secretaria selecciona el RT de Calle, el Usuario Firmante y la ECA responsable, entonces el sistema guarda la terna y aplica el esquema de asignación.
-2. Dado que se reasigna un RT de Calle o Firmante, cuando se guardan los cambios, entonces se actualiza inmediatamente la vista de ruteo y firma de los usuarios afectados.
+- 1. Dado un edificio registrado, cuando la secretaria selecciona el RT de Calle, el Usuario Firmante y la ECA responsable, entonces el sistema guarda la terna y aplica el esquema de asignación.
+- 2. Dado que se reasigna un RT de Calle o Firmante, cuando se guardan los cambios, entonces se actualiza inmediatamente la vista de ruteo y firma de los usuarios afectados.
 
 ## HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA
 

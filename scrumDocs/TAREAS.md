@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:44:33.206Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:45:40.615Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 

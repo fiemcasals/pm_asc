@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:48:56.251Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:49:40.691Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -84,7 +84,6 @@ Como Empresa Conservadora (ECA) quiero consultar un portal de solo lectura con m
 
 - 1. Dado que una ECA accede a su portal exclusivo, cuando visualiza la pantalla principal, entonces observa el gráfico de cobertura mensual con el porcentaje de máquinas inspeccionadas y firmadas.
 - 2. Dado que un ascensor tiene informe normal, cuando la ECA navega su listado, entonces no visualiza opciones de carga ni modificación.
-- 3. (Si existe un informe con algún criterio de "URGENTE", se debe poder visualizar en el listado un ícono de advertencia) Hace a referencia de que tengo inmediata visualización de un RECLAMO
 
 ## HU-10: HU-10: Centro de Alertas Críticas y Acuse Legal en Portal ECA
 

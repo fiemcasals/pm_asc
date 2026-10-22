@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-10-22T21:44:31.730Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-10-22T21:45:39.173Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -35,9 +35,9 @@ Como Secretaria quiero monitorear el estado de inspecciones con semáforo por d�
 
 ### Criterios de Aceptacion
 
-1. Dado un edificio con inspección cumplida en días 1-10, cuando se visualiza en el mapa, entonces se muestra con pin Verde.
-2. Dado un edificio pendiente en días 11-20, cuando la secretaria presiona Enviar recordatorio de ruteo, entonces el sistema actualiza automáticamente el mapa en la tablet del técnico.
-3. Dado un edificio en estado crítico (días 21-30, pin Rojo), cuando la secretaria presiona Reasignar, entonces permite transferir el edificio con un clic a otro ingeniero con menor saturación.
+- 1. Dado un edificio con inspección cumplida en días 1-10, cuando se visualiza en el mapa, entonces se muestra con pin Verde.
+- 2. Dado un edificio pendiente en días 11-20, cuando la secretaria presiona Enviar recordatorio de ruteo, entonces el sistema actualiza automáticamente el mapa en la tablet del técnico.
+- 3. Dado un edificio en estado crítico (días 21-30, pin Rojo), cuando la secretaria presiona Reasignar, entonces permite transferir el edificio con un clic a otro ingeniero con menor saturación.
 
 ## HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice
 

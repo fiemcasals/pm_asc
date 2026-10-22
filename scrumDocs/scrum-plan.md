@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-10-22T21:43:46.828Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-10-22T21:44:30.319Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 

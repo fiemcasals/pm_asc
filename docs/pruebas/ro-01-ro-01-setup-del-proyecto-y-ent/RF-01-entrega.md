@@ -46,6 +46,7 @@ Variables (`.env`, con valores de ejemplo en `.env.example`):
 | `npm run verify` | Tipos OK. API: 15 tests, 15 en verde (Jest: `config`, `env-file`, `health`, `cors`). Web: 4 tests, 4 en verde (Vitest: `health`) |
 | `npm run test:int` | 1 test, 1 en verde: `/api/health` contra PostGIS real informa `3.4.3` |
 | `bash docs/pruebas/ro-01-ro-01-setup-del-proyecto-y-ent/RF-01-entrega.sh` | 9 verificaciones, 9 OK |
+| Navegador (Chrome 156, Playwright) en `https://localhost:8050` | Sin aviso de certificado; `Service worker: Registrado`; 1 registro `dev-sw.js?dev-sw` en estado `activated`. Capturas en la [guía](RF-01-setup-entorno.md) |
 | `… RF-01-entrega.sh --carga 200` | 200 corridas, 0 fallidas · promedio 76 ms · p95 126 ms · la más lenta 225 ms (05/11/2026, máquina de desarrollo con Windows 11) |
 
 ## 3. Qué datos hacen falta

@@ -31,21 +31,23 @@ Abrir https://localhost:8050 en Chrome o Edge. El navegador **no** tiene que mos
 
 Se ve el título `Inspecciones de Ascensores`, el subtítulo `Entorno de desarrollo` y la tarjeta `Estado del sistema`.
 
-<!-- CAPTURA PENDIENTE: imagenes/RF-01-paso-1.png — página cargada, con el título `Inspecciones de Ascensores` resaltado -->
+![Paso 1: la app cargada, con el título Inspecciones de Ascensores resaltado](imagenes/RF-01-paso-1.png)
 
 ### Paso 2 — Service worker registrado (condición 5)
 
 En la tarjeta `Estado del sistema`, la fila `Service worker` dice `Registrado`. Puede mostrar `Verificando…` durante un segundo.
 
-<!-- CAPTURA PENDIENTE: imagenes/RF-01-paso-2.png — fila `Service worker` con valor `Registrado` resaltado -->
+![Paso 2: la fila Service worker con el valor Registrado resaltado](imagenes/RF-01-paso-2.png)
 
-Comprobación adicional: F12 → `Application` → `Service workers` muestra `dev-sw.js?dev-sw` con estado `activated and is running`.
+Comprobación adicional: F12 → `Application` → `Service workers` muestra `dev-sw.js?dev-sw` con estado `activated and is running`. Desde la consola (F12), `(await navigator.serviceWorker.getRegistrations())[0].active.state` devuelve `"activated"`.
+
+Corrida del 05/11/2026 en Chrome 156 (Windows 11): 1 registro, `https://localhost:8050/dev-sw.js?dev-sw`, estado `activated`.
 
 ### Paso 3 — API y base en línea (condiciones 1 y 4)
 
 En la misma tarjeta, la fila `API` dice `En línea` y la fila `Base de datos` dice `En línea (PostGIS 3.4.3)`. La versión puede variar en el último número.
 
-<!-- CAPTURA PENDIENTE: imagenes/RF-01-paso-3.png — fila `Base de datos` con `En línea (PostGIS 3.4.3)` resaltado -->
+![Paso 3: la fila Base de datos con En línea (PostGIS 3.4.3) resaltado](imagenes/RF-01-paso-3.png)
 
 ## Comprobaciones por línea de comandos (condiciones 1 a 4)
 

@@ -1,12 +1,12 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-05T15:20:33.461Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-05T15:45:52.856Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
 | Orden | Código | Tarea | Historia de Usuario | Módulo | Sprint | Estado | Desarrollador | Depende de | Rechazos |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | Haciendo | dev-ma-2 | — | — |
+| 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | Hecho | dev-ma-2 | — | — |
 | 2 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | Hacer | germanG | RF-01 | — |
 | 3 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | Hacer | germanG | RF-01 | — |
 | 4 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | Hacer | dev-ma | RF-01 | — |
@@ -33,7 +33,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 ## Detalle
 
 ### RF-01 — RO-01: Setup del proyecto y entorno de desarrollo verificable
-Inicio de desarrollo de RO-01: esqueleto del monorepo (web PWA, API NestJS, PostGIS en Docker), HTTPS local y CORS de desarrollo.
+Monorepo listo: web React+Vite PWA (HTTPS https://localhost:8050 con mkcert, service worker registrado), API NestJS con GET /api/health (estado de API, base y versión PostGIS; 503 sin base), PostgreSQL 16 + PostGIS 3.4 en Docker. CORS sólo para CORS_ORIGINS (origen de Scrum), rechaza '*' y se desactiva con NODE_ENV=production. Pruebas: npm run verify 19/19 (API 15, web 4), test:int 1/1 contra PostGIS real, script de entrega 9/9, carga 200 corridas 0 fallidas p95 126 ms. 5 tests de desarrollo aprobados con evidencia; 5 de integración preparados para QA (c3 y c5 manuales). Mínimo necesario agregado: .gitattributes (LF para que los .sh corran en Linux). PR: https://github.com/fiemcasals/pm_asc/pull/1
 - Estimado: 4h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

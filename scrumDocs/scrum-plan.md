@@ -1,13 +1,13 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-10-22T21:49:38.865Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-05T13:17:28.313Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
 | Orden | Código | Tarea | Historia de Usuario | Módulo | Sprint | Estado | Desarrollador | Depende de | Rechazos |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | Hacer | dev-ma | — | — |
-| 2 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | Hacer | dev-ma | RF-01 | — |
+| 2 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | Hacer | germanG | RF-01 | — |
 | 3 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | Hacer | dev-ma | RF-01 | — |
 | 4 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | Hacer | dev-ma | RF-01 | — |
 | 5 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | Hacer | dev-ma | RF-01, RF-02 | — |

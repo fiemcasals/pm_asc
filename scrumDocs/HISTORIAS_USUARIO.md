@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-05T14:57:01.311Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-05T15:02:52.133Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -102,3 +102,13 @@ Como Empresa Conservadora (ECA) quiero recibir mensajes instantáneos de WhatsAp
 
 1. Dado que el RT de calle consolida un informe con Alerta de Reparación Urgente o Fuera de Uso, cuando el servidor lo procesa, entonces en menos de 5 segundos envía un mensaje de WhatsApp a través de la API al celular del responsable de la ECA.
 2. Dado el mensaje de WhatsApp recibido, cuando el usuario abre el enlace adjunto, entonces puede visualizar de forma directa la fotografía de la falla y el informe técnico firmado.
+
+## HU-12: Definiciones del Cliente
+
+Como cliente (MAICON S.R.L.) quiero definir los parámetros operativos y de negocio pendientes para que el sistema se construya según mi forma de trabajo. Cada tarea de esta Historia agrupa las preguntas de un tema, con un valor propuesto por el equipo; el cliente responde en Observaciones con 'P#: Acepto' o 'P#: Cambio — ...'. Fecha límite sugerida: 12/11/2026. Temas: 1) Recorrido en calle y validación de presencia (P1-P2); 2) Fallas críticas y estado del ascensor (P3-P6); 3) Firma del informe (P7-P8); 4) Visitas fallidas y recargo (P9-P10); 5) Datos para la carga inicial (P11-P13).
+
+### Criterios de Aceptacion
+
+1. Dada una tarea de esta Historia, cuando el cliente responde, entonces su campo Observaciones contiene la respuesta a cada pregunta del tema o 'Acepto' para el valor propuesto.
+2. Dada una pregunta sin respuesta al 12/11/2026, cuando vence el plazo, entonces queda anotado en la tarea que se adoptó el valor propuesto.
+3. Dada una respuesta que cambia un valor propuesto, cuando se registra, entonces el cambio queda trasladado a la Historia de Usuario que afecta.

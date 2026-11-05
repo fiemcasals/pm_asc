@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-05T15:02:53.620Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-05T15:14:44.574Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -226,8 +226,12 @@ Configurar el webhook/trigger que detecta informes con Reparación Urgente o Fue
 
 ### RF-01: RO-01: Setup del proyecto y entorno de desarrollo verificable (Funcional)
 
-Inicializar la estructura del proyecto web y API con soporte CORS habilitado para https://localhost:8050 según estándar de pruebas.
+Inicializar el monorepo (web React+Vite PWA, API NestJS, PostgreSQL+PostGIS en Docker) con HTTPS local en https://localhost:8050 y CORS habilitado solo en desarrollo para el origen de Scrum Master AI (https://scrum.nuestrocamino.cloud).
 
 **Condiciones de aprobación**
 
-_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._
+1. GET https://localhost:8050/api/health responde 200 con el estado de la API y de la base de datos.
+2. Una petición con Origin: https://scrum.nuestrocamino.cloud recibe Access-Control-Allow-Origin con ese origen, y una con otro origen no lo recibe.
+3. Con la configuración de producción, la API no devuelve encabezados CORS.
+4. docker compose up levanta PostgreSQL con PostGIS, y /api/health informa la versión de PostGIS.
+5. https://localhost:8050 carga la app web y registra el service worker.

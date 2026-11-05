@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+
+# Variables locales y certificados: nunca al repositorio
+.env
+certs/

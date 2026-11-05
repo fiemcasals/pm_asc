@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-05T15:55:34.995Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-05T15:56:38.291Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -26,9 +26,9 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 18 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
 | 19 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | Hacer | gonza | RF-01, RF-02 | — |
 | 20 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | Hacer | gonza | RF-02, RF-02 | — |
-| 21 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | Hacer | dev-ma-2 | RF-01 | — |
-| 22 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | Hacer | dev-ma-2 | RF-02 | — |
-| 23 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | Hacer | dev-ma-2 | RF-01 | — |
+| 21 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | Hacer | gonza | RF-01 | — |
+| 22 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | Hacer | gonza | RF-02 | — |
+| 23 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | Hacer | gonza | RF-01 | — |
 
 ## Detalle
 

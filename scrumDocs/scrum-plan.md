@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T14:58:56.439Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T14:59:21.255Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -88,6 +88,11 @@ PR #6 abierto contra dev. Implementados MedidorCobertura, PortalEca (modo solo l
 - Estimado: 4h
 
 ### RF-01 — Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio
+Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio implementado:
+1. VisitasFallidasService y VisitasFallidasController validan obligatoriamente foto del frente y coordenadas GPS congeladas.
+2. Generación y despacho automático de correo formal con membrete legal de MAICON S.R.L. a la administración del consorcio notificando advertencia 1 o 2 con apercibimiento legal expreso.
+3. FichaConsorcio.tsx con sección interactiva para registrar visita fallida y consultar historial y badges de advertencias.
+4. Pruebas: 146 tests en total (100 Jest en API + 46 Vitest en Web). Tests de desarrollo aprobados en Scrum Master AI. PR #12: https://github.com/fiemcasals/pm_asc/pull/12
 - Estimado: 4h
 
 ### RF-02 — Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA

@@ -61,4 +61,24 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX acuses_recibo_eca_idx ON acuses_recibo_legal (eca);
     `,
   },
+  {
+    id: '003_roles_por_edificio',
+    sql: `
+      -- La terna de trabajo de cada edificio: una fila por consorcio, que se reemplaza entera.
+      -- Son datos de contacto en texto: el sistema todavía no tiene cuentas de usuario.
+      CREATE TABLE roles_edificio (
+        consorcio_id      uuid PRIMARY KEY REFERENCES consorcios (id) ON DELETE CASCADE,
+        rt_calle_nombre   text NOT NULL,
+        rt_calle_telefono text,
+        rt_calle_email    text,
+        firmante_nombre   text NOT NULL,
+        firmante_telefono text,
+        firmante_email    text,
+        eca_nombre        text NOT NULL,
+        eca_telefono      text,
+        eca_email         text,
+        updated_at        timestamptz NOT NULL DEFAULT now()
+      );
+    `,
+  },
 ];

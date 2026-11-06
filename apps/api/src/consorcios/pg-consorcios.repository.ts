@@ -3,6 +3,7 @@ import type { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 import { Consorcio, ConsorcioInput, ConsorcioResumen, Maquina } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
+import { PORCENTAJES_OPERATIVOS, Responsable, RolesEdificio, RolesInput } from './roles.types';
 
 interface ConsorcioRow {
   id: string;
@@ -19,6 +20,19 @@ interface MaquinaRow {
   id: string;
   referencia_agc: string;
   descripcion: string | null;
+}
+
+interface RolesRow {
+  rt_calle_nombre: string;
+  rt_calle_telefono: string | null;
+  rt_calle_email: string | null;
+  firmante_nombre: string;
+  firmante_telefono: string | null;
+  firmante_email: string | null;
+  eca_nombre: string;
+  eca_telefono: string | null;
+  eca_email: string | null;
+  updated_at: Date;
 }
 
 const UNIQUE_VIOLATION = '23505';
@@ -61,6 +75,33 @@ async function leerFicha(client: PoolClient, id: string): Promise<Consorcio | nu
     [id],
   );
   return aConsorcio(consorcio.rows[0], maquinas.rows);
+}
+
+function aResponsable(
+  nombre: string,
+  telefono: string | null,
+  email: string | null,
+  porcentaje: number | null,
+): Responsable {
+  return { nombre, telefono, email, porcentaje };
+}
+
+async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio | null> {
+  const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1', [id]);
+  if (consorcio.rowCount === 0) return null;
+
+  const roles = await client.query<RolesRow>('SELECT * FROM roles_edificio WHERE consorcio_id = $1', [id]);
+  if (roles.rowCount === 0) {
+    return { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
+  }
+  const f = roles.rows[0];
+  return {
+    consorcioId: id,
+    rtCalle: aResponsable(f.rt_calle_nombre, f.rt_calle_telefono, f.rt_calle_email, PORCENTAJES_OPERATIVOS.rtCalle),
+    firmante: aResponsable(f.firmante_nombre, f.firmante_telefono, f.firmante_email, PORCENTAJES_OPERATIVOS.firmante),
+    eca: aResponsable(f.eca_nombre, f.eca_telefono, f.eca_email, PORCENTAJES_OPERATIVOS.eca),
+    actualizadoEn: f.updated_at.toISOString(),
+  };
 }
 
 function traducirError(err: unknown): never {
@@ -145,5 +186,44 @@ export class PgConsorciosRepository extends ConsorciosRepository {
   async eliminar(id: string): Promise<boolean> {
     const filas = await this.db.query('DELETE FROM consorcios WHERE id = $1 RETURNING id', [id]);
     return filas.length > 0;
+  }
+
+  async obtenerRoles(id: string): Promise<RolesEdificio | null> {
+    return this.db.transaction((client) => leerRoles(client, id));
+  }
+
+  async asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null> {
+    return this.db.transaction(async (client) => {
+      // El bloqueo evita que el consorcio se borre entre esta comprobación y el INSERT.
+      const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1 FOR UPDATE', [id]);
+      if (consorcio.rowCount === 0) return null;
+
+      const { rtCalle, firmante, eca } = datos;
+      await client.query(
+        `INSERT INTO roles_edificio (
+           consorcio_id, rt_calle_nombre, rt_calle_telefono, rt_calle_email,
+           firmante_nombre, firmante_telefono, firmante_email,
+           eca_nombre, eca_telefono, eca_email
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (consorcio_id) DO UPDATE SET
+           rt_calle_nombre = EXCLUDED.rt_calle_nombre,
+           rt_calle_telefono = EXCLUDED.rt_calle_telefono,
+           rt_calle_email = EXCLUDED.rt_calle_email,
+           firmante_nombre = EXCLUDED.firmante_nombre,
+           firmante_telefono = EXCLUDED.firmante_telefono,
+           firmante_email = EXCLUDED.firmante_email,
+           eca_nombre = EXCLUDED.eca_nombre,
+           eca_telefono = EXCLUDED.eca_telefono,
+           eca_email = EXCLUDED.eca_email,
+           updated_at = now()`,
+        [
+          id,
+          rtCalle.nombre, rtCalle.telefono, rtCalle.email,
+          firmante.nombre, firmante.telefono, firmante.email,
+          eca.nombre, eca.telefono, eca.email,
+        ],
+      );
+      return leerRoles(client, id);
+    });
   }
 }

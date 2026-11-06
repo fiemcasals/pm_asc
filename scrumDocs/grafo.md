@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-06T15:11:16.164Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-06T15:31:35.554Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -10,6 +10,7 @@ graph TD
   subgraph US_1791560828711["HU-01: HU-01: Gestión y Alta de ECA y Máquinas"]
     REQ_1791909582859["RF-01: API y Modelo de Datos de Consorcios y Máquinas"]
     REQ_1791910394885["RF-02: UI de Secretaría: Carga y Ficha de Edificios y Máquinas"]
+    REQ_1793979090598["RNF-01: Rechazar con 400 los textos que la base no puede guardar (carácter NUL)"]
   end
   subgraph US_1791560828789["HU-02: HU-02: Asignación de Roles Tripartitos por Edificio"]
     REQ_1791910395002["RF-01: API de Asignación Tripartita de Roles por Edificio"]

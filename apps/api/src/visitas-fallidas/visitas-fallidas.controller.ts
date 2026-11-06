@@ -4,9 +4,14 @@ import {
   Get,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { VisitasFallidasService } from './visitas-fallidas.service';
 import {
+  BloqueoConsorcioInfo,
+  LiquidacionConsorcioResultado,
+  LiquidacionMaquinaDto,
+  LiquidacionMaquinaResultado,
   ReporteVisitaFallidaDto,
   ResumenAdvertenciasConsorcio,
   VisitaFallidaRegistro,
@@ -25,6 +30,43 @@ export class VisitasFallidasController {
     @Body() dto: ReporteVisitaFallidaDto,
   ): Promise<VisitaFallidaRegistro> {
     return this.service.registrarVisitaFallida(dto);
+  }
+
+  /**
+   * HU-07 / RF-02 Criterio 1:
+   * Al acumularse la Advertencia 3, el edificio queda bloqueado en el tablero exhibiendo el aviso
+   * "Cobro de Tercer Visita Habilitado".
+   */
+  @Get('consorcio/:consorcioId/bloqueo')
+  async getBloqueo(
+    @Param('consorcioId') consorcioId: string,
+  ): Promise<BloqueoConsorcioInfo> {
+    return this.service.getBloqueoConsorcio(consorcioId);
+  }
+
+  /**
+   * HU-07 / RF-02 Criterio 2:
+   * Facturación mensual por máquina sumando automáticamente recargo del 45% extra si tiene Advertencia 3.
+   */
+  @Post('liquidar-maquina')
+  async liquidarMaquina(
+    @Body() dto: LiquidacionMaquinaDto,
+  ): Promise<LiquidacionMaquinaResultado> {
+    return this.service.liquidarMaquina(dto);
+  }
+
+  /**
+   * HU-07 / RF-02 Criterio 2:
+   * Liquidación mensual consolidada de consorcio con recargos del 45% aplicados a las máquinas.
+   */
+  @Get('consorcio/:consorcioId/liquidacion')
+  async getLiquidacionConsorcio(
+    @Param('consorcioId') consorcioId: string,
+    @Query('periodo') periodo?: string,
+    @Query('montoBase') montoBase?: string,
+  ): Promise<LiquidacionConsorcioResultado> {
+    const base = montoBase ? parseFloat(montoBase) : undefined;
+    return this.service.liquidarConsorcio(consorcioId, periodo, base);
   }
 
   /**

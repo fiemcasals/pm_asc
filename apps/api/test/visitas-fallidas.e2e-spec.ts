@@ -91,4 +91,69 @@ describe('VisitasFallidasController (e2e - HU-07 / RF-01)', () => {
       expect(res.body.historial).toHaveLength(2);
     });
   });
+
+  describe('HU-07 / RF-02 (e2e): Bloqueo por Advertencia 3 y Recargo del 45%', () => {
+    it('al registrar Advertencia 3, GET /api/visitas-fallidas/consorcio/:id/bloqueo responde con edificio bloqueado y aviso Cobro de Tercer Visita Habilitado', async () => {
+      // 3ra visita fallida en consorcio-e2e-1
+      const res3 = await request(app.getHttpServer())
+        .post('/api/visitas-fallidas')
+        .send({
+          consorcioId: 'consorcio-e2e-1',
+          motivo: 'Tercer intento fallido: edificio cerrado sin acceso',
+          fotoFrenteUrl: 'https://storage.maicon.com.ar/fotos/frente-e2e-3.jpg',
+          gps: { latitud: -34.6039, longitud: -58.3818 },
+        })
+        .expect(201);
+
+      expect(res3.body.numeroAdvertencia).toBe(3);
+
+      // Consulta de bloqueo
+      const resBloqueo = await request(app.getHttpServer())
+        .get('/api/visitas-fallidas/consorcio/consorcio-e2e-1/bloqueo')
+        .expect(200);
+
+      expect(resBloqueo.body.bloqueado).toBe(true);
+      expect(resBloqueo.body.avisoCobro).toBe('Cobro de Tercer Visita Habilitado');
+      expect(resBloqueo.body.totalAdvertencias).toBe(3);
+      expect(resBloqueo.body.recargoAplicable).toBe(true);
+      expect(resBloqueo.body.porcentajeRecargo).toBe(45);
+    });
+
+    it('POST /api/visitas-fallidas/liquidar-maquina suma automáticamente el recargo del 45% extra a la liquidación', async () => {
+      const resLiq = await request(app.getHttpServer())
+        .post('/api/visitas-fallidas/liquidar-maquina')
+        .send({
+          consorcioId: 'consorcio-e2e-1',
+          maquinaId: 'maq-e2e-1',
+          referenciaAgc: 'M1',
+          periodo: '2026-11',
+          montoBase: 150000,
+        })
+        .expect(201);
+
+      expect(resLiq.body.consorcioId).toBe('consorcio-e2e-1');
+      expect(resLiq.body.montoBase).toBe(150000);
+      expect(resLiq.body.bloqueadoPorTerceraVisita).toBe(true);
+      expect(resLiq.body.recargoAplicado).toBe(true);
+      expect(resLiq.body.porcentajeRecargo).toBe(45);
+      expect(resLiq.body.montoRecargo).toBe(67500); // 150000 * 0.45
+      expect(resLiq.body.montoTotal).toBe(217500); // 150000 + 67500
+      expect(resLiq.body.avisoCobro).toBe('Cobro de Tercer Visita Habilitado');
+      expect(resLiq.body.detalleConceptos).toHaveLength(2);
+    });
+
+    it('GET /api/visitas-fallidas/consorcio/:id/liquidacion devuelve liquidación consolidada con recargos', async () => {
+      const resLiqConsorcio = await request(app.getHttpServer())
+        .get('/api/visitas-fallidas/consorcio/consorcio-e2e-1/liquidacion?periodo=2026-11&montoBase=150000')
+        .expect(200);
+
+      expect(resLiqConsorcio.body.consorcioId).toBe('consorcio-e2e-1');
+      expect(resLiqConsorcio.body.bloqueadoPorTerceraVisita).toBe(true);
+      expect(resLiqConsorcio.body.avisoCobro).toBe('Cobro de Tercer Visita Habilitado');
+      expect(resLiqConsorcio.body.totalMaquinas).toBe(2);
+      expect(resLiqConsorcio.body.subtotalBase).toBe(300000);
+      expect(resLiqConsorcio.body.totalRecargos).toBe(135000); // 2 * 67500
+      expect(resLiqConsorcio.body.totalGeneral).toBe(435000);
+    });
+  });
 });

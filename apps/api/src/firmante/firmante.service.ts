@@ -157,6 +157,10 @@ export class FirmanteService {
     ];
   }
 
+  getMaquinas(): MaquinaAsignada[] {
+    return this.maquinas;
+  }
+
   async getMaquinasDelMes(
     firmanteIdOrUsername?: string,
     mes?: string,

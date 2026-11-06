@@ -8,14 +8,33 @@ import { Consorcio, ConsorcioInput, ConsorcioResumen } from '../src/consorcios/c
 import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
 import { DatabaseService } from '../src/database/database.service';
 
-/** Base de datos simulada: responde como un PostgreSQL con PostGIS 3.4 o falla a pedido. */
-export function fakeDatabase(opts: { fail?: boolean } = {}): Pick<DatabaseService, 'checkHealth'> {
-  return {
+export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'query'> {
+  /** Consultas recibidas por query(), en orden. */
+  consultas: { texto: string; params: unknown[] }[];
+  /** Si tiene valor, cada query() falla con este error. Se puede cambiar o quitar en medio de una prueba. */
+  errorDeQuery: Error | null;
+}
+
+/**
+ * Base de datos simulada: responde como un PostgreSQL con PostGIS 3.4 o falla a pedido.
+ * - `fail`: checkHealth() falla (la base "no responde").
+ * - `errorDeQuery`: query() falla con ese error. Sin él, query() registra la consulta y devuelve [].
+ */
+export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}): FakeDatabase {
+  const fake: FakeDatabase = {
+    consultas: [],
+    errorDeQuery: opts.errorDeQuery ?? null,
     checkHealth: async () => {
       if (opts.fail) throw new Error('connection refused');
       return { postgis: '3.4.3' };
     },
+    query: (async (texto: string, params: unknown[] = []) => {
+      fake.consultas.push({ texto, params });
+      if (fake.errorDeQuery) throw fake.errorDeQuery;
+      return [];
+    }) as FakeDatabase['query'],
   };
+  return fake;
 }
 
 /** Consorcios en memoria: la misma interfaz que PostgreSQL, para las pruebas aisladas. */

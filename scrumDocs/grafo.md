@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-06T15:47:48.390Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-06T15:56:32.186Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -47,6 +47,7 @@ graph TD
   subgraph US_1791560829468["HU-10: HU-10: Centro de Alertas Críticas y Acuse Legal en Portal ECA"]
     REQ_1791910396649["RF-01: Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA"]
     REQ_1791910396729["RF-02: Descarga de Remito Técnico y Registro de Acuse de Recibo Legal"]
+    REQ_1793980587652["RF-03: Registrar el acuse de recibo legal solo si quedó guardado en la base"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
     REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]
@@ -78,6 +79,7 @@ graph TD
   REQ_1791910396255 --> REQ_1791910396649
   REQ_1791910396553 --> REQ_1791910396649
   REQ_1791910396649 --> REQ_1791910396729
+  REQ_1791910396729 --> REQ_1793980587652
   REQ_1791910396729 --> REQ_1791910396804
   REQ_1791910396804 --> REQ_1791910396892
 ```

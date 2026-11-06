@@ -6,6 +6,7 @@ import {
   AlertasEcaResponse,
   CoberturaEca,
   descargarRemitoTecnico,
+  enviarAlertaWhatsApp,
   fetchAlertasEca,
   fetchCoberturaEca,
   fetchMaquinasEca,
@@ -377,6 +378,81 @@ describe('eca module', () => {
       expect(res.data?.id).toBe('REM-ALT-1');
       expect(res.data?.acuseLegal.registrado).toBe(true);
       expect(res.data?.acuseLegal.usuario).toBe('operador.legal@maicon.com.ar');
+    });
+  });
+
+  describe('enviarAlertaWhatsApp API client (HU-11 / RF-01)', () => {
+    it('consume /api/whatsapp/enviar-alerta con el payload formal', async () => {
+      const mockResult = {
+        ok: true,
+        idMensaje: 'WA-MSG-998877',
+        telefonoDestino: '+5491144009988',
+        mensajeFormateado: 'Alerta formal WhatsApp',
+        intentos: 1,
+        timestampEnvio: '2026-11-06T10:30:00Z',
+        tiempoRespuestaMs: 45,
+        estadoEntrega: 'entregado' as const,
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockResult,
+      } as Response);
+
+      const res = await enviarAlertaWhatsApp({
+        telefonoDestino: '+5491144009988',
+        nombreEca: 'MAICON Mantenimiento',
+        consorcio: 'Consorcio Santa Fe 3200',
+        equipo: 'M1: Ascensor Frontal',
+        estado: 'Reparación Urgente',
+        detalle: 'Deslizamiento crítico en freno',
+      });
+
+      expect(res.ok).toBe(true);
+      expect(res.data?.idMensaje).toBe('WA-MSG-998877');
+      expect(res.data?.estadoEntrega).toBe('entregado');
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/whatsapp/enviar-alerta',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      );
+    });
+
+    it('renderiza botón de despacho WhatsApp en componente AlertasCriticas', () => {
+      const maquinaAlerta: MaquinaEca = {
+        id: 'MAQ-TEST-WA',
+        codigoAGC: 'M1',
+        nombre: 'M1: Ascensor Test',
+        edificio: {
+          id: 'E-1',
+          direccion: 'Av. Callao 850',
+          administracion: 'Admin',
+          consorcio: 'Consorcio Callao',
+        },
+        eca: 'MAICON Mantenimiento',
+        rtCalle: 'dev-ma-2',
+        mes: '2026-11',
+        estado: 'Recorrida',
+        estadoOperativo: 'Reparación Urgente',
+        alertaCritica: {
+          id: 'ALT-WA-1',
+          tipo: 'REPARACION_URGENTE',
+          titulo: 'Alerta Urgente',
+          motivo: 'Freno descalibrado',
+          fechaDeteccion: '2026-11-06T09:00:00Z',
+        },
+        visita: null,
+      };
+
+      const html = renderToString(
+        React.createElement(AlertasCriticas, {
+          maquinas: [maquinaAlerta],
+        }),
+      );
+
+      expect(html).toContain('data-testid="btn-whatsapp-MAQ-TEST-WA"');
+      expect(html).toContain('Despachar Alerta WhatsApp');
     });
   });
 });

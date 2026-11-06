@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { descargarRemitoTecnico, type MaquinaEca, type RemitoTecnico } from './eca';
+import {
+  descargarRemitoTecnico,
+  enviarAlertaWhatsApp,
+  type MaquinaEca,
+  type RemitoTecnico,
+} from './eca';
 
 interface AlertasCriticasProps {
   maquinas: MaquinaEca[];
@@ -8,8 +13,12 @@ interface AlertasCriticasProps {
 
 export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticasProps) {
   const [descargandoId, setDescargandoId] = useState<string | null>(null);
+  const [enviandoWaId, setEnviandoWaId] = useState<string | null>(null);
   const [acusesLocales, setAcusesLocales] = useState<
     Record<string, { fechaHora: string; usuario: string }>
+  >({});
+  const [waEnviados, setWaEnviados] = useState<
+    Record<string, { idMensaje: string; timestamp: string }>
   >({});
   const [mensajeDescarga, setMensajeDescarga] = useState<string | null>(null);
 
@@ -91,6 +100,46 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
     }
   };
 
+  const handleEnviarWhatsApp = async (m: MaquinaEca) => {
+    const alertaId = m.alertaCritica?.id || `ALT-${m.id}`;
+    setEnviandoWaId(alertaId);
+
+    try {
+      const res = await enviarAlertaWhatsApp({
+        telefonoDestino: '+5491144009988',
+        nombreEca: m.eca,
+        consorcio: `${m.edificio.direccion} (${m.edificio.consorcio})`,
+        equipo: `${m.codigoAGC} - ${m.nombre}`,
+        estado: m.estadoOperativo || 'Alerta Crítica',
+        detalle:
+          m.alertaCritica?.motivo ||
+          'Anomalía técnica grave detectada en inspección técnica',
+        remitoUrl: `https://localhost:8050/api/eca/remito/${alertaId}`,
+      });
+
+      if (res.ok && res.data) {
+        setWaEnviados((prev) => ({
+          ...prev,
+          [alertaId]: {
+            idMensaje: res.data!.idMensaje,
+            timestamp: res.data!.timestampEnvio,
+          },
+        }));
+        setMensajeDescarga(
+          `Alerta WhatsApp despachada a ${m.eca} (+5491144009988) [ID: ${res.data.idMensaje}].`,
+        );
+      } else {
+        setMensajeDescarga(res.error || 'Error al enviar alerta por WhatsApp');
+      }
+    } catch (err) {
+      setMensajeDescarga(
+        err instanceof Error ? err.message : 'Error al conectar con WhatsApp API',
+      );
+    } finally {
+      setEnviandoWaId(null);
+    }
+  };
+
   return (
     <div
       className="alertas-criticas-wrapper"
@@ -164,6 +213,15 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
                     📥 Descargar Remito de Notificación
                   </button>
 
+                  <button
+                    className="btn-whatsapp-alerta"
+                    data-testid={`btn-whatsapp-${m.id}`}
+                    onClick={() => handleEnviarWhatsApp(m)}
+                    disabled={enviandoWaId === alertaId}
+                  >
+                    📱 Despachar Alerta WhatsApp
+                  </button>
+
                   {acuse && (
                     <div
                       className="acuse-recibo-legal-box"
@@ -178,6 +236,18 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
                           {acuse.usuario} ({m.eca})
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {waEnviados[alertaId] && (
+                    <div
+                      className="whatsapp-status-badge"
+                      data-testid={`whatsapp-status-${m.id}`}
+                    >
+                      <span className="wa-icon">✓</span>
+                      <span>
+                        WhatsApp Despachado: ID {waEnviados[alertaId].idMensaje}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -316,6 +386,15 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
                 📥 Descargar Remito de Notificación
               </button>
 
+              <button
+                className="btn-whatsapp-alerta"
+                data-testid={`btn-whatsapp-${m.id}`}
+                onClick={() => handleEnviarWhatsApp(m)}
+                disabled={enviandoWaId === alertaId}
+              >
+                📱 Despachar Alerta WhatsApp
+              </button>
+
               {acuse && (
                 <div
                   className="acuse-recibo-legal-box"
@@ -329,6 +408,18 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
                       {acuse.usuario} ({m.eca})
                     </div>
                   </div>
+                </div>
+              )}
+
+              {waEnviados[alertaId] && (
+                <div
+                  className="whatsapp-status-badge"
+                  data-testid={`whatsapp-status-${m.id}`}
+                >
+                  <span className="wa-icon">✓</span>
+                  <span>
+                    WhatsApp Despachado: ID {waEnviados[alertaId].idMensaje}
+                  </span>
                 </div>
               )}
             </div>

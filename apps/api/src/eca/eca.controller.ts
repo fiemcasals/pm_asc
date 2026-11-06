@@ -5,7 +5,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { EcaService } from './eca.service';
-import { CoberturaEcaResponse, MaquinaEca } from './eca.types';
+import {
+  AlertasEcaResponse,
+  CoberturaEcaResponse,
+  MaquinaEca,
+} from './eca.types';
 
 @Controller('eca')
 export class EcaController {
@@ -31,5 +35,23 @@ export class EcaController {
   ): Promise<MaquinaEca[]> {
     const eca = ecaHeaderName || ecaHeaderId || ecaQuery;
     return this.ecaService.getMaquinasFlota(eca, mes);
+  }
+
+  @Get('alertas')
+  async getAlertas(
+    @Headers('x-eca-name') ecaHeaderName?: string,
+    @Headers('x-eca-id') ecaHeaderId?: string,
+    @Query('eca') ecaQuery?: string,
+    @Query('mes') mes: string = '2026-11',
+  ): Promise<AlertasEcaResponse> {
+    const eca = ecaHeaderName || ecaHeaderId || ecaQuery;
+    const ecaCanonica = this.ecaService.resolverEca(eca);
+    const alertas = await this.ecaService.getAlertasCriticas(ecaCanonica, mes);
+    return {
+      eca: ecaCanonica,
+      mes,
+      totalAlertas: alertas.length,
+      alertas,
+    };
   }
 }

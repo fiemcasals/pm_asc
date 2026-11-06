@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { FirmanteService } from '../firmante/firmante.service';
-import { CoberturaEcaResponse, MaquinaEca } from './eca.types';
+import { AlertaFlotaItem, CoberturaEcaResponse, MaquinaEca } from './eca.types';
 
 @Injectable()
 export class EcaService {
@@ -48,6 +48,32 @@ export class EcaService {
   }
 
   /**
+   * Obtiene las alertas críticas detectadas en la flota de la ECA para el mes consultado.
+   */
+  async getAlertasCriticas(
+    ecaIdentificador?: string,
+    mes: string = '2026-11',
+  ): Promise<AlertaFlotaItem[]> {
+    const maquinas = await this.getMaquinasFlota(ecaIdentificador, mes);
+
+    return maquinas
+      .filter((m) => Boolean(m.alertaCritica))
+      .map((m) => ({
+        maquinaId: m.id,
+        codigoAGC: m.codigoAGC,
+        nombreMaquina: m.nombre,
+        edificio: m.edificio,
+        eca: m.eca,
+        estadoOperativo:
+          m.estadoOperativo ||
+          (m.alertaCritica?.tipo === 'FUERA_DE_SERVICIO'
+            ? 'Fuera de Servicio'
+            : 'Reparación Urgente'),
+        alerta: m.alertaCritica!,
+      }));
+  }
+
+  /**
    * Calcula el porcentaje y las métricas de cobertura de flota (inspeccionadas y firmadas)
    * para la ECA en el mes consultado.
    */
@@ -63,6 +89,7 @@ export class EcaService {
     const firmadas = maquinas.filter((m) => Boolean(m.visita?.autorizada)).length;
     const pendientes = maquinas.filter((m) => m.estado === 'Pendiente de Visita').length;
     const advertencias = maquinas.filter((m) => m.estado === 'Advertencia').length;
+    const alertasCriticas = maquinas.filter((m) => Boolean(m.alertaCritica)).length;
 
     const porcentajeInspeccionadas =
       totalMaquinas > 0 ? Number(((inspeccionadas / totalMaquinas) * 100).toFixed(1)) : 0;
@@ -81,6 +108,7 @@ export class EcaService {
       firmadas,
       pendientes,
       advertencias,
+      alertasCriticas,
       porcentajeInspeccionadas,
       porcentajeFirmadas,
       porcentajeCobertura,

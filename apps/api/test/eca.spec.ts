@@ -79,4 +79,30 @@ describe('EcaService', () => {
       expect(cobertura.porcentajeCobertura).toBe(0);
     });
   });
+
+  describe('getAlertasCriticas', () => {
+    it('retorna las máquinas con alertas de Fuera de Servicio y Reparación Urgente', async () => {
+      const alertasMaicon = await ecaService.getAlertasCriticas('MAICON Mantenimiento');
+      expect(alertasMaicon.length).toBe(2);
+
+      const fds = alertasMaicon.find((a) => a.estadoOperativo === 'Fuera de Servicio');
+      expect(fds).toBeDefined();
+      expect(fds?.alerta.tipo).toBe('FUERA_DE_SERVICIO');
+      expect(fds?.alerta.fotografiaCabinaTrabada).toBeTruthy();
+      expect(fds?.alerta.motivo).toContain('Cabina trabada');
+
+      const urg = alertasMaicon.find((a) => a.estadoOperativo === 'Reparación Urgente');
+      expect(urg).toBeDefined();
+      expect(urg?.alerta.tipo).toBe('REPARACION_URGENTE');
+      expect(urg?.alerta.checklist?.length).toBeGreaterThan(0);
+      expect(urg?.alerta.checklist?.[0].estado).toBe('Critico');
+    });
+
+    it('retorna la alerta de cabina trabada para Conservación Porteña', async () => {
+      const alertasPortena = await ecaService.getAlertasCriticas('Conservación Porteña S.R.L.');
+      expect(alertasPortena.length).toBe(1);
+      expect(alertasPortena[0].alerta.tipo).toBe('FUERA_DE_SERVICIO');
+      expect(alertasPortena[0].alerta.fotografiaCabinaTrabada).toBeTruthy();
+    });
+  });
 });

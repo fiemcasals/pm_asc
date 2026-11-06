@@ -1275,3 +1275,398 @@ dd {
   color: #94a3b8;
   font-size: 0.8rem;
 }
+
+/* ==============================================================================
+   PORTAL ECA: Alertas Críticas (Fuera de Servicio y Reparación Urgente)
+   ============================================================================== */
+.alertas-criticas-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 8px;
+}
+
+.alertas-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  border-radius: 4px;
+}
+
+.alertas-pulse-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulse-red-dot 1.5s infinite;
+}
+
+@keyframes pulse-red-dot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.alertas-summary-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #991b1b;
+}
+
+/* 1. Alerta Titilante Roja: Fuera de Servicio */
+.alerta-fuera-de-servicio {
+  background: #fff1f2;
+  border: 3px solid #e11d48;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.2);
+}
+
+.alerta-titilante-roja {
+  animation: titilar-rojo 1.6s infinite ease-in-out;
+}
+
+@keyframes titilar-rojo {
+  0%, 100% {
+    border-color: #e11d48;
+    background-color: #fff1f2;
+    box-shadow: 0 0 14px rgba(225, 29, 72, 0.35);
+  }
+  50% {
+    border-color: #9f1239;
+    background-color: #ffe4e6;
+    box-shadow: 0 0 26px rgba(225, 29, 72, 0.65);
+  }
+}
+
+.badge-rojo-titilante {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #be123c;
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.alerta-siren {
+  font-size: 1.2rem;
+  animation: swing-siren 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes swing-siren {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(10deg); }
+}
+
+.alerta-card-body {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.alerta-card-info {
+  flex: 1 1 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alerta-equipo-titulo {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #881337;
+  font-weight: 800;
+}
+
+.alerta-ubicacion {
+  color: #4c0519;
+  font-size: 0.95rem;
+}
+
+.alerta-motivo-box {
+  background: #ffffff;
+  border-left: 4px solid #be123c;
+  padding: 12px 14px;
+  border-radius: 4px;
+  border-top: 1px solid #fecdd3;
+  border-right: 1px solid #fecdd3;
+  border-bottom: 1px solid #fecdd3;
+}
+
+.alerta-motivo-label {
+  display: block;
+  font-weight: 700;
+  color: #9f1239;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.alerta-motivo-texto {
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.alerta-fecha {
+  font-size: 0.85rem;
+  color: #9f1239;
+  font-weight: 600;
+}
+
+.alerta-foto-container {
+  flex: 0 0 280px;
+  display: flex;
+  justify-content: center;
+}
+
+.foto-frame {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 3px solid #be123c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #000000;
+  width: 100%;
+  max-width: 280px;
+}
+
+.foto-cabina-trabada {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.foto-cabina-trabada:hover {
+  transform: scale(1.03);
+}
+
+.foto-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+/* 2. Cartel Naranja Gigante: Reparación Urgente */
+.cartel-reparacion-urgente-gigante {
+  background: #fff7ed;
+  border: 4px solid #ea580c;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cartel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 2px solid #fed7aa;
+  padding-bottom: 14px;
+}
+
+.cartel-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.cartel-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cartel-super-badge {
+  display: inline-block;
+  background: #c2410c;
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.cartel-main-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #9a3412;
+  letter-spacing: -0.01em;
+}
+
+.cartel-subtitle {
+  color: #7c2d12;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.cartel-motivo-box {
+  background: #ffffff;
+  border-left: 4px solid #ea580c;
+  border-radius: 6px;
+  padding: 14px 16px;
+  border-top: 1px solid #fed7aa;
+  border-right: 1px solid #fed7aa;
+  border-bottom: 1px solid #fed7aa;
+}
+
+.cartel-motivo-box strong {
+  display: block;
+  font-size: 0.85rem;
+  color: #c2410c;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.cartel-motivo-texto {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Detalle del Checklist */
+.checklist-urgente-wrapper {
+  background: #ffffff;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.checklist-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.checklist-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #9a3412;
+}
+
+.checklist-count-tag {
+  background: #ffedd5;
+  color: #c2410c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid #fdba74;
+}
+
+.checklist-table-responsive {
+  overflow-x: auto;
+}
+
+.checklist-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.checklist-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 2px solid #fdba74;
+}
+
+.checklist-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #fed7aa;
+  vertical-align: middle;
+}
+
+.checklist-obs-cell {
+  color: #334155;
+  font-size: 0.88rem;
+}
+
+.badge-severidad {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.badge-severidad-critico {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+.badge-severidad-falla {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fb923c;
+}
+
+.badge-alerta-roja {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.badge-alerta-naranja {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fb923c;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}

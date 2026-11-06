@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T21:22:09.826Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T21:22:21.711Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -51,6 +51,7 @@ PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica,
 - Estimado: 4h
 
 ### RF-01 — API de Asignación Tripartita de Roles por Edificio
+Inicio de desarrollo de la tarea
 - Estimado: 3h
 
 ### RNF-01 — Rechazar con 400 los textos que la base no puede guardar (carácter NUL)

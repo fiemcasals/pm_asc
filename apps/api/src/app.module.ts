@@ -11,6 +11,7 @@ import { FirmanteService } from './firmante/firmante.service';
 import { HealthController } from './health/health.controller';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
+import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
 
 @Module({})
@@ -33,6 +34,7 @@ export class AppModule {
         EcaService,
         WhatsAppFormatterService,
         WhatsAppConnectorService,
+        WhatsAppTriggerService,
       ],
     };
   }

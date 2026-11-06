@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
+import { FirmanteService } from '../src/firmante/firmante.service';
 import { WhatsAppConnectorService } from '../src/whatsapp/whatsapp-connector.service';
 import { WhatsAppFormatterService } from '../src/whatsapp/whatsapp-formatter.service';
+import { WhatsAppTriggerService } from '../src/whatsapp/whatsapp-trigger.service';
 import { MensajeAlertaWhatsAppInput } from '../src/whatsapp/whatsapp.types';
 
 describe('WhatsApp Module (HU-11 / RF-01)', () => {
@@ -128,6 +130,40 @@ describe('WhatsApp Module (HU-11 / RF-01)', () => {
       expect(res.estadoEntrega).toBe('fallido');
       expect(res.intentos).toBe(2);
       expect(res.error).toContain('Connection refused');
+    });
+  });
+
+  describe('HU-11 / RF-02: Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo', () => {
+    let firmanteService: FirmanteService;
+    let triggerService: WhatsAppTriggerService;
+
+    beforeEach(() => {
+      firmanteService = new FirmanteService();
+      triggerService = new WhatsAppTriggerService(connector, firmanteService);
+    });
+
+    it('Criterio 1: al consolidarse un informe crítico, el disparo hacia WhatsApp se ejecuta en menos de 5 segundos comprobables', async () => {
+      const res = await triggerService.dispararAlertaInmediata({
+        alertaId: 'ALT-MAICON-001',
+        telefonoDestino: '+5491144009988',
+      });
+
+      expect(res.ok).toBe(true);
+      expect(res.menorA5Segundos).toBe(true);
+      expect(res.duracionMs).toBeLessThan(5000);
+      expect(res.idMensaje).toContain('WA-MSG-');
+      expect(res.telefonoDestino).toBe('+5491144009988');
+    });
+
+    it('Criterio 2: el mensaje incluye un enlace directo y funcional a las fotos y al informe técnico firmado para celular', async () => {
+      const res = await triggerService.dispararAlertaInmediata({
+        alertaId: 'ALT-MAICON-001',
+        telefonoDestino: '+5491144009988',
+      });
+
+      expect(res.enlaceDirecto).toContain('/api/eca/remito/ALT-MAICON-001/informe');
+      expect(res.mensajeFormateado).toContain(res.enlaceDirecto);
+      expect(res.mensajeFormateado).toContain('Informe y Fotos');
     });
   });
 });

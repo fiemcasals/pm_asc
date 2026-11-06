@@ -140,5 +140,17 @@ describe('EcaController (e2e)', () => {
       );
       expect(res.body.acuse.fechaHora).toBeTruthy();
     });
+
+    it('GET /api/eca/remito/:alertaId/informe devuelve vista HTML responsiva para visualización en celular', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/eca/remito/ALT-MAICON-001/informe')
+        .expect(200);
+
+      expect(res.headers['content-type']).toContain('text/html');
+      expect(res.text).toContain('<!DOCTYPE html>');
+      expect(res.text).toContain('MAICON S.R.L.');
+      expect(res.text).toContain('viewport');
+      expect(res.text).toContain('Checklist de Seguridad');
+    });
   });
 });

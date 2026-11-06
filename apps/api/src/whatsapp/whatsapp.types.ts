@@ -28,3 +28,21 @@ export interface WhatsAppTransport {
     headers: Record<string, string>,
   ): Promise<{ status: number; body?: unknown }>;
 }
+
+export interface TriggerAlertaCriticaDto {
+  alertaId?: string;
+  maquinaId?: string;
+  telefonoDestino?: string;
+  baseUrl?: string;
+}
+
+export interface WhatsAppDisparoResult {
+  ok: boolean;
+  idMensaje: string;
+  telefonoDestino: string;
+  duracionMs: number;
+  menorA5Segundos: boolean;
+  timestampDisparo: string;
+  enlaceDirecto: string;
+  mensajeFormateado: string;
+}

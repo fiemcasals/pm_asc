@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T13:36:18.372Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T13:36:19.703Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -105,6 +105,11 @@ Alertas críticas en Portal ECA implementadas y verificadas:
 - Estimado: 3h
 
 ### RF-02 — Descarga de Remito Técnico y Registro de Acuse de Recibo Legal
+Descarga de remito técnico y acuse de recibo legal implementados:
+1. Botón 'Descargar Remito de Notificación' habilitado en todas las tarjetas de alerta crítica del Portal ECA, permitiendo la descarga formal del documento con desglose de fallas y fotos.
+2. Persistencia automática de fecha, hora y usuario (operador.legal@maicon.com.ar) para el acuse legal vinculante de MAICON S.R.L. en PostgreSQL (tabla acuses_recibo_legal) y en memoria.
+3. Indicador visual inmediato en la UI mostrando constancia de acuse de recibo legal registrado.
+4. Pruebas: 112 tests en verde (72 Jest en API + 40 Vitest en Web) y 7/7 pruebas de integración con PostgreSQL/PostGIS. Los 2 tests de desarrollo fueron aprobados con evidencia; los 2 de integración preparados para QA. PR: https://github.com/fiemcasals/pm_asc/pull/9
 - Estimado: 3h
 
 ### RF-01 — Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica

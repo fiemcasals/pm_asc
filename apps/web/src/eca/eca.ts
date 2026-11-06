@@ -189,6 +189,42 @@ export async function enviarAlertaWhatsApp(
   }
 }
 
+export interface TriggerWhatsAppResult {
+  ok: boolean;
+  idMensaje: string;
+  telefonoDestino: string;
+  duracionMs: number;
+  menorA5Segundos: boolean;
+  timestampDisparo: string;
+  enlaceDirecto: string;
+  mensajeFormateado: string;
+}
+
+export async function triggerAlertaWhatsAppInmediata(
+  alertaId?: string,
+  maquinaId?: string,
+): Promise<FetchResult<TriggerWhatsAppResult>> {
+  try {
+    const res = await fetch('/api/whatsapp/trigger-alerta-critica', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alertaId, maquinaId }),
+    });
+
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: fallo en trigger de WhatsApp` };
+    }
+
+    const data = (await res.json()) as TriggerWhatsAppResult;
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Error al conectar con trigger de WhatsApp',
+    };
+  }
+}
+
 export async function fetchAlertasEca(
   ecaName: string = 'Conservación Porteña S.R.L.',
   mes: string = '2026-11',

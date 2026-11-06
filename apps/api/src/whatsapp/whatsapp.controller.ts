@@ -1,8 +1,11 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { WhatsAppConnectorService } from './whatsapp-connector.service';
 import { WhatsAppFormatterService } from './whatsapp-formatter.service';
+import { WhatsAppTriggerService } from './whatsapp-trigger.service';
 import {
   MensajeAlertaWhatsAppInput,
+  TriggerAlertaCriticaDto,
+  WhatsAppDisparoResult,
   WhatsAppEnvioResult,
 } from './whatsapp.types';
 
@@ -11,6 +14,7 @@ export class WhatsAppController {
   constructor(
     private readonly connector: WhatsAppConnectorService,
     private readonly formatter: WhatsAppFormatterService,
+    private readonly triggerService: WhatsAppTriggerService,
   ) {}
 
   @Post('enviar-alerta')
@@ -29,5 +33,12 @@ export class WhatsAppController {
       ok: true,
       mensajeFormateado,
     };
+  }
+
+  @Post('trigger-alerta-critica')
+  async triggerAlertaCritica(
+    @Body() dto: TriggerAlertaCriticaDto,
+  ): Promise<WhatsAppDisparoResult> {
+    return this.triggerService.dispararAlertaInmediata(dto);
   }
 }

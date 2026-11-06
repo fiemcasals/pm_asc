@@ -12,6 +12,7 @@ import {
   fetchMaquinasEca,
   getCoberturaColor,
   MaquinaEca,
+  triggerAlertaWhatsAppInmediata,
 } from './eca';
 
 describe('eca module', () => {
@@ -453,6 +454,38 @@ describe('eca module', () => {
 
       expect(html).toContain('data-testid="btn-whatsapp-MAQ-TEST-WA"');
       expect(html).toContain('Despachar Alerta WhatsApp');
+    });
+  });
+
+  describe('triggerAlertaWhatsAppInmediata API client (HU-11 / RF-02)', () => {
+    it('dispara /api/whatsapp/trigger-alerta-critica y verifica tiempo < 5s y enlace directo', async () => {
+      const mockTrigger = {
+        ok: true,
+        idMensaje: 'WA-AUTO-101',
+        telefonoDestino: '+5491144009988',
+        duracionMs: 38,
+        menorA5Segundos: true,
+        timestampDisparo: '2026-11-06T10:30:00Z',
+        enlaceDirecto: 'https://localhost:8050/api/eca/remito/ALT-001/informe',
+        mensajeFormateado: 'Texto con https://localhost:8050/api/eca/remito/ALT-001/informe',
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockTrigger,
+      } as Response);
+
+      const res = await triggerAlertaWhatsAppInmediata('ALT-001');
+      expect(res.ok).toBe(true);
+      expect(res.data?.menorA5Segundos).toBe(true);
+      expect(res.data?.duracionMs).toBeLessThan(5000);
+      expect(res.data?.enlaceDirecto).toContain('/api/eca/remito/ALT-001/informe');
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/whatsapp/trigger-alerta-critica',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      );
     });
   });
 });

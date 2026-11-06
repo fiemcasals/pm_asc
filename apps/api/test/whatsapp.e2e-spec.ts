@@ -70,4 +70,23 @@ describe('WhatsAppController (e2e)', () => {
       expect(res.body).toHaveProperty('intentos', 1);
     });
   });
+
+  describe('POST /api/whatsapp/trigger-alerta-critica (RF-02)', () => {
+    it('responde 201 en menos de 5 segundos con link directo funcional al remito', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/whatsapp/trigger-alerta-critica')
+        .send({
+          alertaId: 'ALT-MAICON-001',
+          telefonoDestino: '+5491199887766',
+        })
+        .expect(201);
+
+      expect(res.body).toHaveProperty('ok', true);
+      expect(res.body).toHaveProperty('menorA5Segundos', true);
+      expect(res.body.duracionMs).toBeLessThan(5000);
+      expect(res.body).toHaveProperty('idMensaje');
+      expect(res.body.enlaceDirecto).toContain('/api/eca/remito/ALT-MAICON-001/informe');
+      expect(res.body.mensajeFormateado).toContain(res.body.enlaceDirecto);
+    });
+  });
 });

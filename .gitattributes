@@ -1,0 +1,5 @@
+# Finales de línea LF en el repositorio, sin importar el sistema operativo de quien commitea.
+# Los scripts .sh con CRLF fallan en Linux ("bad interpreter").
+* text=auto eol=lf
+*.sh text eol=lf
+*.png binary

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-06T15:47:46.838Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-06T15:56:30.839Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -212,6 +212,18 @@ Habilitar la descarga del remito técnico para la ECA y persistir en base de dat
 
 1. El portal provee boton para Descargar Remito de Notificacion con el informe y fotos de la falla.
 2. Al descargarse el remito, el sistema registra automaticamente la fecha, hora y usuario para el acuse legal de MAICON S.R.L.
+
+### RF-03: Registrar el acuse de recibo legal solo si quedó guardado en la base (Funcional)
+
+El acuse de recibo legal de ECA se informa como registrado aunque el INSERT en acuses_recibo_legal falle, porque eca.service.ts traga el error con un try/catch vacío y marca el acuse en memoria antes de guardarlo. Guardar primero y, si falla, devolver el error sin marcar nada. Hallazgo de QA de HU-01 RNF-01.
+
+**Condiciones de aprobación**
+
+1. Con la base caída, POST /api/eca/alertas/ALT-MAICON-001/acuse responde 500 y no informa ok: true; GET /api/eca/alertas sigue mostrando esa alerta sin acuseRecibo.
+2. POST /api/eca/alertas/ALT-MAICON-001/acuse con un carácter NUL en usuario responde 400 con message "Datos inválidos"; GET /api/eca/alertas sigue mostrando esa alerta sin acuseRecibo.
+3. Con la base sana, POST /api/eca/alertas/ALT-MAICON-001/acuse con usuario "qa.valido" responde 201 con ok: true, deja 1 fila en acuses_recibo_legal con ese alerta_id y ese usuario, y GET /api/eca/alertas muestra el acuseRecibo con ese usuario.
+4. Con la base caída, GET /api/eca/remito/ALT-MAICON-001 responde 500 y no entrega el remito.
+5. Sin base de datos configurada (servicio creado sin DatabaseService), el acuse se sigue registrando solo en memoria, como hasta ahora.
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 

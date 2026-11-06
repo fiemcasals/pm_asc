@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AlertasCriticas } from './AlertasCriticas';
 import {
   type CoberturaEca,
   fetchCoberturaEca,
@@ -123,6 +124,9 @@ export function PortalEca() {
         <div className="loading-box">Cargando métricas de cobertura y catálogo de flota…</div>
       ) : (
         <>
+          {/* Alertas Críticas (Fuera de Servicio y Reparación Urgente) */}
+          <AlertasCriticas maquinas={maquinas} />
+
           {/* Criterio 1: Gráfico/Medidor de Cobertura */}
           {cobertura && <MedidorCobertura cobertura={cobertura} />}
 
@@ -162,6 +166,24 @@ export function PortalEca() {
                         </td>
                         <td>
                           <strong>{m.nombre}</strong>
+                          {m.estadoOperativo === 'Fuera de Servicio' && (
+                            <span
+                              className="badge badge-alerta-roja"
+                              data-testid={`badge-alerta-${m.id}`}
+                              style={{ display: 'inline-block', marginLeft: '6px' }}
+                            >
+                              🚨 Fuera de Servicio
+                            </span>
+                          )}
+                          {m.estadoOperativo === 'Reparación Urgente' && (
+                            <span
+                              className="badge badge-alerta-naranja"
+                              data-testid={`badge-alerta-${m.id}`}
+                              style={{ display: 'inline-block', marginLeft: '6px' }}
+                            >
+                              ⚠️ Rep. Urgente
+                            </span>
+                          )}
                         </td>
                         <td>
                           <div>{m.edificio.direccion}</div>

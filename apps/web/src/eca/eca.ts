@@ -1,3 +1,28 @@
+export type EstadoOperativo = 'Normal' | 'Fuera de Servicio' | 'Reparación Urgente';
+
+export type TipoAlertaCritica = 'FUERA_DE_SERVICIO' | 'REPARACION_URGENTE';
+
+export interface ChecklistItemCritico {
+  item: string;
+  estado: 'Critico' | 'Falla' | 'Peligro';
+  observaciones: string;
+}
+
+export interface AlertaCritica {
+  id: string;
+  tipo: TipoAlertaCritica;
+  titulo: string;
+  motivo: string;
+  fotografiaCabinaTrabada?: string | null;
+  checklist?: ChecklistItemCritico[];
+  fechaDeteccion: string;
+  remitoUrl?: string;
+  acuseRecibo?: {
+    fechaHora: string;
+    usuario: string;
+  } | null;
+}
+
 export interface CoberturaEca {
   eca: string;
   mes: string;
@@ -6,6 +31,7 @@ export interface CoberturaEca {
   firmadas: number;
   pendientes: number;
   advertencias: number;
+  alertasCriticas?: number;
   porcentajeInspeccionadas: number;
   porcentajeFirmadas: number;
   porcentajeCobertura: number;
@@ -25,6 +51,8 @@ export interface MaquinaEca {
   rtCalle: string;
   mes: string;
   estado: 'Recorrida' | 'Pendiente de Visita' | 'Advertencia';
+  estadoOperativo?: EstadoOperativo;
+  alertaCritica?: AlertaCritica | null;
   visita: {
     id: string;
     fecha: string;
@@ -40,6 +68,54 @@ export interface FetchResult<T> {
   ok: boolean;
   data?: T;
   error?: string;
+}
+
+export interface AlertaFlotaItem {
+  maquinaId: string;
+  codigoAGC: string;
+  nombreMaquina: string;
+  edificio: {
+    id: string;
+    direccion: string;
+    administracion: string;
+    consorcio: string;
+  };
+  eca: string;
+  estadoOperativo: EstadoOperativo;
+  alerta: AlertaCritica;
+}
+
+export interface AlertasEcaResponse {
+  eca: string;
+  mes: string;
+  totalAlertas: number;
+  alertas: AlertaFlotaItem[];
+}
+
+export async function fetchAlertasEca(
+  ecaName: string = 'Conservación Porteña S.R.L.',
+  mes: string = '2026-11',
+): Promise<FetchResult<AlertasEcaResponse>> {
+  try {
+    const params = new URLSearchParams({ eca: ecaName, mes });
+    const res = await fetch(`/api/eca/alertas?${params.toString()}`, {
+      headers: {
+        'x-eca-name': ecaName,
+      },
+    });
+
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo obtener alertas de la flota` };
+    }
+
+    const data = (await res.json()) as AlertasEcaResponse;
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Error de conexión',
+    };
+  }
 }
 
 export async function fetchCoberturaEca(

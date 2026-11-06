@@ -73,4 +73,33 @@ describe('EcaController (e2e)', () => {
       expect(res.body).toEqual([]);
     });
   });
+
+  describe('GET /api/eca/alertas', () => {
+    it('responde 200 con el listado de alertas críticas de la flota', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/eca/alertas')
+        .set('x-eca-name', 'MAICON Mantenimiento')
+        .expect(200);
+
+      expect(res.body).toHaveProperty('eca', 'MAICON Mantenimiento');
+      expect(res.body).toHaveProperty('mes', '2026-11');
+      expect(res.body).toHaveProperty('totalAlertas', 2);
+      expect(Array.isArray(res.body.alertas)).toBe(true);
+      expect(res.body.alertas.length).toBe(2);
+
+      const fueraDeServicio = res.body.alertas.find(
+        (a: any) => a.alerta.tipo === 'FUERA_DE_SERVICIO',
+      );
+      expect(fueraDeServicio).toBeDefined();
+      expect(fueraDeServicio.alerta.fotografiaCabinaTrabada).toBeTruthy();
+      expect(fueraDeServicio.alerta.motivo).toBeTruthy();
+
+      const reparacionUrgente = res.body.alertas.find(
+        (a: any) => a.alerta.tipo === 'REPARACION_URGENTE',
+      );
+      expect(reparacionUrgente).toBeDefined();
+      expect(Array.isArray(reparacionUrgente.alerta.checklist)).toBe(true);
+      expect(reparacionUrgente.alerta.checklist.length).toBeGreaterThan(0);
+    });
+  });
 });

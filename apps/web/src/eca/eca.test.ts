@@ -1,6 +1,11 @@
+import React from 'react';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { AlertasCriticas } from './AlertasCriticas';
 import {
+  AlertasEcaResponse,
   CoberturaEca,
+  fetchAlertasEca,
   fetchCoberturaEca,
   fetchMaquinasEca,
   getCoberturaColor,
@@ -122,6 +127,178 @@ describe('eca module', () => {
       const res = await fetchMaquinasEca();
       expect(res.ok).toBe(false);
       expect(res.error).toBe('Timeout');
+    });
+  });
+
+  describe('fetchAlertasEca', () => {
+    it('consume /api/eca/alertas retornando las alertas críticas registradas', async () => {
+      const mockAlertas: AlertasEcaResponse = {
+        eca: 'MAICON Mantenimiento',
+        mes: '2026-11',
+        totalAlertas: 2,
+        alertas: [
+          {
+            maquinaId: 'MAQ-SANTAFE-M1',
+            codigoAGC: 'M1',
+            nombreMaquina: 'M1: Ascensor Frontal',
+            edificio: {
+              id: 'EDIF-03',
+              direccion: 'Av. Santa Fe 3200',
+              administracion: 'Estudio Palermo Admin',
+              consorcio: 'Consorcio Santa Fe 3200',
+            },
+            eca: 'MAICON Mantenimiento',
+            estadoOperativo: 'Reparación Urgente',
+            alerta: {
+              id: 'ALT-01',
+              tipo: 'REPARACION_URGENTE',
+              titulo: 'Reparación Urgente',
+              motivo: 'Freno con deslizamiento',
+              fechaDeteccion: '2026-11-06T09:15:00Z',
+            },
+          },
+        ],
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockAlertas,
+      } as Response);
+
+      const res = await fetchAlertasEca('MAICON Mantenimiento');
+      expect(res.ok).toBe(true);
+      expect(res.data?.totalAlertas).toBe(2);
+      expect(res.data?.alertas[0].estadoOperativo).toBe('Reparación Urgente');
+    });
+  });
+
+  describe('AlertasCriticas Component (HU-10 / RF-01)', () => {
+    const maquinaFueraDeServicio: MaquinaEca = {
+      id: 'MAQ-FDS-1',
+      codigoAGC: 'M2',
+      nombre: 'M2: Ascensor de Servicio',
+      edificio: {
+        id: 'EDIF-1',
+        direccion: 'Av. Corrientes 1234, CABA',
+        administracion: 'Balvanera SRL',
+        consorcio: 'Consorcio Corrientes 1234',
+      },
+      eca: 'Conservación Porteña S.R.L.',
+      rtCalle: 'dev-ma-2',
+      mes: '2026-11',
+      estado: 'Pendiente de Visita',
+      estadoOperativo: 'Fuera de Servicio',
+      alertaCritica: {
+        id: 'ALT-FDS-1',
+        tipo: 'FUERA_DE_SERVICIO',
+        titulo: 'FUERA DE SERVICIO: Cabina Trabada',
+        motivo: 'Cabina trabada mecánicamente a 40cm del piso 4 con riesgo de atrapamiento',
+        fotografiaCabinaTrabada: 'https://fotos.local/cabina-trabada.jpg',
+        fechaDeteccion: '2026-11-06T08:30:00Z',
+      },
+      visita: null,
+    };
+
+    const maquinaReparacionUrgente: MaquinaEca = {
+      id: 'MAQ-URG-1',
+      codigoAGC: 'M1',
+      nombre: 'M1: Ascensor Principal',
+      edificio: {
+        id: 'EDIF-3',
+        direccion: 'Av. Santa Fe 3200, CABA',
+        administracion: 'Palermo Admin',
+        consorcio: 'Consorcio Santa Fe 3200',
+      },
+      eca: 'MAICON Mantenimiento',
+      rtCalle: 'dev-ma-2',
+      mes: '2026-11',
+      estado: 'Recorrida',
+      estadoOperativo: 'Reparación Urgente',
+      alertaCritica: {
+        id: 'ALT-URG-1',
+        tipo: 'REPARACION_URGENTE',
+        titulo: 'REPARACIÓN URGENTE: Anomalías Graves Detectadas Operando',
+        motivo: 'Freno electromagnético con deslizamiento crítico de 18cm y cables deshilachados',
+        checklist: [
+          {
+            item: 'Freno electromagnético',
+            estado: 'Critico',
+            observaciones: 'Deslizamiento severo de 18 cm con carga',
+          },
+          {
+            item: 'Cables de tracción',
+            estado: 'Falla',
+            observaciones: 'Deshilachado en torones centrales',
+          },
+        ],
+        fechaDeteccion: '2026-11-06T09:15:00Z',
+      },
+      visita: null,
+    };
+
+    it('Criterio 1: Si un ascensor es marcado como Fuera de Servicio, muestra alerta titilante roja con motivo y fotografia de la cabina trabada', () => {
+      const html = renderToString(
+        React.createElement(AlertasCriticas, {
+          maquinas: [maquinaFueraDeServicio],
+        }),
+      );
+
+      // Clases y estructura de alerta titilante roja
+      expect(html).toContain('alerta-fuera-de-servicio');
+      expect(html).toContain('alerta-titilante-roja');
+      expect(html).toContain('FUERA DE SERVICIO');
+
+      // Motivo
+      expect(html).toContain('Cabina trabada mecánicamente a 40cm del piso 4 con riesgo de atrapamiento');
+      expect(html).toContain('data-testid="motivo-fuera-de-servicio"');
+
+      // Fotografía de la cabina trabada
+      expect(html).toContain('data-testid="contenedor-foto-cabina-trabada"');
+      expect(html).toContain('data-testid="foto-cabina-trabada"');
+      expect(html).toContain('src="https://fotos.local/cabina-trabada.jpg"');
+      expect(html).toContain('alt="Fotografía de la cabina trabada"');
+    });
+
+    it('Criterio 2: Si presenta anomalías graves operando, exhibe cartel naranja gigante de Reparacion Urgente con detalle del checklist', () => {
+      const html = renderToString(
+        React.createElement(AlertasCriticas, {
+          maquinas: [maquinaReparacionUrgente],
+        }),
+      );
+
+      // Cartel naranja gigante
+      expect(html).toContain('cartel-reparacion-urgente-gigante');
+      expect(html).toContain('data-testid="cartel-reparacion-urgente"');
+      expect(html).toContain('CARTEL GIGANTE: REPARACIÓN URGENTE');
+
+      // Motivo de anomalías graves operando
+      expect(html).toContain('Freno electromagnético con deslizamiento crítico de 18cm y cables deshilachados');
+      expect(html).toContain('data-testid="motivo-reparacion-urgente"');
+
+      // Detalle del checklist
+      expect(html).toContain('data-testid="checklist-anomalias-graves"');
+      expect(html).toContain('Freno electromagnético');
+      expect(html).toContain('Deslizamiento severo de 18 cm con carga');
+      expect(html).toContain('Cables de tracción');
+      expect(html).toContain('Deshilachado en torones centrales');
+      expect(html).toContain('CRITICO');
+      expect(html).toContain('FALLA');
+    });
+
+    it('no renderiza alertas si todas las máquinas operan de forma normal sin alertas', () => {
+      const maquinaNormal: MaquinaEca = {
+        ...maquinaFueraDeServicio,
+        estadoOperativo: 'Normal',
+        alertaCritica: null,
+      };
+
+      const html = renderToString(
+        React.createElement(AlertasCriticas, {
+          maquinas: [maquinaNormal],
+        }),
+      );
+
+      expect(html).toBe('');
     });
   });
 });

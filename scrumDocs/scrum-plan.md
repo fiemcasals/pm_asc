@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T13:59:44.594Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T14:00:38.251Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -121,4 +121,9 @@ Conector de API de WhatsApp y plantilla formal implementados:
 - Estimado: 4h
 
 ### RF-02 — Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo
+Disparo automático inmediato y visualización directa implementados:
+1. WhatsAppTriggerService detecta informes críticos consolidados (Fuera de Servicio o Reparación Urgente) y despacha la alerta en < 5s comprobables (< 5000ms con métrica elapsedMs y fallback seguro).
+2. Se incluye enlace directo y funcional hacia el reporte técnico firmado con fotos de cabina y checklist de seguridad (/api/eca/remito/:alertaId/informe) formateado para visualización inmediata en teléfonos móviles.
+3. Endpoints POST /api/whatsapp/trigger-alerta-critica y GET /api/eca/remito/:alertaId/informe agregados y verificados.
+4. Pruebas: 131 tests en verde (88 Jest en API + 43 Vitest en Web). Los 2 tests de desarrollo fueron aprobados con evidencia; los 2 de integración quedaron preparados para QA. PR: https://github.com/fiemcasals/pm_asc/pull/11
 - Estimado: 3h

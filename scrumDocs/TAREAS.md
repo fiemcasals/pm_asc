@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-06T15:11:14.503Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-06T15:31:34.035Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -21,6 +21,17 @@ Construir la interfaz de usuario en la pestaña Carga de Edificios y Máquinas, 
 
 1. La pestaña de administracion muestra el formulario de alta de consorcios con campos de direccion, administracion y grilla dinamica de maquinas AGC (M1, M2).
 2. El listado permite seleccionar cualquier consorcio y visualizar su ficha tecnica completa y maquinas asociadas.
+
+### RNF-01: Rechazar con 400 los textos que la base no puede guardar (carácter NUL) (No funcional)
+
+Traducir a HTTP 400 los errores de PostgreSQL por texto con codificación inválida (carácter NUL, SQLSTATE 22021 y 22P05) en cualquier endpoint, en lugar de 500. Hallazgo de QA de HU-01 RF-01.
+
+**Condiciones de aprobación**
+
+1. POST /api/consorcios con un carácter NUL (\u0000) en nombre responde 400 con message "Datos inválidos" y una lista errores, y no guarda ninguna fila.
+2. PUT /api/consorcios/:id con un NUL en la descripción de una máquina responde 400 y la ficha no cambia.
+3. La respuesta 400 no incluye el texto del error de PostgreSQL ni trazas, y el error real queda en el log de la API.
+4. Un error de base de datos de otro tipo (por ejemplo, con la base caída) sigue respondiendo 500 y no se convierte en 400.
 
 ## HU-02: HU-02: Asignación de Roles Tripartitos por Edificio
 

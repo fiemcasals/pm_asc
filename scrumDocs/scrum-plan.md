@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T15:32:11.515Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T15:32:18.600Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -49,6 +49,7 @@ PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica,
 - Estimado: 3h
 
 ### RNF-01 — Rechazar con 400 los textos que la base no puede guardar (carácter NUL)
+Inicio de desarrollo del requerimiento
 - Estimado: 1h
 
 ### RF-02 — UI de Secretaría: Pestaña de Asignación de Roles de Trabajo

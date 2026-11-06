@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T12:39:35.138Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T12:39:43.439Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -77,7 +77,7 @@ PR #5 abierto contra dev. Implementados GET /api/eca/cobertura y GET /api/eca/ma
 - Estimado: 4h
 
 ### RF-02 — UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura
-Iniciando desarrollo de UI Portal ECA con medidor grafico de cobertura y catalogo en modo solo lectura
+PR #6 abierto contra dev. Implementados MedidorCobertura, PortalEca (modo solo lectura protegido), pestaÃ±a en App y 8 tests en Vitest en verde.
 - Estimado: 4h
 
 ### RF-01 — Recepción de Falla Crítica y Alerta Emergente en Secretaría

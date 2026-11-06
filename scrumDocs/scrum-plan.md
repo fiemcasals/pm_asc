@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T15:40:30.720Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T15:45:03.607Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -10,7 +10,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 2 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 3 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 4 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | Hacer | germanG | RF-01 | — |
-| 5 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | Hecho | germanG | RF-01 | — |
+| 5 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
 | 6 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 7 | RF-01 | Servicio de Telemetría GPS y Proximidad de Inspectores | HU-03 | — | — | Hacer | germanG | RF-01 | — |
 | 8 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
@@ -49,7 +49,7 @@ PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica,
 - Estimado: 3h
 
 ### RNF-01 — Rechazar con 400 los textos que la base no puede guardar (carácter NUL)
-Inicio de desarrollo del requerimiento
+Filtro global de errores (database/database-error.filter.ts, registrado en app.setup.ts) que traduce a 400 los SQLSTATE 22021 y 22P05 de PostgreSQL en todos los endpoints, con el formato { message: "Datos inválidos", errores } y sin filtrar el texto de PostgreSQL; el error real queda en el log (WARN). Cualquier otro error de base sigue siendo 500. Pruebas: npm run verify 122/122 en API (15 nuevos) y 49/49 en web; test:int 12/12 contra PostGIS real (5 nuevos); sin el filtro fallan 5 de 11 e2e y 4 de 5 de integración (Expected 400, Received 500). Script de entrega 4/4; carga 200 envíos con NUL, 0 fallidos, p95 77 ms; 203 líneas de log del filtro. Condición 4 probada con la base caída: 500 en el alta válida y en la del NUL, 503 en /api/health, 200 al volver. 4 tests de desarrollo aprobados con evidencia; 4 de integración preparados para QA como Manual (el NUL no se puede escribir en los pasos automáticos de la app). Afuera: la validación campo por campo (el mensaje no dice qué campo) y probar cada endpoint de otros módulos con un NUL. Sin mínimo necesario agregado fuera de la descripción. PR: https://github.com/fiemcasals/pm_asc/pull/14
 - Estimado: 1h
 
 ### RF-02 — UI de Secretaría: Pestaña de Asignación de Roles de Trabajo

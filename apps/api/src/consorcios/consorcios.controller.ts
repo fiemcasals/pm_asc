@@ -14,6 +14,8 @@ import {
 import { validarConsorcio } from './consorcio.validation';
 import { Consorcio, ConsorcioResumen } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
+import { RolesEdificio } from './roles.types';
+import { validarRoles } from './roles.validation';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -63,6 +65,28 @@ export class ConsorciosController {
   async eliminar(@Param('id') id: string): Promise<void> {
     exigirId(id);
     if (!(await this.consorcios.eliminar(id))) throw new NotFoundException('Consorcio no encontrado');
+  }
+
+  /** Terna del edificio con sus porcentajes operativos y datos de contacto. */
+  @Get(':id/roles')
+  async obtenerRoles(@Param('id') id: string): Promise<RolesEdificio> {
+    exigirId(id);
+    const roles = await this.consorcios.obtenerRoles(id);
+    if (!roles) throw new NotFoundException('Consorcio no encontrado');
+    return roles;
+  }
+
+  /** Asigna o reemplaza la terna completa: RT de Calle, Firmante AGC y ECA Responsable. */
+  @Put(':id/roles')
+  async asignarRoles(@Param('id') id: string, @Body() cuerpo: unknown): Promise<RolesEdificio> {
+    exigirId(id);
+    const resultado = validarRoles(cuerpo);
+    if (!resultado.ok) {
+      throw new BadRequestException({ message: 'Datos inválidos', errores: resultado.errores });
+    }
+    const roles = await this.consorcios.asignarRoles(id, resultado.valor);
+    if (!roles) throw new NotFoundException('Consorcio no encontrado');
+    return roles;
   }
 
   private validar(cuerpo: unknown) {

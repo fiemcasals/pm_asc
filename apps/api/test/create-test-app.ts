@@ -6,6 +6,7 @@ import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
 import { Consorcio, ConsorcioInput, ConsorcioResumen } from '../src/consorcios/consorcio.types';
 import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
+import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
 
 export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'query'> {
@@ -40,6 +41,7 @@ export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}
 /** Consorcios en memoria: la misma interfaz que PostgreSQL, para las pruebas aisladas. */
 export class InMemoryConsorciosRepository extends ConsorciosRepository {
   readonly filas = new Map<string, Consorcio>();
+  readonly roles = new Map<string, RolesEdificio>();
 
   private armar(id: string, datos: ConsorcioInput, createdAt: string): Consorcio {
     return {
@@ -82,7 +84,29 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
   }
 
   async eliminar(id: string): Promise<boolean> {
+    this.roles.delete(id);
     return this.filas.delete(id);
+  }
+
+  async obtenerRoles(id: string): Promise<RolesEdificio | null> {
+    if (!this.filas.has(id)) return null;
+    const roles = this.roles.get(id);
+    return roles
+      ? structuredClone(roles)
+      : { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
+  }
+
+  async asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null> {
+    if (!this.filas.has(id)) return null;
+    const roles: RolesEdificio = {
+      consorcioId: id,
+      rtCalle: { ...datos.rtCalle, porcentaje: PORCENTAJES_OPERATIVOS.rtCalle },
+      firmante: { ...datos.firmante, porcentaje: PORCENTAJES_OPERATIVOS.firmante },
+      eca: { ...datos.eca, porcentaje: PORCENTAJES_OPERATIVOS.eca },
+      actualizadoEn: new Date().toISOString(),
+    };
+    this.roles.set(id, roles);
+    return structuredClone(roles);
   }
 }
 

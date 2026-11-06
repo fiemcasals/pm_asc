@@ -1,4 +1,5 @@
 import { Consorcio, ConsorcioInput, ConsorcioResumen } from './consorcio.types';
+import { RolesEdificio, RolesInput } from './roles.types';
 
 /** Lanzado cuando la base rechaza una referencia AGC repetida dentro del mismo edificio. */
 export class ReferenciaAgcDuplicadaError extends Error {
@@ -20,4 +21,8 @@ export abstract class ConsorciosRepository {
   abstract reemplazar(id: string, datos: ConsorcioInput): Promise<Consorcio | null>;
   /** `false` si no existía. Borra también sus máquinas. */
   abstract eliminar(id: string): Promise<boolean>;
+  /** Roles del edificio; sin terna asignada, los roles vienen en `null`. `null` si el consorcio no existe. */
+  abstract obtenerRoles(id: string): Promise<RolesEdificio | null>;
+  /** Reemplaza la terna completa. `null` si el consorcio no existe. */
+  abstract asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null>;
 }

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { PortalEca } from './eca/PortalEca';
 import { PortalFirmante } from './firmante/PortalFirmante';
 import { fetchHealth, type HealthState } from './health';
 
 type SwState = 'verificando' | 'registrado' | 'no-soportado' | 'no-registrado';
-type Vista = 'firmante' | 'sistema';
+type Vista = 'firmante' | 'eca' | 'sistema';
 
 function useServiceWorkerState(): SwState {
   const [state, setState] = useState<SwState>('verificando');
@@ -61,6 +62,13 @@ export function App() {
             Portal Firmante (RT Legal)
           </button>
           <button
+            className={`tab-btn ${vista === 'eca' ? 'active' : ''}`}
+            onClick={() => setVista('eca')}
+            data-testid="tab-eca"
+          >
+            Portal ECA (Conservadoras)
+          </button>
+          <button
             className={`tab-btn ${vista === 'sistema' ? 'active' : ''}`}
             onClick={() => setVista('sistema')}
             data-testid="tab-sistema"
@@ -70,9 +78,9 @@ export function App() {
         </nav>
       </header>
 
-      {vista === 'firmante' ? (
-        <PortalFirmante />
-      ) : (
+      {vista === 'firmante' && <PortalFirmante />}
+      {vista === 'eca' && <PortalEca />}
+      {vista === 'sistema' && (
         <section className="card" aria-labelledby="estado-titulo">
           <h2 id="estado-titulo">Estado del sistema</h2>
           <dl>

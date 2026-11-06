@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T13:52:16.199Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T13:52:38.061Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -27,7 +27,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 19 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | Hacer | gonza | RF-01, RF-02 | — |
 | 20 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | Hecho ✓ dev | gonza | RF-02, RF-02 | — |
 | 21 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | Hecho ✓ dev | gonza | RF-01 | — |
-| 22 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | Hecho | gonza | RF-02 | — |
+| 22 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | Hecho ✓ dev | gonza | RF-02 | — |
 | 23 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | Hacer | gonza | RF-01 | — |
 
 ## Detalle
@@ -113,6 +113,11 @@ Descarga de remito técnico y acuse de recibo legal implementados:
 - Estimado: 3h
 
 ### RF-01 — Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica
+Conector de API de WhatsApp y plantilla formal implementados:
+1. WhatsAppFormatterService formatea la notificación formal institucional de MAICON S.R.L. con validación de obligatoriedad de nombre ECA, consorcio, estado, equipo y detalle técnico de falla.
+2. WhatsAppConnectorService realiza el despacho exitoso con tracking (idMensaje, estado 'entregado', tiempo de respuesta en ms) e implementa política de reintentos automática (backoff exponencial) ante fallas transitorias de red.
+3. Endpoints POST /api/whatsapp/enviar-alerta y POST /api/whatsapp/formatear habilitados y cableados al botón de despacho en la UI del Portal ECA.
+4. Pruebas: 126 tests en verde (84 Jest en API + 42 Vitest en Web) y 7/7 pruebas de integración con PostgreSQL/PostGIS. Los 2 tests de desarrollo fueron aprobados con evidencia; los 2 de integración preparados para QA. PR: https://github.com/fiemcasals/pm_asc/pull/10
 - Estimado: 4h
 
 ### RF-02 — Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo

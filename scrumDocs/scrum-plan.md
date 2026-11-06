@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T15:10:43.958Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T15:11:10.868Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -24,7 +24,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 16 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 17 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | Hecho ✓ dev | gonza | RF-01 | — |
 | 18 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
-| 19 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | Hecho | gonza | RF-01, RF-02 | — |
+| 19 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | Hecho ✓ dev | gonza | RF-01, RF-02 | — |
 | 20 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | Hecho ✓ dev | gonza | RF-02, RF-02 | — |
 | 21 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | Hecho ✓ dev | gonza | RF-01 | — |
 | 22 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | Hecho ✓ dev | gonza | RF-02 | — |
@@ -99,6 +99,11 @@ Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio implementa
 - Estimado: 4h
 
 ### RF-02 — Bloqueo por Advertencia 3 y Cálculo de Recargo del 45%
+Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% implementado:
+1. Al acumularse la Advertencia 3 (3 visitas fallidas consecutivas), el edificio queda automáticamente bloqueado en el tablero exhibiendo el aviso y cartel oficial 'Cobro de Tercer Visita Habilitado'.
+2. El módulo de facturación mensual (VisitasFallidasService.liquidarMaquina y liquidarConsorcio) calcula y suma automáticamente el recargo del 45% extra a la liquidación de esa máquina (.000 abono base + .500 recargo 45% = .500) con constancia en conceptos.
+3. Frontend FichaConsorcio.tsx enriquecido con cartel de bloqueo, badge oficial y tabla de facturación mensual con recargo del 45%.
+4. Pruebas: 156 tests en verde (107 Jest + 49 Vitest). Tests de desarrollo aprobados en Scrum Master AI con evidencia; tests de integración preparados para QA. PR #13: https://github.com/fiemcasals/pm_asc/pull/13
 - Estimado: 4h
 
 ### RF-01 — Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T13:28:49.176Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T13:28:50.727Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -97,6 +97,11 @@ PR #6 abierto contra dev. Implementados MedidorCobertura, PortalEca (modo solo l
 - Estimado: 4h
 
 ### RF-01 — Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA
+Alertas críticas en Portal ECA implementadas y verificadas:
+1. Alerta titilante roja (.alerta-titilante-roja) ante equipos marcados como Fuera de Servicio, con motivo técnico de detención y fotografía destacada de la cabina trabada.
+2. Cartel naranja gigante (.cartel-reparacion-urgente-gigante) de Reparación Urgente ante anomalías graves operando con detalle completo del checklist técnico de seguridad (4 componentes críticos categorizados por severidad y observaciones del inspector).
+3. API enriquecida con endpoint GET /api/eca/alertas y cobertura con métricas de criticidad.
+4. Pruebas: 105 tests en verde (68 Jest en API + 37 Vitest en Web) y 7/7 de integración contra PostGIS. Los 2 tests de desarrollo fueron aprobados con evidencia; los 2 de integración quedaron preparados para QA. PR: https://github.com/fiemcasals/pm_asc/pull/8
 - Estimado: 3h
 
 ### RF-02 — Descarga de Remito Técnico y Registro de Acuse de Recibo Legal

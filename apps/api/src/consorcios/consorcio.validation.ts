@@ -15,14 +15,14 @@ export type ResultadoValidacion =
   | { ok: true; valor: ConsorcioInput }
   | { ok: false; errores: string[] };
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function esObjeto(valor: unknown): valor is Record<string, unknown> {
+export function esObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
 }
 
 /** Texto obligatorio: string no vacío (tras recortar) y dentro del límite. */
-function textoObligatorio(valor: unknown, campo: string, max: number, errores: string[]): string {
+export function textoObligatorio(valor: unknown, campo: string, max: number, errores: string[]): string {
   if (typeof valor !== 'string' || valor.trim() === '') {
     errores.push(`${campo} es obligatorio`);
     return '';
@@ -33,7 +33,7 @@ function textoObligatorio(valor: unknown, campo: string, max: number, errores: s
 }
 
 /** Texto opcional: ausente, null o vacío → null. Si viene, tiene que ser string dentro del límite. */
-function textoOpcional(valor: unknown, campo: string, max: number, errores: string[]): string | null {
+export function textoOpcional(valor: unknown, campo: string, max: number, errores: string[]): string | null {
   if (valor === undefined || valor === null) return null;
   if (typeof valor !== 'string') {
     errores.push(`${campo} tiene que ser texto`);

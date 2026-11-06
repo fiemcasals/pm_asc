@@ -1,16 +1,16 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T15:31:30.774Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T15:31:44.968Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
 | Orden | Código | Tarea | Historia de Usuario | Módulo | Sprint | Estado | Desarrollador | Depende de | Rechazos |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 2 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | Hacer | germanG | — | — |
-| 3 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 4 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | testing | gonza | RF-01 | — |
-| 5 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | Hacer | germanG | RF-01 | — |
+| 2 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 3 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | testing | gonza | RF-01 | — |
+| 4 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | Hacer | germanG | RF-01 | — |
+| 5 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | Hacer | germanG | RF-01 | — |
 | 6 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 7 | RF-01 | Servicio de Telemetría GPS y Proximidad de Inspectores | HU-03 | — | — | Hacer | germanG | RF-01 | — |
 | 8 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | testing | gonza | RF-01 | — |
@@ -37,9 +37,6 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 Monorepo listo: web React+Vite PWA (HTTPS https://localhost:8050 con mkcert, service worker registrado), API NestJS con GET /api/health (estado de API, base y versión PostGIS; 503 sin base), PostgreSQL 16 + PostGIS 3.4 en Docker. CORS sólo para CORS_ORIGINS (origen de Scrum), rechaza '*' y se desactiva con NODE_ENV=production. Pruebas: npm run verify 19/19 (API 15, web 4), test:int 1/1 contra PostGIS real, script de entrega 9/9, carga 200 corridas 0 fallidas p95 126 ms. 5 tests de desarrollo aprobados con evidencia; 5 de integración preparados para QA (c3 y c5 manuales). Mínimo necesario agregado: .gitattributes (LF para que los .sh corran en Linux). PR: https://github.com/fiemcasals/pm_asc/pull/1
 - Estimado: 4h
 
-### RNF-01 — Rechazar con 400 los textos que la base no puede guardar (carácter NUL)
-- Estimado: 1h
-
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
 Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia AGC única por edificio, borrado en cascada) y endpoints POST, GET, GET :id, PUT y DELETE en /api/consorcios. Mínimo necesario agregado: sistema de migraciones (SQL plano, aplicado al arrancar la API, tabla schema_migrations), porque RO-01 lo dejó asignado a esta tarea; GET (listado) y PUT/DELETE porque la descripción pide CRUD. Pruebas: npm run verify 36/36 en API (21 nuevos) y 4/4 en web; test:int 7/7 contra PostGIS real; script de entrega 5/5; carga 200 recorridos, 0 fallidos, p95 320 ms. 2 tests de desarrollo aprobados con evidencia; 2 de integración preparados para QA. Afuera: la ECA (HU-02), autenticación, paginación del listado y ubicación geográfica. Consorcio y edificio se modelaron como una sola entidad. PR: https://github.com/fiemcasals/pm_asc/pull/3
 - Estimado: 4h
@@ -50,6 +47,9 @@ PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica,
 
 ### RF-01 — API de Asignación Tripartita de Roles por Edificio
 - Estimado: 3h
+
+### RNF-01 — Rechazar con 400 los textos que la base no puede guardar (carácter NUL)
+- Estimado: 1h
 
 ### RF-02 — UI de Secretaría: Pestaña de Asignación de Roles de Trabajo
 - Estimado: 3h

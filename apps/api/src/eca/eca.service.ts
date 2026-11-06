@@ -127,6 +127,14 @@ export class EcaService {
 
   /**
    * Registra automáticamente o explícitamente el acuse de recibo legal para una alerta crítica.
+   *
+   * El acuse es un registro legal: sólo se informa como registrado si quedó guardado.
+   * - Con base de datos, se guarda ANTES de marcarlo en memoria, y si el INSERT falla el error
+   *   sube (no se traga): no queda nada marcado y quien llama se entera. Un texto que la base no
+   *   puede guardar (p. ej. un carácter NUL) sale como 400 por el filtro global
+   *   (database/database-error.filter.ts); cualquier otro error de base es un 500.
+   * - Sin base de datos configurada (servicio creado sin DatabaseService, p. ej. en pruebas
+   *   unitarias) el acuse queda sólo en memoria, como en desarrollo sin base.
    */
   async registrarAcuseRecibo(
     alertaId: string,
@@ -149,30 +157,26 @@ export class EcaService {
     const acuseId = `ACU-${Date.now()}`;
     const remitoUrl = `/api/eca/remito/${alertaId}`;
 
+    if (this.db) {
+      await this.db.query(
+        `INSERT INTO acuses_recibo_legal (alerta_id, maquina_id, eca, usuario, fecha_hora, tipo_alerta, remito_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          alertaId,
+          maquina.id,
+          maquina.eca,
+          usuario,
+          fechaHora,
+          maquina.alertaCritica.tipo,
+          remitoUrl,
+        ],
+      );
+    }
+
     maquina.alertaCritica.acuseRecibo = {
       fechaHora,
       usuario,
     };
-
-    if (this.db) {
-      try {
-        await this.db.query(
-          `INSERT INTO acuses_recibo_legal (alerta_id, maquina_id, eca, usuario, fecha_hora, tipo_alerta, remito_url)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            alertaId,
-            maquina.id,
-            maquina.eca,
-            usuario,
-            fechaHora,
-            maquina.alertaCritica.tipo,
-            remitoUrl,
-          ],
-        );
-      } catch (err) {
-        // En entornos sin base de datos activa se conserva en memoria sin bloquear
-      }
-    }
 
     return {
       ok: true,

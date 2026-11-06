@@ -13,6 +13,8 @@ import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service'
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
+import { VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
+import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
 
 @Module({})
 export class AppModule {
@@ -25,6 +27,7 @@ export class AppModule {
         FirmanteController,
         EcaController,
         WhatsAppController,
+        VisitasFallidasController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -35,6 +38,7 @@ export class AppModule {
         WhatsAppFormatterService,
         WhatsAppConnectorService,
         WhatsAppTriggerService,
+        VisitasFallidasService,
       ],
     };
   }

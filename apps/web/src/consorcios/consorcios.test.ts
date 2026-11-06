@@ -3,9 +3,14 @@ import {
   Consorcio,
   ConsorcioInput,
   ConsorcioResumen,
+  ReporteVisitaFallidaInput,
+  ResumenAdvertenciasConsorcio,
+  VisitaFallidaRegistro,
   crearConsorcio,
+  fetchAdvertenciasConsorcio,
   fetchConsorcioById,
   fetchConsorcios,
+  registrarVisitaFallida,
 } from './consorcios';
 
 describe('consorcios module', () => {
@@ -150,6 +155,106 @@ describe('consorcios module', () => {
       const res = await crearConsorcio(input);
       expect(res.ok).toBe(false);
       expect(res.errores).toEqual(['nombre es obligatorio', 'direccion es obligatorio']);
+    });
+  });
+
+  describe('registrarVisitaFallida (HU-07 / RF-01)', () => {
+    it('registra exitosamente una visita fallida con foto del frente y GPS congelado', async () => {
+      const input: ReporteVisitaFallidaInput = {
+        consorcioId: '11111111-1111-1111-1111-111111111111',
+        inspector: 'Inspector García',
+        fotoFrenteUrl: 'https://storage.empresa.com/frente-consorcio-1.jpg',
+        gps: {
+          latitud: -34.603722,
+          longitud: -58.381592,
+          precision: 5.2,
+          timestamp: '2026-11-06T10:00:00.000Z',
+        },
+        motivo: 'Portero ausente y timbre sin respuesta',
+      };
+
+      const mockRegistro: VisitaFallidaRegistro = {
+        id: 'vf-1',
+        consorcioId: input.consorcioId,
+        consorcioNombre: 'Consorcio Callao 850',
+        direccion: 'Av. Callao 850, CABA',
+        numeroAdvertencia: 1,
+        fotoFrenteUrl: input.fotoFrenteUrl,
+        gps: input.gps,
+        inspector: input.inspector || 'Inspector General',
+        motivo: input.motivo || '',
+        fechaHora: '2026-11-06T10:00:00.000Z',
+        emailNotificacion: {
+          id: 'email-1',
+          destinatario: 'administracion@consorcio.com',
+          remitente: 'notificaciones@maicon.com.ar',
+          asunto: 'NOTIFICACIÓN DE VISITA TÉCNICA FALLIDA - ADVERTENCIA 1',
+          cuerpo: 'Estimada Administración...',
+          fechaEnvio: '2026-11-06T10:00:01.000Z',
+          estado: 'enviado',
+        },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockRegistro,
+      } as Response);
+
+      const res = await registrarVisitaFallida(input);
+      expect(res.ok).toBe(true);
+      expect(res.data?.numeroAdvertencia).toBe(1);
+      expect(res.data?.fotoFrenteUrl).toBe(input.fotoFrenteUrl);
+      expect(res.data?.emailNotificacion?.asunto).toContain('ADVERTENCIA 1');
+      expect(global.fetch).toHaveBeenCalledWith('/api/visitas-fallidas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+    });
+
+    it('devuelve error si falta la foto del frente o coordenadas GPS', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({
+          message: 'Es obligatoria la foto del frente del edificio con coordenadas GPS congeladas',
+        }),
+      } as Response);
+
+      const inputInvalido: ReporteVisitaFallidaInput = {
+        consorcioId: '11111111-1111-1111-1111-111111111111',
+        fotoFrenteUrl: '',
+        gps: { latitud: 0, longitud: 0 },
+      };
+
+      const res = await registrarVisitaFallida(inputInvalido);
+      expect(res.ok).toBe(false);
+      expect(res.error).toContain('foto del frente');
+    });
+  });
+
+  describe('fetchAdvertenciasConsorcio (HU-07 / RF-01)', () => {
+    it('obtiene el historial de advertencias y estado de bloqueo', async () => {
+      const mockResumen: ResumenAdvertenciasConsorcio = {
+        consorcioId: '11111111-1111-1111-1111-111111111111',
+        totalAdvertencias: 2,
+        ultimaAdvertencia: 2,
+        bloqueadoPorTerceraVisita: false,
+        recargoAplicable: false,
+        historial: [],
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockResumen,
+      } as Response);
+
+      const res = await fetchAdvertenciasConsorcio('11111111-1111-1111-1111-111111111111');
+      expect(res.ok).toBe(true);
+      expect(res.data?.totalAdvertencias).toBe(2);
+      expect(res.data?.ultimaAdvertencia).toBe(2);
+      expect(res.data?.bloqueadoPorTerceraVisita).toBe(false);
+      expect(global.fetch).toHaveBeenCalledWith('/api/visitas-fallidas/consorcio/11111111-1111-1111-1111-111111111111');
     });
   });
 });

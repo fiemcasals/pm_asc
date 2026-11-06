@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T13:15:51.534Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T13:16:00.095Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -41,6 +41,7 @@ Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia A
 - Estimado: 4h
 
 ### RF-02 — UI de Secretaría: Carga y Ficha de Edificios y Máquinas
+PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica, FichaConsorcio, SecretariaView (layout Master-Detail) y 6 tests Vitest en verde.
 - Estimado: 4h
 
 ### RF-01 — API de Asignación Tripartita de Roles por Edificio

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-06T16:08:46.251Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-06T21:21:46.869Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -32,6 +32,15 @@ Traducir a HTTP 400 los errores de PostgreSQL por texto con codificación invál
 2. PUT /api/consorcios/:id con un NUL en la descripción de una máquina responde 400 y la ficha no cambia.
 3. La respuesta 400 no incluye el texto del error de PostgreSQL ni trazas, y el error real queda en el log de la API.
 4. Un error de base de datos de otro tipo (por ejemplo, con la base caída) sigue respondiendo 500 y no se convierte en 400.
+
+### RNF-02: Evitar que las pruebas de integración fallen al correr en paralelo (No funcional)
+
+npm run test:int falla de forma intermitente: en 3 de 6 corridas cayó el criterio 1 de texto-invalido.int-spec.ts (RNF-01). Ese test compara el total de filas de consorcios y maquinas mientras los otros archivos de integración escriben en las mismas tablas de la misma base, porque Jest los corre en paralelo. En serie (--runInBand) pasó 16 de 16 en 3 corridas de 3. Es un problema de la prueba, no de la app.
+
+**Condiciones de aprobación**
+
+1. Cinco corridas seguidas de npm run test:int terminan con todos los tests en verde
+2. La corrida deja las tablas consorcios y maquinas con la misma cantidad de filas que antes de empezar
 
 ## HU-02: HU-02: Asignación de Roles Tripartitos por Edificio
 

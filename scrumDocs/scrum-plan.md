@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T12:30:06.600Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T12:34:35.273Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -16,7 +16,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 8 | RF-02 | UI Mapa de Flota interactivo CABA y Despacho de Emergencia | HU-03 | — | — | Hacer | germanG | RF-01 | — |
 | 9 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 10 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | Hecho ✓ dev | gonza | RF-01 | — |
-| 11 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | Haciendo | gonza | RF-01 | — |
+| 11 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | Hecho | gonza | RF-01 | — |
 | 12 | RF-02 | Integración Visual del Semáforo en Mapa y Reasignación Rápida | HU-04 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 13 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
 | 14 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | Hacer | gonza | RF-01 | — |

@@ -124,13 +124,61 @@ async function run() {
   await page.screenshot({ path: shot3, fullPage: true });
   console.log('   📸 Captura guardada: 03_secretaria_consorcio_creado.png');
 
-  // --- ESCENARIO 4: ESTADO DEL SISTEMA ---
-  console.log('⚙️ 5. Verificando Estado del Sistema y PostGIS...');
+  // --- ESCENARIO 4: PROTOCOLO VISITAS FALLIDAS Y RECARGO 45% (HU-07) ---
+  console.log('⚠️ 5. Probando Protocolo de Visitas Fallidas, Advertencias y Cobro 3ra Visita (HU-07)...');
+  // Abrir ficha del consorcio recién creado o del primer consorcio en la lista
+  const btnVerFicha = page.locator('button:has-text("Ver Ficha Técnica"), [data-testid^="btn-ver-consorcio-"]').first();
+  if (await btnVerFicha.isVisible()) {
+    console.log('   🏢 Abriendo Ficha Técnica de Consorcio...');
+    await btnVerFicha.click();
+    await page.waitForTimeout(1500);
+
+    // Scroll hacia sección de Visitas Fallidas
+    const seccionFallidas = page.locator('[data-testid="seccion-visitas-fallidas"]');
+    if (await seccionFallidas.isVisible()) {
+      await seccionFallidas.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(1000);
+
+      // Registrar 3 visitas fallidas consecutivas para activar Advertencia 3 y Recargo 45%
+      for (let adv = 1; adv <= 3; adv++) {
+        console.log(`   📝 Registrando Visita Fallida (Intento ${adv} de 3)...`);
+        const btnToggle = page.locator('[data-testid="btn-toggle-visita-fallida"]');
+        if (await btnToggle.isVisible()) {
+          await btnToggle.click();
+          await page.waitForTimeout(800);
+
+          await page.fill('[data-testid="input-motivo-fallida"]', `Visita fallida ${adv}: encargado ausente en horario pactado`);
+          await page.fill('[data-testid="input-foto-frente"]', `https://storage.maicon.com.ar/fotos/frente-inspeccion-${adv}.jpg`);
+          await page.fill('[data-testid="input-gps-lat"]', '-34.603722');
+          await page.fill('[data-testid="input-gps-lng"]', '-58.381592');
+
+          await page.click('[data-testid="btn-confirmar-visita-fallida"]');
+          await page.waitForTimeout(2000);
+        }
+      }
+
+      // Desplazarse al cartel de bloqueo y módulo de facturación
+      console.log('   🚫 Comprobando Bloqueo en Tablero y Recargo del 45% en Facturación...');
+      const seccionFacturacion = page.locator('[data-testid="seccion-facturacion-mensual"]');
+      if (await seccionFacturacion.isVisible()) {
+        await seccionFacturacion.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(1500);
+      }
+    }
+  }
+
+  // Captura de pantalla 4: HU-07 Bloqueo y Recargo 45%
+  const shotHu07 = path.join(ARTIFACT_DIR, '05_visitas_fallidas_bloqueo_recargo_45.png');
+  await page.screenshot({ path: shotHu07, fullPage: true });
+  console.log('   📸 Captura guardada: 05_visitas_fallidas_bloqueo_recargo_45.png');
+
+  // --- ESCENARIO 5: ESTADO DEL SISTEMA ---
+  console.log('⚙️ 6. Verificando Estado del Sistema y PostGIS...');
   await page.click('[data-testid="tab-sistema"]');
   await page.waitForSelector('[data-testid="estado-api"]');
   await page.waitForTimeout(1500);
 
-  // Captura de pantalla 4: Sistema
+  // Captura de pantalla 5: Sistema
   const shot4 = path.join(ARTIFACT_DIR, '04_estado_sistema_postgis.png');
   await page.screenshot({ path: shot4, fullPage: true });
   console.log('   📸 Captura guardada: 04_estado_sistema_postgis.png');

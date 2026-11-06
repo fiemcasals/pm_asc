@@ -2,7 +2,7 @@
 
 - **Tarea:** HU-07 / RF-02 — `REQ-1791910395872`
 - **Rama:** `feature/hu-07-hu-07-protocolo-de-visitas-fal/req-1791910395872-bloqueo-por-advertencia-3-y-calculo-de-r`
-- **Pull Request:** #13 (Pendiente de merge a `dev`)
+- **Pull Request:** #13 (Mergeado en `dev` y promovido a `testing`)
 
 ## 1. Qué quedó implementado
 
@@ -28,9 +28,13 @@ Se completó el ciclo integral del protocolo de visitas fallidas de la HU-07:
 ## 2. Criterios de Aceptación Cubiertos
 
 - **TEST-1791910395878-0**: *Al acumularse la Advertencia 3, el edificio queda bloqueado en el tablero exhibiendo el aviso Cobro de Tercer Visita Habilitado.*
-  - **Estado**: Aprobado.
+  - **Estado**: Aprobado (desarrollo).
+- **TEST-1791910395881-1**: *Al acumularse la Advertencia 3, el edificio queda bloqueado en el tablero exhibiendo el aviso Cobro de Tercer Visita Habilitado. — integrado en dev/testing*
+  - **Estado**: Certificado por QA.
 - **TEST-1791910395883-2**: *El modulo de facturacion mensual suma automaticamente el recargo del 45% extra a la liquidacion de esa maquina.*
-  - **Estado**: Aprobado.
+  - **Estado**: Aprobado (desarrollo).
+- **TEST-1791910395885-3**: *El modulo de facturacion mensual suma automaticamente el recargo del 45% extra a la liquidacion de esa maquina. — integrado en dev/testing*
+  - **Estado**: Certificado por QA.
 
 ## 3. Pruebas Automatizadas
 
@@ -40,3 +44,13 @@ Se completó el ciclo integral del protocolo de visitas fallidas de la HU-07:
 | `npm test -w apps/api -- visitas-fallidas` | 11 pruebas unitarias + 7 pruebas e2e en verde (18/18). |
 | `npm test -w apps/web -- consorcios` | 12 pruebas unitarias en verde cubriendo bloqueo y recargo 45%. |
 | `npm run verify` | 14 test suites, 107 pruebas Jest y 49 pruebas Vitest aprobadas (156/156). |
+
+## 4. Evidencia Visual de Pruebas en el Navegador (QA)
+
+![Bloqueo por Advertencia 3 y Recargo del 45%](imagenes/RF-01-RF-02-visitas-fallidas-bloqueo-recargo.png)
+
+- **Inspección en vivo**: Prueba automatizada en Google Chrome (`https://localhost:8050/`) verificando la acumulación de la 3ª visita fallida.
+- **Resultado comprobable**:
+  - Aparición del cartel rojo: **`🚫 Cobro de Tercer Visita Habilitado`**.
+  - Badge en cabecera: **`🚫 Bloqueado — Cobro de Tercer Visita Habilitado`**.
+  - Tabla de facturación mensual aplicando automáticamente **+$67.500 (45%)** sobre el abono base de $150.000 para totalizar **$217.500** por ascensor.

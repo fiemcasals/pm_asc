@@ -105,4 +105,46 @@ describe('EcaService', () => {
       expect(alertasPortena[0].alerta.fotografiaCabinaTrabada).toBeTruthy();
     });
   });
+
+  describe('RF-02: Remito Técnico y Acuse de Recibo Legal', () => {
+    it('genera el remito técnico con informe, fotos y registra automáticamente el acuse legal', async () => {
+      const remito = await ecaService.getRemitoTecnico(
+        'ALT-MAICON-002',
+        'operador.legal@maicon.com.ar',
+      );
+
+      expect(remito.id).toBe('REM-ALT-MAICON-002');
+      expect(remito.alertaId).toBe('ALT-MAICON-002');
+      expect(remito.maquinaId).toBe('MAQ-SANTAFE-M2');
+      expect(remito.codigoAGC).toBe('M2');
+      expect(remito.eca).toBe('MAICON Mantenimiento');
+      expect(remito.fotografiaCabinaTrabada).toBeTruthy();
+      expect(remito.motivo).toContain('Cabina trabada');
+
+      // Verificación de registro automático de acuse legal
+      expect(remito.acuseLegal.registrado).toBe(true);
+      expect(remito.acuseLegal.fechaHora).toBeTruthy();
+      expect(remito.acuseLegal.usuario).toBe('operador.legal@maicon.com.ar');
+
+      // Verifica que quedó persistido en la máquina
+      const maquina = firmanteService
+        .getMaquinas()
+        .find((m) => m.id === 'MAQ-SANTAFE-M2');
+      expect(maquina?.alertaCritica?.acuseRecibo?.usuario).toBe(
+        'operador.legal@maicon.com.ar',
+      );
+    });
+
+    it('permite registrar acuse de recibo legal explícito', async () => {
+      const res = await ecaService.registrarAcuseRecibo(
+        'ALT-MAICON-001',
+        'auditor@maicon.com.ar',
+      );
+
+      expect(res.ok).toBe(true);
+      expect(res.alertaId).toBe('ALT-MAICON-001');
+      expect(res.acuse.usuario).toBe('auditor@maicon.com.ar');
+      expect(res.acuse.fechaHora).toBeTruthy();
+    });
+  });
 });

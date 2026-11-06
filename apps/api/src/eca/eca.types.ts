@@ -45,3 +45,46 @@ export interface AlertasEcaResponse {
   totalAlertas: number;
   alertas: AlertaFlotaItem[];
 }
+
+export interface AcuseReciboDto {
+  usuario?: string;
+}
+
+export interface AcuseReciboResponse {
+  ok: boolean;
+  mensaje: string;
+  alertaId: string;
+  maquinaId: string;
+  eca: string;
+  acuse: {
+    id: string;
+    fechaHora: string;
+    usuario: string;
+    remitoUrl: string;
+  };
+}
+
+export interface RemitoTecnicoResponse {
+  id: string;
+  alertaId: string;
+  maquinaId: string;
+  codigoAGC: string;
+  nombreMaquina: string;
+  edificio: {
+    direccion: string;
+    consorcio: string;
+    administracion: string;
+  };
+  eca: string;
+  tipoAlerta: TipoAlertaCritica;
+  titulo: string;
+  motivo: string;
+  fotografiaCabinaTrabada?: string | null;
+  checklist?: ChecklistItemCritico[];
+  fechaDeteccion: string;
+  acuseLegal: {
+    registrado: boolean;
+    fechaHora: string;
+    usuario: string;
+  };
+}

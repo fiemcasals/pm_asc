@@ -102,4 +102,43 @@ describe('EcaController (e2e)', () => {
       expect(reparacionUrgente.alerta.checklist.length).toBeGreaterThan(0);
     });
   });
+
+  describe('RF-02: Descarga de Remito y Acuse Legal', () => {
+    it('GET /api/eca/remito/:alertaId descarga el remito técnico y registra el acuse legal automáticamente', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/eca/remito/ALT-MAICON-001?usuario=operador.legal@maicon.com.ar')
+        .expect(200);
+
+      expect(res.headers['content-disposition']).toContain(
+        'attachment; filename="remito-tecnico-ALT-MAICON-001.json"',
+      );
+      expect(res.body).toHaveProperty('id', 'REM-ALT-MAICON-001');
+      expect(res.body).toHaveProperty('alertaId', 'ALT-MAICON-001');
+      expect(res.body).toHaveProperty('eca', 'MAICON Mantenimiento');
+      expect(res.body.checklist.length).toBeGreaterThan(0);
+
+      // Verificación de acuse legal registrado automáticamente
+      expect(res.body.acuseLegal).toHaveProperty('registrado', true);
+      expect(res.body.acuseLegal).toHaveProperty(
+        'usuario',
+        'operador.legal@maicon.com.ar',
+      );
+      expect(res.body.acuseLegal.fechaHora).toBeTruthy();
+    });
+
+    it('POST /api/eca/alertas/:alertaId/acuse registra explícitamente el acuse legal', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/eca/alertas/ALT-MAICON-002/acuse')
+        .send({ usuario: 'responsable.guardia@maicon.com.ar' })
+        .expect(201);
+
+      expect(res.body).toHaveProperty('ok', true);
+      expect(res.body).toHaveProperty('alertaId', 'ALT-MAICON-002');
+      expect(res.body.acuse).toHaveProperty(
+        'usuario',
+        'responsable.guardia@maicon.com.ar',
+      );
+      expect(res.body.acuse.fechaHora).toBeTruthy();
+    });
+  });
 });

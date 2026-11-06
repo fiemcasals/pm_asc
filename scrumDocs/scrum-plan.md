@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T11:45:22.278Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T11:46:17.260Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -12,7 +12,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 4 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | Hacer | germanG | RF-01 | — |
 | 5 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 6 | RF-01 | Servicio de Telemetría GPS y Proximidad de Inspectores | HU-03 | — | — | Hacer | germanG | RF-01 | — |
-| 7 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | Haciendo | gonza | RF-01 | — |
+| 7 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | Hecho | gonza | RF-01 | — |
 | 8 | RF-02 | UI Mapa de Flota interactivo CABA y Despacho de Emergencia | HU-03 | — | — | Hacer | germanG | RF-01 | — |
 | 9 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 10 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | Hacer | gonza | RF-01 | — |
@@ -37,6 +37,7 @@ Monorepo listo: web React+Vite PWA (HTTPS https://localhost:8050 con mkcert, ser
 - Estimado: 4h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
+Inicio de desarrollo del requerimiento
 - Estimado: 4h
 
 ### RF-02 — UI de Secretaría: Carga y Ficha de Edificios y Máquinas

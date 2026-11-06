@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-06T12:29:58.349Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-06T12:30:12.597Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD

@@ -65,6 +65,19 @@ export class FirmanteService {
         firmanteUsername: 'gonza',
         mes: '2026-11',
         estado: 'Pendiente de Visita',
+        estadoOperativo: 'Fuera de Servicio',
+        alertaCritica: {
+          id: 'ALT-CP-001',
+          tipo: 'FUERA_DE_SERVICIO',
+          titulo: '🚨 FUERA DE SERVICIO: Cabina Trabada',
+          motivo:
+            'Cabina trabada mecánicamente a 40cm del piso 4 con deformación en guiadores y rotura de cuña de seguridad. Riesgo inminente de atrapamiento.',
+          fotografiaCabinaTrabada:
+            'https://storage.nuestrocamino.cloud/fotos/cabina-trabada-corrientes-m2.jpg',
+          fechaDeteccion: '2026-11-06T08:30:00.000Z',
+          remitoUrl: '/api/eca/remito/ALT-CP-001',
+          acuseRecibo: null,
+        },
         visita: null,
       },
       {
@@ -83,6 +96,7 @@ export class FirmanteService {
         firmanteUsername: 'gonza',
         mes: '2026-11',
         estado: 'Advertencia',
+        estadoOperativo: 'Normal',
         visita: {
           id: 'VIS-2026-11-201',
           fecha: '2026-11-05T14:15:00.000Z',
@@ -110,6 +124,42 @@ export class FirmanteService {
         firmanteUsername: 'gonza',
         mes: '2026-11',
         estado: 'Recorrida',
+        estadoOperativo: 'Reparación Urgente',
+        alertaCritica: {
+          id: 'ALT-MAICON-001',
+          tipo: 'REPARACION_URGENTE',
+          titulo: '⚠️ REPARACIÓN URGENTE: Anomalías Graves Detectadas Operando',
+          motivo:
+            'Freno electromagnético con deslizamiento crítico de 18cm y cables con deshilachado severo. El equipo continúa en marcha con severo riesgo operacional.',
+          checklist: [
+            {
+              item: 'Freno electromagnético de máquina tractora',
+              estado: 'Critico',
+              observaciones:
+                'Deslizamiento severo de 18 cm detectado en prueba de parada con carga',
+            },
+            {
+              item: 'Cables de tracción y amarres de cabina',
+              estado: 'Falla',
+              observaciones: 'Deshilachado visible en 2 torones del cable central',
+            },
+            {
+              item: 'Seguridad y cerraduras de puertas de palier',
+              estado: 'Critico',
+              observaciones: 'Patín retráctil no traba cerradura mecánica en piso 3',
+            },
+            {
+              item: 'Limitador de velocidad y paracaídas',
+              estado: 'Critico',
+              observaciones:
+                'Traba centrífuga sin precinto oficial y con juego axial excesivo',
+            },
+          ],
+          fotografiaCabinaTrabada: null,
+          fechaDeteccion: '2026-11-06T09:15:00.000Z',
+          remitoUrl: '/api/eca/remito/ALT-MAICON-001',
+          acuseRecibo: null,
+        },
         visita: {
           id: 'VIS-2026-11-301',
           fecha: '2026-11-05T09:00:00.000Z',
@@ -140,6 +190,19 @@ export class FirmanteService {
         firmanteUsername: 'gonza',
         mes: '2026-11',
         estado: 'Recorrida',
+        estadoOperativo: 'Fuera de Servicio',
+        alertaCritica: {
+          id: 'ALT-MAICON-002',
+          tipo: 'FUERA_DE_SERVICIO',
+          titulo: '🚨 FUERA DE SERVICIO: Cabina Trabada',
+          motivo:
+            'Cabina trabada mecánicamente con rotura de guiador inferior y acuñamiento forzado en hueco de ascensor. Inmediatamente desenergizado.',
+          fotografiaCabinaTrabada:
+            'https://storage.nuestrocamino.cloud/fotos/cabina-trabada-santafe-m2.jpg',
+          fechaDeteccion: '2026-11-06T07:45:00.000Z',
+          remitoUrl: '/api/eca/remito/ALT-MAICON-002',
+          acuseRecibo: null,
+        },
         visita: {
           id: 'VIS-2026-11-302',
           fecha: '2026-11-05T09:45:00.000Z',
@@ -149,7 +212,8 @@ export class FirmanteService {
             cables: '', // Falta foto de cables
             frente: 'https://storage.nuestrocamino.cloud/fotos/frente-maq-302.jpg',
           },
-          firmaEncargado: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xMCAxMCIvPjwvc3ZnPg==',
+          firmaEncargado:
+            'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0xMCAxMCIvPjwvc3ZnPg==',
           nombreEncargado: 'Roberto Gómez',
           autorizada: false,
         },

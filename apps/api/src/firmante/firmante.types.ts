@@ -1,5 +1,30 @@
 export type EstadoVisita = 'Recorrida' | 'Pendiente de Visita' | 'Advertencia';
 
+export type EstadoOperativo = 'Normal' | 'Fuera de Servicio' | 'Reparación Urgente';
+
+export type TipoAlertaCritica = 'FUERA_DE_SERVICIO' | 'REPARACION_URGENTE';
+
+export interface ChecklistItemCritico {
+  item: string;
+  estado: 'Critico' | 'Falla' | 'Peligro';
+  observaciones: string;
+}
+
+export interface AlertaCritica {
+  id: string;
+  tipo: TipoAlertaCritica;
+  titulo: string;
+  motivo: string;
+  fotografiaCabinaTrabada?: string | null;
+  checklist?: ChecklistItemCritico[];
+  fechaDeteccion: string;
+  remitoUrl?: string;
+  acuseRecibo?: {
+    fechaHora: string;
+    usuario: string;
+  } | null;
+}
+
 export interface FotosObligatorias {
   cables: string;
   frente: string;
@@ -38,6 +63,8 @@ export interface MaquinaAsignada {
   firmanteUsername: string;
   mes: string;
   estado: EstadoVisita;
+  estadoOperativo?: EstadoOperativo;
+  alertaCritica?: AlertaCritica | null;
   visita: VisitaInspeccion | null;
 }
 

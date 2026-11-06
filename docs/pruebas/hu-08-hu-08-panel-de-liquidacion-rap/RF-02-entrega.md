@@ -69,3 +69,12 @@ bash docs/pruebas/hu-08-hu-08-panel-de-liquidacion-rap/RF-02-entrega.sh
 
 - **TEST-1791910396049-0**: *El usuario visualiza una lista vertical de sus máquinas asignadas para el mes actual, con el indicador de estado claramente diferenciado (Recorrida, Pendiente de Visita, Advertencia).*
 - **TEST-1791910396063-2**: *El botón 'Autorizar Firma AGC' permanece bloqueado para máquinas en 'Pendiente de Visita' o 'Advertencia', y se habilita únicamente tras auditar que las fotos y la firma del encargado estén completas.*
+
+## 4. Evidencia Visual de Pruebas en el Navegador
+
+![Portal del Firmante - Autorización AGC](imagenes/RF-02-portal-firmante-autorizado.png)
+
+- **Inspección en vivo**: Prueba realizada sobre máquina `M1: Ascensor Principal` (Av. Corrientes 1234).
+- **Validación**: Fotos obligatorias de cables de tracción, frente de cabina y firma de encargado validadas en el modal de auditoría.
+- **Resultado comprobable**: Emisión del protocolo legal `AGC-2026-AUT-1` y transición reactiva al badge verde `✓ Autorizada AGC`.
+

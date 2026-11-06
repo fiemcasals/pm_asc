@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T11:46:17.260Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T11:46:47.577Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -53,7 +53,7 @@ Inicio de desarrollo del requerimiento
 - Estimado: 4h
 
 ### RF-01 — API de Máquinas Asignadas y Autorización de Firma AGC
-Inicio de desarrollo: API de Máquinas Asignadas y Autorización de Firma AGC (endpoints GET /api/firmante/maquinas y POST /api/firmante/autorizar).
+Implementada la API de Máquinas Asignadas (GET /api/firmante/maquinas) y Autorización de Firma AGC (POST /api/firmante/autorizar) con validación estricta de estado Recorrida, fotos obligatorias y firma del encargado. Pruebas: 33 tests en verde (18 específicos del firmante). Entrega y script en docs/pruebas/hu-08-hu-08-panel-de-liquidacion-rap/.
 - Estimado: 4h
 
 ### RF-02 — UI Mapa de Flota interactivo CABA y Despacho de Emergencia

@@ -142,6 +142,53 @@ export async function descargarRemitoTecnico(
   }
 }
 
+export interface MensajeAlertaWhatsAppInput {
+  telefonoDestino?: string;
+  nombreEca: string;
+  consorcio: string;
+  equipo: string;
+  estado: string;
+  detalle: string;
+  remitoUrl?: string;
+  fechaDeteccion?: string;
+}
+
+export interface WhatsAppEnvioResult {
+  ok: boolean;
+  idMensaje: string;
+  telefonoDestino: string;
+  mensajeFormateado: string;
+  intentos: number;
+  timestampEnvio: string;
+  tiempoRespuestaMs: number;
+  estadoEntrega: 'entregado' | 'enviado' | 'fallido';
+  error?: string;
+}
+
+export async function enviarAlertaWhatsApp(
+  input: MensajeAlertaWhatsAppInput,
+): Promise<FetchResult<WhatsAppEnvioResult>> {
+  try {
+    const res = await fetch('/api/whatsapp/enviar-alerta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo despachar por WhatsApp` };
+    }
+
+    const data = (await res.json()) as WhatsAppEnvioResult;
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Error al enviar alerta por WhatsApp',
+    };
+  }
+}
+
 export async function fetchAlertasEca(
   ecaName: string = 'Conservación Porteña S.R.L.',
   mes: string = '2026-11',

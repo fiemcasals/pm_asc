@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
+  BloqueoConsorcioInfo,
+  DetalleConceptoLiquidacion,
   EmailNotificacionConsorcio,
+  LiquidacionConsorcioResultado,
+  LiquidacionMaquinaDto,
+  LiquidacionMaquinaResultado,
   ReporteVisitaFallidaDto,
   ResumenAdvertenciasConsorcio,
   VisitaFallidaRegistro,
@@ -145,14 +150,168 @@ export class VisitasFallidasService {
     const historial = this.registros.filter((r) => r.consorcioId === consorcioId);
     const totalAdvertencias = historial.length;
     const ultima = historial.length > 0 ? historial[historial.length - 1].numeroAdvertencia : null;
+    const bloqueado = totalAdvertencias >= 3;
 
     return {
       consorcioId,
       totalAdvertencias,
       ultimaAdvertencia: ultima,
-      bloqueadoPorTerceraVisita: totalAdvertencias >= 3,
-      recargoAplicable: totalAdvertencias >= 3,
+      bloqueadoPorTerceraVisita: bloqueado,
+      recargoAplicable: bloqueado,
+      avisoCobro: bloqueado ? 'Cobro de Tercer Visita Habilitado' : null,
       historial,
+    };
+  }
+
+  /**
+   * HU-07 / RF-02 Criterio 1:
+   * Al acumularse la Advertencia 3, el edificio queda bloqueado en el tablero exhibiendo el aviso
+   * "Cobro de Tercer Visita Habilitado".
+   */
+  async getBloqueoConsorcio(consorcioId: string): Promise<BloqueoConsorcioInfo> {
+    const consorcioInfo = await this.resolverConsorcioInfo(consorcioId);
+    const resumen = this.getHistorialConsorcio(consorcioId);
+    const bloqueado = resumen.bloqueadoPorTerceraVisita;
+
+    return {
+      consorcioId,
+      consorcioNombre: consorcioInfo.nombre,
+      bloqueado,
+      avisoCobro: bloqueado ? 'Cobro de Tercer Visita Habilitado' : null,
+      totalAdvertencias: resumen.totalAdvertencias,
+      recargoAplicable: bloqueado,
+      porcentajeRecargo: bloqueado ? 45 : 0,
+      motivoBloqueo: bloqueado
+        ? 'El edificio acumula 3 visitas fallidas consecutivas. Queda bloqueado en el tablero y habilitado para cobro con recargo del 45%.'
+        : null,
+    };
+  }
+
+  /**
+   * HU-07 / RF-02 Criterio 2:
+   * El módulo de facturación mensual suma automáticamente el recargo del 45% extra a la liquidación de esa máquina.
+   */
+  async liquidarMaquina(dto: LiquidacionMaquinaDto): Promise<LiquidacionMaquinaResultado> {
+    if (!dto || !dto.consorcioId) {
+      throw new BadRequestException('El consorcioId es obligatorio para liquidar la máquina');
+    }
+
+    const consorcioInfo = await this.resolverConsorcioInfo(dto.consorcioId);
+    const resumen = this.getHistorialConsorcio(dto.consorcioId);
+    const tieneRecargo = resumen.totalAdvertencias >= 3;
+
+    const montoBase = typeof dto.montoBase === 'number' && dto.montoBase > 0 ? dto.montoBase : 150000;
+    const porcentajeRecargo = tieneRecargo ? 45 : 0;
+    const montoRecargo = tieneRecargo ? Math.round(montoBase * 0.45 * 100) / 100 : 0;
+    const montoTotal = Math.round((montoBase + montoRecargo) * 100) / 100;
+
+    const maquinaId = dto.maquinaId || `maq-${dto.referenciaAgc || 'M1'}`;
+    const referenciaAgc = dto.referenciaAgc || 'M1';
+    const periodo = dto.periodo || new Date().toISOString().slice(0, 7);
+    const avisoCobro = tieneRecargo ? 'Cobro de Tercer Visita Habilitado' : null;
+
+    const detalleConceptos: DetalleConceptoLiquidacion[] = [
+      {
+        concepto: `Abono mensual conservación y mantenimiento máquina ${referenciaAgc}`,
+        monto: montoBase,
+      },
+    ];
+
+    if (tieneRecargo) {
+      detalleConceptos.push({
+        concepto: `Recargo 45% extra por tercera visita fallida — Cobro de Tercer Visita Habilitado (Normativa AGC)`,
+        monto: montoRecargo,
+      });
+    }
+
+    this.logger.log(
+      `Liquidación emitida para máquina ${referenciaAgc} (Consorcio ${consorcioInfo.nombre}) — Base: $${montoBase}, Recargo 45%: $${montoRecargo}, Total: $${montoTotal}`,
+    );
+
+    return {
+      id: `LIQ-${dto.consorcioId.slice(0, 8)}-${referenciaAgc}-${periodo}`,
+      consorcioId: dto.consorcioId,
+      consorcioNombre: consorcioInfo.nombre,
+      maquinaId,
+      referenciaAgc,
+      periodo,
+      montoBase,
+      totalAdvertencias: resumen.totalAdvertencias,
+      bloqueadoPorTerceraVisita: tieneRecargo,
+      recargoAplicado: tieneRecargo,
+      porcentajeRecargo,
+      montoRecargo,
+      montoTotal,
+      avisoCobro,
+      detalleConceptos,
+      fechaLiquidacion: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Facturación mensual consolidada de todas las máquinas del consorcio aplicando recargo 45% si corresponde.
+   */
+  async liquidarConsorcio(
+    consorcioId: string,
+    periodo?: string,
+    montoBasePorMaquina = 150000,
+  ): Promise<LiquidacionConsorcioResultado> {
+    const consorcioInfo = await this.resolverConsorcioInfo(consorcioId);
+    const resumen = this.getHistorialConsorcio(consorcioId);
+    const periodoActual = periodo || new Date().toISOString().slice(0, 7);
+
+    let maquinasLista: { id: string; referenciaAgc: string }[] = [];
+    if (this.db) {
+      try {
+        const rows = await this.db.query<{ id: string; referencia_agc: string }>(
+          `SELECT id, referencia_agc FROM maquinas WHERE consorcio_id = $1 ORDER BY referencia_agc ASC`,
+          [consorcioId],
+        );
+        if (rows && rows.length > 0) {
+          maquinasLista = rows.map((r) => ({ id: r.id, referenciaAgc: r.referencia_agc }));
+        }
+      } catch {
+        // Fallback a máquinas conocidas
+      }
+    }
+
+    if (maquinasLista.length === 0) {
+      maquinasLista = [
+        { id: `maq-${consorcioId}-1`, referenciaAgc: 'M1' },
+        { id: `maq-${consorcioId}-2`, referenciaAgc: 'M2' },
+      ];
+    }
+
+    const liquidacionesMaquinas: LiquidacionMaquinaResultado[] = [];
+    let subtotalBase = 0;
+    let totalRecargos = 0;
+
+    for (const maq of maquinasLista) {
+      const liq = await this.liquidarMaquina({
+        consorcioId,
+        maquinaId: maq.id,
+        referenciaAgc: maq.referenciaAgc,
+        periodo: periodoActual,
+        montoBase: montoBasePorMaquina,
+      });
+      liquidacionesMaquinas.push(liq);
+      subtotalBase += liq.montoBase;
+      totalRecargos += liq.montoRecargo;
+    }
+
+    return {
+      consorcioId,
+      consorcioNombre: consorcioInfo.nombre,
+      periodo: periodoActual,
+      totalMaquinas: maquinasLista.length,
+      totalAdvertencias: resumen.totalAdvertencias,
+      bloqueadoPorTerceraVisita: resumen.bloqueadoPorTerceraVisita,
+      avisoCobro: resumen.avisoCobro,
+      subtotalBase,
+      totalRecargos,
+      totalGeneral: subtotalBase + totalRecargos,
+      liquidacionesMaquinas,
+      fechaLiquidacion: new Date().toISOString(),
     };
   }
 

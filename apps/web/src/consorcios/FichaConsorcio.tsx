@@ -98,9 +98,24 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
     >
       <div className="ficha-header">
         <div>
-          <span className="badge badge-recorrida" style={{ marginBottom: '6px' }}>
-            Ficha Oficial de Edificio
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+            <span className="badge badge-recorrida">
+              Ficha Oficial de Edificio
+            </span>
+            {resumen?.bloqueadoPorTerceraVisita && (
+              <span
+                className="badge badge-error"
+                data-testid="badge-edificio-bloqueado"
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                }}
+              >
+                🚫 Bloqueado — Cobro de Tercer Visita Habilitado
+              </span>
+            )}
+          </div>
           <h3 id="ficha-titulo" className="ficha-title" data-testid="ficha-nombre">
             {nombre}
           </h3>
@@ -191,6 +206,44 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
             {errorLocal && (
               <div className="alert alert-error" style={{ marginTop: '10px' }} role="alert">
                 {errorLocal}
+              </div>
+            )}
+
+            {/* Cartel Bloqueo por Tercera Visita (HU-07 / RF-02 Criterio 1) */}
+            {resumen?.bloqueadoPorTerceraVisita && (
+              <div
+                className="cartel-bloqueo-tercera-visita"
+                data-testid="cartel-bloqueo-tercera-visita"
+                style={{
+                  marginTop: '12px',
+                  padding: '16px',
+                  background: '#fef2f2',
+                  border: '2px solid #ef4444',
+                  borderRadius: '8px',
+                  color: '#991b1b',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '22px' }}>🚫</span>
+                  <h5
+                    style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}
+                    data-testid="aviso-cobro-tercer-visita"
+                  >
+                    {resumen.avisoCobro || 'Cobro de Tercer Visita Habilitado'}
+                  </h5>
+                </div>
+                <p style={{ margin: '0 0 8px', fontSize: '13px', lineHeight: '1.4' }}>
+                  El edificio ha acumulado <strong>3 visitas fallidas consecutivas</strong>. Queda automáticamente{' '}
+                  <strong>bloqueado en el tablero</strong> de inspecciones y se encuentra habilitado para cobro técnico extraordinario
+                  con el recargo del <strong>45% extra</strong> en la liquidación mensual de cada máquina.
+                </p>
+                <span
+                  className="badge badge-danger"
+                  data-testid="badge-bloqueo-activo"
+                  style={{ background: '#b91c1c', color: '#fff', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}
+                >
+                  🔒 Edificio Bloqueado en Tablero
+                </span>
               </div>
             )}
 
@@ -355,6 +408,115 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Sección HU-07 / RF-02: Módulo de Facturación Mensual y Liquidación con Recargo del 45% */}
+        <div className="ficha-section" data-testid="seccion-facturacion-mensual">
+          <div className="section-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <h4 className="section-title">
+              Módulo de Facturación Mensual (Liquidación de Máquinas)
+            </h4>
+            {resumen?.recargoAplicable ? (
+              <span
+                className="badge"
+                data-testid="badge-recargo-45-habilitado"
+                style={{
+                  background: '#fee2e2',
+                  color: '#991b1b',
+                  border: '1px solid #ef4444',
+                  fontWeight: 'bold',
+                }}
+              >
+                ⚠️ Recargo 45% Extra Aplicado (Advertencia 3)
+              </span>
+            ) : (
+              <span className="badge badge-recorrida" data-testid="badge-tarifa-regular">
+                Tarifa Regular (Sin Recargo)
+              </span>
+            )}
+          </div>
+
+          <div className="table-responsive" style={{ marginTop: '10px' }}>
+            <table className="ficha-table" data-testid="tabla-facturacion-maquinas">
+              <thead>
+                <tr>
+                  <th>Máquina (AGC)</th>
+                  <th>Concepto Liquidación</th>
+                  <th>Abono Base</th>
+                  <th>Recargo Extra (45%)</th>
+                  <th>Total Liquidado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {maquinas.map((m) => {
+                  const abonoBase = 150000;
+                  const recargo = resumen?.recargoAplicable ? Math.round(abonoBase * 0.45) : 0;
+                  const total = abonoBase + recargo;
+
+                  return (
+                    <tr key={`fact-${m.id || m.referenciaAgc}`} data-testid={`fila-facturacion-${m.referenciaAgc}`}>
+                      <td>
+                        <span className="agc-code">{m.referenciaAgc}</span>
+                      </td>
+                      <td>
+                        Abono mensual conservación
+                        {resumen?.recargoAplicable && (
+                          <div style={{ color: '#b91c1c', fontSize: '12px', fontWeight: 600 }}>
+                            + Cobro de Tercer Visita Habilitado
+                          </div>
+                        )}
+                      </td>
+                      <td>${abonoBase.toLocaleString('es-AR')}</td>
+                      <td>
+                        {resumen?.recargoAplicable ? (
+                          <span
+                            style={{ color: '#dc2626', fontWeight: 'bold' }}
+                            data-testid={`recargo-valor-${m.referenciaAgc}`}
+                          >
+                            +${recargo.toLocaleString('es-AR')} (45%)
+                          </span>
+                        ) : (
+                          <span className="text-muted">$0 (0%)</span>
+                        )}
+                      </td>
+                      <td>
+                        <strong data-testid={`total-maquina-${m.referenciaAgc}`}>
+                          ${total.toLocaleString('es-AR')}
+                        </strong>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr style={{ background: 'var(--surface-sunken, #f8fafc)', fontWeight: 'bold' }}>
+                  <td colSpan={2}>Total Consolidado ({maquinas.length} máquinas):</td>
+                  <td>${(maquinas.length * 150000).toLocaleString('es-AR')}</td>
+                  <td>
+                    {resumen?.recargoAplicable ? (
+                      <span style={{ color: '#dc2626' }}>
+                        +${Math.round(maquinas.length * 150000 * 0.45).toLocaleString('es-AR')}
+                      </span>
+                    ) : (
+                      '$0'
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      color: resumen?.recargoAplicable ? '#b91c1c' : '#1e293b',
+                      fontSize: '15px',
+                    }}
+                    data-testid="total-liquidacion-consorcio"
+                  >
+                    ${(
+                      maquinas.length *
+                      (150000 + (resumen?.recargoAplicable ? Math.round(150000 * 0.45) : 0))
+                    ).toLocaleString('es-AR')}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
         {/* Metadatos */}

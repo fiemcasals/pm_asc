@@ -135,11 +135,71 @@ export interface VisitaFallidaRegistro {
 
 export interface ResumenAdvertenciasConsorcio {
   consorcioId: string;
+  consorcioNombre?: string;
   totalAdvertencias: number;
   ultimaAdvertencia: 1 | 2 | 3 | null;
   bloqueadoPorTerceraVisita: boolean;
   recargoAplicable: boolean;
+  avisoCobro?: string | null;
   historial: VisitaFallidaRegistro[];
+}
+
+export interface BloqueoConsorcioInfo {
+  consorcioId: string;
+  consorcioNombre: string;
+  bloqueado: boolean;
+  avisoCobro: string | null;
+  totalAdvertencias: number;
+  recargoAplicable: boolean;
+  porcentajeRecargo: number;
+  motivoBloqueo: string | null;
+}
+
+export interface LiquidacionMaquinaInput {
+  consorcioId: string;
+  maquinaId?: string;
+  referenciaAgc?: string;
+  periodo?: string;
+  montoBase?: number;
+}
+
+export interface DetalleConceptoLiquidacion {
+  concepto: string;
+  monto: number;
+}
+
+export interface LiquidacionMaquinaResultado {
+  id: string;
+  consorcioId: string;
+  consorcioNombre: string;
+  maquinaId: string;
+  referenciaAgc: string;
+  periodo: string;
+  montoBase: number;
+  totalAdvertencias: number;
+  bloqueadoPorTerceraVisita: boolean;
+  recargoAplicado: boolean;
+  porcentajeRecargo: number;
+  montoRecargo: number;
+  montoTotal: number;
+  avisoCobro: string | null;
+  detalleConceptos: DetalleConceptoLiquidacion[];
+  fechaLiquidacion: string;
+}
+
+export interface LiquidacionConsorcioResultado {
+  consorcioId: string;
+  consorcioNombre: string;
+  periodo: string;
+  totalMaquinas: number;
+  totalAdvertencias: number;
+  bloqueadoPorTerceraVisita: boolean;
+  avisoCobro: string | null;
+  subtotalBase: number;
+  totalRecargos: number;
+  totalGeneral: number;
+  liquidacionesMaquinas: LiquidacionMaquinaResultado[];
+  fechaLiquidacion: string;
 }
 
 export async function registrarVisitaFallida(
@@ -175,6 +235,62 @@ export async function fetchAdvertenciasConsorcio(
       return { ok: false, error: `Error ${res.status}: no se pudo obtener advertencias` };
     }
     const data = (await res.json()) as ResumenAdvertenciasConsorcio;
+    return { ok: true, data };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function fetchBloqueoConsorcio(
+  consorcioId: string,
+): Promise<FetchResult<BloqueoConsorcioInfo>> {
+  try {
+    const res = await fetch(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}/bloqueo`);
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo consultar bloqueo` };
+    }
+    const data = (await res.json()) as BloqueoConsorcioInfo;
+    return { ok: true, data };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function liquidarMaquina(
+  input: LiquidacionMaquinaInput,
+): Promise<FetchResult<LiquidacionMaquinaResultado>> {
+  try {
+    const res = await fetch('/api/visitas-fallidas/liquidar-maquina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      return { ok: false, error: json.message || 'Error al liquidar máquina' };
+    }
+    return { ok: true, data: json as LiquidacionMaquinaResultado };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function fetchLiquidacionConsorcio(
+  consorcioId: string,
+  periodo?: string,
+  montoBase?: number,
+): Promise<FetchResult<LiquidacionConsorcioResultado>> {
+  try {
+    const params = new URLSearchParams();
+    if (periodo) params.set('periodo', periodo);
+    if (montoBase) params.set('montoBase', montoBase.toString());
+    const qs = params.toString() ? `?${params.toString()}` : '';
+
+    const res = await fetch(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}/liquidacion${qs}`);
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo obtener liquidación` };
+    }
+    const data = (await res.json()) as LiquidacionConsorcioResultado;
     return { ok: true, data };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T12:34:35.273Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T12:34:41.218Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -67,7 +67,7 @@ PR #4 abierto en GitHub contra dev. Componentes PortalFirmante, ModalAuditoria, 
 - Estimado: 4h
 
 ### RF-01 — API de Cobertura de Flota por Empresa Conservadora
-Iniciando desarrollo de API de Cobertura de Flota por ECA (GET /api/eca/cobertura y GET /api/eca/maquinas)
+PR #5 abierto contra dev. Implementados GET /api/eca/cobertura y GET /api/eca/maquinas con 11 tests unitarios y e2e en verde.
 - Estimado: 3h
 
 ### RF-02 — Integración Visual del Semáforo en Mapa y Reasignación Rápida

@@ -84,7 +84,7 @@ bash docs/pruebas/hu-02-hu-02-asignacion-de-roles-trip/RF-01-entrega.sh --carga 
 Resultado medido el 06/11/2026 contra `https://localhost:8050`:
 
 - Recorrido: 8 verificaciones OK, 0 fallidas.
-- Carga de 200 recorridos (`POST` + `PUT` roles + `GET` roles + `DELETE`): 0 fallidas, promedio 505 ms, p95 543 ms, la más lenta 637 ms. Cada tiempo incluye el arranque de `curl` y `node` del script, no sólo la API.
+- Carga de 200 recorridos (`POST` + `PUT` roles + `GET` roles + `DELETE`): 0 fallidas, promedio 537 ms, p95 653 ms, la más lenta 706 ms. Cada tiempo incluye el arranque de `curl` y `node` del script, no sólo la API.
 - Al terminar, `consorcios` y `roles_edificio` quedaron con 0 filas.
 
 | Suite | Resultado |

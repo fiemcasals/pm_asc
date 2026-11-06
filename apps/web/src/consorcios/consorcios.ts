@@ -92,3 +92,92 @@ export async function crearConsorcio(input: ConsorcioInput): Promise<FetchResult
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
   }
 }
+
+export interface CoordenadasGPS {
+  latitud: number;
+  longitud: number;
+  precision?: number;
+  timestamp?: string;
+}
+
+export interface ReporteVisitaFallidaInput {
+  consorcioId: string;
+  motivo?: string;
+  fotoFrenteUrl: string;
+  gps: CoordenadasGPS;
+  inspector?: string;
+  emailAdministracion?: string;
+}
+
+export interface EmailNotificacionConsorcio {
+  id: string;
+  destinatario: string;
+  remitente: string;
+  asunto: string;
+  cuerpo: string;
+  fechaEnvio: string;
+  estado: 'enviado';
+}
+
+export interface VisitaFallidaRegistro {
+  id: string;
+  consorcioId: string;
+  consorcioNombre: string;
+  direccion: string;
+  numeroAdvertencia: 1 | 2 | 3;
+  motivo: string;
+  fotoFrenteUrl: string;
+  gps: CoordenadasGPS;
+  inspector: string;
+  fechaHora: string;
+  emailNotificacion?: EmailNotificacionConsorcio | null;
+}
+
+export interface ResumenAdvertenciasConsorcio {
+  consorcioId: string;
+  totalAdvertencias: number;
+  ultimaAdvertencia: 1 | 2 | 3 | null;
+  bloqueadoPorTerceraVisita: boolean;
+  recargoAplicable: boolean;
+  historial: VisitaFallidaRegistro[];
+}
+
+export async function registrarVisitaFallida(
+  input: ReporteVisitaFallidaInput,
+): Promise<FetchResult<VisitaFallidaRegistro>> {
+  try {
+    const res = await fetch('/api/visitas-fallidas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: json.message || 'Error al registrar visita fallida',
+      };
+    }
+
+    return { ok: true, data: json as VisitaFallidaRegistro };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function fetchAdvertenciasConsorcio(
+  consorcioId: string,
+): Promise<FetchResult<ResumenAdvertenciasConsorcio>> {
+  try {
+    const res = await fetch(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}`);
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo obtener advertencias` };
+    }
+    const data = (await res.json()) as ResumenAdvertenciasConsorcio;
+    return { ok: true, data };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+

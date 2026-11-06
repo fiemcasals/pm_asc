@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T21:31:10.284Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T21:33:55.243Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -51,7 +51,7 @@ PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica,
 - Estimado: 4h
 
 ### RF-01 — API de Asignación Tripartita de Roles por Edificio
-PR #16 contra dev. Agrega PUT y GET /api/consorcios/:id/roles y la tabla roles_edificio. npm run verify: API 144/144, web 49/49. Integración con --runInBand: 21/21. Script: 8/8; --carga 200: 0 fallidas, p95 543 ms. Mínimo necesario fuera de lo pedido: se exportaron los helpers de consorcio.validation.ts para reutilizarlos. Asumido: la ECA devuelve porcentaje null, y cada responsable necesita al menos un contacto. Sin cubrir aquí: FirmanteService sigue con datos fijos y no lee esta tabla.
+PR #16 contra dev. Agrega PUT y GET /api/consorcios/:id/roles y la tabla roles_edificio. npm run verify: API 144/144, web 49/49. Integración con --runInBand: 21/21. Script: 8/8; --carga 200: 0 fallidas, p95 653 ms. Mínimo necesario fuera de lo pedido: se exportaron los helpers de consorcio.validation.ts para reutilizarlos. Asumido: la ECA devuelve porcentaje null, y cada responsable necesita al menos un contacto. Sin cubrir aquí: FirmanteService sigue con datos fijos y no lee esta tabla.
 - Estimado: 3h
 
 ### RNF-01 — Rechazar con 400 los textos que la base no puede guardar (carácter NUL)

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T11:34:11.915Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T11:34:27.131Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -52,6 +52,7 @@ Monorepo listo: web React+Vite PWA (HTTPS https://localhost:8050 con mkcert, ser
 - Estimado: 4h
 
 ### RF-01 — API de Máquinas Asignadas y Autorización de Firma AGC
+Inicio de desarrollo: API de Máquinas Asignadas y Autorización de Firma AGC (endpoints GET /api/firmante/maquinas y POST /api/firmante/autorizar).
 - Estimado: 4h
 
 ### RF-02 — UI Mapa de Flota interactivo CABA y Despacho de Emergencia

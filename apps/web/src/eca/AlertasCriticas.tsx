@@ -1,11 +1,18 @@
-import React from 'react';
-import { type MaquinaEca } from './eca';
+import React, { useState } from 'react';
+import { descargarRemitoTecnico, type MaquinaEca, type RemitoTecnico } from './eca';
 
 interface AlertasCriticasProps {
   maquinas: MaquinaEca[];
+  onAcuseRegistrado?: (alertaId: string, fechaHora: string, usuario: string) => void;
 }
 
-export function AlertasCriticas({ maquinas }: AlertasCriticasProps) {
+export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticasProps) {
+  const [descargandoId, setDescargandoId] = useState<string | null>(null);
+  const [acusesLocales, setAcusesLocales] = useState<
+    Record<string, { fechaHora: string; usuario: string }>
+  >({});
+  const [mensajeDescarga, setMensajeDescarga] = useState<string | null>(null);
+
   // Filtrar máquinas que tengan alertas críticas o estados Fuera de Servicio / Reparación Urgente
   const maquinasConAlerta = maquinas.filter(
     (m) =>
@@ -30,6 +37,60 @@ export function AlertasCriticas({ maquinas }: AlertasCriticasProps) {
       m.alertaCritica?.tipo === 'REPARACION_URGENTE',
   );
 
+  const handleDescargarRemito = async (m: MaquinaEca) => {
+    const alertaId = m.alertaCritica?.id || `ALT-${m.id}`;
+    setDescargandoId(alertaId);
+    setMensajeDescarga(null);
+
+    try {
+      const usuario = m.eca.toLowerCase().includes('maicon')
+        ? 'operador.legal@maicon.com.ar'
+        : 'responsable.tecnico@eca.com.ar';
+
+      const res = await descargarRemitoTecnico(alertaId, usuario);
+
+      if (res.ok && res.data) {
+        const remito = res.data;
+        const fechaHora = remito.acuseLegal.fechaHora;
+        const acuseUser = remito.acuseLegal.usuario;
+
+        setAcusesLocales((prev) => ({
+          ...prev,
+          [alertaId]: { fechaHora, usuario: acuseUser },
+        }));
+
+        if (onAcuseRegistrado) {
+          onAcuseRegistrado(alertaId, fechaHora, acuseUser);
+        }
+
+        // Crear descarga de archivo en el navegador
+        const blob = new Blob([JSON.stringify(remito, null, 2)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Remito-Tecnico-${m.codigoAGC}-${alertaId}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        setMensajeDescarga(
+          `Remito de notificación descargado. Acuse legal registrado para ${m.eca} a las ${new Date(fechaHora).toLocaleTimeString('es-AR')}.`,
+        );
+      } else {
+        setMensajeDescarga(res.error || 'No se pudo descargar el remito de notificación');
+      }
+    } catch (err) {
+      setMensajeDescarga(
+        err instanceof Error ? err.message : 'Error al procesar la descarga del remito',
+      );
+    } finally {
+      setDescargandoId(null);
+    }
+  };
+
   return (
     <div
       className="alertas-criticas-wrapper"
@@ -43,9 +104,17 @@ export function AlertasCriticas({ maquinas }: AlertasCriticasProps) {
         </h3>
       </div>
 
+      {mensajeDescarga && (
+        <div className="alerta-notificacion-descarga" role="status" data-testid="mensaje-descarga-remito">
+          ✓ {mensajeDescarga}
+        </div>
+      )}
+
       {/* Criterio 1: Alerta titilante roja de Fuera de Servicio con motivo y foto de cabina trabada */}
       {alertasFueraDeServicio.map((m) => {
         const alerta = m.alertaCritica;
+        const alertaId = alerta?.id || `ALT-${m.id}`;
+        const acuse = acusesLocales[alertaId] || alerta?.acuseRecibo;
         const motivo =
           alerta?.motivo ||
           'Cabina trabada mecánicamente en hueco con acuñamiento forzado. Equipo desenergizado.';
@@ -83,6 +152,35 @@ export function AlertasCriticas({ maquinas }: AlertasCriticasProps) {
                     🕒 Detección: {new Date(alerta.fechaDeteccion).toLocaleString('es-AR')}
                   </div>
                 )}
+
+                {/* Botón de descarga de remito y registro de acuse legal */}
+                <div className="alerta-acciones-container">
+                  <button
+                    className="btn-descargar-remito btn-remito-rojo"
+                    data-testid={`btn-descargar-remito-${m.id}`}
+                    onClick={() => handleDescargarRemito(m)}
+                    disabled={descargandoId === alertaId}
+                  >
+                    📥 Descargar Remito de Notificación
+                  </button>
+
+                  {acuse && (
+                    <div
+                      className="acuse-recibo-legal-box"
+                      data-testid={`acuse-recibo-${m.id}`}
+                    >
+                      <span className="acuse-recibo-icono">⚖️</span>
+                      <div>
+                        <strong>Acuse de Recibo Legal Registrado:</strong>
+                        <div className="acuse-meta-texto">
+                          Fecha y Hora:{' '}
+                          {new Date(acuse.fechaHora).toLocaleString('es-AR')} | Usuario:{' '}
+                          {acuse.usuario} ({m.eca})
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Fotografía de la cabina trabada */}
@@ -108,6 +206,8 @@ export function AlertasCriticas({ maquinas }: AlertasCriticasProps) {
       {/* Criterio 2: Cartel naranja gigante de Reparación Urgente con detalle del checklist */}
       {alertasReparacionUrgente.map((m) => {
         const alerta = m.alertaCritica;
+        const alertaId = alerta?.id || `ALT-${m.id}`;
+        const acuse = acusesLocales[alertaId] || alerta?.acuseRecibo;
         const motivo =
           alerta?.motivo ||
           'Anomalías graves detectadas operando: Freno con deslizamiento crítico y riesgo operacional.';
@@ -203,6 +303,34 @@ export function AlertasCriticas({ maquinas }: AlertasCriticasProps) {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Botón de descarga de remito y registro de acuse legal para reparación urgente */}
+            <div className="alerta-acciones-container">
+              <button
+                className="btn-descargar-remito btn-remito-naranja"
+                data-testid={`btn-descargar-remito-${m.id}`}
+                onClick={() => handleDescargarRemito(m)}
+                disabled={descargandoId === alertaId}
+              >
+                📥 Descargar Remito de Notificación
+              </button>
+
+              {acuse && (
+                <div
+                  className="acuse-recibo-legal-box"
+                  data-testid={`acuse-recibo-${m.id}`}
+                >
+                  <span className="acuse-recibo-icono">⚖️</span>
+                  <div>
+                    <strong>Acuse de Recibo Legal Registrado:</strong>
+                    <div className="acuse-meta-texto">
+                      Fecha y Hora: {new Date(acuse.fechaHora).toLocaleString('es-AR')} | Usuario:{' '}
+                      {acuse.usuario} ({m.eca})
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );

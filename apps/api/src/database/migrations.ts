@@ -41,4 +41,24 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX maquinas_consorcio_idx ON maquinas (consorcio_id);
     `,
   },
+  {
+    id: '002_acuses_recibo_legal',
+    sql: `
+      -- Registro formal y vinculante del acuse de recibo legal de remitos técnicos por parte de la ECA
+      CREATE TABLE acuses_recibo_legal (
+        id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        alerta_id       text NOT NULL,
+        maquina_id      text NOT NULL,
+        eca             text NOT NULL,
+        usuario         text NOT NULL,
+        fecha_hora      timestamptz NOT NULL DEFAULT now(),
+        tipo_alerta     text NOT NULL,
+        remito_url      text,
+        created_at      timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX acuses_recibo_alerta_idx ON acuses_recibo_legal (alerta_id);
+      CREATE INDEX acuses_recibo_eca_idx ON acuses_recibo_legal (eca);
+    `,
+  },
 ];

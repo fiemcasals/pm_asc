@@ -5,6 +5,7 @@ import { AlertasCriticas } from './AlertasCriticas';
 import {
   AlertasEcaResponse,
   CoberturaEca,
+  descargarRemitoTecnico,
   fetchAlertasEca,
   fetchCoberturaEca,
   fetchMaquinasEca,
@@ -299,6 +300,83 @@ describe('eca module', () => {
       );
 
       expect(html).toBe('');
+    });
+
+    it('RF-02 Criterio 1: El portal provee boton para Descargar Remito de Notificacion con el informe y fotos de la falla', () => {
+      const html = renderToString(
+        React.createElement(AlertasCriticas, {
+          maquinas: [maquinaFueraDeServicio, maquinaReparacionUrgente],
+        }),
+      );
+
+      expect(html).toContain('data-testid="btn-descargar-remito-MAQ-FDS-1"');
+      expect(html).toContain('data-testid="btn-descargar-remito-MAQ-URG-1"');
+      expect(html).toContain('Descargar Remito de Notificación');
+    });
+
+    it('RF-02 Criterio 2: Al descargarse el remito, el sistema registra y exhibe automaticamente la fecha, hora y usuario para el acuse legal de MAICON S.R.L.', () => {
+      const maquinaConAcuse: MaquinaEca = {
+        ...maquinaReparacionUrgente,
+        alertaCritica: {
+          ...maquinaReparacionUrgente.alertaCritica!,
+          acuseRecibo: {
+            fechaHora: '2026-11-06T10:15:00.000Z',
+            usuario: 'operador.legal@maicon.com.ar',
+          },
+        },
+      };
+
+      const html = renderToString(
+        React.createElement(AlertasCriticas, {
+          maquinas: [maquinaConAcuse],
+        }),
+      );
+
+      expect(html).toContain('data-testid="acuse-recibo-MAQ-URG-1"');
+      expect(html).toContain('Acuse de Recibo Legal Registrado');
+      expect(html).toContain('operador.legal@maicon.com.ar');
+      expect(html).toContain('MAICON Mantenimiento');
+    });
+  });
+
+  describe('descargarRemitoTecnico API client', () => {
+    it('llama a /api/eca/remito/:alertaId y devuelve el remito con acuse legal', async () => {
+      const mockRemito = {
+        id: 'REM-ALT-1',
+        alertaId: 'ALT-1',
+        maquinaId: 'MAQ-1',
+        codigoAGC: 'M1',
+        nombreMaquina: 'M1: Ascensor Principal',
+        edificio: {
+          direccion: 'Av. Santa Fe 3200',
+          consorcio: 'Santa Fe 3200',
+          administracion: 'Palermo Admin',
+        },
+        eca: 'MAICON Mantenimiento',
+        tipoAlerta: 'REPARACION_URGENTE',
+        titulo: 'Reparación Urgente',
+        motivo: 'Freno deslizando',
+        fechaDeteccion: '2026-11-06T09:15:00Z',
+        acuseLegal: {
+          registrado: true,
+          fechaHora: '2026-11-06T10:30:00Z',
+          usuario: 'operador.legal@maicon.com.ar',
+        },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => mockRemito,
+      } as Response);
+
+      const res = await descargarRemitoTecnico(
+        'ALT-1',
+        'operador.legal@maicon.com.ar',
+      );
+      expect(res.ok).toBe(true);
+      expect(res.data?.id).toBe('REM-ALT-1');
+      expect(res.data?.acuseLegal.registrado).toBe(true);
+      expect(res.data?.acuseLegal.usuario).toBe('operador.legal@maicon.com.ar');
     });
   });
 });

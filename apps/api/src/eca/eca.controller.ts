@@ -1,14 +1,22 @@
 import {
+  Body,
   Controller,
   Get,
   Headers,
+  Param,
+  Post,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { EcaService } from './eca.service';
 import {
+  AcuseReciboDto,
+  AcuseReciboResponse,
   AlertasEcaResponse,
   CoberturaEcaResponse,
   MaquinaEca,
+  RemitoTecnicoResponse,
 } from './eca.types';
 
 @Controller('eca')
@@ -53,5 +61,37 @@ export class EcaController {
       totalAlertas: alertas.length,
       alertas,
     };
+  }
+
+  @Get('remito/:alertaId')
+  async descargarRemito(
+    @Param('alertaId') alertaId: string,
+    @Query('usuario') queryUsuario?: string,
+    @Headers('x-user-id') headerUserId?: string,
+    @Headers('x-eca-user') headerEcaUser?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<RemitoTecnicoResponse> {
+    const usuario = queryUsuario || headerEcaUser || headerUserId;
+    const remito = await this.ecaService.getRemitoTecnico(alertaId, usuario);
+
+    if (res) {
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="remito-tecnico-${alertaId}.json"`,
+      );
+    }
+
+    return remito;
+  }
+
+  @Post('alertas/:alertaId/acuse')
+  async registrarAcuse(
+    @Param('alertaId') alertaId: string,
+    @Body() dto: AcuseReciboDto = {},
+    @Headers('x-user-id') headerUserId?: string,
+    @Headers('x-eca-user') headerEcaUser?: string,
+  ): Promise<AcuseReciboResponse> {
+    const usuario = dto.usuario || headerEcaUser || headerUserId;
+    return this.ecaService.registrarAcuseRecibo(alertaId, usuario);
   }
 }

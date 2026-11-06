@@ -1670,3 +1670,83 @@ dd {
   border-radius: 4px;
   font-weight: 700;
 }
+
+/* Acciones y Acuse de Recibo Legal */
+.alerta-acciones-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.btn-descargar-remito {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-remito-rojo {
+  background: #be123c;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(190, 18, 60, 0.3);
+}
+
+.btn-remito-rojo:hover:not(:disabled) {
+  background: #9f1239;
+  transform: translateY(-1px);
+}
+
+.btn-remito-naranja {
+  background: #ea580c;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3);
+}
+
+.btn-remito-naranja:hover:not(:disabled) {
+  background: #c2410c;
+  transform: translateY(-1px);
+}
+
+.btn-descargar-remito:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.acuse-recibo-legal-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+
+.acuse-recibo-icono {
+  font-size: 1.2rem;
+}
+
+.acuse-meta-texto {
+  font-size: 0.8rem;
+  color: #15803d;
+}
+
+.alerta-notificacion-descarga {
+  background: #ecfdf5;
+  border-left: 4px solid #10b981;
+  color: #065f46;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}

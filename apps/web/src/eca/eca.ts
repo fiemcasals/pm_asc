@@ -92,6 +92,56 @@ export interface AlertasEcaResponse {
   alertas: AlertaFlotaItem[];
 }
 
+export interface RemitoTecnico {
+  id: string;
+  alertaId: string;
+  maquinaId: string;
+  codigoAGC: string;
+  nombreMaquina: string;
+  edificio: {
+    direccion: string;
+    consorcio: string;
+    administracion: string;
+  };
+  eca: string;
+  tipoAlerta: TipoAlertaCritica;
+  titulo: string;
+  motivo: string;
+  fotografiaCabinaTrabada?: string | null;
+  checklist?: ChecklistItemCritico[];
+  fechaDeteccion: string;
+  acuseLegal: {
+    registrado: boolean;
+    fechaHora: string;
+    usuario: string;
+  };
+}
+
+export async function descargarRemitoTecnico(
+  alertaId: string,
+  usuario?: string,
+): Promise<FetchResult<RemitoTecnico>> {
+  try {
+    const params = new URLSearchParams();
+    if (usuario) params.set('usuario', usuario);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`/api/eca/remito/${alertaId}${query}`);
+
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo descargar el remito técnico` };
+    }
+
+    const data = (await res.json()) as RemitoTecnico;
+    return { ok: true, data };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Error al descargar remito técnico',
+    };
+  }
+}
+
 export async function fetchAlertasEca(
   ecaName: string = 'Conservación Porteña S.R.L.',
   mes: string = '2026-11',

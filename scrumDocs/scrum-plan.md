@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-06T12:06:11.429Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-06T12:06:23.429Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -63,6 +63,7 @@ Implementada la API de Máquinas Asignadas (GET /api/firmante/maquinas) y Autori
 - Estimado: 4h
 
 ### RF-02 — UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría
+Inicio de desarrollo: UI Portal del Usuario Firmante con lista vertical de máquinas, badges de estado y modal de auditoría de fotos/firma.
 - Estimado: 4h
 
 ### RF-01 — API de Cobertura de Flota por Empresa Conservadora

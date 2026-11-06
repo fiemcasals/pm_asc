@@ -64,3 +64,12 @@ bash docs/pruebas/hu-01-hu-01-gestion-y-alta-de-eca-y/RF-02-entrega.sh
 
 - **TEST-1791910394895-0**: *La pestaña de administracion muestra el formulario de alta de consorcios con campos de direccion, administracion y grilla dinamica de maquinas AGC (M1, M2).*
 - **TEST-1791910394900-2**: *El listado permite seleccionar cualquier consorcio y visualizar su ficha tecnica completa y maquinas asociadas.*
+
+## 4. Evidencia Visual de Pruebas en el Navegador
+
+![Secretaría - Alta de Consorcio y Ficha Técnica AGC](imagenes/RF-02-secretaria-alta-consorcio.png)
+
+- **Inspección en vivo**: Prueba realizada sobre formulario de alta de consorcio `+ Alta de Nuevo Consorcio`.
+- **Validación**: Carga de dirección literal CABA (`Av. Callao 1540, Recoleta, CABA`), administración (`Administración Ramos & Asociados SRL`) y grilla de máquinas AGC (`M1: Ascensor Principal Hidráulico`).
+- **Resultado comprobable**: Inserción exitosa en PostgreSQL/PostGIS, actualización inmediata del listado Master-Detail y renderizado de la Ficha Técnica Oficial del edificio.
+

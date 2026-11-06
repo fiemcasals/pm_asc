@@ -82,3 +82,11 @@ El script no deja datos. Para la condición 3 levanta una API en modo producció
 - **Producción no está resuelta acá.** Falta definir cómo se sirven la web y la API (dominio, certificado, proxy). Es una tarea operacional aparte.
 - **No hay ORM ni migraciones todavía.** La API usa `pg` directamente para el health check. Elegir y configurar las migraciones corresponde a la primera tarea con modelo de datos (HU-01, "API y Modelo de Datos de Consorcios y Máquinas").
 - **Regresión:** RO-01 no pertenece a ningún módulo y no hay otras tareas integradas en `dev`, así que no hay batería de integración previa para correr.
+
+## 6. Evidencia Visual de Pruebas en el Navegador
+
+![Estado del Sistema y Base PostGIS](imagenes/RF-01-estado-sistema-postgis.png)
+
+- **Inspección en vivo**: Prueba automatizada en Google Chrome (`https://localhost:8050/`) verificando la pestaña `Estado del Sistema`.
+- **Validación**: Conexión activa a API NestJS (`En línea`), Service Worker PWA (`Registrado`) y base PostgreSQL 16 con PostGIS (`En línea (PostGIS 3.4.3)`).
+

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
 import { PortalFirmante } from './firmante/PortalFirmante';
 import { fetchHealth, type HealthState } from './health';
 
 type SwState = 'verificando' | 'registrado' | 'no-soportado' | 'no-registrado';
-type Vista = 'firmante' | 'eca' | 'sistema';
+type Vista = 'firmante' | 'eca' | 'secretaria' | 'sistema';
 
 function useServiceWorkerState(): SwState {
   const [state, setState] = useState<SwState>('verificando');
@@ -69,6 +70,13 @@ export function App() {
             Portal ECA (Conservadoras)
           </button>
           <button
+            className={`tab-btn ${vista === 'secretaria' ? 'active' : ''}`}
+            onClick={() => setVista('secretaria')}
+            data-testid="tab-secretaria"
+          >
+            Secretaría (Edificios y Máquinas)
+          </button>
+          <button
             className={`tab-btn ${vista === 'sistema' ? 'active' : ''}`}
             onClick={() => setVista('sistema')}
             data-testid="tab-sistema"
@@ -80,6 +88,7 @@ export function App() {
 
       {vista === 'firmante' && <PortalFirmante />}
       {vista === 'eca' && <PortalEca />}
+      {vista === 'secretaria' && <SecretariaView />}
       {vista === 'sistema' && (
         <section className="card" aria-labelledby="estado-titulo">
           <h2 id="estado-titulo">Estado del sistema</h2>

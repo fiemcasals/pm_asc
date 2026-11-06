@@ -64,7 +64,7 @@ Con la web levantada la URL por defecto es `https://localhost:8050`; sin ella, `
 
 **Lo que el script no puede ver** (se hace a mano, y se hizo):
 
-- **Condición 3, el log:** en la terminal donde corre la API, cada rechazo deja una línea `WARN [TextoInvalidoFilter] … (SQLSTATE 22021)`. Tras la corrida de 200 hubo 202 líneas: 2 del recorrido normal y 200 de la carga.
+- **Condición 3, el log:** en la terminal donde corre la API, cada rechazo deja una línea `WARN [TextoInvalidoFilter] … (SQLSTATE 22021)`. Tras el recorrido normal y la corrida de 200 hubo 203 líneas: 3 del recorrido (el `POST` de la condición 1, el `PUT` de la 2 y el `POST` de la verificación 3) y 200 de la carga. Con la base caída, en cambio, el log registró 2 líneas `ERROR [ExceptionsHandler]` (`ECONNREFUSED`) y ninguna del filtro, como corresponde.
 - **Condición 4, con la base caída de verdad:**
   ```bash
   docker stop mant-asc-db

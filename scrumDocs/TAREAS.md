@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-07T00:43:30.438Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-07T00:49:18.574Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -253,17 +253,6 @@ Configurar el webhook/trigger que detecta informes con Reparación Urgente o Fue
 
 1. Al consolidarse un informe critico, el disparo hacia WhatsApp se ejecuta en menos de 5 segundos comprobables.
 2. El mensaje incluye un enlace directo y funcional a las fotos y al informe tecnico firmado para visualizacion inmediata en el celular.
-
-## HU-12: Definiciones del Cliente
-
-### RF-01: Redactar preguntas para el cliente (Funcional)
-
-Redactar el cuestionario de definiciones pendientes para MAICON S.R.L. (P1 a P13), agrupado en cinco temas y con una propuesta del equipo por pregunta. Se entregó en PDF. No incluye registrar las respuestas del cliente.
-
-**Condiciones de aprobación**
-
-1. Existe un cuestionario con las preguntas P1 a P13, agrupadas en cinco temas y con la propuesta del equipo en cada pregunta.
-2. El cuestionario fue enviado a MAICON S.R.L.
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

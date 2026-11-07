@@ -1794,3 +1794,56 @@ dd {
   font-weight: bold;
   color: #16a34a;
 }
+
+/* Asignación de Roles de Trabajo */
+.roles-item-row {
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+}
+
+.roles-item-row .consorcio-item-info {
+  width: 100%;
+}
+
+.roles-item-row .badge {
+  white-space: nowrap;
+}
+
+.roles-layout {
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+.roles-layout .fieldset-section,
+.roles-layout .form-field {
+  min-width: 0;
+}
+
+.roles-layout .form-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+@media (max-width: 800px) {
+  .roles-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.roles-item-row:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.roles-item-terna {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.roles-campos {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}

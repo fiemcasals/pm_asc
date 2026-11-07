@@ -62,13 +62,14 @@ El script recorre las llamadas de la pantalla. Lo visual se comprueba con la [gu
 Resultado medido el 06/11/2026 contra `https://localhost:8050`:
 
 - Recorrido: 10 verificaciones OK, 0 fallidas.
-- Carga de 200 recorridos (2 `POST`, 2 `GET` roles, 2 `PUT` roles y 2 `DELETE`): 0 fallidas, promedio 982 ms, p95 1088 ms, la más lenta 1739 ms. Cada tiempo incluye el arranque de `curl` y `node` del script.
+- Carga de 200 recorridos (2 `POST`, 2 `GET` roles, 2 `PUT` roles y 2 `DELETE`): 0 fallidas, promedio 1103 ms, p95 1225 ms, la más lenta 1750 ms. Cada tiempo incluye el arranque de `curl` y `node` del script.
 - Al terminar, `GET /api/consorcios` devolvió una lista vacía.
 - Recorrido en Chrome con Playwright, ventana de 1366 × 900: selectores, error de validación, guardado, actualización sin recargar, reutilización de una persona, cambio de responsable tras recargar y pestaña `Edificios y Máquinas`, sin errores de consola más allá del `400` provocado a propósito.
+- Fallas forzadas en Chrome, interceptando las respuestas de la API: 18 comprobaciones OK. Cubren la lectura fallida de un edificio y de la lista, el guardado lento y con error, y la salida con cambios sin guardar.
 
 | Suite | Resultado |
 |---|---|
-| `npm run verify` | Tipos OK · API 144/144 · web 60/60 (11 nuevos) |
+| `npm run verify` | Tipos OK · API 144/144 · web 64/64 (15 nuevos) |
 | Integración con `--runInBand` | 21/21 |
 
 | Condición de aprobación | ¿Cubierta? | Cómo se prueba |
@@ -82,9 +83,12 @@ Resultado medido el 06/11/2026 contra `https://localhost:8050`:
 - **«En tiempo real» se interpretó como «sin recargar la página»:** quien guarda ve el cambio al instante. Otra persona con la pantalla abierta lo ve recién al volver a entrar a la pestaña.
 - **Una persona con el mismo nombre y contactos distintos** aparece una sola vez, con los datos de su asignación más reciente. Cambiar sus datos en un edificio no los cambia en los demás.
 - **Los textos «60%» y «25%» están en `ROLES_DE_TRABAJO` (`roles.ts`):** son los de la Tarea. El significado de esos porcentajes está pendiente de confirmación por MAICON.
-- **Si no se puede leer la terna de un edificio, no se muestra su formulario:** guardar uno vacío borraría la asignación. Aparece el error con `Reintentar`.
+- **Si no se puede leer la terna de un edificio, no se muestra su formulario:** guardar uno vacío borraría la asignación. La fila muestra `Sin datos`, y un aviso informa cuántos edificios fallaron, con `Reintentar`.
+- **Mientras se guarda,** la lista de edificios y los campos quedan bloqueados, para que el resultado del guardado siempre se vea.
+- **Con cambios sin guardar,** pasar a otro edificio o usar las pestañas pide confirmación. Recargar la página o cerrarla no pregunta.
+- **Dos personas editando el mismo edificio:** cada guardado reemplaza la terna completa, así que la última pisa a la anterior sin aviso. Evitarlo requiere cambiar la API y queda en una Tarea aparte.
 - **Los errores de validación se muestran como los devuelve la API** (por ejemplo, `rtCalle necesita al menos un dato de contacto (telefono o email)`), igual que en el alta de consorcios.
-- **Cantidad de consultas:** la pantalla hace un `GET` de roles por edificio al abrirse. No se midió con un padrón real de edificios.
+- **Cantidad de consultas:** la pantalla hace un `GET` de roles por edificio al abrirse. No se midió con un padrón real de edificios. Un endpoint que traiga todas las ternas juntas queda en una Tarea aparte.
 - **Pantalla angosta:** a 390 px la pestaña nueva se ordena en una columna, pero la página tiene 96 px de scroll horizontal. Lo causa la barra principal de `App.tsx`, que se comporta igual en `Portal Firmante (RT Legal)`. No se tocó porque es de otra pantalla y no hay Tarea que lo cubra.
 - **Fuera de alcance:** el criterio 2 de la Historia (actualizar la vista de ruteo y firma) sigue pendiente: `FirmanteService` no lee estas ternas.
 - **Sin autenticación:** igual que el resto de `/api/consorcios`.

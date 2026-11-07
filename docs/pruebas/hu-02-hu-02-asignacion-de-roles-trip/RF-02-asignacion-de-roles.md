@@ -71,3 +71,4 @@ Apretá otro edificio. En `RT Calle (60%)`, abrí el selector `Responsable` y el
 
 1. **Modificar:** en un edificio asignado, cambiá el `Nombre *` de `ECA Responsable`, apretá `Guardar` y recargá la página. El nombre nuevo sigue en la fila del edificio.
 2. **Error:** dejá un responsable sin `Teléfono` ni `Email` y apretá `Guardar`. Aparece `Por favor corrija los siguientes errores:` y la terna anterior no cambia.
+3. **Cambios sin guardar:** cambiá un dato sin apretar `Guardar` y apretá otro edificio. Aparece `Hay cambios sin guardar. ¿Salir y descartarlos?`. Con `Cancelar` seguís en el mismo edificio y conservás lo escrito.

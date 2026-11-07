@@ -7,6 +7,9 @@ import {
   fetchRoles,
   formularioDesdeRoles,
   guardarRoles,
+  marcarCambiosSinGuardar,
+  mismoNombre,
+  puedeSalir,
   ternaAsignada,
 } from './roles';
 
@@ -62,6 +65,41 @@ describe('roles de trabajo', () => {
       expect(ternaAsignada(conTerna)).toBe(true);
       expect(ternaAsignada(sinTerna)).toBe(false);
       expect(ternaAsignada(undefined)).toBe(false);
+    });
+  });
+
+  describe('mismoNombre', () => {
+    it('ignora mayúsculas y espacios de los extremos', () => {
+      expect(mismoNombre(' LAURA GÓMEZ ', 'Laura Gómez')).toBe(true);
+      expect(mismoNombre('Laura Gómez', 'Laura Gomez')).toBe(false);
+    });
+  });
+
+  describe('puedeSalir', () => {
+    it('no pregunta si no hay cambios', () => {
+      const confirm = vi.fn();
+      vi.stubGlobal('window', { confirm });
+      marcarCambiosSinGuardar(false);
+      expect(puedeSalir()).toBe(true);
+      expect(confirm).not.toHaveBeenCalled();
+    });
+
+    it('frena la salida si se rechaza y mantiene el aviso', () => {
+      const confirm = vi.fn().mockReturnValue(false);
+      vi.stubGlobal('window', { confirm });
+      marcarCambiosSinGuardar(true);
+      expect(puedeSalir()).toBe(false);
+      expect(puedeSalir()).toBe(false);
+      expect(confirm).toHaveBeenCalledTimes(2);
+    });
+
+    it('permite salir si se confirma y no vuelve a preguntar', () => {
+      const confirm = vi.fn().mockReturnValue(true);
+      vi.stubGlobal('window', { confirm });
+      marcarCambiosSinGuardar(true);
+      expect(puedeSalir()).toBe(true);
+      expect(puedeSalir()).toBe(true);
+      expect(confirm).toHaveBeenCalledTimes(1);
     });
   });
 

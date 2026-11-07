@@ -159,9 +159,17 @@ valor="$(json "$TMP/g.json" 'b.rtCalle')"
 [ "$code" = "200" ] && [ "$valor" = "null" ] && pass "Guardar un edificio no toca al otro" || fail "Otro edificio → HTTP $code, $valor"
 
 echo "-- Limpieza"
-borrar "$UNO"; UNO=""
-borrar "$DOS"; DOS=""
-pass "Consorcios de prueba borrados"
+borrar "$UNO"
+borrar "$DOS"
+a="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/consorcios/$UNO/roles")"
+b="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/consorcios/$DOS/roles")"
+if [ "$a$b" = "404404" ]; then
+  pass "Consorcios de prueba borrados (GET → 404)"
+  UNO=""
+  DOS=""
+else
+  fail "Tras borrar, GET → HTTP $a y $b (se esperaba 404)"
+fi
 
 echo
 echo "== Resultado: $OK verificaciones OK, $FALLAS fallidas"

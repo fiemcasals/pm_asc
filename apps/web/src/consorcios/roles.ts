@@ -53,6 +53,25 @@ export function ternaAsignada(roles: RolesEdificio | undefined): boolean {
   return Boolean(roles?.rtCalle && roles.firmante && roles.eca);
 }
 
+export function mismoNombre(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+// La navegación de Secretaría y la de App desmontan el formulario, así que comparten este aviso.
+let hayCambiosSinGuardar = false;
+
+export function marcarCambiosSinGuardar(valor: boolean): void {
+  hayCambiosSinGuardar = valor;
+}
+
+/** Devuelve si se puede abandonar el formulario; si hay cambios, lo pregunta. */
+export function puedeSalir(): boolean {
+  if (!hayCambiosSinGuardar) return true;
+  const confirmado = window.confirm('Hay cambios sin guardar. ¿Salir y descartarlos?');
+  if (confirmado) hayCambiosSinGuardar = false;
+  return confirmado;
+}
+
 /**
  * Las opciones de cada selector: quienes ya ocupan ese rol en algún edificio. El sistema no tiene
  * un padrón de personas, así que sale de las ternas guardadas. Si un nombre se repite con contactos
@@ -67,7 +86,7 @@ export function directorioPorRol(roles: RolesEdificio[]): DirectorioRoles {
     for (const edificio of recientes) {
       const responsable = edificio[clave];
       if (!responsable) continue;
-      const id = responsable.nombre.toLowerCase();
+      const id = responsable.nombre.trim().toLowerCase();
       if (!porNombre.has(id)) porNombre.set(id, datosDe(responsable));
     }
     return [...porNombre.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));

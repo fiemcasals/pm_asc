@@ -8,6 +8,7 @@ import {
 } from './consorcios';
 import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
+import { puedeSalir } from './roles';
 
 function EdificiosPanel() {
   const [consorcios, setConsorcios] = useState<ConsorcioResumen[]>([]);
@@ -188,7 +189,7 @@ export function SecretariaView() {
       <nav className="nav-tabs" aria-label="Pestañas de Secretaría">
         <button
           className={`tab-btn ${pestana === 'edificios' ? 'active' : ''}`}
-          onClick={() => setPestana('edificios')}
+          onClick={() => puedeSalir() && setPestana('edificios')}
           data-testid="pestana-edificios"
         >
           Edificios y Máquinas

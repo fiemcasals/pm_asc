@@ -11,6 +11,9 @@ import {
   fetchRoles,
   formularioDesdeRoles,
   guardarRoles,
+  marcarCambiosSinGuardar,
+  mismoNombre,
+  puedeSalir,
   ternaAsignada,
 } from './roles';
 
@@ -19,13 +22,31 @@ interface FormularioTernaProps {
   roles: RolesEdificio;
   directorio: DirectorioRoles;
   onGuardado: (roles: RolesEdificio) => void;
+  onGuardandoChange: (guardando: boolean) => void;
 }
 
-function FormularioTerna({ consorcio, roles, directorio, onGuardado }: FormularioTernaProps) {
+function FormularioTerna({
+  consorcio,
+  roles,
+  directorio,
+  onGuardado,
+  onGuardandoChange,
+}: FormularioTernaProps) {
   const [formulario, setFormulario] = useState<FormularioRoles>(() => formularioDesdeRoles(roles));
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState<string[]>([]);
   const [confirmacion, setConfirmacion] = useState<string | null>(null);
+
+  const sinGuardar = JSON.stringify(formulario) !== JSON.stringify(formularioDesdeRoles(roles));
+  useEffect(() => {
+    marcarCambiosSinGuardar(sinGuardar);
+    return () => marcarCambiosSinGuardar(false);
+  }, [sinGuardar]);
+
+  const cambiarGuardando = (valor: boolean) => {
+    setGuardando(valor);
+    onGuardandoChange(valor);
+  };
 
   const actualizar = (clave: ClaveRol, cambios: Partial<DatosResponsable>) => {
     setConfirmacion(null);
@@ -41,9 +62,9 @@ function FormularioTerna({ consorcio, roles, directorio, onGuardado }: Formulari
     e.preventDefault();
     setErrores([]);
     setConfirmacion(null);
-    setGuardando(true);
+    cambiarGuardando(true);
     const res = await guardarRoles(consorcio.id, formulario);
-    setGuardando(false);
+    cambiarGuardando(false);
 
     if (res.ok && res.data) {
       setFormulario(formularioDesdeRoles(res.data));
@@ -80,10 +101,11 @@ function FormularioTerna({ consorcio, roles, directorio, onGuardado }: Formulari
         </div>
       )}
 
+      <fieldset className="roles-campos" disabled={guardando}>
       {ROLES_DE_TRABAJO.map(({ clave, etiqueta }) => {
         const datos = formulario[clave];
         const opciones = directorio[clave];
-        const enDirectorio = opciones.some((p) => p.nombre === datos.nombre);
+        const enDirectorio = opciones.find((p) => mismoNombre(p.nombre, datos.nombre));
         return (
           <fieldset key={clave} className="fieldset-section">
             <legend className="fieldset-legend">{etiqueta}</legend>
@@ -95,7 +117,7 @@ function FormularioTerna({ consorcio, roles, directorio, onGuardado }: Formulari
               <select
                 id={`selector-${clave}`}
                 className="field-input"
-                value={enDirectorio ? datos.nombre : ''}
+                value={enDirectorio?.nombre ?? ''}
                 onChange={(e) => seleccionar(clave, e.target.value)}
                 data-testid={`selector-${clave}`}
               >
@@ -152,6 +174,7 @@ function FormularioTerna({ consorcio, roles, directorio, onGuardado }: Formulari
           </fieldset>
         );
       })}
+      </fieldset>
 
       <p className="field-help">Cada responsable necesita al menos un teléfono o un email.</p>
 
@@ -169,6 +192,7 @@ export function AsignacionRoles() {
   const [roles, setRoles] = useState<Record<string, RolesEdificio>>({});
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState('');
 
@@ -199,9 +223,18 @@ export function AsignacionRoles() {
     void cargar();
   }, []);
 
+  const reintentar = () => {
+    if (puedeSalir()) void cargar();
+  };
+
+  const seleccionar = (id: string) => {
+    if (id !== seleccionadoId && puedeSalir()) setSeleccionadoId(id);
+  };
+
   const directorio = useMemo(() => directorioPorRol(Object.values(roles)), [roles]);
   const seleccionado = consorcios.find((c) => c.id === seleccionadoId) ?? null;
   const rolesSeleccionado = seleccionadoId ? roles[seleccionadoId] : undefined;
+  const sinDatos = consorcios.filter((c) => !roles[c.id]).length;
 
   const texto = filtro.toLowerCase();
   const filtrados = consorcios.filter(
@@ -222,7 +255,17 @@ export function AsignacionRoles() {
       {error && (
         <div className="alert alert-error" role="alert">
           {error}
-          <button className="btn-link" onClick={() => cargar()} style={{ marginLeft: '12px' }}>
+          <button className="btn-link" onClick={reintentar} style={{ marginLeft: '12px' }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      {!cargando && sinDatos > 0 && (
+        <div className="alert alert-warning" role="alert" data-testid="roles-sin-datos">
+          No se pudieron leer los responsables de {sinDatos}{' '}
+          {sinDatos === 1 ? 'edificio' : 'edificios'}. Los selectores pueden estar incompletos.
+          <button className="btn-link" onClick={reintentar} style={{ marginLeft: '12px' }}>
             Reintentar
           </button>
         </div>
@@ -244,6 +287,8 @@ export function AsignacionRoles() {
 
           {cargando ? (
             <div className="loading-box">Cargando edificios y responsables…</div>
+          ) : error ? (
+            <div className="empty-box">No se pudo leer la lista de edificios.</div>
           ) : filtrados.length === 0 ? (
             <div className="empty-box">
               {consorcios.length === 0
@@ -255,26 +300,32 @@ export function AsignacionRoles() {
               {filtrados.map((c) => {
                 const rolesEdificio = roles[c.id];
                 const asignado = ternaAsignada(rolesEdificio);
+                const indicador = !rolesEdificio
+                  ? { clase: 'badge-advertencia', texto: 'Sin datos' }
+                  : asignado
+                    ? { clase: 'badge-autorizada', texto: 'Asignado' }
+                    : { clase: 'badge-pendiente-de-visita', texto: 'Sin asignar' };
                 return (
                   <button
                     key={c.id}
                     type="button"
                     className={`consorcio-item-row roles-item-row ${seleccionadoId === c.id ? 'selected' : ''}`}
-                    onClick={() => setSeleccionadoId(c.id)}
+                    onClick={() => seleccionar(c.id)}
+                    disabled={guardando}
                     data-testid={`item-roles-${c.id}`}
                   >
                     <span className="consorcio-item-info">
                       <strong className="consorcio-item-nombre">{c.nombre}</strong>
-                      <span className="consorcio-item-dir">
-                        {asignado
-                          ? `${rolesEdificio?.rtCalle?.nombre} · ${rolesEdificio?.firmante?.nombre} · ${rolesEdificio?.eca?.nombre}`
-                          : c.direccion}
-                      </span>
+                      <span className="consorcio-item-dir">{c.direccion}</span>
+                      {asignado && (
+                        <span className="roles-item-terna">
+                          {rolesEdificio?.rtCalle?.nombre} · {rolesEdificio?.firmante?.nombre} ·{' '}
+                          {rolesEdificio?.eca?.nombre}
+                        </span>
+                      )}
                     </span>
                     <span className="consorcio-item-meta">
-                      <span className={`badge ${asignado ? 'badge-autorizada' : 'badge-pendiente-de-visita'}`}>
-                        {asignado ? 'Asignado' : 'Sin asignar'}
-                      </span>
+                      <span className={`badge ${indicador.clase}`}>{indicador.texto}</span>
                     </span>
                   </button>
                 );
@@ -293,16 +344,17 @@ export function AsignacionRoles() {
               roles={rolesSeleccionado}
               directorio={directorio}
               onGuardado={(nuevos) => setRoles((prev) => ({ ...prev, [nuevos.consorcioId]: nuevos }))}
+              onGuardandoChange={setGuardando}
             />
           ) : seleccionado ? (
             // Sin la terna actual no se muestra el formulario: guardarlo vacío pisaría la asignación.
             <div className="alert alert-error" role="alert">
               No se pudieron leer los responsables de este edificio.
-              <button className="btn-link" onClick={() => cargar()} style={{ marginLeft: '12px' }}>
+              <button className="btn-link" onClick={reintentar} style={{ marginLeft: '12px' }}>
                 Reintentar
               </button>
             </div>
-          ) : (
+          ) : error ? null : (
             <div className="empty-box">Seleccione un edificio para asignar su terna de trabajo.</div>
           )}
         </div>

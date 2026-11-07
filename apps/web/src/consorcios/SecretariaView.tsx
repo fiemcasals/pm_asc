@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AsignacionRoles } from './AsignacionRoles';
 import {
   Consorcio,
   ConsorcioResumen,
@@ -8,7 +9,7 @@ import {
 import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
 
-export function SecretariaView() {
+function EdificiosPanel() {
   const [consorcios, setConsorcios] = useState<ConsorcioResumen[]>([]);
   const [consorcioSeleccionado, setConsorcioSeleccionado] = useState<Consorcio | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -176,5 +177,32 @@ export function SecretariaView() {
         </div>
       </div>
     </section>
+  );
+}
+
+export function SecretariaView() {
+  const [pestana, setPestana] = useState<'edificios' | 'roles'>('edificios');
+
+  return (
+    <>
+      <nav className="nav-tabs" aria-label="Pestañas de Secretaría">
+        <button
+          className={`tab-btn ${pestana === 'edificios' ? 'active' : ''}`}
+          onClick={() => setPestana('edificios')}
+          data-testid="pestana-edificios"
+        >
+          Edificios y Máquinas
+        </button>
+        <button
+          className={`tab-btn ${pestana === 'roles' ? 'active' : ''}`}
+          onClick={() => setPestana('roles')}
+          data-testid="pestana-roles"
+        >
+          Asignación de Roles de Trabajo
+        </button>
+      </nav>
+
+      {pestana === 'edificios' ? <EdificiosPanel /> : <AsignacionRoles />}
+    </>
   );
 }

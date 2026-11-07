@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-07T00:49:20.018Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-07T00:58:34.458Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -36,6 +36,7 @@ graph TD
   subgraph US_1791560829237["HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita"]
     REQ_1791910395756["RF-01: Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio"]
     REQ_1791910395872["RF-02: Bloqueo por Advertencia 3 y Cálculo de Recargo del 45%"]
+    REQ_1794013110546["RF-03: Persistir las visitas fallidas en PostgreSQL"]
   end
   subgraph US_1791560829306["HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC"]
     REQ_1791910395959["RF-01: API de Máquinas Asignadas y Autorización de Firma AGC"]

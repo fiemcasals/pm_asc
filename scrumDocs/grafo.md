@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-06T21:58:29.936Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-07T00:43:32.023Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -53,6 +53,9 @@ graph TD
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
     REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]
     REQ_1791910396892["RF-02: Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo"]
+  end
+  subgraph US_1793890970481["HU-12: Definiciones del Cliente"]
+    REQ_1794012207412["RF-01: Redactar preguntas para el cliente"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885

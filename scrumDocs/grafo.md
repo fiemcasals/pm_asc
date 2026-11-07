@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-07T01:37:14.394Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-07T01:45:43.636Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -16,6 +16,8 @@ graph TD
   subgraph US_1791560828789["HU-02: HU-02: Asignación de Roles Tripartitos por Edificio"]
     REQ_1791910395002["RF-01: API de Asignación Tripartita de Roles por Edificio"]
     REQ_1791910395101["RF-02: UI de Secretaría: Pestaña de Asignación de Roles de Trabajo"]
+    REQ_1794015939180["RF-03: Evitar que un guardado pise una asignación más nueva"]
+    REQ_1794015939447["RNF-01: Leer todas las ternas en una sola consulta"]
   end
   subgraph US_1791560828900["HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA"]
     REQ_1791910395196["RF-01: Servicio de Telemetría GPS y Proximidad de Inspectores"]

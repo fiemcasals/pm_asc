@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-07T00:49:18.574Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-07T00:58:33.069Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -161,6 +161,16 @@ Implementar la lógica de negocio ante la 3ra advertencia consecutiva: bloqueo d
 
 1. Al acumularse la Advertencia 3, el edificio queda bloqueado en el tablero exhibiendo el aviso Cobro de Tercer Visita Habilitado.
 2. El modulo de facturacion mensual suma automaticamente el recargo del 45% extra a la liquidacion de esa maquina.
+
+### RF-03: Persistir las visitas fallidas en PostgreSQL (Funcional)
+
+Las visitas fallidas hoy viven solo en la memoria de la API: el INSERT de visitas-fallidas.service.ts usa en acuses_recibo_legal una columna inexistente (metadata), omite columnas obligatorias y oculta el error en el log de debug. Un reinicio pierde el historial y reinicia el conteo de advertencias.
+
+**Condiciones de aprobación**
+
+1. Al registrar una visita fallida, la visita queda guardada en PostgreSQL con todos sus datos.
+2. Después de reiniciar la API, el historial del consorcio conserva las visitas registradas y la siguiente visita continúa la numeración de advertencias.
+3. Si el guardado en PostgreSQL falla, la API responde con error y no informa la visita como registrada.
 
 ## HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC
 

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-07T01:24:11.204Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-07T01:24:38.016Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -64,6 +64,7 @@ Filtro global de errores (database/database-error.filter.ts, registrado en app.s
 - Estimado: 1h
 
 ### RF-02 — UI de Secretaría: Pestaña de Asignación de Roles de Trabajo
+Pestaña Asignación de Roles de Trabajo implementada en Secretaría. npm run verify: API 144/144 y web 60/60. Integración 21/21. RF-02-entrega.sh: 10 OK; carga de 200 con 0 fallidas. Tests de integración preparados para QA. No hay padrón de personas: los selectores usan las ternas guardadas más + Persona nueva. El scroll horizontal de 96 px a 390 px viene de la barra principal de App.tsx, no se tocó.
 - Estimado: 3h
 
 ### RF-01 — Servicio de Telemetría GPS y Proximidad de Inspectores

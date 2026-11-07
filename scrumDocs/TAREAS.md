@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-07T01:37:12.992Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-07T01:45:42.145Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -61,6 +61,25 @@ Desarrollar la interfaz en Pestaña 2 para que la secretaria asigne de forma ág
 
 1. La pestaña Asignacion de Roles de Trabajo presenta selectores para RT Calle (60%), Firmante AGC (25%) y ECA Responsable por cada edificio.
 2. Al modificar un responsable y presionar Guardar, la interfaz actualiza los datos en tiempo real y muestra confirmacion de guardado.
+
+### RF-03: Evitar que un guardado pise una asignación más nueva (Funcional)
+
+Hoy PUT /api/consorcios/:id/roles reemplaza la terna completa sin comprobar si cambió desde que se leyó. Si dos personas editan el mismo edificio, la última pisa a la anterior y ambas ven la confirmación. Salió de la revisión del PR #18.
+
+**Condiciones de aprobación**
+
+1. Si la terna de un edificio cambió después de leerla, PUT /api/consorcios/:id/roles responde 409 y no modifica la terna.
+2. Ante ese rechazo, la pestaña Asignación de Roles de Trabajo informa que la terna cambió y muestra la versión vigente.
+3. Si la terna no cambió, guardar funciona igual que antes.
+
+### RNF-01: Leer todas las ternas en una sola consulta (No funcional)
+
+La pestaña Asignación de Roles de Trabajo hace un GET de roles por edificio al abrirse, cada uno con su transacción, sobre un pool de 5 conexiones con 2 s de espera. Con muchos edificios pueden fallar lecturas y la lista tarda lo que tarda la respuesta más lenta. Salió de la revisión del PR #18.
+
+**Condiciones de aprobación**
+
+1. La pestaña obtiene las ternas de todos los edificios con una sola llamada a la API.
+2. Con 500 edificios cargados, abrir la pestaña no devuelve errores de lectura y se informa el tiempo medido.
 
 ## HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA
 

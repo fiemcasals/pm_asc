@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
 import { PortalFirmante } from './firmante/PortalFirmante';
@@ -42,6 +43,10 @@ export function App() {
   const [health, setHealth] = useState<HealthState | null>(null);
   const swState = useServiceWorkerState();
 
+  const irA = (destino: Vista) => {
+    if (destino === vista || puedeSalir()) setVista(destino);
+  };
+
   useEffect(() => {
     void fetchHealth().then(setHealth);
   }, []);
@@ -57,28 +62,28 @@ export function App() {
         <nav className="nav-tabs" aria-label="Secciones del sistema">
           <button
             className={`tab-btn ${vista === 'firmante' ? 'active' : ''}`}
-            onClick={() => setVista('firmante')}
+            onClick={() => irA('firmante')}
             data-testid="tab-firmante"
           >
             Portal Firmante (RT Legal)
           </button>
           <button
             className={`tab-btn ${vista === 'eca' ? 'active' : ''}`}
-            onClick={() => setVista('eca')}
+            onClick={() => irA('eca')}
             data-testid="tab-eca"
           >
             Portal ECA (Conservadoras)
           </button>
           <button
             className={`tab-btn ${vista === 'secretaria' ? 'active' : ''}`}
-            onClick={() => setVista('secretaria')}
+            onClick={() => irA('secretaria')}
             data-testid="tab-secretaria"
           >
             Secretaría (Edificios y Máquinas)
           </button>
           <button
             className={`tab-btn ${vista === 'sistema' ? 'active' : ''}`}
-            onClick={() => setVista('sistema')}
+            onClick={() => irA('sistema')}
             data-testid="tab-sistema"
           >
             Estado del Sistema

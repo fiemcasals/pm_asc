@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-08T16:20:00.324Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-08T16:36:16.074Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -282,6 +282,27 @@ Configurar el webhook/trigger que detecta informes con Reparación Urgente o Fue
 
 1. Al consolidarse un informe critico, el disparo hacia WhatsApp se ejecuta en menos de 5 segundos comprobables.
 2. El mensaje incluye un enlace directo y funcional a las fotos y al informe tecnico firmado para visualizacion inmediata en el celular.
+
+### RF-03: No informar como entregado un WhatsApp que no se envió (Funcional)
+
+Sin un proveedor configurado, WhatsAppConnectorService simula el envío y devuelve ok con estado "entregado". El Portal ECA muestra entonces "WhatsApp Despachado" con un ID, aunque ningún mensaje salió. Quien lo ve puede creer que la ECA fue avisada de una falla crítica.
+
+**Condiciones de aprobación**
+
+1. Sin proveedor de WhatsApp configurado, el envío de una alerta responde con error, informa que el envío no está configurado y no devuelve el estado "entregado".
+2. En el Portal ECA, cuando el envío no se realizó, el botón Despachar Alerta WhatsApp muestra el motivo y no muestra "WhatsApp Despachado".
+3. El disparo automático ante una alerta crítica registra el envío como no realizado cuando no hay proveedor configurado.
+
+### RF-04: Enviar las alertas por WhatsApp a través de un proveedor real (Funcional)
+
+Conectar WhatsAppConnectorService con un proveedor real (WhatsApp Cloud API de Meta o Twilio), empezando por su modo de prueba, y tomar el destino del teléfono de la ECA asignada al edificio en lugar del número fijo +5491144009988. El número remitente de producción depende de la respuesta de MAICON (P13.b).
+
+**Condiciones de aprobación**
+
+1. Con las credenciales del proveedor cargadas en variables de entorno, una alerta crítica llega como mensaje de WhatsApp a un número registrado en el modo de prueba del proveedor.
+2. El destino es el teléfono de la ECA responsable del edificio asignada en la terna de roles; sin teléfono cargado, el envío no se hace y se informa el motivo.
+3. Si el proveedor rechaza el envío, la API informa el error que devolvió el proveedor y el envío queda registrado como fallido.
+4. Las credenciales del proveedor no quedan en el repositorio.
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

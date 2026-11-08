@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-08T16:36:13.581Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-08T16:36:34.751Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -11,7 +11,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 3 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | Hacer | Sin asignar | — | — |
 | 4 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | — | — |
 | 5 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | — | — |
-| 6 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | Hacer | Sin asignar | — | — |
+| 6 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | — | — |
 | 7 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 8 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 9 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -36,6 +36,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 28 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 29 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 30 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
+| 31 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | Hacer | Sin asignar | RF-01, RF-02 | — |
 
 ## Detalle
 
@@ -56,7 +57,7 @@ PR contra dev. maxWorkers: 1 en jest.int.config.js: la suite de integración cor
 ### RNF-01 — Leer todas las ternas en una sola consulta
 - Estimado: 0h
 
-### RF-03 — No informar como entregado un WhatsApp que no se envió
+### RF-04 — Enviar las alertas por WhatsApp a través de un proveedor real
 - Estimado: 0h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
@@ -170,3 +171,6 @@ Disparo automático inmediato y visualización directa implementados:
 3. Endpoints POST /api/whatsapp/trigger-alerta-critica y GET /api/eca/remito/:alertaId/informe agregados y verificados.
 4. Pruebas: 131 tests en verde (88 Jest en API + 43 Vitest en Web). Los 2 tests de desarrollo fueron aprobados con evidencia; los 2 de integración quedaron preparados para QA. PR: https://github.com/fiemcasals/pm_asc/pull/11
 - Estimado: 3h
+
+### RF-03 — No informar como entregado un WhatsApp que no se envió
+- Estimado: 0h

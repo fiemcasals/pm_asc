@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-09T21:51:29.581Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-09T21:51:35.500Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -106,6 +106,7 @@ PR #6 abierto contra dev. Implementados MedidorCobertura, PortalEca (modo solo l
 - Estimado: 4h
 
 ### RF-01 — Recepción de Falla Crítica y Alerta Emergente en Secretaría
+Inicio de desarrollo del requerimiento
 - Estimado: 4h
 
 ### RF-02 — UI Tablero Dinámico de Monitoreo General (Backoffice)

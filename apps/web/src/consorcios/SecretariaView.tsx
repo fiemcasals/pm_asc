@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AlertaFallaCritica } from '../fallas/AlertaFallaCritica';
 import { AsignacionRoles } from './AsignacionRoles';
 import {
   Consorcio,
@@ -204,6 +205,8 @@ export function SecretariaView() {
       </nav>
 
       {pestana === 'edificios' ? <EdificiosPanel /> : <AsignacionRoles />}
+
+      <AlertaFallaCritica />
     </>
   );
 }

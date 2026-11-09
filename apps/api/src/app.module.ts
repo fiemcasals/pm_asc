@@ -6,6 +6,8 @@ import { PgConsorciosRepository } from './consorcios/pg-consorcios.repository';
 import { DatabaseService } from './database/database.service';
 import { EcaController } from './eca/eca.controller';
 import { EcaService } from './eca/eca.service';
+import { FallasCriticasController } from './fallas-criticas/fallas-criticas.controller';
+import { FallasCriticasService } from './fallas-criticas/fallas-criticas.service';
 import { FirmanteController } from './firmante/firmante.controller';
 import { FirmanteService } from './firmante/firmante.service';
 import { HealthController } from './health/health.controller';
@@ -28,6 +30,7 @@ export class AppModule {
         EcaController,
         WhatsAppController,
         VisitasFallidasController,
+        FallasCriticasController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -39,6 +42,7 @@ export class AppModule {
         WhatsAppConnectorService,
         WhatsAppTriggerService,
         VisitasFallidasService,
+        FallasCriticasService,
       ],
     };
   }

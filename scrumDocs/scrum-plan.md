@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-09T22:06:19.936Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-09T22:06:52.898Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -106,7 +106,7 @@ PR #6 abierto contra dev. Implementados MedidorCobertura, PortalEca (modo solo l
 - Estimado: 4h
 
 ### RF-01 — Recepción de Falla Crítica y Alerta Emergente en Secretaría
-Inicio de desarrollo del requerimiento
+PR #19 contra dev. API: POST /api/fallas-criticas/informes emite un evento SSE (GET /api/fallas-criticas/eventos) cuando el informe trae cables desgastados o limitador anulado. El informe se ve en GET /api/fallas-criticas/informes/:id, de sólo lectura. Web: notificación emergente en Secretaría con 3 pitidos (Web Audio) y el botón Ver informe técnico. Tests: API 160/160 (16 nuevos), web 75/75 (11 nuevos), entrega.sh con carga 50: 0 errores y 0 eventos perdidos. Mínimo necesario fuera de lo escrito: el informe tiene su propia ruta de lectura porque /api/eca/remito/:id/informe registra un acuse legal falso a nombre de la ECA. Supuestos: los informes viven en memoria, no se toca la alertaCritica de la máquina (eso es RF-02) y el canal no tiene autenticación (ningún endpoint la tiene). Detalle en docs/pruebas/hu-06-hu-06-gestion-de-fallas-critic/RF-01-entrega.md
 - Estimado: 4h
 
 ### RF-02 — UI Tablero Dinámico de Monitoreo General (Backoffice)

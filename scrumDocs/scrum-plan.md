@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-09T22:06:52.898Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-11T14:34:40.557Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 22 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
 | 23 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 24 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | Hacer | Sin asignar | RF-01 | — |
+| 24 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | Hacer | gonza | RF-01 | — |
 | 25 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 26 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 27 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |

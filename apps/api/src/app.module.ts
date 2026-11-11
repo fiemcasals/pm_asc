@@ -14,6 +14,8 @@ import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service'
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
 import { VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
+import { VisitasFallidasRepository } from './visitas-fallidas/visitas-fallidas.repository';
+import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-fallidas.repository';
 import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
 
 @Module({})
@@ -33,6 +35,7 @@ export class AppModule {
         { provide: APP_CONFIG, useValue: config },
         DatabaseService,
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
+        { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,
         EcaService,
         WhatsAppFormatterService,

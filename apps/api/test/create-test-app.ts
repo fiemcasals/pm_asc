@@ -8,6 +8,10 @@ import { Consorcio, ConsorcioInput, ConsorcioResumen } from '../src/consorcios/c
 import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
+import {
+  InMemoryVisitasFallidasRepository,
+  VisitasFallidasRepository,
+} from '../src/visitas-fallidas/visitas-fallidas.repository';
 
 export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'query'> {
   /** Consultas recibidas por query(), en orden. */
@@ -114,6 +118,7 @@ export async function createTestApp(
   env: NodeJS.ProcessEnv,
   database = fakeDatabase(),
   consorcios: ConsorciosRepository = new InMemoryConsorciosRepository(),
+  visitasFallidas: VisitasFallidasRepository = new InMemoryVisitasFallidasRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   const config = loadConfig(env);
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(config)] })
@@ -121,6 +126,8 @@ export async function createTestApp(
     .useValue(database)
     .overrideProvider(ConsorciosRepository)
     .useValue(consorcios)
+    .overrideProvider(VisitasFallidasRepository)
+    .useValue(visitasFallidas)
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });

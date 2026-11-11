@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-11T14:57:44.106Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-11T15:12:06.343Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -35,7 +35,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 27 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 28 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 29 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 30 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | Hacer | gonza | RF-01, RF-02 | — |
+| 30 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | Hecho | gonza | RF-01, RF-02 | — |
 | 31 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
 
 ## Detalle
@@ -172,6 +172,7 @@ Disparo automático inmediato y visualización directa implementados:
 - Estimado: 3h
 
 ### RF-03 — No informar como entregado un WhatsApp que no se envió
+Inicio de desarrollo de HU-11 RF-03: no informar como entregado un WhatsApp sin proveedor configurado (REQ-1794155773535)
 - Estimado: 0h
 
 ### RF-04 — Enviar las alertas por WhatsApp a través de un proveedor real

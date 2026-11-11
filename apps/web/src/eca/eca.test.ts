@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { AlertasCriticas } from './AlertasCriticas';
+import { AccionesAlertaCritica, AlertasCriticas } from './AlertasCriticas';
 import {
   AlertasEcaResponse,
   CoberturaEca,
@@ -486,6 +486,120 @@ describe('eca module', () => {
           method: 'POST',
         }),
       );
+    });
+  });
+
+  describe('HU-11 / RF-03: No informar como entregado un WhatsApp que no se envió', () => {
+    const payloadBase = {
+      telefonoDestino: '+5491144009988',
+      nombreEca: 'MAICON Mantenimiento',
+      consorcio: 'Consorcio Santa Fe 3200',
+      equipo: 'M1: Ascensor Frontal',
+      estado: 'Reparación Urgente',
+      detalle: 'Deslizamiento crítico en freno',
+    };
+
+    it('enviarAlertaWhatsApp propaga el motivo exacto cuando la API responde HTTP 503 no_configurado', async () => {
+      const msg = 'El envío por WhatsApp no está configurado: no hay proveedor de mensajería activo.';
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({
+          statusCode: 503,
+          ok: false,
+          estadoEntrega: 'no_configurado',
+          message: msg,
+          error: msg,
+        }),
+      } as unknown as Response);
+
+      const res = await enviarAlertaWhatsApp(payloadBase);
+      expect(res.ok).toBe(false);
+      expect(res.error).toBe(msg);
+      expect(res.data?.estadoEntrega).toBe('no_configurado');
+    });
+
+    it('enviarAlertaWhatsApp rechaza respuestas con ok: false o estadoEntrega no_configurado aunque HTTP sea 2xx', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          ok: false,
+          idMensaje: '',
+          estadoEntrega: 'no_configurado',
+          error: 'Sin proveedor activo',
+        }),
+      } as unknown as Response);
+
+      const res = await enviarAlertaWhatsApp(payloadBase);
+      expect(res.ok).toBe(false);
+      expect(res.error).toBe('Sin proveedor activo');
+    });
+
+    it('triggerAlertaWhatsAppInmediata devuelve ok: false con el motivo cuando envioRealizado es false', async () => {
+      const motivo = 'El envío por WhatsApp no está configurado: no hay proveedor de mensajería activo.';
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          ok: false,
+          envioRealizado: false,
+          estado: 'no_realizado',
+          estadoEntrega: 'no_configurado',
+          idMensaje: '',
+          motivo,
+        }),
+      } as unknown as Response);
+
+      const res = await triggerAlertaWhatsAppInmediata('ALT-MAICON-001');
+      expect(res.ok).toBe(false);
+      expect(res.error).toBe(motivo);
+      expect(res.data?.estado).toBe('no_realizado');
+    });
+
+    it('AccionesAlertaCritica muestra el motivo del rechazo y no muestra "WhatsApp Despachado" cuando falló', () => {
+      const maquinaAlerta: MaquinaEca = {
+        id: 'MAQ-RF03-ERR',
+        codigoAGC: 'M1',
+        nombre: 'M1: Ascensor Principal',
+        edificio: {
+          id: 'E-RF03',
+          direccion: 'Av. Callao 850',
+          administracion: 'Admin',
+          consorcio: 'Consorcio Callao',
+        },
+        eca: 'MAICON Mantenimiento',
+        rtCalle: 'dev-ma-2',
+        mes: '2026-11',
+        estado: 'Recorrida',
+        estadoOperativo: 'Reparación Urgente',
+        alertaCritica: {
+          id: 'ALT-RF03-ERR',
+          tipo: 'REPARACION_URGENTE',
+          titulo: 'Alerta Urgente',
+          motivo: 'Freno descalibrado',
+          fechaDeteccion: '2026-11-11T10:00:00Z',
+        },
+        visita: null,
+      };
+
+      const html = renderToString(
+        React.createElement(AccionesAlertaCritica, {
+          maquina: maquinaAlerta,
+          alertaId: 'ALT-RF03-ERR',
+          descargandoId: null,
+          enviandoWaId: null,
+          waError: 'El envío por WhatsApp no está configurado: no hay proveedor de mensajería activo.',
+          remitoClassName: 'btn-remito-naranja',
+          onDescargarRemito: () => undefined,
+          onEnviarWhatsApp: () => undefined,
+        }),
+      );
+
+      expect(html).toContain('data-testid="whatsapp-error-MAQ-RF03-ERR"');
+      expect(html).toContain('Envío no realizado: El envío por WhatsApp no está configurado');
+      expect(html).not.toContain('WhatsApp Despachado');
+      expect(html).not.toContain('data-testid="whatsapp-status-MAQ-RF03-ERR"');
     });
   });
 });

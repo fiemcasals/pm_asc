@@ -1,10 +1,9 @@
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  Optional,
-} from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
+  InMemoryVisitasFallidasRepository,
+  VisitasFallidasRepository,
+} from './visitas-fallidas.repository';
 import {
   BloqueoConsorcioInfo,
   DetalleConceptoLiquidacion,
@@ -20,13 +19,16 @@ import {
 @Injectable()
 export class VisitasFallidasService {
   private readonly logger = new Logger(VisitasFallidasService.name);
-  private registros: VisitaFallidaRegistro[] = [];
+  private readonly repo: VisitasFallidasRepository;
 
-  constructor(@Optional() private readonly db?: DatabaseService) {}
+  constructor(@Optional() repo?: VisitasFallidasRepository) {
+    this.repo = repo ?? new InMemoryVisitasFallidasRepository();
+  }
 
   /**
-   * Criterio 1: Valida el reporte de visita fallida comprobando foto del frente y coordenadas GPS congeladas.
-   * Criterio 2: Al confirmarse Advertencia 1 o 2, despacha email formal a la administración.
+   * Criterio 1 (RF-01): Valida el reporte comprobando foto del frente y coordenadas GPS congeladas.
+   * Criterio 2 (RF-01): Al confirmarse Advertencia 1 o 2, despacha email formal a la administración.
+   * Criterio 1-3 (RF-03): Persiste en PostgreSQL de forma transaccional y propaga cualquier error de guardado.
    */
   async registrarVisitaFallida(
     dto: ReporteVisitaFallidaDto,
@@ -55,99 +57,76 @@ export class VisitasFallidasService {
       !dto.gps ||
       typeof dto.gps !== 'object' ||
       typeof dto.gps.latitud !== 'number' ||
-      isNaN(dto.gps.latitud) ||
+      !Number.isFinite(dto.gps.latitud) ||
       typeof dto.gps.longitud !== 'number' ||
-      isNaN(dto.gps.longitud)
+      !Number.isFinite(dto.gps.longitud)
     ) {
       throw new BadRequestException(
         'Las coordenadas GPS congeladas son obligatorias para certificar la geolocalización de la visita fallida.',
       );
     }
 
-    // Resolver datos del consorcio
     const consorcioInfo = await this.resolverConsorcioInfo(dto.consorcioId);
-
-    // Contar advertencias previas del consorcio para determinar número (1, 2 o 3)
-    const previas = this.registros.filter((r) => r.consorcioId === dto.consorcioId);
-    const numeroAdvertencia: 1 | 2 | 3 =
-      previas.length === 0 ? 1 : previas.length === 1 ? 2 : 3;
-
     const fechaHora = new Date().toISOString();
     const motivo = dto.motivo?.trim() || 'No se pudo realizar la inspección: encargado ausente';
     const inspector = dto.inspector?.trim() || 'Inspector Técnico de Guardia (RT Calle)';
 
-    // Criterio 2: Al confirmarse Advertencia 1 o 2, generar y enviar correo formal
-    let emailNotificacion: EmailNotificacionConsorcio | null = null;
-    if (numeroAdvertencia === 1 || numeroAdvertencia === 2) {
-      const emailDestino =
-        dto.emailAdministracion?.trim() ||
-        consorcioInfo.email ||
-        `administracion@${dto.consorcioId}.com.ar`;
+    const guardado = await this.repo.registrar(dto.consorcioId, (previasCount) => {
+      const numeroAdvertencia: 1 | 2 | 3 =
+        previasCount === 0 ? 1 : previasCount === 1 ? 2 : 3;
 
-      emailNotificacion = this.generarYEnviarCorreoFormal({
+      // Al confirmarse Advertencia 1 o 2, generar y preparar correo formal
+      let emailNotificacion: EmailNotificacionConsorcio | null = null;
+      if (numeroAdvertencia === 1 || numeroAdvertencia === 2) {
+        const emailDestino =
+          dto.emailAdministracion?.trim() ||
+          consorcioInfo.email ||
+          `administracion@${dto.consorcioId}.com.ar`;
+
+        emailNotificacion = this.generarYEnviarCorreoFormal({
+          consorcioNombre: consorcioInfo.nombre,
+          direccion: consorcioInfo.direccion,
+          numeroAdvertencia,
+          destinatario: emailDestino,
+          motivo,
+          fotoFrenteUrl: dto.fotoFrenteUrl,
+          gps: dto.gps,
+          fechaHora,
+          inspector,
+        });
+      }
+
+      return {
+        id: `VF-${randomUUID()}`,
+        consorcioId: dto.consorcioId,
         consorcioNombre: consorcioInfo.nombre,
         direccion: consorcioInfo.direccion,
         numeroAdvertencia,
-        destinatario: emailDestino,
         motivo,
         fotoFrenteUrl: dto.fotoFrenteUrl,
-        gps: dto.gps,
-        fechaHora,
+        gps: {
+          latitud: dto.gps.latitud,
+          longitud: dto.gps.longitud,
+          precision: dto.gps.precision || 5.0,
+          timestamp: dto.gps.timestamp || fechaHora,
+        },
         inspector,
-      });
-    }
-
-    const nuevoRegistro: VisitaFallidaRegistro = {
-      id: `VF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      consorcioId: dto.consorcioId,
-      consorcioNombre: consorcioInfo.nombre,
-      direccion: consorcioInfo.direccion,
-      numeroAdvertencia,
-      motivo,
-      fotoFrenteUrl: dto.fotoFrenteUrl,
-      gps: {
-        latitud: dto.gps.latitud,
-        longitud: dto.gps.longitud,
-        precision: dto.gps.precision || 5.0,
-        timestamp: dto.gps.timestamp || fechaHora,
-      },
-      inspector,
-      fechaHora,
-      emailNotificacion,
-    };
-
-    this.registros.push(nuevoRegistro);
-
-    // Persistencia opcional en PostgreSQL si la base está activa
-    if (this.db) {
-      try {
-        await this.db.query(
-          `INSERT INTO acuses_recibo_legal (alerta_id, usuario, fecha_hora, metadata)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT DO NOTHING`,
-          [
-            nuevoRegistro.id,
-            'sistema.notificaciones@maicon.com.ar',
-            fechaHora,
-            JSON.stringify(nuevoRegistro),
-          ],
-        );
-      } catch (err) {
-        this.logger.debug(`No se pudo persistir en PostgreSQL (continuando en memoria): ${err}`);
-      }
-    }
+        fechaHora,
+        emailNotificacion,
+      };
+    });
 
     this.logger.log(
-      `Visita fallida registrada para consorcio ${consorcioInfo.nombre} — Advertencia ${numeroAdvertencia}${
-        emailNotificacion ? ` (Email despachado a ${emailNotificacion.destinatario})` : ''
+      `Visita fallida registrada para consorcio ${consorcioInfo.nombre} — Advertencia ${guardado.numeroAdvertencia}${
+        guardado.emailNotificacion ? ` (Email despachado a ${guardado.emailNotificacion.destinatario})` : ''
       }`,
     );
 
-    return nuevoRegistro;
+    return guardado;
   }
 
-  getHistorialConsorcio(consorcioId: string): ResumenAdvertenciasConsorcio {
-    const historial = this.registros.filter((r) => r.consorcioId === consorcioId);
+  async getHistorialConsorcio(consorcioId: string): Promise<ResumenAdvertenciasConsorcio> {
+    const historial = await this.repo.listarPorConsorcio(consorcioId);
     const totalAdvertencias = historial.length;
     const ultima = historial.length > 0 ? historial[historial.length - 1].numeroAdvertencia : null;
     const bloqueado = totalAdvertencias >= 3;
@@ -170,7 +149,7 @@ export class VisitasFallidasService {
    */
   async getBloqueoConsorcio(consorcioId: string): Promise<BloqueoConsorcioInfo> {
     const consorcioInfo = await this.resolverConsorcioInfo(consorcioId);
-    const resumen = this.getHistorialConsorcio(consorcioId);
+    const resumen = await this.getHistorialConsorcio(consorcioId);
     const bloqueado = resumen.bloqueadoPorTerceraVisita;
 
     return {
@@ -197,7 +176,7 @@ export class VisitasFallidasService {
     }
 
     const consorcioInfo = await this.resolverConsorcioInfo(dto.consorcioId);
-    const resumen = this.getHistorialConsorcio(dto.consorcioId);
+    const resumen = await this.getHistorialConsorcio(dto.consorcioId);
     const tieneRecargo = resumen.totalAdvertencias >= 3;
 
     const montoBase = typeof dto.montoBase === 'number' && dto.montoBase > 0 ? dto.montoBase : 150000;
@@ -257,24 +236,10 @@ export class VisitasFallidasService {
     montoBasePorMaquina = 150000,
   ): Promise<LiquidacionConsorcioResultado> {
     const consorcioInfo = await this.resolverConsorcioInfo(consorcioId);
-    const resumen = this.getHistorialConsorcio(consorcioId);
+    const resumen = await this.getHistorialConsorcio(consorcioId);
     const periodoActual = periodo || new Date().toISOString().slice(0, 7);
 
-    let maquinasLista: { id: string; referenciaAgc: string }[] = [];
-    if (this.db) {
-      try {
-        const rows = await this.db.query<{ id: string; referencia_agc: string }>(
-          `SELECT id, referencia_agc FROM maquinas WHERE consorcio_id = $1 ORDER BY referencia_agc ASC`,
-          [consorcioId],
-        );
-        if (rows && rows.length > 0) {
-          maquinasLista = rows.map((r) => ({ id: r.id, referenciaAgc: r.referencia_agc }));
-        }
-      } catch {
-        // Fallback a máquinas conocidas
-      }
-    }
-
+    let maquinasLista = await this.repo.listarMaquinasConsorcio(consorcioId);
     if (maquinasLista.length === 0) {
       maquinasLista = [
         { id: `maq-${consorcioId}-1`, referenciaAgc: 'M1' },
@@ -315,8 +280,8 @@ export class VisitasFallidasService {
     };
   }
 
-  getTodas(): VisitaFallidaRegistro[] {
-    return [...this.registros];
+  async getTodas(): Promise<VisitaFallidaRegistro[]> {
+    return this.repo.listarTodas();
   }
 
   /**
@@ -387,29 +352,15 @@ export class VisitasFallidasService {
   private async resolverConsorcioInfo(
     consorcioId: string,
   ): Promise<{ nombre: string; direccion: string; email: string }> {
-    if (this.db) {
-      try {
-        const rows = await this.db.query<{
-          nombre: string;
-          direccion: string;
-          administracion_email: string | null;
-        }>(
-          `SELECT nombre, direccion, administracion_email FROM consorcios WHERE id = $1`,
-          [consorcioId],
-        );
-        if (rows && rows.length > 0) {
-          return {
-            nombre: rows[0].nombre,
-            direccion: rows[0].direccion,
-            email: rows[0].administracion_email || 'administracion@consorcio.com.ar',
-          };
-        }
-      } catch {
-        // Fallback a mapeo estándar
-      }
+    const encontrado = await this.repo.buscarConsorcioInfo(consorcioId);
+    if (encontrado) {
+      return {
+        nombre: encontrado.nombre,
+        direccion: encontrado.direccion,
+        email: encontrado.email || 'administracion@consorcio.com.ar',
+      };
     }
 
-    // Defaults según IDs conocidos o generados
     return {
       nombre: `Consorcio Edificio ${consorcioId}`,
       direccion: `Av. Corrientes ${consorcioId.slice(0, 4) || '1234'}, CABA`,

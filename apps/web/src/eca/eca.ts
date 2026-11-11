@@ -153,6 +153,8 @@ export interface MensajeAlertaWhatsAppInput {
   fechaDeteccion?: string;
 }
 
+export type EstadoEntregaWhatsApp = 'entregado' | 'enviado' | 'fallido' | 'no_configurado';
+
 export interface WhatsAppEnvioResult {
   ok: boolean;
   idMensaje: string;
@@ -161,8 +163,17 @@ export interface WhatsAppEnvioResult {
   intentos: number;
   timestampEnvio: string;
   tiempoRespuestaMs: number;
-  estadoEntrega: 'entregado' | 'enviado' | 'fallido';
+  estadoEntrega: EstadoEntregaWhatsApp;
   error?: string;
+}
+
+async function leerJsonSeguro<T>(res: Response): Promise<T | null> {
+  try {
+    if (typeof res.json !== 'function') return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function enviarAlertaWhatsApp(
@@ -175,11 +186,20 @@ export async function enviarAlertaWhatsApp(
       body: JSON.stringify(input),
     });
 
-    if (!res.ok) {
-      return { ok: false, error: `Error ${res.status}: no se pudo despachar por WhatsApp` };
+    const data = await leerJsonSeguro<WhatsAppEnvioResult & { message?: string }>(res);
+    const motivoError =
+      data?.error || data?.message || `Error ${res.status}: no se pudo despachar por WhatsApp`;
+
+    if (
+      !res.ok ||
+      !data ||
+      !data.ok ||
+      data.estadoEntrega === 'no_configurado' ||
+      data.estadoEntrega === 'fallido'
+    ) {
+      return { ok: false, data: data ?? undefined, error: motivoError };
     }
 
-    const data = (await res.json()) as WhatsAppEnvioResult;
     return { ok: true, data };
   } catch (err) {
     return {
@@ -191,6 +211,9 @@ export async function enviarAlertaWhatsApp(
 
 export interface TriggerWhatsAppResult {
   ok: boolean;
+  envioRealizado?: boolean;
+  estado?: 'realizado' | 'no_realizado';
+  estadoEntrega?: EstadoEntregaWhatsApp;
   idMensaje: string;
   telefonoDestino: string;
   duracionMs: number;
@@ -198,6 +221,7 @@ export interface TriggerWhatsAppResult {
   timestampDisparo: string;
   enlaceDirecto: string;
   mensajeFormateado: string;
+  motivo?: string;
 }
 
 export async function triggerAlertaWhatsAppInmediata(
@@ -211,11 +235,14 @@ export async function triggerAlertaWhatsAppInmediata(
       body: JSON.stringify({ alertaId, maquinaId }),
     });
 
-    if (!res.ok) {
-      return { ok: false, error: `Error ${res.status}: fallo en trigger de WhatsApp` };
+    const data = await leerJsonSeguro<TriggerWhatsAppResult & { message?: string; error?: string }>(res);
+    const motivoError =
+      data?.motivo || data?.error || data?.message || `Error ${res.status}: fallo en trigger de WhatsApp`;
+
+    if (!res.ok || !data || !data.ok || data.envioRealizado === false) {
+      return { ok: false, data: data ?? undefined, error: motivoError };
     }
 
-    const data = (await res.json()) as TriggerWhatsAppResult;
     return { ok: true, data };
   } catch (err) {
     return {

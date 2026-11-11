@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FirmanteService } from '../firmante/firmante.service';
 import { WhatsAppConnectorService } from './whatsapp-connector.service';
 import {
@@ -8,6 +8,8 @@ import {
 
 @Injectable()
 export class WhatsAppTriggerService {
+  private readonly logger = new Logger(WhatsAppTriggerService.name);
+
   constructor(
     private readonly connector: WhatsAppConnectorService,
     private readonly firmanteService: FirmanteService,
@@ -15,8 +17,7 @@ export class WhatsAppTriggerService {
 
   /**
    * Ejecuta el disparo automático de WhatsApp ante una anomalía crítica.
-   * Criterio 1: Se ejecuta en menos de 5 segundos comprobables (< 5s).
-   * Criterio 2: Incluye enlace directo y funcional a las fotos y al informe técnico firmado.
+   * Si no hay proveedor configurado, registra el intento como no realizado sin simular entrega.
    */
   async dispararAlertaInmediata(
     dto: TriggerAlertaCriticaDto,
@@ -44,23 +45,41 @@ export class WhatsAppTriggerService {
     const enlaceDirecto = `${baseUrl}/api/eca/remito/${alerta.id}/informe`;
     const telefono = dto.telefonoDestino || '+5491144009988';
 
-    // Despacho a través del conector
-    const resEnvio = await this.connector.enviarMensajeAlerta({
-      telefonoDestino: telefono,
-      nombreEca: maquina.eca,
-      consorcio: `${maquina.edificio.direccion} (${maquina.edificio.consorcio})`,
-      equipo: `${maquina.codigoAGC} - ${maquina.nombre}`,
-      estado: maquina.estadoOperativo || 'Alerta Crítica',
-      detalle: alerta.motivo,
-      remitoUrl: enlaceDirecto,
-      fechaDeteccion: alerta.fechaDeteccion,
-    });
+    const resEnvio = await this.connector.enviarMensajeAlerta(
+      {
+        telefonoDestino: telefono,
+        nombreEca: maquina.eca,
+        consorcio: `${maquina.edificio.direccion} (${maquina.edificio.consorcio})`,
+        equipo: `${maquina.codigoAGC} - ${maquina.nombre}`,
+        estado: maquina.estadoOperativo || 'Alerta Crítica',
+        detalle: alerta.motivo,
+        remitoUrl: enlaceDirecto,
+        fechaDeteccion: alerta.fechaDeteccion,
+      },
+      3,
+      50,
+      {
+        origen: 'automatico',
+        alertaId: alerta.id,
+        maquinaId: maquina.id,
+        enlaceDirecto,
+      },
+    );
 
     const duracionMs = Date.now() - inicioMs;
     const menorA5Segundos = duracionMs < 5000;
 
+    if (!resEnvio.ok) {
+      this.logger.warn(
+        `Disparo automático WhatsApp para alerta ${alerta.id} registrado como no_realizado: ${resEnvio.error}`,
+      );
+    }
+
     return {
       ok: resEnvio.ok,
+      envioRealizado: resEnvio.ok,
+      estado: resEnvio.ok ? 'realizado' : 'no_realizado',
+      estadoEntrega: resEnvio.estadoEntrega,
       idMensaje: resEnvio.idMensaje,
       telefonoDestino: resEnvio.telefonoDestino,
       duracionMs,
@@ -68,7 +87,7 @@ export class WhatsAppTriggerService {
       timestampDisparo: new Date().toISOString(),
       enlaceDirecto,
       mensajeFormateado: resEnvio.mensajeFormateado,
+      ...(resEnvio.error ? { motivo: resEnvio.error } : {}),
     };
   }
 }
-

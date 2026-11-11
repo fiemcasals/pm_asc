@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-11T14:45:05.426Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-11T14:47:49.365Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 22 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
 | 23 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 24 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | Hecho | gonza | RF-01 | — |
+| 24 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | Hecho ✓ dev | gonza | RF-01 | — |
 | 25 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 26 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 27 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
@@ -132,7 +132,7 @@ Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% implementado:
 - Estimado: 4h
 
 ### RF-03 — Persistir las visitas fallidas en PostgreSQL
-Inicio de desarrollo de persistencia real de visitas fallidas en PostgreSQL (REQ-1794013110546)
+PR #20 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/20). Migración 004_visitas_fallidas + PgVisitasFallidasRepository (transacción con pg_advisory_xact_lock, sin try/catch silencioso ni estado en memoria). Ante fallo de PostgreSQL hace rollback y propaga 500 o 400 (NUL vía filtro RNF-01). Pruebas: npm run verify API 149/149 y Web 64/64 OK; npm run test:int 24/24 contra PostGIS real (incluye reinicio real de NestJS app.close() -> nueva instancia); RF-03-entrega.sh 4/4 OK; --carga 100: 0 fallidas, promedio 61 ms, p95 79 ms, 100/100 filas en PostgreSQL; probado en vivo matando proceso node y deteniendo mant-asc-db (HTTP 500, reintento al volver HTTP 201). Mínimo necesario: InMemoryVisitasFallidasRepository y 4.º parámetro opcional en createTestApp para aislar tests sin DB, e IDs VF-<uuid> para evitar colisiones en carga. Asumido: consorcio_id en texto sin FK estricta para preservar compatibilidad con IDs simbólicos de pruebas. Los 3 Tests de desarrollo aprobados con evidencia y los 3 de integración preparados para QA. Detalle en docs/pruebas/hu-07-hu-07-protocolo-de-visitas-fal/RF-03-entrega.md
 - Estimado: 0h
 
 ### RF-01 — Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA

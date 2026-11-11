@@ -1,8 +1,11 @@
 # HU-11 / RF-03 — No informar como entregado un WhatsApp que no se envió
 
 - **Requerimiento:** `REQ-1794155773535`
-- **Rama:** `feature/hu-11-hu-11-notificaciones-automatic/req-1794155773535-no-informar-como-entregado-un-whatsapp-q`
+- **Rama de entrega:** `feature/hu-11-hu-11-notificaciones-automatic/req-1794155773535-no-informar-como-entregado-un-whatsapp-q` (PR #21 mergeado en `dev` y promovido a `testing`)
+- **Depende de:** `HU-11 · RF-01` (`REQ-1791910396804`), `HU-11 · RF-02` (`REQ-1791910396892`)
 - **Responsable (Developer):** `gonza`
+- **Guía visual QA:** [`RF-03-no-informar-whatsapp.md`](RF-03-no-informar-whatsapp.md)
+- **Script integrado:** [`RF-03-entrega.sh`](RF-03-entrega.sh)
 
 ---
 
@@ -95,3 +98,34 @@ Resultados observados contra `apps/api` compilado (`http://127.0.0.1:3050`):
 Portal ECA tras hacer clic en **Despachar Alerta WhatsApp** sin proveedor configurado:
 
 ![Portal ECA sin proveedor WhatsApp](imagenes/RF-03-portal-eca-no-configurado.png)
+
+---
+
+## 8. Certificación QA en Rama `testing` (`qa-ma-2`)
+
+Verificado el **11/11/2026** directamente sobre la rama **`testing`** (`a158334`, tras integrar PR #21 en `dev` y promover `dev → testing`) en entorno local de QA sin proveedor de WhatsApp configurado (el proyecto tiene configurado únicamente el entorno `Desarrollo` en Scrum Master AI):
+
+| Verificación QA | Resultado observado |
+|---|---|
+| `npm run verify` | `tsc --noEmit` 0 errores · API Jest **20 suites, 154/154 OK** · Web Vitest **5 archivos, 68/68 OK** (**222/222**) |
+| `npm run test:int -w apps/api` | **6 suites, 24/24 OK** contra PostgreSQL 16 + PostGIS 3.4.3 real (`mant-asc-db`) |
+| `RF-03-entrega.sh` | **3 verificaciones OK, 0 fallidas** (`POST /api/whatsapp/enviar-alerta` → HTTP `503` `estadoEntrega: no_configurado`; `trigger-alerta-critica` `ALT-MAICON-001` → `envioRealizado: false`, `estado: no_realizado`; `GET /api/whatsapp/historial?alertaId=ALT-MAICON-001` → `origen: automatico`, `estado: no_realizado`) |
+| `RF-03-entrega.sh --carga 50` | **50 corridas · 0 falsos entregados / distinto de 503 · promedio: 125 ms · p95: 142 ms · más lenta: 159 ms** |
+| Pruebas exploratorias API | `POST /api/whatsapp/enviar-alerta` (503) + `trigger-alerta-critica` (201) consultados luego en `GET /api/whatsapp/historial` → `total: 2`, ambos `envioRealizado: false`, `estado: "no_realizado"`, `estadoEntrega: "no_configurado"`; payload inválido / con `\u0000` rechazado con HTTP `400` sin registrar falso envío |
+
+**Criterios de Aceptación Certificados (Scrum Master AI):**
+- `TEST-1794155773556-1` (Criterio 1): **Certificado en `testing`** — HTTP `503` con `estadoEntrega: no_configurado` y mensaje explícito sin proveedor; `0/50` falsos entregados en carga.
+- `TEST-1794155773561-3` (Criterio 2 — Manual visual): **Certificado en `testing`** — en Google Chrome sobre `https://localhost:8050`, al pulsar **`📱 Despachar Alerta WhatsApp`** en **`Portal ECA (Conservadoras)`** muestra el banner superior y el badge **`⚠️ Envío no realizado: ...`** sin renderizar nunca `"WhatsApp Despachado"`.
+- `TEST-1794155773567-5` (Criterio 3): **Certificado en `testing`** — disparo automático para `ALT-MAICON-001` devuelve `envioRealizado: false` / `estado: no_realizado` y queda registrado y filtrable en `GET /api/whatsapp/historial?alertaId=ALT-MAICON-001`.
+
+---
+
+## 9. Evidencia Visual QA en Navegador Real (Chrome, foco estándar `.scrum-qa-foco`)
+
+Paso a paso completo documentado en la guía [`RF-03-no-informar-whatsapp.md`](RF-03-no-informar-whatsapp.md):
+
+1. Navegar a la pestaña **`Portal ECA (Conservadoras)`**: [`RF-03-paso-1-navegar-portal-eca.png`](imagenes/RF-03-paso-1-navegar-portal-eca.png)
+2. Presionar **`📱 Despachar Alerta WhatsApp`** en `Alertas Críticas de Flota`: [`RF-03-paso-2-boton-despachar-whatsapp.png`](imagenes/RF-03-paso-2-boton-despachar-whatsapp.png)
+3. Validar el rechazo explícito sin `"WhatsApp Despachado"`:
+
+![Resultado QA en Portal ECA sin proveedor WhatsApp](imagenes/RF-03-paso-3-error-no-configurado.png)

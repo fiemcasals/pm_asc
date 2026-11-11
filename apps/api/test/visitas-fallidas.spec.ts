@@ -125,7 +125,7 @@ describe('VisitasFallidasService (HU-07 / RF-01)', () => {
         gps: { latitud: -34.60, longitud: -58.38 },
       });
 
-      const resumen = service.getHistorialConsorcio('consorcio-historial');
+      const resumen = await service.getHistorialConsorcio('consorcio-historial');
       expect(resumen.totalAdvertencias).toBe(1);
       expect(resumen.ultimaAdvertencia).toBe(1);
       expect(resumen.bloqueadoPorTerceraVisita).toBe(false);
@@ -163,7 +163,7 @@ describe('VisitasFallidasService (HU-07 / RF-01)', () => {
         expect(r3.numeroAdvertencia).toBe(3);
 
         // Comprobación de estado bloqueado y aviso oficial
-        const historial = service.getHistorialConsorcio(consorcioId);
+        const historial = await service.getHistorialConsorcio(consorcioId);
         expect(historial.totalAdvertencias).toBe(3);
         expect(historial.ultimaAdvertencia).toBe(3);
         expect(historial.bloqueadoPorTerceraVisita).toBe(true);

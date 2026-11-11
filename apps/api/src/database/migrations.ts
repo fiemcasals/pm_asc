@@ -81,4 +81,31 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    id: '004_visitas_fallidas',
+    sql: `
+      -- Historial persistente de visitas fallidas y advertencias por consorcio (HU-07 RF-03).
+      -- consorcio_id es text para admitir tanto UUIDs de la tabla consorcios como IDs simbólicos.
+      CREATE TABLE visitas_fallidas (
+        orden              bigserial NOT NULL,
+        id                 text PRIMARY KEY,
+        consorcio_id       text NOT NULL,
+        consorcio_nombre   text NOT NULL,
+        direccion          text NOT NULL,
+        numero_advertencia smallint NOT NULL CHECK (numero_advertencia IN (1, 2, 3)),
+        motivo             text NOT NULL,
+        foto_frente_url    text NOT NULL,
+        gps_latitud        double precision NOT NULL,
+        gps_longitud       double precision NOT NULL,
+        gps_precision      double precision NOT NULL,
+        gps_timestamp      timestamptz NOT NULL,
+        inspector          text NOT NULL,
+        fecha_hora         timestamptz NOT NULL DEFAULT now(),
+        email_notificacion jsonb,
+        created_at         timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX visitas_fallidas_consorcio_orden_idx ON visitas_fallidas (consorcio_id, orden ASC);
+    `,
+  },
 ];

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:03:26.550Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:06:23.867Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -50,7 +50,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 42 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 43 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
 | 44 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 45 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Hacer | gonza | RF-01, RF-03 | — |
+| 45 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Haciendo | gonza | RF-01, RF-03 | — |
 | 46 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 47 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 48 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | germanG | RF-02, RF-01, RF-05 | — |

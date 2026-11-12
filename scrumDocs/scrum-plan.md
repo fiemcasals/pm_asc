@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:09:06.806Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:14:54.965Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -263,6 +263,7 @@ Alertas críticas en Portal ECA implementadas y verificadas:
 - Estimado: 4h
 
 ### RF-01 — Motor del checklist configurable
+Test obs check
 - Estimado: 5h
 
 ### RF-06 — Pantalla de constancia de visita fallida en el celular del RT

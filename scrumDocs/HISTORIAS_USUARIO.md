@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:33:22.606Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:33:42.553Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -113,7 +113,7 @@ Como usuario del Portal ECA y Secretaría quiero pantallas libres de prefijos re
 1. Dado el centro de Alertas Críticas del Portal ECA, cuando se muestran equipos en Fuera de Servicio o con Anomalías Graves, entonces no aparecen los prefijos 'CARTEL GIGANTE:', códigos duplicados como 'M2 - M2:' ni etiquetas redundantes sobre la fotografía.
 2. Dado el Portal ECA y las vistas de Consorcios, cuando el operador consulta fichas, formularios o encabezados de solo lectura, entonces no se muestran badges obvios ni referencias técnicas internas ('(HU-07)', 'PostgreSQL', 'base oficial', 'Dirección Literal', 'Grilla Dinámica').
 
-## HU-14: Acceso por rol y sesión en el celular
+## HU-14: HU-14: Acceso por rol y sesión en el celular
 
 Como usuario del sistema (RT de Calle, Secretaría, Firmante, ECA o Administrador) quiero ingresar con mis credenciales desde el celular o la computadora para ver solo lo que corresponde a mi rol.
 Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
@@ -126,7 +126,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 4. Dado un RT que usa su celular personal, cuando ingresa por primera vez, entonces acepta el aviso de uso de su ubicación antes de empezar a trabajar.
 5. Dado un celular perdido o un RT que deja la empresa, cuando un Administrador revoca su sesión, entonces ese celular no puede volver a pedir ni enviar datos.
 
-## HU-15: Aislamiento de datos entre ECA
+## HU-15: HU-15: Aislamiento de datos entre ECA
 
 Como Empresa Conservadora quiero que mis datos queden aislados de los de otras ECA para mantener la confidencialidad de mis clientes.
 Se asume una sola ECA por edificio, como asigna hoy HU-02; si MAICON confirma que un edificio puede tener equipos de distintas ECA, el aislamiento pasa al equipo.
@@ -138,7 +138,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 2. Dado un usuario de la ECA A, cuando pide por URL un recurso de la ECA B, entonces recibe 404.
 3. Dado un RT de Calle o un Firmante, cuando consulta edificios o máquinas, entonces ve solo los asignados, aunque sean de varias ECA.
 
-## HU-16: Mapa del RT y llegada al edificio
+## HU-16: HU-16: Mapa del RT y llegada al edificio
 
 Como RT de Calle quiero ver en el celular mis edificios pendientes según estén abiertos o cerrados ahora, con su contacto, y poder iniciar la inspección solo cuando estoy en el edificio, para no ir en vano y dejar constancia de mi presencia.
 Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
@@ -151,7 +151,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 4. Dado un RT a 30 m o menos del edificio, cuando mira la tarjeta, entonces aparecen "Iniciar Inspección" y "No se pudo realizar la inspección".
 5. Dado un GPS sin precisión suficiente, cuando el RT está en el edificio, entonces puede iniciar con foto y justificación, y la visita queda marcada para revisión de la Secretaría.
 
-## HU-17: Inspección técnica por solapas
+## HU-17: HU-17: Inspección técnica por solapas
 
 Como RT de Calle quiero relevar cada equipo del edificio por solapas desde el celular, moviéndome por el edificio, para registrar el estado de todas las máquinas en una sola visita, aunque no tenga señal.
 Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
@@ -164,7 +164,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 4. Dado un equipo fuera de servicio, cuando se guarda el reporte de parada, entonces la Secretaría y el Firmante reciben el aviso y ese equipo queda resuelto sin afectar a los demás.
 5. Dado que no hay señal, cuando el RT trabaja, entonces no pierde nada de lo cargado, fotos incluidas.
 
-## HU-18: Cierre, firma y envío del informe
+## HU-18: HU-18: Cierre, firma y envío del informe
 
 Como RT de Calle quiero consolidar todos los equipos en un informe que el encargado firme una sola vez en el celular, y que se envíe aunque al firmar no haya señal, para cerrar la visita con validez.
 La firma en pantalla es una firma electrónica (Ley 25.506), no digital: su valor probatorio se apoya en el sellado del informe.

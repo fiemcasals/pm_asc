@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Login } from './auth/Login';
+import { cerrarSesion, pantallaInicial, restaurarSesion, type Usuario } from './auth/sesion';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
@@ -12,6 +14,7 @@ import {
   IconFirmante,
   IconMoon,
   IconPanelLeft,
+  IconSalir,
   IconSecretaria,
   IconSistema,
   IconSun,
@@ -49,6 +52,14 @@ const SW_LABEL: Record<SwState, string> = {
   registrado: 'Registrado',
   'no-soportado': 'No soportado por este navegador',
   'no-registrado': 'No registrado',
+};
+
+const NAV_RT = {
+  id: 'rt' as const,
+  label: 'Mapa del RT',
+  shortLabel: 'Mapa',
+  testId: 'tab-rt',
+  icon: IconBrand,
 };
 
 const NAV_ITEMS: Array<{
@@ -94,8 +105,67 @@ function getInitialTheme(): ThemeMode {
   return stored === 'light' ? 'light' : 'dark';
 }
 
+type EstadoSesion =
+  | { kind: 'cargando' }
+  | { kind: 'sin-sesion' }
+  | { kind: 'activa'; usuario: Usuario; sinSenal: boolean };
+
+/** Puerta de entrada: sin sesión muestra el ingreso; con sesión, la pantalla del rol. */
 export function App() {
-  const [vista, setVista] = useState<Vista>('firmante');
+  const [sesion, setSesion] = useState<EstadoSesion>({ kind: 'cargando' });
+
+  useEffect(() => {
+    let activo = true;
+    void restaurarSesion().then((r) => {
+      if (!activo) return;
+      setSesion(
+        r.kind === 'sin-sesion'
+          ? { kind: 'sin-sesion' }
+          : { kind: 'activa', usuario: r.usuario, sinSenal: r.kind === 'sin-senal' },
+      );
+    });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const salir = useCallback(async () => {
+    if (!puedeSalir()) return;
+    await cerrarSesion();
+    setSesion({ kind: 'sin-sesion' });
+  }, []);
+
+  if (sesion.kind === 'cargando') {
+    return (
+      <main className="login-page" aria-busy="true">
+        <p className="login-title">Cargando…</p>
+      </main>
+    );
+  }
+  if (sesion.kind === 'sin-sesion') {
+    return <Login onIngreso={(usuario) => setSesion({ kind: 'activa', usuario, sinSenal: false })} />;
+  }
+  return (
+    <Escritorio
+      key={sesion.usuario.id}
+      usuario={sesion.usuario}
+      sinSenal={sesion.sinSenal}
+      onCerrarSesion={salir}
+    />
+  );
+}
+
+interface EscritorioProps {
+  usuario: Usuario;
+  sinSenal: boolean;
+  onCerrarSesion: () => void;
+}
+
+function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
+  const esRt = usuario.rol === 'rt_calle';
+  // El RT de Calle sólo ve su recorrido; el resto, los portales de oficina.
+  const navItems = esRt ? [NAV_RT] : NAV_ITEMS;
+  const [vista, setVista] = useState<Vista>(() => pantallaInicial(usuario.rol));
   const [health, setHealth] = useState<HealthState | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -143,7 +213,7 @@ export function App() {
     void fetchHealth().then(setHealth);
   }, []);
 
-  const currentNav = NAV_ITEMS.find((item) => item.id === vista) ?? NAV_ITEMS[0];
+  const currentNav = navItems.find((item) => item.id === vista) ?? navItems[0];
   const systemOnline = health?.kind === 'ok';
   const systemDotClass =
     health === null ? 'dot-pending' : systemOnline ? 'dot-ok' : 'dot-error';
@@ -178,7 +248,7 @@ export function App() {
 
         <nav className="neo-nav-group" aria-label="Secciones del sistema">
           {!sidebarCollapsed && <div className="neo-nav-label">PORTALES</div>}
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = vista === item.id;
             return (
@@ -198,6 +268,21 @@ export function App() {
         </nav>
 
         <div className="neo-sidebar-footer">
+          {!sidebarCollapsed && (
+            <span className="neo-status-label" data-testid="sesion-usuario" title={usuario.usuario}>
+              {usuario.nombre}
+            </span>
+          )}
+          <button
+            type="button"
+            className="neo-icon-btn"
+            onClick={onCerrarSesion}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+            data-testid="btn-cerrar-sesion"
+          >
+            <IconSalir size={15} />
+          </button>
           <button
             type="button"
             className="neo-status-pill"
@@ -239,11 +324,23 @@ export function App() {
           </div>
 
           <div className="neo-topbar-actions">
-            <GlobalSearch
-              onNavigate={irA}
-              onSelectConsorcio={handleSelectConsorcio}
-              onSelectMaquina={handleSelectMaquina}
-            />
+            {!esRt && (
+              <GlobalSearch
+                onNavigate={irA}
+                onSelectConsorcio={handleSelectConsorcio}
+                onSelectMaquina={handleSelectMaquina}
+              />
+            )}
+
+            <button
+              type="button"
+              className="neo-icon-btn neo-mobile-theme-btn"
+              onClick={onCerrarSesion}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <IconSalir size={15} />
+            </button>
 
             <button
               type="button"
@@ -257,6 +354,22 @@ export function App() {
         </header>
 
         <main className="page neo-main">
+          {sinSenal && (
+            <p className="sesion-aviso" role="status" data-testid="aviso-sin-senal">
+              Sin señal: estás trabajando con la sesión guardada en este dispositivo.
+            </p>
+          )}
+          {vista === 'rt' && (
+            <section className="rt-inicio" aria-labelledby="rt-titulo" data-testid="vista-rt">
+              <h2 id="rt-titulo" className="portal-title">
+                Hola {usuario.nombre}
+              </h2>
+              <p className="portal-desc">
+                Acá vas a ver el mapa con tus edificios pendientes. Llega con la tarea "Mapa del RT con
+                pines por horario" (HU-16).
+              </p>
+            </section>
+          )}
           {vista === 'firmante' && (
             <PortalFirmante
               maquinaInicialId={maquinaBuscadaId}
@@ -348,7 +461,7 @@ export function App() {
 
       {/* Barra inferior mobile PWA */}
       <nav className="neo-mobile-nav" aria-label="Navegación móvil">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active = vista === item.id;
           return (

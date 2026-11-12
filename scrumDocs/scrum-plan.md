@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:28:14.400Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:28:24.539Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -324,7 +324,12 @@ Disparo automático inmediato y visualización directa implementados:
 - Estimado: 3h
 
 ### RF-05 — Fotos por anomalía
-Inicio de desarrollo de HU-17 RF-05
+PR #33 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/33
+Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494001295-fotos-por-anomalia
+- Adjuntar Foto de Anomalía con nombre del ítem mostrado solo en fallas.
+- Falla crítica sin foto bloquea la solapa; falla común sin foto permite completar.
+- Compresión progresiva JPEG vía Canvas <= 500 KB (fotos.ts) con metadatos de equipo, solapa, ítem y hora.
+- Verificado: npm run verify (API 26/207 OK, Web 8/86 OK), RF-05-entrega.sh (2 OK; carga 20x maxBytes=420000 prom 0.34 ms) y Playwright RF-05-paso-1/2.png.
 - Estimado: 4h
 
 ### RF-07 — Navegación por estaciones y sala compartida

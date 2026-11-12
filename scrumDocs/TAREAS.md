@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:27:23.742Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:28:35.346Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -174,14 +174,17 @@ Implementar el pipeline de eventos ante fallas críticas cargadas por el RT de c
 1. Al registrarse un informe con falla critica (cables desgastados o limitador anulado), el servidor emite evento en tiempo real.
 2. El panel de la secretaria despliega una notificacion emergente con aviso sonoro y enlace directo al informe.
 
-### RF-02: Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA (Funcional)
+### RF-02: Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA (Funcional)
 
-Desarrollar el generador de PDF con membrete institucional de MAICON S.R.L. y servicio de envío de email automático a la ECA para deslinde de responsabilidad.
+Generar el PDF formal de la falla con membrete de MAICON S.R.L. para el deslinde de responsabilidad, y el servicio que lo envía por email a la ECA. El envío NO se dispara al registrar la falla: lo invoca la aprobación de la Secretaría (tarea "Enviar los avisos a la ECA solo después de la revisión de la Secretaría", HU-11), porque el cliente pidió que nada salga sin revisión (P4 y cuestionario 06/11). Logo, membrete y textos legales los provee MAICON (P13.a); hasta tenerlos se usa un membrete provisorio. Remitente provisorio informado por el cliente en P10.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
 
 **Condiciones de aprobación**
 
-1. El servicio genera un documento PDF formal con membrete de MAICON S.R.L., detalle de anomalias tecnicas y fotografias adjuntas.
-2. El sistema despacha automaticamente el PDF por correo electronico a la ECA contratante dejando constancia de envio.
+1. El servicio genera un PDF con membrete de MAICON S.R.L., datos del edificio y la máquina, detalle de las fallas y las fotos adjuntas.
+2. Registrar una Falla Crítica no envía ningún email: el envío ocurre solo cuando se lo invoca para un aviso aprobado.
+3. Al enviarse, el PDF llega por email a la ECA del edificio y queda registrada la constancia de envío con fecha y hora.
+4. Si el envío del email falla, queda registrado como "Envío fallido" con el motivo y se puede reintentar.
 
 ### RF-03: Lista de Fallas Críticas definida por el cliente (Funcional)
 
@@ -426,7 +429,7 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 **Condiciones de aprobación**
 
 1. Al registrarse una Falla Crítica no se envía ningún WhatsApp ni email: el aviso queda en estado "Pendiente de revisión" y aparece en la bandeja de la Secretaría.
-2. Cuando la Secretaría aprueba el aviso, se envía el WhatsApp a la ECA y al RT Firmante del edificio, y el aviso pasa a "Enviado".
+2. Cuando la Secretaría aprueba el aviso, se envían el WhatsApp a la ECA y al RT Firmante del edificio y el PDF legal por email a la ECA, y el aviso pasa a "Enviado".
 3. El endpoint de disparo automático ya no envía nada sin aprobación: un pedido de envío de un aviso no aprobado responde 409 con el motivo.
 4. El historial de envíos registra quién aprobó cada aviso y la fecha y hora de la aprobación.
 

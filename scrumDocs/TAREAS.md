@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:21:21.721Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:23:43.851Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -116,26 +116,6 @@ La pestaña Asignación de Roles de Trabajo hace un GET de roles por edificio al
 
 1. La pestaña obtiene las ternas de todos los edificios con una sola llamada a la API.
 2. Con 500 edificios cargados, abrir la pestaña no devuelve errores de lectura y se informa el tiempo medido.
-
-## HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA
-
-### RF-01: Servicio de Telemetría GPS y Proximidad de Inspectores (Funcional)
-
-Implementar el servicio backend de ingesta y consulta de ubicación GPS en tiempo real de los técnicos e inspectores en calle.
-
-**Condiciones de aprobación**
-
-1. El endpoint POST /api/inspectores/gps actualiza las coordenadas latitud/longitud y estado del inspector.
-2. El endpoint GET /api/flota/cercano calcula y retorna el inspector mas cercano a un punto geografico de CABA ante emergencias.
-
-### RF-02: UI Mapa de Flota interactivo CABA y Despacho de Emergencia (Funcional)
-
-Desarrollar la pantalla principal con el mapa interactivo de CABA, visualizando los pines de inspectores en vivo y selector de desvío urgente.
-
-**Condiciones de aprobación**
-
-1. El mapa principal de CABA renderiza los pines de ubicacion en vivo de los tecnicos con sus datos de identificacion.
-2. Ante un llamado de emergencia por ascensor parado con personas atrapadas, el mapa destaca al tecnico mas proximo con boton para desviarlo.
 
 ## HU-04: HU-04: Semáforo de Control Mensual y Reasignación Operativa
 

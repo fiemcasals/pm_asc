@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:23:45.206Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:27:25.228Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -24,7 +24,7 @@ graph TD
   end
   subgraph US_1791560828979["HU-04: HU-04: Semáforo de Control Mensual y Reasignación Operativa"]
     REQ_1791910395389["RF-01: Motor de Control Semafórico por Antigüedad de Visita"]
-    REQ_1791910395476["RF-02: Integración Visual del Semáforo en Mapa y Reasignación Rápida"]
+    REQ_1791910395476["RF-02: Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida"]
   end
   subgraph US_1791560829061["HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice"]
     REQ_1791910395565["RF-01: API de Monitoreo Backoffice y Acciones Comerciales"]

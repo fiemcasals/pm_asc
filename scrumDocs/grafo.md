@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:27:25.228Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:28:36.766Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -32,7 +32,7 @@ graph TD
   end
   subgraph US_1791560829152["HU-06: HU-06: Gestión de Fallas Críticas y Deslinde Legal"]
     REQ_1791910396411["RF-01: Recepción de Falla Crítica y Alerta Emergente en Secretaría"]
-    REQ_1791910396553["RF-02: Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA"]
+    REQ_1791910396553["RF-02: Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA"]
     REQ_1794493274550["RF-03: Lista de Fallas Críticas definida por el cliente"]
     REQ_1794493274814["RF-04: Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra"]
     REQ_1794493275052["RF-05: Estado del ascensor: el RT lo marca y el Firmante lo confirma"]
@@ -121,6 +121,7 @@ graph TD
   REQ_1791910395002 --> REQ_1794155774018
   REQ_1794155773535 --> REQ_1794493273993
   REQ_1791910396892 --> REQ_1794493273993
+  REQ_1791910396553 --> REQ_1794493273993
   REQ_1794493273993 --> REQ_1794493274385
   REQ_1794486918351 --> REQ_1794488168014
 ```

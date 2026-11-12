@@ -97,6 +97,35 @@ describe('FallasCriticasService', () => {
     res.informe.inspector = 'otro';
     expect(service.obtenerInforme(res.informe.id).inspector).toBe('dev-ma-2');
   });
+
+  it('acepta códigos críticos del checklist (RF-08), fotos base64 y deduplica reintentos por clientReportId', () => {
+    const payload = {
+      ...BASE,
+      clientReportId: 'rep-rf08-1',
+      fallasCriticas: ['PARACAIDAS_ANOMALIA', 'ESPACIO_ENTRE_PUERTAS_MAYOR_12CM'],
+      fotografias: ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/'],
+      observaciones: 'Hallazgo crítico desde checklist móvil',
+    };
+
+    const primero = service.registrarInforme(payload);
+    expect(primero.eventoEmitido).toBe(true);
+    expect(primero.informe.fallasCriticas).toEqual([
+      'PARACAIDAS_ANOMALIA',
+      'ESPACIO_ENTRE_PUERTAS_MAYOR_12CM',
+    ]);
+    expect(primero.informe.fotografias).toHaveLength(1);
+    expect(recibidos).toHaveLength(1);
+    expect(recibidos[0].fallas).toEqual([
+      'PARACAIDAS_ANOMALIA',
+      'ESPACIO_ENTRE_PUERTAS_MAYOR_12CM',
+    ]);
+
+    const reintento = service.registrarInforme(payload);
+    expect(reintento.eventoEmitido).toBe(false);
+    expect(reintento.informe.id).toBe(primero.informe.id);
+    expect(service.listarEventosCriticos()).toHaveLength(1);
+    expect(recibidos).toHaveLength(1);
+  });
 });
 
 describe('renderInforme', () => {
@@ -111,5 +140,17 @@ describe('renderInforme', () => {
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(html).toContain('Limitador de velocidad anulado');
+  });
+
+  it('incrusta fotos base64 válidas en el informe HTML', () => {
+    const service = new FallasCriticasService(new FirmanteService());
+    const { informe } = service.registrarInforme({
+      ...BASE,
+      fallasCriticas: ['STOP_FOSA_DEFICIENTE_INEXISTENTE'],
+      fotografias: ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/'],
+    });
+    const html = renderInforme(informe);
+    expect(html).toContain('<img src="data:image/jpeg;base64,');
+    expect(html).toContain('Stop de fosa: DEFICIENTE / INEXISTENTE');
   });
 });

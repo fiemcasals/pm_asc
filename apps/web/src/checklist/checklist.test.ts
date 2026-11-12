@@ -1,10 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   CHECKLIST_VERSION,
   obtenerChecklistParaTipo,
   obtenerFallasCriticasDefinidas,
 } from './checklist.config';
 import { contarRespondidosSolapa, esSolapaCompleta } from './checklist.logic';
+import {
+  construirPayloadInformeCritico,
+  despacharOEncolarInformeCritico,
+  recolectarFallasCriticasSolapa,
+  sincronizarColaFallasCriticas,
+} from './fallasCriticasChecklist';
 
 describe('Checklist genérico por solapas (HU-17 RF-04)', () => {
   it('dibuja las 5 solapas desde el motor versionado y adapta ítems según tracción vs hidráulico', () => {
@@ -231,6 +237,7 @@ import {
   cargarVisitaEnCurso,
   guardarVisitaEnCurso,
   limpiarVisitaEnCurso,
+  listarColaInformesCriticos,
   tieneProgresoVisita,
 } from './offlineStore';
 
@@ -283,6 +290,7 @@ function crearIdbEnMemoria(): IDBFactory {
                 return val[kp];
               }),
               get: (k: string) => makeReq(() => map.get(k)),
+              getAll: () => makeReq(() => [...map.values()]),
               delete: (k: string) => makeReq(() => {
                 map.delete(k);
                 return undefined;
@@ -371,5 +379,135 @@ describe('Persistencia offline en IndexedDB (HU-17 RNF-01)', () => {
 
     await limpiarVisitaEnCurso(idb);
     expect(await cargarVisitaEnCurso(idb)).toBeNull();
+  });
+});
+
+describe('Fallas críticas del checklist y cola offline (HU-17 RF-08)', () => {
+  it('recolecta fallas críticas de una solapa (incluye fallas por piso y fotos) y arma el payload', () => {
+    const config = obtenerChecklistParaTipo('traccion');
+    const accesos = config.solapas.find((s) => s.id === 'accesos')!;
+
+    const rec = recolectarFallasCriticasSolapa({
+      solapa: accesos,
+      respuestasSolapa: {
+        espacio_entre_puertas: 'mayor_12cm',
+      },
+      fallasPiso: [
+        {
+          id: 'fp-1',
+          piso: '4',
+          componenteId: 'cerradura_puerta',
+          componenteEtiqueta: 'Cerradura no traba',
+          grupo: 'seguridad_critica',
+          grupoTitulo: 'Seguridad Crítica',
+          detalle: 'No enclava puerta en piso 4',
+          esFallaCritica: true,
+          codigoFallaCritica: 'CERRADURA_NO_TRABA',
+          creadaEn: '2026-11-12T12:00:00.000Z',
+        },
+      ],
+      fotos: {
+        'accesos:espacio_entre_puertas': {
+          id: 'f-1',
+          maquinaId: 'demo-m1',
+          referenciaAgc: 'M1',
+          solapaId: 'accesos',
+          itemId: 'espacio_entre_puertas',
+          itemEtiqueta: 'Espacio entre puertas mayor a 12 cm',
+          dataUrl: 'data:image/jpeg;base64,AAA=',
+          sizeBytes: 1200,
+          tomadaEn: '2026-11-12T12:00:00.000Z',
+        },
+        'accesos:piso:fp-1': {
+          id: 'f-2',
+          maquinaId: 'demo-m1',
+          referenciaAgc: 'M1',
+          solapaId: 'accesos',
+          itemId: 'piso-fp-1',
+          itemEtiqueta: 'Piso 4',
+          dataUrl: 'data:image/jpeg;base64,BBB=',
+          sizeBytes: 1400,
+          tomadaEn: '2026-11-12T12:00:00.000Z',
+        },
+      },
+    });
+
+    expect(rec.codigosCriticos).toEqual(['ESPACIO_ENTRE_PUERTAS_MAYOR_12CM', 'CERRADURA_NO_TRABA']);
+    expect(rec.fotografias).toHaveLength(2);
+
+    const payload = construirPayloadInformeCritico({
+      equipo: EQUIPOS_EDIFICIO_DEMO[0],
+      solapa: accesos,
+      respuestasSolapa: { espacio_entre_puertas: 'mayor_12cm' },
+      fallasPiso: [],
+      fotos: {
+        'accesos:espacio_entre_puertas': {
+          id: 'f-1',
+          maquinaId: 'demo-m1',
+          referenciaAgc: 'M1',
+          solapaId: 'accesos',
+          itemId: 'espacio_entre_puertas',
+          itemEtiqueta: 'Espacio entre puertas mayor a 12 cm',
+          dataUrl: 'data:image/jpeg;base64,AAA=',
+          sizeBytes: 1200,
+          tomadaEn: '2026-11-12T12:00:00.000Z',
+        },
+      },
+      observacionSolapa: 'Puerta desregulada',
+      inspector: 'Gonzalo RT',
+      clientReportId: 'rep-test-1',
+    });
+
+    expect(payload).toMatchObject({
+      clientReportId: 'rep-test-1',
+      maquinaId: 'MAQ-CALLAO-M1',
+      inspector: 'Gonzalo RT',
+      fallasCriticas: ['ESPACIO_ENTRE_PUERTAS_MAYOR_12CM'],
+    });
+    expect(payload?.observaciones).toContain('Puerta desregulada');
+    expect(payload?.fotografias).toHaveLength(1);
+  });
+
+  it('sin señal encola el informe en IndexedDB y al volver la conexión lo envía una sola vez', async () => {
+    const idb = crearIdbEnMemoria();
+    const config = obtenerChecklistParaTipo('traccion');
+    const sala = config.solapas.find((s) => s.id === 'sala_maquinas')!;
+    const payload = construirPayloadInformeCritico({
+      equipo: EQUIPOS_EDIFICIO_DEMO[0],
+      solapa: sala,
+      respuestasSolapa: { cables_traccion: 'desgastados', limitador_velocidad: 'anulado' },
+      inspector: 'Gonzalo RT',
+      clientReportId: 'rep-offline-1',
+    })!;
+
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 201,
+      json: async () => ({ informe: { id: 'INF-901' }, eventoEmitido: true }),
+    })) as unknown as typeof fetch;
+
+    const offlineRes = await despacharOEncolarInformeCritico({
+      payload,
+      enLinea: false,
+      idbFactory: idb,
+      fetchFn: fetchMock,
+    });
+    expect(offlineRes).toEqual({
+      tieneFallasCriticas: true,
+      estado: 'encolado',
+      pendientesEnCola: 1,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await listarColaInformesCriticos(idb)).toHaveLength(1);
+
+    const sync1 = await sincronizarColaFallasCriticas(idb, fetchMock);
+    expect(sync1).toEqual({ enviados: 1, pendientes: 0 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(await listarColaInformesCriticos(idb)).toHaveLength(0);
+
+    // Segundo intento de sincronización: la cola ya está vacía, no reenvía duplicados
+    const sync2 = await sincronizarColaFallasCriticas(idb, fetchMock);
+    expect(sync2).toEqual({ enviados: 0, pendientes: 0 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -8,6 +8,7 @@ import { type RespuestasChecklist } from './checklist.logic';
 
 export interface EquipoInspeccion {
   maquinaId: string;
+  firmanteMaquinaId?: string;
   referenciaAgc: string;
   descripcion: string;
   tipo: TipoMaquinaChecklist;
@@ -18,6 +19,7 @@ export interface EquipoInspeccion {
 export const EQUIPOS_EDIFICIO_DEMO: readonly EquipoInspeccion[] = [
   {
     maquinaId: 'demo-m1',
+    firmanteMaquinaId: 'MAQ-CALLAO-M1',
     referenciaAgc: 'M1',
     descripcion: 'Principal Tracción',
     tipo: 'traccion',
@@ -26,6 +28,7 @@ export const EQUIPOS_EDIFICIO_DEMO: readonly EquipoInspeccion[] = [
   },
   {
     maquinaId: 'demo-m2',
+    firmanteMaquinaId: 'MAQ-CORRIENTES-M1',
     referenciaAgc: 'M2',
     descripcion: 'Servicio Hidráulico',
     tipo: 'hidraulico',
@@ -34,6 +37,7 @@ export const EQUIPOS_EDIFICIO_DEMO: readonly EquipoInspeccion[] = [
   },
   {
     maquinaId: 'demo-m3',
+    firmanteMaquinaId: 'MAQ-CORRIENTES-M2',
     referenciaAgc: 'M3',
     descripcion: 'Montavehículos',
     tipo: 'montavehiculos',

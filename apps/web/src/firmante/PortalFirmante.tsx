@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AlertaFallaCritica } from '../fallas/AlertaFallaCritica';
 import {
   autorizarFirmaMaquina,
   fetchMaquinasFirmante,
@@ -88,6 +89,7 @@ export function PortalFirmante({
 
   return (
     <section className="portal-firmante" aria-labelledby="portal-firmante-titulo">
+      <AlertaFallaCritica rol="firmante" />
       <div className="portal-header">
         <div>
           <h2 id="portal-firmante-titulo" className="portal-title">

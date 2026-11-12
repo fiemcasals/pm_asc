@@ -431,7 +431,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               onConsumirMaquinaInicial={() => setMaquinaBuscadaId(null)}
             />
           )}
-          {vista === 'inspeccion' && <InspeccionCampoView />}
+          {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} />}
           {vista === 'eca' && <PortalEca />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />

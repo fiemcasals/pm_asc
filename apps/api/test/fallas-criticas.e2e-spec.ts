@@ -138,4 +138,41 @@ describe('Fallas críticas (e2e)', () => {
   it('404 si el informe no existe', async () => {
     await request(app.getHttpServer()).get('/api/fallas-criticas/informes/INF-nada').expect(404);
   });
+
+  it('RF-08: registra falla crítica de checklist con foto base64, la lista en GET /informes y deduplica reintento offline', async () => {
+    const payload = {
+      clientReportId: 'rep-e2e-rf08-001',
+      maquinaId: 'MAQ-CORRIENTES-M1',
+      inspector: 'Gonzalo RT',
+      cablesDesgastados: false,
+      limitadorAnulado: false,
+      fallasCriticas: ['PARACAIDAS_ANOMALIA'],
+      observaciones: '[Cabina · M1] Paracaídas: Anomalía o rotura visible',
+      fotografias: ['data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/'],
+    };
+
+    const primero = await request(app.getHttpServer())
+      .post('/api/fallas-criticas/informes')
+      .send(payload)
+      .expect(201);
+
+    expect(primero.body.eventoEmitido).toBe(true);
+    expect(primero.body.informe.fallasCriticas).toEqual(['PARACAIDAS_ANOMALIA']);
+
+    const reintento = await request(app.getHttpServer())
+      .post('/api/fallas-criticas/informes')
+      .send(payload)
+      .expect(201);
+
+    expect(reintento.body.eventoEmitido).toBe(false);
+    expect(reintento.body.informe.id).toBe(primero.body.informe.id);
+
+    const listado = await request(app.getHttpServer())
+      .get('/api/fallas-criticas/informes')
+      .expect(200);
+    const coincidencias = (listado.body as Array<{ informeId: string }>).filter(
+      (i) => i.informeId === primero.body.informe.id,
+    );
+    expect(coincidencias).toHaveLength(1);
+  });
 });

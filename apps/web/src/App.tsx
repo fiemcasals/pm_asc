@@ -1,6 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ConsentimientoUbicacion } from './auth/ConsentimientoUbicacion';
 import { Login } from './auth/Login';
-import { cerrarSesion, pantallaInicial, restaurarSesion, type Usuario } from './auth/sesion';
+import {
+  alRevocarse,
+  cerrarSesion,
+  guardarPerfil,
+  MENSAJE_REVOCADA,
+  pantallaInicial,
+  restaurarSesion,
+  type Usuario,
+} from './auth/sesion';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
@@ -107,7 +116,7 @@ function getInitialTheme(): ThemeMode {
 
 type EstadoSesion =
   | { kind: 'cargando' }
-  | { kind: 'sin-sesion' }
+  | { kind: 'sin-sesion'; aviso?: string }
   | { kind: 'activa'; usuario: Usuario; sinSenal: boolean };
 
 /** Puerta de entrada: sin sesión muestra el ingreso; con sesión, la pantalla del rol. */
@@ -118,16 +127,17 @@ export function App() {
     let activo = true;
     void restaurarSesion().then((r) => {
       if (!activo) return;
-      setSesion(
-        r.kind === 'sin-sesion'
-          ? { kind: 'sin-sesion' }
-          : { kind: 'activa', usuario: r.usuario, sinSenal: r.kind === 'sin-senal' },
-      );
+      if (r.kind === 'sin-sesion') setSesion({ kind: 'sin-sesion' });
+      else if (r.kind === 'revocada') setSesion({ kind: 'sin-sesion', aviso: MENSAJE_REVOCADA });
+      else setSesion({ kind: 'activa', usuario: r.usuario, sinSenal: r.kind === 'sin-senal' });
     });
     return () => {
       activo = false;
     };
   }, []);
+
+  // Si en cualquier pedido el servidor informa que la sesión fue revocada, se vuelve al ingreso con el motivo.
+  useEffect(() => alRevocarse(() => setSesion({ kind: 'sin-sesion', aviso: MENSAJE_REVOCADA })), []);
 
   const salir = useCallback(async () => {
     if (!puedeSalir()) return;
@@ -143,7 +153,25 @@ export function App() {
     );
   }
   if (sesion.kind === 'sin-sesion') {
-    return <Login onIngreso={(usuario) => setSesion({ kind: 'activa', usuario, sinSenal: false })} />;
+    return (
+      <Login
+        aviso={sesion.aviso}
+        onIngreso={(usuario) => setSesion({ kind: 'activa', usuario, sinSenal: false })}
+      />
+    );
+  }
+  // El RT de Calle no puede seguir sin aceptar el aviso de uso de ubicación (Ley 25.326).
+  if (sesion.usuario.rol === 'rt_calle' && sesion.usuario.consentimientoUbicacionPendiente) {
+    return (
+      <ConsentimientoUbicacion
+        onCerrarSesion={salir}
+        onAceptado={() => {
+          const usuario = { ...sesion.usuario, consentimientoUbicacionPendiente: false };
+          guardarPerfil(usuario);
+          setSesion({ ...sesion, usuario });
+        }}
+      />
+    );
   }
   return (
     <Escritorio

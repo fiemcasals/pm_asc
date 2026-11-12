@@ -26,9 +26,11 @@ function LogoMaicon() {
 
 interface LoginProps {
   onIngreso: (usuario: Usuario) => void;
+  /** Motivo por el que se volvió al ingreso (por ejemplo, sesión revocada). */
+  aviso?: string;
 }
 
-export function Login({ onIngreso }: LoginProps) {
+export function Login({ onIngreso, aviso }: LoginProps) {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [verPassword, setVerPassword] = useState(false);
@@ -57,6 +59,12 @@ export function Login({ onIngreso }: LoginProps) {
         <h1 id="login-titulo" className="login-title">
           Inspecciones de Ascensores
         </h1>
+
+        {aviso && (
+          <p className="login-aviso" role="status" data-testid="login-aviso">
+            {aviso}
+          </p>
+        )}
 
         <label className="login-field">
           <span className="login-label">Usuario / Email</span>

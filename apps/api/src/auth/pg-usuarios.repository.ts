@@ -10,6 +10,7 @@ interface UsuarioRow {
   rol: Rol;
   password_hash: string;
   activo: boolean;
+  sesiones_revocadas_en: Date | null;
 }
 
 interface SesionRow {
@@ -17,6 +18,7 @@ interface SesionRow {
   usuario_id: string;
   refresh_hash: string;
   expira_en: Date;
+  revocada_en: Date | null;
 }
 
 const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,13 +31,18 @@ const aUsuario = (r: UsuarioRow): UsuarioGuardado => ({
   rol: r.rol,
   passwordHash: r.password_hash,
   activo: r.activo,
+  sesionesRevocadasEn: r.sesiones_revocadas_en ? new Date(r.sesiones_revocadas_en) : null,
 });
+
+const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en';
+const COLUMNAS_SESION = 'id, usuario_id, refresh_hash, expira_en, revocada_en';
 
 const aSesion = (r: SesionRow): Sesion => ({
   id: r.id,
   usuarioId: r.usuario_id,
   refreshHash: r.refresh_hash,
   expiraEn: new Date(r.expira_en),
+  revocadaEn: r.revocada_en ? new Date(r.revocada_en) : null,
 });
 
 @Injectable()
@@ -46,7 +53,7 @@ export class PgUsuariosRepository extends UsuariosRepository {
 
   async buscarPorUsuario(usuario: string): Promise<UsuarioGuardado | null> {
     const rows = await this.db.query<UsuarioRow>(
-      'SELECT id, usuario, nombre, rol, password_hash, activo FROM usuarios WHERE lower(usuario) = $1',
+      `SELECT ${COLUMNAS_USUARIO} FROM usuarios WHERE lower(usuario) = $1`,
       [clave(usuario)],
     );
     return rows[0] ? aUsuario(rows[0]) : null;
@@ -55,7 +62,7 @@ export class PgUsuariosRepository extends UsuariosRepository {
   async buscarPorId(id: string): Promise<UsuarioGuardado | null> {
     if (!ES_UUID.test(id)) return null;
     const rows = await this.db.query<UsuarioRow>(
-      'SELECT id, usuario, nombre, rol, password_hash, activo FROM usuarios WHERE id = $1',
+      `SELECT ${COLUMNAS_USUARIO} FROM usuarios WHERE id = $1`,
       [id],
     );
     return rows[0] ? aUsuario(rows[0]) : null;
@@ -66,7 +73,7 @@ export class PgUsuariosRepository extends UsuariosRepository {
       `INSERT INTO usuarios (usuario, nombre, rol, password_hash)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (lower(usuario)) DO NOTHING
-       RETURNING id, usuario, nombre, rol, password_hash, activo`,
+       RETURNING ${COLUMNAS_USUARIO}`,
       [datos.usuario.trim(), datos.nombre, datos.rol, datos.passwordHash],
     );
     return rows[0] ? aUsuario(rows[0]) : null;
@@ -80,10 +87,10 @@ export class PgUsuariosRepository extends UsuariosRepository {
     return Number(rows[0]?.total ?? 0);
   }
 
-  async crearSesion(datos: Omit<Sesion, 'id'>): Promise<Sesion> {
+  async crearSesion(datos: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion> {
     const rows = await this.db.query<SesionRow>(
       `INSERT INTO sesiones (usuario_id, refresh_hash, expira_en) VALUES ($1, $2, $3)
-       RETURNING id, usuario_id, refresh_hash, expira_en`,
+       RETURNING ${COLUMNAS_SESION}`,
       [datos.usuarioId, datos.refreshHash, datos.expiraEn],
     );
     return aSesion(rows[0]);
@@ -91,7 +98,7 @@ export class PgUsuariosRepository extends UsuariosRepository {
 
   async buscarSesion(refreshHash: string): Promise<Sesion | null> {
     const rows = await this.db.query<SesionRow>(
-      'SELECT id, usuario_id, refresh_hash, expira_en FROM sesiones WHERE refresh_hash = $1',
+      `SELECT ${COLUMNAS_SESION} FROM sesiones WHERE refresh_hash = $1`,
       [refreshHash],
     );
     return rows[0] ? aSesion(rows[0]) : null;
@@ -101,6 +108,39 @@ export class PgUsuariosRepository extends UsuariosRepository {
     const rows = await this.db.query<{ id: string }>(
       'DELETE FROM sesiones WHERE id = $1 RETURNING id',
       [id],
+    );
+    return rows.length > 0;
+  }
+
+  async revocarSesiones(usuarioId: string, ahora: Date): Promise<boolean> {
+    if (!ES_UUID.test(usuarioId)) return false;
+    return this.db.transaction(async (client) => {
+      const r = await client.query('UPDATE usuarios SET sesiones_revocadas_en = $2 WHERE id = $1', [
+        usuarioId,
+        ahora,
+      ]);
+      if (r.rowCount === 0) return false;
+      await client.query(
+        'UPDATE sesiones SET revocada_en = $2 WHERE usuario_id = $1 AND revocada_en IS NULL',
+        [usuarioId, ahora],
+      );
+      return true;
+    });
+  }
+
+  async registrarConsentimiento(usuarioId: string, version: string, ahora: Date): Promise<void> {
+    await this.db.query(
+      `INSERT INTO consentimientos_ubicacion (usuario_id, version, aceptado_en) VALUES ($1, $2, $3)
+       ON CONFLICT (usuario_id, version) DO NOTHING`,
+      [usuarioId, version, ahora],
+    );
+  }
+
+  async tieneConsentimiento(usuarioId: string, version: string): Promise<boolean> {
+    if (!ES_UUID.test(usuarioId)) return false;
+    const rows = await this.db.query(
+      'SELECT 1 FROM consentimientos_ubicacion WHERE usuario_id = $1 AND version = $2',
+      [usuarioId, version],
     );
     return rows.length > 0;
   }

@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthController, UsuariosController } from './auth/auth.controller';
+import { AuthController, ConsentimientoController, UsuariosController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { RELOJ, relojDelSistema } from './auth/auth.types';
 import { PgUsuariosRepository } from './auth/pg-usuarios.repository';
@@ -36,6 +36,7 @@ export class AppModule {
         HealthController,
         AuthController,
         UsuariosController,
+        ConsentimientoController,
         ConsorciosController,
         FirmanteController,
         EcaController,

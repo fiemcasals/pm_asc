@@ -1,8 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { aceptarConsentimiento } from './consentimiento';
 import {
   CLAVE_PERFIL,
+  MENSAJE_REVOCADA,
   MENSAJE_SIN_CONEXION,
+  SesionRevocadaError,
+  alRevocarse,
   cerrarSesion,
+  fetchConSesion,
   getAccessToken,
   leerPerfil,
   login,
@@ -148,6 +153,89 @@ describe('sesión del usuario (HU-14 RF-02)', () => {
       localStorage.setItem(CLAVE_PERFIL, '{"rol":"superusuario"}');
       vi.stubGlobal('fetch', vi.fn());
       expect(await restaurarSesion()).toEqual({ kind: 'sin-sesion' });
+    });
+  });
+
+  describe('revocación por un Administrador (RNF-01 c4)', () => {
+    const revocada = () => respuesta(401, { statusCode: 401, message: MENSAJE_REVOCADA, motivo: 'revocada' });
+
+    it('al reabrir la app con la sesión revocada, la cierra y lo informa', async () => {
+      localStorage.setItem(CLAVE_PERFIL, JSON.stringify(RT));
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(revocada()));
+      expect(await restaurarSesion()).toEqual({ kind: 'revocada' });
+      expect(leerPerfil()).toBeNull();
+      expect(getAccessToken()).toBeNull();
+    });
+
+    it('un envío que recibe 401 por revocación cierra la sesión, avisa y NO se reintenta', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, { accessToken: 'tok-5', usuario: RT })));
+      await login('rt1', 'Clave-Segura-2026');
+      const fetch = vi.fn().mockResolvedValue(revocada());
+      vi.stubGlobal('fetch', fetch);
+      const oyente = vi.fn();
+      const desuscribir = alRevocarse(oyente);
+
+      await expect(fetchConSesion('/api/visitas-fallidas', { method: 'POST', body: '{}' })).rejects.toBeInstanceOf(SesionRevocadaError);
+
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(new Headers(fetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer tok-5');
+      expect(oyente).toHaveBeenCalledTimes(1);
+      expect(leerPerfil()).toBeNull();
+      expect(getAccessToken()).toBeNull();
+      desuscribir();
+    });
+
+    it('con el token vencido (401 sin motivo) lo renueva una vez y reintenta el envío', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, { accessToken: 'viejo', usuario: RT })));
+      await login('rt1', 'Clave-Segura-2026');
+      const fetch = vi.fn()
+        .mockResolvedValueOnce(respuesta(401, { statusCode: 401, message: 'Tenés que iniciar sesión.' }))
+        .mockResolvedValueOnce(respuesta(200, { accessToken: 'nuevo', usuario: RT }))
+        .mockResolvedValueOnce(respuesta(201, { ok: true }));
+      vi.stubGlobal('fetch', fetch);
+
+      const res = await fetchConSesion('/api/algo', { method: 'POST' });
+
+      expect(res.status).toBe(201);
+      expect(fetch.mock.calls.map((c) => c[0])).toEqual(['/api/algo', '/api/auth/refresh', '/api/algo']);
+      expect(new Headers(fetch.mock.calls[2][1].headers).get('Authorization')).toBe('Bearer nuevo');
+    });
+
+    it('si al renovar el servidor dice que la sesión fue revocada, no reintenta el envío', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, { accessToken: 'viejo', usuario: RT })));
+      await login('rt1', 'Clave-Segura-2026');
+      const fetch = vi.fn()
+        .mockResolvedValueOnce(respuesta(401, { statusCode: 401, message: 'Tenés que iniciar sesión.' }))
+        .mockResolvedValueOnce(revocada());
+      vi.stubGlobal('fetch', fetch);
+
+      await expect(fetchConSesion('/api/algo', { method: 'POST' })).rejects.toBeInstanceOf(SesionRevocadaError);
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(leerPerfil()).toBeNull();
+    });
+  });
+
+  describe('consentimiento de ubicación (RNF-01 c1)', () => {
+    it('el login trae si el RT tiene el aviso pendiente, y aceptarlo manda la versión con el token', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+        respuesta(200, { accessToken: 'tok-6', usuario: { ...RT, consentimientoUbicacionPendiente: true } }),
+      ));
+      const r = await login('rt1', 'Clave-Segura-2026');
+      expect(r.kind === 'ok' && r.usuario.consentimientoUbicacionPendiente).toBe(true);
+
+      const fetch = vi.fn().mockResolvedValue(respuesta(201, { version: 'ubicacion-2026-11-v1', aceptadoEn: 'x' }));
+      vi.stubGlobal('fetch', fetch);
+      expect(await aceptarConsentimiento('ubicacion-2026-11-v1')).toBeNull();
+      expect(fetch.mock.calls[0][0]).toBe('/api/consentimientos/ubicacion');
+      expect(fetch.mock.calls[0][1].body).toBe(JSON.stringify({ version: 'ubicacion-2026-11-v1' }));
+      expect(new Headers(fetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer tok-6');
+    });
+
+    it('si la versión cambió, devuelve el mensaje del servidor; sin red, avisa que hace falta señal', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(400, { message: 'El aviso cambió: volvé a leerlo.' })));
+      expect(await aceptarConsentimiento('vieja')).toBe('El aviso cambió: volvé a leerlo.');
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+      expect(await aceptarConsentimiento('ubicacion-2026-11-v1')).toMatch(/hace falta señal/);
     });
   });
 

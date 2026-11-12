@@ -145,4 +145,21 @@ export const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    id: '006_consentimiento_y_revocacion',
+    sql: `
+      -- Aceptación del aviso de uso de ubicación (Ley 25.326), una fila por usuario y versión del texto.
+      CREATE TABLE consentimientos_ubicacion (
+        usuario_id  uuid NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+        version     text NOT NULL,
+        aceptado_en timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (usuario_id, version)
+      );
+
+      -- Revocación de sesiones por un Administrador. En el usuario, para invalidar también los
+      -- tokens de acceso ya emitidos; en cada sesión, para poder informar el motivo al refrescar.
+      ALTER TABLE usuarios ADD COLUMN sesiones_revocadas_en timestamptz;
+      ALTER TABLE sesiones ADD COLUMN revocada_en timestamptz;
+    `,
+  },
 ];

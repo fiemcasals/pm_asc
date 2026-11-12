@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Req, Res } from '@nestjs/common';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService, DURACION_REFRESCO_MS, LoginBloqueadoException, ResultadoSesion } from './auth.service';
-import { UsuarioAutenticado, UsuarioPublico } from './auth.types';
+import { UsuarioAutenticado, UsuarioPublico, UsuarioSesion } from './auth.types';
 import { validarLogin, validarNuevoUsuario } from './auth.validation';
 import { Roles, UsuarioActual } from './roles.guard';
 
@@ -26,7 +26,7 @@ interface RespuestaSesion {
   accessToken: string;
   tokenType: 'Bearer';
   expiresIn: number;
-  usuario: UsuarioPublico;
+  usuario: UsuarioSesion;
 }
 
 @Controller('auth')
@@ -65,7 +65,7 @@ export class AuthController {
 
   @Get('me')
   @Roles()
-  perfil(@UsuarioActual() usuario: UsuarioAutenticado): Promise<UsuarioPublico> {
+  perfil(@UsuarioActual() usuario: UsuarioAutenticado): Promise<UsuarioSesion> {
     return this.auth.perfil(usuario.id);
   }
 
@@ -85,5 +85,33 @@ export class UsuariosController {
   @Roles('administrador')
   crear(@Body() body: unknown): Promise<UsuarioPublico> {
     return this.auth.crearUsuario(validarNuevoUsuario(body));
+  }
+
+  /** Corta todas las sesiones del usuario (celular perdido, RT que deja la empresa). */
+  @Post(':id/revocar-sesiones')
+  @HttpCode(204)
+  @Roles('administrador')
+  revocar(@Param('id') id: string): Promise<void> {
+    return this.auth.revocarSesiones(id);
+  }
+}
+
+/** Aviso de uso de ubicación (Ley 25.326): el texto vigente y su aceptación. */
+@Controller('consentimientos/ubicacion')
+export class ConsentimientoController {
+  constructor(private readonly auth: AuthService) {}
+
+  @Get()
+  texto(): { version: string; titulo: string; parrafos: string[] } {
+    return this.auth.textoConsentimiento();
+  }
+
+  @Post()
+  @Roles()
+  aceptar(
+    @UsuarioActual() usuario: UsuarioAutenticado,
+    @Body() body: { version?: unknown } | undefined,
+  ): Promise<{ version: string; aceptadoEn: string }> {
+    return this.auth.aceptarConsentimiento(usuario.id, body?.version);
   }
 }

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T16:59:21.036Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T17:16:14.591Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -141,6 +141,7 @@ Pruebas:
 - Estimado: 6h
 
 ### RF-01 — Asociar la ECA al usuario y exponerla en la sesión
+PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RF-01-entrega.md
 - Estimado: 3h
 
 ### RF-04 — Horarios de atención por edificio editables por la Secretaría

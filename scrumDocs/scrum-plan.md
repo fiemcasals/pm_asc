@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T14:33:20.295Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T14:33:41.012Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -50,15 +50,28 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 42 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 43 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
 | 44 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 45 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 46 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
-| 47 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 48 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 49 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 50 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 51 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
-| 52 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02, RF-02 | — |
-| 53 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hacer | Sin asignar | RF-05 | — |
+| 45 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Hacer | Sin asignar | RF-01, RF-03 | — |
+| 46 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | Sin asignar | RF-02, RF-05 | — |
+| 47 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
+| 48 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | Sin asignar | RF-02, RF-01, RF-05 | — |
+| 49 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
+| 50 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 51 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | Sin asignar | RF-02, RF-05 | — |
+| 52 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hacer | Sin asignar | RF-01, RF-02 | — |
+| 53 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
+| 54 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 55 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hacer | Sin asignar | RF-04 | — |
+| 56 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-05 | — |
+| 57 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-04 | — |
+| 58 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 59 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-05 | — |
+| 60 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-05 | — |
+| 61 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | Sin asignar | RF-07, RF-03 | — |
+| 62 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
+| 63 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02, RF-02 | — |
+| 64 | RNF-01 | Sellado del informe | HU-18 | — | — | Hacer | Sin asignar | RF-01 | — |
+| 65 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | Hacer | Sin asignar | RF-01, RNF-01 | — |
+| 66 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hacer | Sin asignar | RF-05 | — |
 
 ## Detalle
 
@@ -226,12 +239,21 @@ Alertas críticas en Portal ECA implementadas y verificadas:
 ### RF-05 — Estado del ascensor: el RT lo marca y el Firmante lo confirma
 - Estimado: 4h
 
+### RF-01 — Motor del checklist configurable
+- Estimado: 5h
+
+### RF-06 — Pantalla de constancia de visita fallida en el celular del RT
+- Estimado: 4h
+
 ### RF-02 — Descarga de Remito Técnico y Registro de Acuse de Recibo Legal
 Descarga de remito técnico y acuse de recibo legal implementados:
 1. Botón 'Descargar Remito de Notificación' habilitado en todas las tarjetas de alerta crítica del Portal ECA, permitiendo la descarga formal del documento con desglose de fallas y fotos.
 2. Persistencia automática de fecha, hora y usuario (operador.legal@maicon.com.ar) para el acuse legal vinculante de MAICON S.R.L. en PostgreSQL (tabla acuses_recibo_legal) y en memoria.
 3. Indicador visual inmediato en la UI mostrando constancia de acuse de recibo legal registrado.
 4. Pruebas: 112 tests en verde (72 Jest en API + 40 Vitest en Web) y 7/7 pruebas de integración con PostgreSQL/PostGIS. Los 2 tests de desarrollo fueron aprobados con evidencia; los 2 de integración preparados para QA. PR: https://github.com/fiemcasals/pm_asc/pull/9
+- Estimado: 3h
+
+### RF-02 — Selección de equipo y pregunta de uso
 - Estimado: 3h
 
 ### RF-01 — Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica
@@ -246,6 +268,12 @@ Conector de API de WhatsApp y plantilla formal implementados:
 EcaService.registrarAcuseRecibo ahora guarda el acuse en acuses_recibo_legal ANTES de marcarlo en memoria y deja subir el error del INSERT (se sacó el try/catch vacío): con la base caída responde 500, con un texto que la base no puede guardar (NUL) responde 400 por el filtro de RNF-01, el remito no se entrega si el acuse no se pudo guardar, y sin base configurada el acuse queda sólo en memoria como antes. 24 líneas en eca.service.ts. Pruebas: npm run verify 135/135 en API (13 nuevos) y 49/49 en web; test:int 16/16 contra PostGIS real (4 nuevos); sin el arreglo fallan 8 de 13 unitarias/e2e y 2 de 4 de integración (Expected 400, Received 201 / 200). Script de entrega 5/5; carga de 100 acuses válidos: 0 fallidos, 100 de 100 filas guardadas, p95 69 ms. Condiciones 1 y 4 con la base real detenida: 500, sin remito y la alerta sin acuse; al volver la base, el reintento da 201 con su fila. 5 tests de desarrollo aprobados con evidencia; 5 de integración preparados para QA como Manual (apagan la base o llevan un NUL). Mínimo necesario agregado: fakeDatabase de los tests gana query() (aditivo). Afuera y documentado: HU-07 RF-01 (visitas fallidas) tiene un INSERT que no puede funcionar nunca (columna metadata inexistente) y también se traga el error; el acuse guardado no se vuelve a leer tras reiniciar; sin unicidad por alerta. PR: https://github.com/fiemcasals/pm_asc/pull/15
 - Estimado: 2h
 
+### RF-03 — Reporte de parada de un equipo fuera de servicio
+- Estimado: 3h
+
+### RF-04 — Pantalla de solapa generada desde el motor
+- Estimado: 5h
+
 ### RF-02 — Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo
 Disparo automático inmediato y visualización directa implementados:
 1. WhatsAppTriggerService detecta informes críticos consolidados (Fuera de Servicio o Reparación Urgente) y despacha la alerta en < 5s comprobables (< 5000ms con métrica elapsedMs y fallback seguro).
@@ -257,15 +285,39 @@ Disparo automático inmediato y visualización directa implementados:
 ### RF-04 — Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse
 - Estimado: 3h
 
+### RF-05 — Fotos por anomalía
+- Estimado: 4h
+
+### RF-07 — Navegación por estaciones y sala compartida
+- Estimado: 4h
+
+### RF-08 — Las Fallas Críticas del checklist llegan a la Secretaría
+- Estimado: 2h
+
 ### RF-03 — No informar como entregado un WhatsApp que no se envió
 PR #21 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/21). Commit 358f9ae55e15808975ae960bb587de4ecb6c9788 en rama oficial. Eliminado el falso estado "entregado" en WhatsAppConnectorService cuando no hay proveedor configurado (!transport): POST /api/whatsapp/enviar-alerta devuelve HTTP 503 Service Unavailable (estadoEntrega: "no_configurado", idMensaje: "", intentos: 0) y POST /api/whatsapp/trigger-alerta-critica registra el intento como no_realizado en el historial consultable por GET /api/whatsapp/historial. En Portal ECA (eca.ts + AccionesAlertaCritica en AlertasCriticas.tsx + styles.css) muestra el motivo real devuelto por el servidor en .whatsapp-error-badge y .alerta-notificacion-error, limpia estado previo y nunca muestra "WhatsApp Despachado". Verificado en árbol limpio: npm run verify -> 0 errores TS, Jest API 20 suites / 154 tests passed, Vitest Web 5 archivos / 68 tests passed; npm run test:int -> 6 suites / 24 tests passed contra PostgreSQL; RF-03-entrega.sh 3/3 OK y --carga 50: 0 falsos entregados / distinto de 503 (promedio 116 ms, p95 132 ms); verificado en navegador Chrome con captura de pantalla. Asumido: historial en memoria dentro del alcance de RF-03; proveedor real (Meta/Twilio) y lectura de teléfono ECA desde roles_edificio quedan reservados para HU-11 · RF-04 (REQ-1794155774018). Los 3 Tests de desarrollo aprobados con evidencia y los 3 de integración preparados para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/358f9ae55e15808975ae960bb587de4ecb6c9788/docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-03-entrega.md
 - Estimado: 0h
+
+### RF-06 — Fallas por piso en Accesos
+- Estimado: 3h
+
+### RNF-01 — Visita en curso sin señal
+- Estimado: 5h
+
+### RF-01 — Consolidación y firma en pantalla
+- Estimado: 4h
 
 ### RF-04 — Enviar las alertas por WhatsApp a través de un proveedor real
 - Estimado: 0h
 
 ### RF-05 — Enviar los avisos a la ECA solo después de la revisión de la Secretaría
 - Estimado: 4h
+
+### RNF-01 — Sellado del informe
+- Estimado: 4h
+
+### RNF-02 — Cola de sincronización del celular
+- Estimado: 5h
 
 ### RF-06 — Link del aviso de WhatsApp sin contraseña y válido por 7 días
 - Estimado: 3h

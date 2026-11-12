@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:34:28.297Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:40:36.620Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -333,7 +333,7 @@ Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494001295-fotos-por-a
 - Estimado: 4h
 
 ### RF-07 — Navegación por estaciones y sala compartida
-Inicio desarrollo HU-17 RF-07 (navegacion entre maquinas y sala compartida).
+PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/35. RF-07 implementado en navegacion.ts, ChecklistSolapaView.tsx e InspeccionCampoView.tsx (selector M1/M2/M3 por solapa, sincronizacion automatica de Sala Principal compartida sin tocar M3 independiente y navegacion 'Ir a Accesos/Cabinas ->'). Integrado con Login HU-14 de dev. Verificado: npm run verify (API 26 suites/207 tests, Web 9 files/105 tests), Playwright 360x800 (scrollWidth=360) y RF-07-entrega.sh --carga 20 (promedio 11.81 ms). | Nota Scrum API: {"error":"No podés pedir el merge de una Tarea sin condiciones de aprobación: son lo que dice cuándo está terminado, y de ellas la app deriva sola los casos de prueba. Pedíselas al Project Manager o al Scrum Master (campo acceptanceCriteria)."}
 - Estimado: 4h
 
 ### RF-08 — Las Fallas Críticas del checklist llegan a la Secretaría

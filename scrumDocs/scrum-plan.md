@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:06:36.045Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:06:57.185Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -164,7 +164,13 @@ Implementada la API de Máquinas Asignadas (GET /api/firmante/maquinas) y Autori
 - Estimado: 4h
 
 ### RNF-02 — Acceso de RT y Firmante a edificios de varias ECA
-PR #29: https://github.com/fiemcasals/pm_asc/pull/29
+PR #29 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/29
+Rama apilada sobre HU-15 RNF-01 (PR #28): feature/hu-15-hu-15-aislamiento-de-datos-ent/req-1794493999670-acceso-de-rt-y-firmante-a-edificios-de-v
+Documentacion: docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RNF-02-entrega.md y RNF-02-acceso-multi-eca-rt-firmante.md
+Pruebas:
+- npm run verify: API 23 suites / 174 tests OK; Web 7 files / 82 tests OK; tsc --noEmit 0 errores.
+- npm run test:int -w apps/api: 8 suites / 27 tests OK (incluye rls-rt-firmante.int-spec.ts).
+- bash docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RNF-02-entrega.sh: 4 OK · 0 fallas; --carga 20: 20/20, promedio 64 ms, p95 77 ms, max 77 ms.
 - Estimado: 4h
 
 ### RF-03 — Evitar que un guardado pise una asignación más nueva

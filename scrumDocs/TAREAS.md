@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T13:27:27.939Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:21:21.721Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -21,6 +21,30 @@ Construir la interfaz de usuario en la pestaña Carga de Edificios y Máquinas, 
 
 1. La pestaña de administracion muestra el formulario de alta de consorcios con campos de direccion, administracion y grilla dinamica de maquinas AGC (M1, M2).
 2. El listado permite seleccionar cualquier consorcio y visualizar su ficha tecnica completa y maquinas asociadas.
+
+### RF-03: Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) (Funcional)
+
+El cliente informó (P11) que la AGC tiene un listado tipo Excel con máquinas, ubicaciones y estados (APTO, etc.). Encargado, teléfono, horarios y email de la ECA se cargan a mano. Las columnas exactas dependen del ejemplo que tiene que mandar MAICON; mientras tanto se trabaja con un archivo de prueba con las columnas dirección, matrícula AGC, tipo de equipo y estado.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. La Secretaría sube un archivo .xlsx y el sistema crea las máquinas nuevas y actualiza las existentes, identificadas por matrícula AGC, sin duplicarlas.
+2. Una fila inválida se informa con su número y motivo, y no impide importar las demás.
+3. Al terminar se muestra un resumen: cantidad de máquinas creadas, actualizadas y rechazadas.
+4. Un archivo que no es .xlsx o supera 5 MB se rechaza con 400 sin importar nada.
+
+### RF-04: Horarios de atención por edificio editables por la Secretaría (Funcional)
+
+Definición del cliente (P12): hasta 2 franjas por día, que pueden variar según el día de la semana; lo habitual es de 08:00 a 12:00 y de 17:00 a 20:00. La Secretaría los modifica por edificio: algunos tienen horarios particulares o requieren coordinación ("A coordinar", pin amarillo). Los feriados cuentan como cerrado.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Un edificio nuevo arranca con lunes a viernes de 08:00 a 12:00 y de 17:00 a 20:00.
+2. La Secretaría puede editar hasta 2 franjas por día de la semana; una franja con hora de fin anterior a la de inicio o superpuesta con la otra se rechaza con 400.
+3. La Secretaría puede marcar un edificio como "A coordinar", que reemplaza las franjas.
+4. La API informa si un edificio está abierto en un momento dado, considerando cerrado los feriados.
 
 ### RNF-01: Rechazar con 400 los textos que la base no puede guardar (carácter NUL) (No funcional)
 
@@ -71,6 +95,18 @@ Hoy PUT /api/consorcios/:id/roles reemplaza la terna completa sin comprobar si c
 1. Si la terna de un edificio cambió después de leerla, PUT /api/consorcios/:id/roles responde 409 y no modifica la terna.
 2. Ante ese rechazo, la pestaña Asignación de Roles de Trabajo informa que la terna cambió y muestra la versión vigente.
 3. Si la terna no cambió, guardar funciona igual que antes.
+
+### RF-04: Porcentajes de pago y abono configurables por máquina (Funcional)
+
+Hoy el 60 % (RT de Calle) y el 25 % (Firmante) son constantes en el código (PORCENTAJES_OPERATIVOS). El cliente aclaró (cuestionario 06/11) que no son fijos: son un modelo inicial de pago que depende del monto de cada máquina. También pidió abono mensual por máquina; los valores los manda MAICON.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Cada máquina tiene abono mensual, porcentaje del RT de Calle y porcentaje del Firmante editables; una máquina nueva arranca con 60 % y 25 %.
+2. La liquidación usa los valores guardados de cada máquina, no constantes del código.
+3. Un porcentaje menor que 0, mayor que 100, o una suma de porcentajes mayor que 100 se rechaza con 400 y el motivo.
+4. Cada cambio de abono o porcentaje queda registrado con usuario, fecha, valor anterior y valor nuevo.
 
 ### RNF-01: Leer todas las ternas en una sola consulta (No funcional)
 
@@ -161,6 +197,49 @@ Desarrollar el generador de PDF con membrete institucional de MAICON S.R.L. y se
 1. El servicio genera un documento PDF formal con membrete de MAICON S.R.L., detalle de anomalias tecnicas y fotografias adjuntas.
 2. El sistema despacha automaticamente el PDF por correo electronico a la ECA contratante dejando constancia de envio.
 
+### RF-03: Lista de Fallas Críticas definida por el cliente (Funcional)
+
+Hoy el sistema solo reconoce dos fallas críticas (cables desgastados y limitador anulado). El cliente definió la lista final (P3 y P6):
+• Sala de Máquinas: Cables de tracción DESGASTADOS; Corte de fuerza motriz NO ACTÚA.
+• Cabina: Botón de PARE Falla; Paracaídas Anomalía.
+• Accesos: Destrabe manual TRABADO / INEXISTENTE; Cerradura no traba; Contacto eléctrico puenteado / falla; Espacio entre puertas mayor a 12 cm (requiere suplemento).
+• Caja: Instalaciones ajenas SÍ; Espacios CON ABERTURAS; Límites superiores o inferiores FALLAN / ANULADOS.
+• Fosa: Stop de fosa DEFICIENTE / INEXISTENTE.
+• Solo hidráulicos: Aceite de batea insuficiente.
+Sacó: pérdida de aceite crítica, limitador DEFICIENTE, tablero fuera de norma, puerta tijera, alarma, piso de madera, baranda de techo y extensión de cables.
+Pendiente de confirmar con MAICON: si "limitador anulado" sigue siendo crítico (se mantiene hasta que responda) y si se agrega un ítem "frenos defectuosos", que hoy no existe en el checklist.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. El informe acepta cada uno de los ítems de la lista del cliente y cualquiera de ellos marcado genera la alerta de Falla Crítica.
+2. Los ítems que el cliente sacó (pérdida de aceite, limitador deficiente, tablero, puerta tijera, alarma, piso, baranda, extensión de cables) se registran como falla común y no generan alerta crítica.
+3. "Aceite de batea insuficiente" se acepta solo en máquinas hidráulicas; en una máquina de tracción el informe responde 400 con el motivo.
+4. La alerta de la Secretaría muestra el nombre legible de cada falla crítica detectada, agrupada por zona (Sala de Máquinas, Cabina, Accesos, Caja, Fosa).
+
+### RF-04: Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra (Funcional)
+
+El cliente pidió que la Falla Crítica se avise a la Secretaría y al RT Firmante del edificio (P4), y que la alarma sonora siga sonando hasta que alguien la abra (cuestionario 06/11). La persona de guardia fuera de horario queda pendiente: MAICON tiene que indicarla.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Al registrarse una Falla Crítica, el RT Firmante asignado al edificio la ve en su portal como alerta nueva.
+2. En la Secretaría la alarma sonora se repite hasta que un usuario abre la alerta; al abrirla deja de sonar en todas las pantallas de la Secretaría.
+3. La alerta registra qué usuario la abrió primero y la fecha y hora.
+
+### RF-05: Estado del ascensor: el RT lo marca y el Firmante lo confirma (Funcional)
+
+Definición del cliente (P4 y cuestionario 06/11): "Reparación Urgente" = funciona con riesgo; "Fuera de Servicio" = no debe usarse. El RT de Calle marca el estado, el RT Firmante lo confirma en coordinación con la Secretaría, y se avisa a la Secretaría y al Firmante. Vuelve a "Normal" solo con una nueva inspección del RT con foto.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. El RT de Calle puede marcar una máquina como "Reparación Urgente" o "Fuera de Servicio"; el estado queda "Pendiente de confirmación" y se avisa a la Secretaría y al Firmante.
+2. Solo el RT Firmante asignado al edificio puede confirmar o rechazar el estado; otro rol recibe 403.
+3. El estado confirmado se ve en la ficha de la máquina y en el portal de la ECA.
+4. Volver a "Normal" exige una nueva inspección del RT con al menos una foto; sin foto responde 400.
+
 ## HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita
 
 ### RF-01: Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio (Funcional)
@@ -191,6 +270,31 @@ Las visitas fallidas hoy viven solo en la memoria de la API: el INSERT de visita
 2. Después de reiniciar la API, el historial del consorcio conserva las visitas registradas y la siguiente visita continúa la numeración de advertencias.
 3. Si el guardado en PostgreSQL falla, la API responde con error y no informa la visita como registrada.
 
+### RF-04: Recargo del 45 % una sola vez por máquina no inspeccionada (Funcional)
+
+Hoy la liquidación suma el 45 % cada vez que se liquida mientras el edificio tenga 3 advertencias (visitas-fallidas.service.ts, liquidación mensual). El cliente definió (cuestionario 06/11): el recargo se aplica una sola vez por máquina no inspeccionada, en la liquidación siguiente, y un Administrador puede anularlo indicando el motivo (P9).
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Al llegar a la 3.ª advertencia, el recargo del 45 % se suma una sola vez, en la liquidación siguiente, por cada máquina no inspeccionada del edificio.
+2. Las liquidaciones de los meses posteriores no vuelven a sumar el recargo, aunque el edificio siga bloqueado.
+3. Un Administrador puede anular el recargo con motivo obligatorio; la anulación queda registrada con usuario, fecha y motivo, y la liquidación deja de incluirlo.
+4. Otro rol que intente anular el recargo recibe 403.
+
+### RF-05: Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas (Funcional)
+
+Definiciones del cliente (P9 y cuestionario 06/11): las advertencias son consecutivas y solo se reinician con una visita exitosa; entre visitas fallidas tiene que pasar al menos 1 día; un edificio bloqueado sale del recorrido del RT hasta que la Secretaría lo desbloquea.
+Pendiente de confirmar con MAICON: si "consorcio cerrado" y "administración que cancela" también suman advertencia (P9.a menciona solo "encargado o responsable ausente").
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Un edificio bloqueado no aparece en la lista de edificios a visitar del RT.
+2. La Secretaría puede desbloquear el edificio con motivo obligatorio; vuelve al recorrido y el desbloqueo queda registrado.
+3. Una segunda visita fallida del mismo edificio en el mismo día responde 409 y no suma advertencia.
+4. El contador de advertencias vuelve a cero solo con una visita exitosa.
+
 ## HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC
 
 ### RF-01: API de Máquinas Asignadas y Autorización de Firma AGC (Funcional)
@@ -210,6 +314,18 @@ Desarrollar la interfaz limpia y corporativa del Usuario Firmante para liquidar 
 
 1. Visualiza lista vertical de sus maquinas con indicador de estado (Recorrida, Pendiente de Visita, Advertencia).
 2. El boton Autorizar Firma AGC permanece bloqueado en maquinas pendientes y se habilita unicamente tras auditar fotos y firma en el modal.
+
+### RF-03: Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles (Funcional)
+
+Definición del cliente (cuestionario 06/11): si el Firmante rechaza un informe, vuelve a la Secretaría, no al RT de Calle. El Firmante tiene 5 días hábiles para autorizar; si no lo hace, se avisa a la Secretaría. El trámite ante la AGC se hace por fuera del sistema.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. El Firmante puede rechazar un informe con motivo obligatorio; sin motivo responde 400.
+2. El informe rechazado aparece en la bandeja de la Secretaría con el motivo, y no en la del RT de Calle.
+3. Un informe que lleva más de 5 días hábiles (lunes a viernes) sin autorizar genera un aviso a la Secretaría, una sola vez.
+4. Un informe autorizado o rechazado dentro del plazo no genera aviso.
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 
@@ -263,6 +379,18 @@ El acuse de recibo legal de ECA se informa como registrado aunque el INSERT en a
 4. Con la base caída, GET /api/eca/remito/ALT-MAICON-001 responde 500 y no entrega el remito.
 5. Sin base de datos configurada (servicio creado sin DatabaseService), el acuse se sigue registrando solo en memoria, como hasta ahora.
 
+### RF-04: Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse (Funcional)
+
+Definición del cliente (cuestionario 06/11): si la ECA no acusa recibo de una alerta, a las 24 h se le manda un recordatorio y a las 48 h se avisa a la Secretaría.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Una alerta sin acuse a las 24 h genera un recordatorio a la ECA, registrado en el historial de la alerta.
+2. Una alerta sin acuse a las 48 h genera un aviso en la Secretaría con el edificio y la ECA.
+3. Si la ECA acusa recibo antes, no se envía el recordatorio ni el aviso.
+4. Cada recordatorio y aviso se envía una sola vez por alerta.
+
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 
 ### RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica (Funcional)
@@ -303,6 +431,30 @@ Conectar WhatsAppConnectorService con un proveedor real (WhatsApp Cloud API de M
 2. El destino es el teléfono de la ECA responsable del edificio asignada en la terna de roles; sin teléfono cargado, el envío no se hace y se informa el motivo.
 3. Si el proveedor rechaza el envío, la API informa el error que devolvió el proveedor y el envío queda registrado como fallido.
 4. Las credenciales del proveedor no quedan en el repositorio.
+
+### RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría (Funcional)
+
+El cliente pidió que ningún aviso salga automático: WhatsApp y PDF a la ECA se envían recién cuando la Secretaría revisa la falla y aprueba el envío (P4 y cuestionario 06/11). Hoy el disparo es automático e inmediato (< 5 s, POST /api/whatsapp/trigger-alerta-critica). Hay que reemplazarlo por una bandeja "Pendiente de revisión" en la Secretaría con la acción "Aprobar y enviar". El aviso va a la ECA y también al RT Firmante del edificio.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. Al registrarse una Falla Crítica no se envía ningún WhatsApp ni email: el aviso queda en estado "Pendiente de revisión" y aparece en la bandeja de la Secretaría.
+2. Cuando la Secretaría aprueba el aviso, se envía el WhatsApp a la ECA y al RT Firmante del edificio, y el aviso pasa a "Enviado".
+3. El endpoint de disparo automático ya no envía nada sin aprobación: un pedido de envío de un aviso no aprobado responde 409 con el motivo.
+4. El historial de envíos registra quién aprobó cada aviso y la fecha y hora de la aprobación.
+
+### RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días (Funcional)
+
+El cliente aceptó que el link del WhatsApp abra el informe sin pedir contraseña, con vencimiento de 7 días (cuestionario 06/11). El link tiene que ser imposible de adivinar y mostrar solo el informe de ese aviso.
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+**Condiciones de aprobación**
+
+1. El link del aviso abre el informe de la falla sin iniciar sesión.
+2. El link contiene un token aleatorio de al menos 128 bits; un token inexistente o alterado responde 404 sin revelar datos.
+3. Pasados 7 días desde el envío, el link responde 410 con el mensaje "Este enlace venció" y no muestra el informe.
+4. El link muestra únicamente el informe de ese aviso, no otros edificios ni otras fallas de la ECA.
 
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 

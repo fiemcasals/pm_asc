@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T16:03:24.524Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T16:24:51.391Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -85,6 +85,8 @@ graph TD
   subgraph US_1794493998112["HU-15: HU-15: Aislamiento de datos entre ECA"]
     REQ_1794493999440["RNF-01: Row Level Security por ECA"]
     REQ_1794493999670["RNF-02: Acceso de RT y Firmante a edificios de varias ECA"]
+    REQ_1794500686999["RF-01: Asociar la ECA al usuario y exponerla en la sesión"]
+    REQ_1794500687294["RNF-03: Tomar la ECA y el rol del RLS desde la sesión del usuario"]
   end
   subgraph US_1794493998209["HU-16: HU-16: Mapa del RT y llegada al edificio"]
     REQ_1794493999840["RF-01: Mapa del RT con pines por horario"]
@@ -165,6 +167,9 @@ graph TD
   REQ_1791909582859 --> REQ_1794493999440
   REQ_1794493999440 --> REQ_1794493999670
   REQ_1791910395002 --> REQ_1794493999670
+  REQ_1794493998753 --> REQ_1794500686999
+  REQ_1794500686999 --> REQ_1794500687294
+  REQ_1794493999670 --> REQ_1794500687294
   REQ_1794493998996 --> REQ_1794493999840
   REQ_1794493999670 --> REQ_1794493999840
   REQ_1794493998460 --> REQ_1794493999840

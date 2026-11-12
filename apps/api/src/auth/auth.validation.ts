@@ -1,0 +1,43 @@
+import { BadRequestException } from '@nestjs/common';
+import { esRol, Rol, ROLES } from './auth.types';
+
+/** bcrypt sólo usa los primeros 72 bytes: una contraseña más larga no se acepta al crearla. */
+const MAX_BYTES_PASSWORD = 72;
+const MIN_PASSWORD = 10;
+
+export function validarLogin(body: unknown): { usuario: string; password: string } {
+  const b = (body ?? {}) as Record<string, unknown>;
+  if (typeof b.usuario !== 'string' || !b.usuario.trim() || typeof b.password !== 'string' || !b.password) {
+    throw new BadRequestException('usuario y password son obligatorios.');
+  }
+  if (b.usuario.length > 100 || b.password.length > 200) {
+    throw new BadRequestException('usuario o password demasiado largos.');
+  }
+  return { usuario: b.usuario.trim(), password: b.password };
+}
+
+export function validarNuevoUsuario(body: unknown): {
+  usuario: string;
+  nombre: string;
+  rol: Rol;
+  password: string;
+} {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const errores: string[] = [];
+
+  const usuario = typeof b.usuario === 'string' ? b.usuario.trim() : '';
+  if (!/^[A-Za-z0-9._@-]{3,100}$/.test(usuario)) {
+    errores.push('usuario tiene que tener entre 3 y 100 caracteres: letras, números, punto, guion, guion bajo o @');
+  }
+  const nombre = typeof b.nombre === 'string' ? b.nombre.trim() : '';
+  if (!nombre || nombre.length > 120) errores.push('nombre es obligatorio (hasta 120 caracteres)');
+  if (!esRol(b.rol)) errores.push(`rol tiene que ser uno de: ${ROLES.join(', ')}`);
+  const password = typeof b.password === 'string' ? b.password : '';
+  if (password.length < MIN_PASSWORD) errores.push(`password tiene que tener al menos ${MIN_PASSWORD} caracteres`);
+  if (Buffer.byteLength(password, 'utf8') > MAX_BYTES_PASSWORD) {
+    errores.push(`password no puede superar los ${MAX_BYTES_PASSWORD} bytes`);
+  }
+
+  if (errores.length > 0) throw new BadRequestException(errores);
+  return { usuario, nombre, rol: b.rol as Rol, password };
+}

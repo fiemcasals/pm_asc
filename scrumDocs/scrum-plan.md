@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:03:17.752Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:03:24.244Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -128,6 +128,14 @@ Filtro global de errores (database/database-error.filter.ts, registrado en app.s
 - Estimado: 3h
 
 ### RNF-01 — Row Level Security por ECA
+PR #28 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/28
+Rama: feature/hu-15-hu-15-aislamiento-de-datos-ent/req-1794493999440-row-level-security-por-eca
+Dependencia upstream HU-14 RF-01 (doing): EcaContextMiddleware soporta req.user.eca y header x-eca-actual; mientras no exista auth en dev usa fallback ECA_SISTEMA_DEV salvo RLS_STRICT_HTTP=true o contexto vacío.
+Documentacion: docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RNF-01-entrega.md y RNF-01-rls-por-eca.md
+Pruebas:
+- npm run verify: API 23 suites / 173 tests OK; Web 7 files / 82 tests OK; tsc --noEmit 0 errores.
+- npm run test:int -w apps/api: 7 suites / 26 tests OK (incluye rls-eca.int-spec.ts).
+- bash docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RNF-01-entrega.sh: 4 OK · 0 fallas; --carga 20: 20/20, promedio 74 ms, p95 86 ms, max 102 ms.
 - Estimado: 6h
 
 ### RF-04 — Horarios de atención por edificio editables por la Secretaría

@@ -114,4 +114,41 @@ describe('Consorcios y máquinas contra PostgreSQL + PostGIS real', () => {
     expect(huerfanas.rowCount).toBe(0);
     expect((await http().get(`/api/consorcios/${creado.body.id}`)).status).toBe(404);
   });
+
+  it('persiste encargado, pisos, punto PostGIS, tipo y sala compartida, y excluye sin ubicacion del mapa', async () => {
+    const conGeo = await http().post('/api/consorcios').send({
+      nombre: 'Int-test Operativo Con Geo',
+      direccion: 'Av. Santa Fe 2100',
+      encargado: { nombre: 'Luis Encargado', telefono: '11 5555-7777' },
+      pisos: ['SS', 'PB', '1', '2'],
+      ubicacion: { latitud: -34.5956, longitud: -58.3976 },
+      maquinas: [
+        { referenciaAgc: 'M1', descripcion: 'Izquierda', tipo: 'hidraulico', salaCompartidaId: 'sala-principal' },
+        { referenciaAgc: 'M2', descripcion: 'Derecha', tipo: 'montavehiculos', salaCompartidaId: 'sala-principal' },
+      ],
+    });
+    expect(conGeo.status).toBe(201);
+    creados.push(conGeo.body.id);
+
+    const sinGeo = await http().post('/api/consorcios').send({
+      nombre: 'Int-test Operativo Sin Geo',
+      direccion: 'Calle Falsa 400',
+    });
+    expect(sinGeo.status).toBe(201);
+    creados.push(sinGeo.body.id);
+
+    const ficha = await http().get(`/api/consorcios/${conGeo.body.id}`);
+    expect(ficha.status).toBe(200);
+    expect(ficha.body.encargado).toEqual({ nombre: 'Luis Encargado', telefono: '11 5555-7777' });
+    expect(ficha.body.pisos).toEqual(['SS', 'PB', '1', '2']);
+    expect(ficha.body.ubicacion.latitud).toBeCloseTo(-34.5956, 4);
+    expect(ficha.body.ubicacion.longitud).toBeCloseTo(-58.3976, 4);
+    expect(ficha.body.maquinas[0]).toMatchObject({ tipo: 'hidraulico', salaCompartidaId: 'sala-principal' });
+    expect(ficha.body.maquinas[1]).toMatchObject({ tipo: 'montavehiculos', salaCompartidaId: 'sala-principal' });
+
+    const mapa = await http().get('/api/consorcios/mapa');
+    expect(mapa.status).toBe(200);
+    expect(mapa.body.some((c: { id: string }) => c.id === conGeo.body.id)).toBe(true);
+    expect(mapa.body.some((c: { id: string }) => c.id === sinGeo.body.id)).toBe(false);
+  });
 });

@@ -6,7 +6,7 @@ import { Reloj, RELOJ, relojDelSistema } from '../src/auth/auth.types';
 import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usuarios.repository';
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
-import { Consorcio, ConsorcioInput, ConsorcioResumen } from '../src/consorcios/consorcio.types';
+import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '../src/consorcios/consorcio.types';
 import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
@@ -55,6 +55,9 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
       nombre: datos.nombre,
       direccion: datos.direccion,
       administracion: { ...datos.administracion },
+      encargado: { ...datos.encargado },
+      pisos: [...datos.pisos],
+      ubicacion: datos.ubicacion ? { ...datos.ubicacion } : null,
       maquinas: datos.maquinas.map((m) => ({ id: randomUUID(), ...m })),
       createdAt,
       updatedAt: new Date().toISOString(),
@@ -74,6 +77,18 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
       direccion: c.direccion,
       cantidadMaquinas: c.maquinas.length,
     }));
+  }
+
+  async listarParaMapa(): Promise<ConsorcioMapaItem[]> {
+    return [...this.filas.values()]
+      .filter((c) => c.ubicacion !== null)
+      .map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        direccion: c.direccion,
+        ubicacion: structuredClone(c.ubicacion!),
+        cantidadMaquinas: c.maquinas.length,
+      }));
   }
 
   async obtener(id: string): Promise<Consorcio | null> {

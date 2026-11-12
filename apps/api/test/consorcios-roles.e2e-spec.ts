@@ -22,6 +22,9 @@ describe('/api/consorcios/:id/roles', () => {
       nombre: 'Consorcio Roles',
       direccion: 'Calle 1',
       administracion: { nombre: null, telefono: null, email: null },
+      encargado: { nombre: null, telefono: null },
+      pisos: [],
+      ubicacion: null,
       maquinas: [],
     }));
   });

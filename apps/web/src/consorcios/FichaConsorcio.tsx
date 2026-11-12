@@ -1,19 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import {
+  actualizarConsorcio,
+  agruparSalasCompartidas,
   Consorcio,
+  ETIQUETAS_TIPO_MAQUINA,
   fetchAdvertenciasConsorcio,
+  MaquinaInput,
+  parsearListaPisos,
+  PuntoGeografico,
   registrarVisitaFallida,
   ResumenAdvertenciasConsorcio,
+  TIPOS_MAQUINA,
+  TipoMaquina,
   VisitaFallidaRegistro,
 } from './consorcios';
+import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
 
 interface FichaConsorcioProps {
   consorcio: Consorcio;
   onCerrar?: () => void;
+  onConsorcioActualizado?: (actualizado: Consorcio) => void;
 }
 
-export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
+export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: FichaConsorcioProps) {
   const { id: consorcioId, nombre, direccion, administracion, maquinas, createdAt } = consorcio;
+  const encargadoActual = consorcio.encargado ?? { nombre: null, telefono: null };
+  const pisosActuales = consorcio.pisos ?? [];
+  const ubicacionActual = consorcio.ubicacion ?? null;
+  const salasCompartidas = agruparSalasCompartidas(maquinas);
+
+  const [editandoOperativo, setEditandoOperativo] = useState(false);
+  const [encargadoNombre, setEncargadoNombre] = useState(encargadoActual.nombre ?? '');
+  const [encargadoTelefono, setEncargadoTelefono] = useState(encargadoActual.telefono ?? '');
+  const [pisosTexto, setPisosTexto] = useState(pisosActuales.join(', '));
+  const [ubicacionEdit, setUbicacionEdit] = useState<PuntoGeografico | null>(ubicacionActual);
+  const [maquinasEdit, setMaquinasEdit] = useState<MaquinaInput[]>([]);
+  const [guardandoOperativo, setGuardandoOperativo] = useState(false);
+  const [mensajeOperativo, setMensajeOperativo] = useState<string | null>(null);
+  const [errorOperativo, setErrorOperativo] = useState<string | null>(null);
 
   const [resumen, setResumen] = useState<ResumenAdvertenciasConsorcio | null>(null);
   const [mostrarFormularioFallida, setMostrarFormularioFallida] = useState(false);
@@ -28,6 +52,21 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
   const [ultimaRegistrada, setUltimaRegistrada] = useState<VisitaFallidaRegistro | null>(null);
 
+  const sincronizarEdicionOperativa = (c: Consorcio) => {
+    setEncargadoNombre(c.encargado?.nombre ?? '');
+    setEncargadoTelefono(c.encargado?.telefono ?? '');
+    setPisosTexto((c.pisos ?? []).join(', '));
+    setUbicacionEdit(c.ubicacion ?? null);
+    setMaquinasEdit(
+      c.maquinas.map((m) => ({
+        referenciaAgc: m.referenciaAgc,
+        descripcion: m.descripcion,
+        tipo: m.tipo ?? 'traccion',
+        salaCompartidaId: m.salaCompartidaId ?? null,
+      })),
+    );
+  };
+
   const cargarResumen = async () => {
     const res = await fetchAdvertenciasConsorcio(consorcioId);
     if (res.ok && res.data) {
@@ -37,11 +76,49 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
 
   useEffect(() => {
     void cargarResumen();
+    sincronizarEdicionOperativa(consorcio);
+    setEditandoOperativo(false);
+    setMensajeOperativo(null);
+    setErrorOperativo(null);
     setMostrarFormularioFallida(false);
     setMensajeResultado(null);
     setErrorLocal(null);
     setUltimaRegistrada(null);
-  }, [consorcioId]);
+  }, [consorcio]);
+
+  const handleGuardarOperativo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuardandoOperativo(true);
+    setErrorOperativo(null);
+    setMensajeOperativo(null);
+
+    const res = await actualizarConsorcio(consorcioId, {
+      nombre,
+      direccion,
+      administracion,
+      encargado: {
+        nombre: encargadoNombre.trim() || null,
+        telefono: encargadoTelefono.trim() || null,
+      },
+      pisos: parsearListaPisos(pisosTexto),
+      ubicacion: ubicacionEdit,
+      maquinas: maquinasEdit.map((m) => ({
+        referenciaAgc: m.referenciaAgc,
+        descripcion: m.descripcion,
+        tipo: (m.tipo || 'traccion') as TipoMaquina,
+        salaCompartidaId: m.salaCompartidaId?.trim() || null,
+      })),
+    });
+
+    setGuardandoOperativo(false);
+    if (res.ok && res.data) {
+      setEditandoOperativo(false);
+      setMensajeOperativo('Datos operativos y equipos actualizados correctamente.');
+      onConsorcioActualizado?.(res.data);
+    } else {
+      setErrorOperativo(res.errores?.join(' | ') || res.error || 'Error al guardar datos operativos');
+    }
+  };
 
   const handleRegistrarFallida = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,6 +238,199 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Sección HU-01 RF-05: Datos Operativos del Edificio (Encargado, Pisos, Ubicación PostGIS) */}
+        <div className="ficha-section" data-testid="seccion-datos-operativos">
+          <div className="section-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <h4 className="section-title">Datos Operativos para la Calle</h4>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                sincronizarEdicionOperativa(consorcio);
+                setEditandoOperativo((prev) => !prev);
+                setErrorOperativo(null);
+                setMensajeOperativo(null);
+              }}
+              data-testid="btn-editar-operativos"
+            >
+              {editandoOperativo ? '✕ Cancelar Edición' : '✏️ Editar Datos Operativos y Equipos'}
+            </button>
+          </div>
+
+          {!ubicacionActual && (
+            <div
+              className="alert alert-warning"
+              role="alert"
+              data-testid="advertencia-sin-ubicacion"
+              style={{
+                marginTop: '8px',
+                background: '#fffbeb',
+                border: '1px solid #f59e0b',
+                color: '#92400e',
+                padding: '10px 12px',
+                borderRadius: '6px',
+              }}
+            >
+              ⚠️ <strong>Edificio sin ubicación geográfica:</strong> este consorcio queda excluido de las vistas de mapa hasta fijar su punto en el mapa.
+            </div>
+          )}
+
+          {mensajeOperativo && (
+            <div className="alert alert-success" role="status" style={{ marginTop: '8px' }} data-testid="mensaje-exito-operativo">
+              {mensajeOperativo}
+            </div>
+          )}
+
+          {errorOperativo && (
+            <div className="alert alert-error" role="alert" style={{ marginTop: '8px' }}>
+              {errorOperativo}
+            </div>
+          )}
+
+          {editandoOperativo ? (
+            <form onSubmit={handleGuardarOperativo} style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '12px' }} data-testid="form-editar-operativos">
+              <div className="form-grid-3">
+                <div className="form-field">
+                  <label className="field-label" htmlFor="edit-encargado-nombre">Encargado del Edificio</label>
+                  <input
+                    id="edit-encargado-nombre"
+                    type="text"
+                    className="field-input"
+                    value={encargadoNombre}
+                    onChange={(e) => setEncargadoNombre(e.target.value)}
+                    placeholder="Ej. Carlos Gómez"
+                    data-testid="edit-encargado-nombre"
+                  />
+                </div>
+                <div className="form-field">
+                  <label className="field-label" htmlFor="edit-encargado-tel">Teléfono Encargado</label>
+                  <input
+                    id="edit-encargado-tel"
+                    type="tel"
+                    className="field-input"
+                    value={encargadoTelefono}
+                    onChange={(e) => setEncargadoTelefono(e.target.value)}
+                    placeholder="Ej. 11-5555-6666"
+                    data-testid="edit-encargado-telefono"
+                  />
+                </div>
+                <div className="form-field">
+                  <label className="field-label" htmlFor="edit-pisos">Lista de Pisos (coma)</label>
+                  <input
+                    id="edit-pisos"
+                    type="text"
+                    className="field-input"
+                    value={pisosTexto}
+                    onChange={(e) => setPisosTexto(e.target.value)}
+                    placeholder="SS, PB, 1, 2, 3, 4"
+                    data-testid="edit-pisos"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <span className="field-label">Punto Geográfico PostGIS (clic en mapa para fijar o mover)</span>
+                <MapaUbicacionConsorcio
+                  ubicacion={ubicacionEdit}
+                  editable
+                  onCambiarUbicacion={setUbicacionEdit}
+                  testId="mapa-editar-ficha"
+                />
+              </div>
+
+              <div>
+                <span className="field-label">Tipo de Equipo y Sala Compartida por Máquina</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                  {maquinasEdit.map((m, idx) => (
+                    <div key={m.referenciaAgc} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: '8px', alignItems: 'center' }}>
+                      <span className="agc-code">{m.referenciaAgc}</span>
+                      <select
+                        className="field-input"
+                        value={m.tipo || 'traccion'}
+                        onChange={(e) =>
+                          setMaquinasEdit((prev) =>
+                            prev.map((item, i) => (i === idx ? { ...item, tipo: e.target.value as TipoMaquina } : item)),
+                          )
+                        }
+                        data-testid={`edit-maquina-tipo-${m.referenciaAgc}`}
+                      >
+                        {TIPOS_MAQUINA.map((tipo) => (
+                          <option key={tipo} value={tipo}>
+                            {ETIQUETAS_TIPO_MAQUINA[tipo]}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        className="field-input"
+                        placeholder="Sala compartida (ej. sala-principal)"
+                        value={m.salaCompartidaId || ''}
+                        onChange={(e) =>
+                          setMaquinasEdit((prev) =>
+                            prev.map((item, i) => (i === idx ? { ...item, salaCompartidaId: e.target.value } : item)),
+                          )
+                        }
+                        data-testid={`edit-maquina-sala-${m.referenciaAgc}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm"
+                  disabled={guardandoOperativo}
+                  data-testid="btn-guardar-operativos"
+                >
+                  {guardandoOperativo ? 'Guardando…' : 'Guardar Datos Operativos'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="admin-info-box" style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                <div>
+                  <strong>Encargado:</strong>{' '}
+                  <span data-testid="ficha-encargado-nombre">{encargadoActual.nombre || 'Sin registrar'}</span>
+                </div>
+                <div>
+                  <strong>Tel. Encargado:</strong>{' '}
+                  <span data-testid="ficha-encargado-telefono">{encargadoActual.telefono || 'Sin registrar'}</span>
+                </div>
+              </div>
+              <div>
+                <strong>Pisos del edificio:</strong>{' '}
+                <span data-testid="ficha-pisos">
+                  {pisosActuales.length > 0 ? (
+                    <span style={{ display: 'inline-flex', gap: '4px', flexWrap: 'wrap', marginLeft: '4px' }}>
+                      {pisosActuales.map((piso) => (
+                        <span key={piso} className="badge badge-autorizada">
+                          {piso}
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    'Sin pisos configurados'
+                  )}
+                </span>
+              </div>
+              {ubicacionActual && (
+                <div>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>Ubicación PostGIS:</strong>{' '}
+                    <span data-testid="ficha-ubicacion-coords">
+                      {ubicacionActual.latitud}, {ubicacionActual.longitud}
+                    </span>
+                  </div>
+                  <MapaUbicacionConsorcio ubicacion={ubicacionActual} testId="mapa-lectura-ficha" />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sección HU-07: Protocolo de Visitas Fallidas y Advertencias */}
@@ -387,6 +657,8 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
                   <tr>
                     <th>Ref. AGC</th>
                     <th>Descripción / Ubicación</th>
+                    <th>Tipo</th>
+                    <th>Sala de Máquinas</th>
                     <th>Identificador Único</th>
                   </tr>
                 </thead>
@@ -400,12 +672,44 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
                         <strong>{m.descripcion || 'Sin descripción'}</strong>
                       </td>
                       <td>
+                        <span className="badge badge-autorizada" data-testid={`maquina-tipo-${m.referenciaAgc}`}>
+                          {ETIQUETAS_TIPO_MAQUINA[m.tipo ?? 'traccion']}
+                        </span>
+                      </td>
+                      <td data-testid={`maquina-sala-${m.referenciaAgc}`}>
+                        {m.salaCompartidaId ? (
+                          <span className="badge badge-recorrida">Compartida: {m.salaCompartidaId}</span>
+                        ) : (
+                          <span className="text-muted">Individual</span>
+                        )}
+                      </td>
+                      <td>
                         <small className="text-muted font-mono">{m.id}</small>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {salasCompartidas.length > 0 && (
+            <div
+              className="admin-info-box"
+              style={{ marginTop: '10px', borderLeft: '4px solid #0f766e' }}
+              data-testid="resumen-salas-compartidas"
+            >
+              <strong>Salas de Máquinas Compartidas:</strong>
+              <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
+                {salasCompartidas.map((grupo) => (
+                  <li key={grupo.salaId} data-testid={`sala-grupo-${grupo.salaId}`}>
+                    <strong>{grupo.salaId}:</strong>{' '}
+                    {grupo.maquinas
+                      .map((m) => `${m.referenciaAgc}${m.descripcion ? ` (${m.descripcion})` : ''}`)
+                      .join(' + ')}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

@@ -1,12 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  actualizarConsorcio,
+  agruparSalasCompartidas,
   BloqueoConsorcioInfo,
   Consorcio,
   ConsorcioInput,
+  ConsorcioMapaItem,
   ConsorcioResumen,
   LiquidacionConsorcioResultado,
   LiquidacionMaquinaInput,
   LiquidacionMaquinaResultado,
+  parsearListaPisos,
   ReporteVisitaFallidaInput,
   ResumenAdvertenciasConsorcio,
   VisitaFallidaRegistro,
@@ -15,6 +19,7 @@ import {
   fetchBloqueoConsorcio,
   fetchConsorcioById,
   fetchConsorcios,
+  fetchConsorciosMapa,
   fetchLiquidacionConsorcio,
   liquidarMaquina,
   registrarVisitaFallida,
@@ -375,6 +380,56 @@ describe('consorcios module', () => {
         expect(res.data?.totalRecargos).toBe(135000);
         expect(res.data?.totalGeneral).toBe(435000);
         expect(res.data?.avisoCobro).toBe('Cobro de Tercer Visita Habilitado');
+      });
+    });
+
+    describe('datos operativos y salas compartidas (HU-01 RF-05)', () => {
+      it('agruparSalasCompartidas agrupa solo salas con 2 o más máquinas', () => {
+        const grupos = agruparSalasCompartidas([
+          { id: '1', referenciaAgc: 'M1', descripcion: 'Izquierda', tipo: 'traccion', salaCompartidaId: 'sala-principal' },
+          { id: '2', referenciaAgc: 'M2', descripcion: 'Derecha', tipo: 'hidraulico', salaCompartidaId: 'sala-principal' },
+          { id: '3', referenciaAgc: 'M3', descripcion: 'Montacargas', tipo: 'montavehiculos', salaCompartidaId: 'sala-unica' },
+          { id: '4', referenciaAgc: 'M4', descripcion: 'Auxiliar', tipo: 'traccion', salaCompartidaId: null },
+        ]);
+        expect(grupos).toHaveLength(1);
+        expect(grupos[0].salaId).toBe('sala-principal');
+        expect(grupos[0].maquinas.map((m) => m.referenciaAgc)).toEqual(['M1', 'M2']);
+      });
+
+      it('parsearListaPisos recorta y elimina duplicados conservando orden', () => {
+        expect(parsearListaPisos(' SS , PB, 1, pb, 2 , ')).toEqual(['SS', 'PB', '1', '2']);
+      });
+
+      it('actualizarConsorcio envía PUT /api/consorcios/:id y fetchConsorciosMapa consulta /api/consorcios/mapa', async () => {
+        const payload: ConsorcioInput = {
+          nombre: 'Edificio Norte',
+          direccion: 'Av. Libertador 1000',
+          administracion: { nombre: null, telefono: null, email: null },
+          encargado: { nombre: 'Luis', telefono: '11-5555-0000' },
+          pisos: ['PB', '1', '2'],
+          ubicacion: { latitud: -34.58, longitud: -58.4 },
+          maquinas: [{ referenciaAgc: 'M1', descripcion: 'Principal', tipo: 'hidraulico', salaCompartidaId: null }],
+        };
+        const mockResp = { ...payload, id: 'c-1', createdAt: '', updatedAt: '' };
+        global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => mockResp } as Response);
+        const putRes = await actualizarConsorcio('c-1', payload);
+        expect(putRes.ok).toBe(true);
+        expect(global.fetch).toHaveBeenCalledWith('/api/consorcios/c-1', expect.objectContaining({ method: 'PUT' }));
+
+        const mockMapa: ConsorcioMapaItem[] = [
+          {
+            id: 'c-1',
+            nombre: 'Edificio Norte',
+            direccion: 'Av. Libertador 1000',
+            ubicacion: { latitud: -34.58, longitud: -58.4 },
+            cantidadMaquinas: 1,
+          },
+        ];
+        global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => mockMapa } as Response);
+        const mapRes = await fetchConsorciosMapa();
+        expect(mapRes.ok).toBe(true);
+        expect(mapRes.data).toEqual(mockMapa);
+        expect(global.fetch).toHaveBeenCalledWith('/api/consorcios/mapa');
       });
     });
   });

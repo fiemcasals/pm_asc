@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:33:30.322Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:33:43.846Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -511,7 +511,7 @@ Remover rótulos redundantes y menciones técnicas internas en el Portal ECA y l
 1. El Portal ECA conserva el badge 'Solo lectura' y elimina los rótulos redundantes 'Modo Consulta Oficial', 'Solo lectura: Sin edición habilitada' y '(Protegido)'.
 2. Las vistas de Consorcios (FichaConsorcio y FormularioConsorcio) eliminan referencias técnicas internas como '(HU-07)', 'base oficial', 'Dirección Literal' y 'Grilla Dinámica' manteniendo toda su funcionalidad.
 
-## HU-14: Acceso por rol y sesión en el celular
+## HU-14: HU-14: Acceso por rol y sesión en el celular
 
 ### RF-01: API de autenticación y roles (Funcional)
 
@@ -551,7 +551,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Un Administrador puede revocar las sesiones de un usuario; desde ese momento el refresco y cualquier envío de ese celular responden 401.
 4. Al recibir el 401 por revocación, la app cierra la sesión y lo informa; lo pendiente no se envía hasta un nuevo ingreso válido.
 
-## HU-15: Aislamiento de datos entre ECA
+## HU-15: HU-15: Aislamiento de datos entre ECA
 
 ### RNF-01: Row Level Security por ECA (No funcional)
 
@@ -576,7 +576,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 2. Un Firmante ve solo las máquinas de los edificios donde figura como Firmante.
 3. Al quitar una asignación, ese usuario deja de ver el edificio en la siguiente consulta.
 
-## HU-16: Mapa del RT y llegada al edificio
+## HU-16: HU-16: Mapa del RT y llegada al edificio
 
 ### RF-01: Mapa del RT con pines por horario (Funcional)
 
@@ -603,7 +603,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Si la precisión del GPS no alcanza, aparece "Sin buena señal GPS", que exige foto del frente y justificación escrita, y marca la visita para revisión de la Secretaría.
 4. Al iniciar se registran coordenadas, precisión, hora del dispositivo y hora del servidor, y ninguna se puede editar.
 
-## HU-17: Inspección técnica por solapas
+## HU-17: HU-17: Inspección técnica por solapas
 
 ### RF-01: Motor del checklist configurable (Funcional)
 
@@ -709,7 +709,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. La app abre sin señal si ya se cargó una vez con señal.
 4. Una visita de 3 equipos con 20 fotos se completa sin conexión en un celular Android real, y queda registrado el modelo usado en la prueba.
 
-## HU-18: Cierre, firma y envío del informe
+## HU-18: HU-18: Cierre, firma y envío del informe
 
 ### RF-01: Consolidación y firma en pantalla (Funcional)
 

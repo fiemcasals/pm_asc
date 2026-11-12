@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:28:24.539Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:28:26.566Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -64,7 +64,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 56 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hacer | gonza | RF-04, RF-05 | — |
 | 57 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hacer | gonza | RF-04, RF-04 | — |
 | 58 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 59 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Hacer | gonza | RF-04, RF-05 | — |
+| 59 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | gonza | RF-04, RF-05 | — |
 | 60 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hacer | gonza | RF-04, RF-05 | — |
 | 61 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | germanG | RF-07, RF-03 | — |
 | 62 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
@@ -343,6 +343,7 @@ PR #21 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/21). Commit
 - Estimado: 0h
 
 ### RF-06 — Fallas por piso en Accesos
+Inicio de desarrollo de HU-17 RF-06
 - Estimado: 3h
 
 ### RNF-01 — Visita en curso sin señal

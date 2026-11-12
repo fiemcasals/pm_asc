@@ -25,7 +25,6 @@ export function MedidorCobertura({ cobertura }: MedidorCoberturaProps) {
     <div className="medidor-card" data-testid="medidor-cobertura">
       <div className="medidor-header">
         <h3 className="medidor-title">Medidor de Cobertura Mensual</h3>
-        <span className="badge badge-modo-consulta">Modo Consulta Oficial</span>
       </div>
 
       <div className="medidor-content">

@@ -69,7 +69,7 @@ export function PortalEca() {
         </div>
 
         <div className="read-only-badge" data-testid="badge-solo-lectura">
-          🔒 Modo Solo Lectura (Protegido)
+          Solo lectura
         </div>
       </div>
 
@@ -136,9 +136,6 @@ export function PortalEca() {
               <h3 className="section-title">
                 Flota Asignada a {ecaSeleccionada} ({maquinas.length} máquinas)
               </h3>
-              <span className="solo-lectura-pill">
-                👁 Solo lectura: Sin edición habilitada
-              </span>
             </div>
 
             {maquinas.length === 0 ? (

@@ -167,7 +167,7 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
         <div className="ficha-section" data-testid="seccion-visitas-fallidas">
           <div className="section-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h4 className="section-title">
-              Protocolo de Visitas Fallidas (HU-07)
+              Protocolo de Visitas Fallidas
             </h4>
             <button
               type="button"
@@ -522,7 +522,7 @@ export function FichaConsorcio({ consorcio, onCerrar }: FichaConsorcioProps) {
         {/* Metadatos */}
         <div className="ficha-meta">
           <small>
-            Registrado en PostgreSQL:{' '}
+            Fecha de registro:{' '}
             {createdAt ? new Date(createdAt).toLocaleString('es-AR') : 'Recién creado'}
           </small>
         </div>

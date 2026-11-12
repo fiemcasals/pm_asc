@@ -138,7 +138,7 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
 
       {exito && (
         <div className="alert alert-success" role="status">
-          ✓ ¡Consorcio y máquinas registrados con éxito en la base oficial!
+          ✓ Consorcio y máquinas registrados con éxito.
         </div>
       )}
 
@@ -165,7 +165,7 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
 
           <div className="form-field">
             <label htmlFor="direccion-consorcio" className="field-label">
-              Dirección Literal (CABA) *
+              Dirección (CABA) *
             </label>
             <input
               id="direccion-consorcio"
@@ -237,7 +237,7 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
       <fieldset className="fieldset-section" data-testid="grilla-dinamica-maquinas">
         <div className="section-header-row">
           <legend className="fieldset-legend" style={{ margin: 0 }}>
-            3. Grilla Dinámica de Máquinas AGC ({maquinas.length} máquinas)
+            3. Máquinas AGC del Edificio ({maquinas.length})
           </legend>
           <button
             type="button"

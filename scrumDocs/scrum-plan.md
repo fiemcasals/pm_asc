@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T14:35:40.901Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T14:35:42.142Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -60,12 +60,12 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 52 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hacer | gonza | RF-01, RF-02 | — |
 | 53 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
 | 54 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 55 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hacer | Sin asignar | RF-04 | — |
-| 56 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-05 | — |
+| 55 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hacer | gonza | RF-04 | — |
+| 56 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hacer | gonza | RF-04, RF-05 | — |
 | 57 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-04 | — |
 | 58 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 59 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-05 | — |
-| 60 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hacer | Sin asignar | RF-04, RF-05 | — |
+| 59 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Hacer | gonza | RF-04, RF-05 | — |
+| 60 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hacer | gonza | RF-04, RF-05 | — |
 | 61 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | Sin asignar | RF-07, RF-03 | — |
 | 62 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
 | 63 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02, RF-02 | — |

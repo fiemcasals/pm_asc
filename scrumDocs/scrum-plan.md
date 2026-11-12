@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:57:32.800Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:57:54.264Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -337,7 +337,7 @@ PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/35. RF-07 implem
 - Estimado: 4h
 
 ### RF-08 — Las Fallas Críticas del checklist llegan a la Secretaría
-Inicio desarrollo HU-17 RF-08 (disparo automatico e idempotente de Falla Critica online/offline).
+PR #38 abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/38. Implementa despacho de fallas criticas del checklist por solapas (con fotos base64), cola offline en IndexedDB (cola_fallas_criticas) con deduplicacion por clientReportId, y alertas en Secretaria y Firmante (GET /informes + SSE). Pruebas automaticas de desarrollo aprobadas (3/3). Script docs/pruebas/hu-17-hu-17-inspeccion-tecnica-por-s/RF-08-entrega.sh --carga 20: 12.04 ms prom / 30.10 ms p95.
 - Estimado: 2h
 
 ### RF-03 — No informar como entregado un WhatsApp que no se envió

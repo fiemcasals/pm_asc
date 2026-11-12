@@ -174,3 +174,52 @@ describe('Fallas por piso en Accesos (HU-17 RF-06)', () => {
     expect(trasEliminar.map((f) => f.id)).toEqual([f1.id, f3.id]);
   });
 });
+
+import {
+  EQUIPOS_EDIFICIO_DEMO,
+  aplicarRespuestaConSalaCompartida,
+  obtenerSiguienteSolapa,
+  obtenerSolapaAnterior,
+} from './navegacion';
+
+describe('Navegación por estaciones y sala compartida (HU-17 RF-07)', () => {
+  it('sincroniza respuestas de entorno entre equipos de una misma sala compartida sin tocar salas independientes', () => {
+    const config = obtenerChecklistParaTipo('traccion');
+    const { respuestasPorEquipo, propagadoAEquipos } = aplicarRespuestaConSalaCompartida({
+      prevRespuestasPorEquipo: {},
+      equipos: EQUIPOS_EDIFICIO_DEMO,
+      equipoActivoId: 'demo-m1',
+      config,
+      solapaId: 'sala_maquinas',
+      itemId: 'entorno_iluminacion',
+      opcionId: 'deficiente',
+    });
+
+    expect(propagadoAEquipos).toEqual(['demo-m2']);
+    expect(respuestasPorEquipo['demo-m1']?.sala_maquinas?.entorno_iluminacion).toBe('deficiente');
+    expect(respuestasPorEquipo['demo-m2']?.sala_maquinas?.entorno_iluminacion).toBe('deficiente');
+    expect(respuestasPorEquipo['demo-m3']?.sala_maquinas?.entorno_iluminacion).toBeUndefined();
+
+    // Ítem propio de máquina no se propaga entre equipos
+    const resMaq = aplicarRespuestaConSalaCompartida({
+      prevRespuestasPorEquipo: respuestasPorEquipo,
+      equipos: EQUIPOS_EDIFICIO_DEMO,
+      equipoActivoId: 'demo-m1',
+      config,
+      solapaId: 'sala_maquinas',
+      itemId: 'cables_traccion',
+      opcionId: 'correctos',
+    });
+    expect(resMaq.propagadoAEquipos).toEqual([]);
+    expect(resMaq.respuestasPorEquipo['demo-m2']?.sala_maquinas?.cables_traccion).toBeUndefined();
+  });
+
+  it('navega a la estación siguiente y conserva orden completo', () => {
+    const config = obtenerChecklistParaTipo('traccion');
+    expect(obtenerSiguienteSolapa(config.solapas, 'sala_maquinas')?.id).toBe('cabina');
+    expect(obtenerSiguienteSolapa(config.solapas, 'cabina')?.id).toBe('accesos');
+    expect(obtenerSiguienteSolapa(config.solapas, 'fosa')).toBeNull();
+    expect(obtenerSolapaAnterior(config.solapas, 'sala_maquinas')).toBeNull();
+    expect(obtenerSolapaAnterior(config.solapas, 'cabina')?.id).toBe('sala_maquinas');
+  });
+});

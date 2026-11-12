@@ -2507,3 +2507,77 @@ dd {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ── HU-17 RF-07: Selector de equipos por estación y sala compartida ── */
+.checklist-equipos-estacion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checklist-equipos-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.checklist-equipo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checklist-equipo-pill.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.checklist-sala-tag {
+  font-style: normal;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.checklist-sala-aviso {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.checklist-estacion-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .checklist-equipo-pill {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: flex-start;
+  }
+
+  .checklist-estacion-nav .btn {
+    flex: 1 1 100%;
+  }
+}

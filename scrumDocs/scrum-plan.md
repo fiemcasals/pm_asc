@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:16:57.882Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:17:18.713Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -263,7 +263,14 @@ Alertas críticas en Portal ECA implementadas y verificadas:
 - Estimado: 4h
 
 ### RF-01 — Motor del checklist configurable
-Test obs check
+PR #30 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/30
+Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494000545-motor-del-checklist-configurable
+- Motor del checklist configurable versionado (v2026.11.1) en apps/api/src/checklist/ (config, service, controller) y migración 005_checklist_inspecciones.
+- Endpoints: GET /api/checklist/config?tipo=traccion|hidraulico|montavehiculos, POST/GET /api/checklist/inspecciones (persiste version_checklist).
+- Dependencia upstream HU-06 RF-03 (to_do): sincroniza 1 a 1 sus 14 códigos críticos y 8 fallas comunes no críticas.
+- Verificado: npm run verify (API 24/178 OK, Web 7/82 OK, typecheck 0 errores), test:int (7/25 OK), RF-01-entrega.sh (3 OK / 0 fallas; carga 20 corridas prom 7 ms p95 7 ms).
+- 5 tests desarrollo marcados Aprobado; 5 integracion en Pendiente.
+- Nota: PATCH status=pr_open rechazado por Scrum API con 400 "No podés pedir el merge de una Tarea sin condiciones de aprobación (campo acceptanceCriteria)" pese a que acceptanceCriteria tiene 5 ítems y 10 tests generados.
 - Estimado: 5h
 
 ### RF-06 — Pantalla de constancia de visita fallida en el celular del RT

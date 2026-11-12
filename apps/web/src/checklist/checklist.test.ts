@@ -126,3 +126,51 @@ describe('Fotos por anomalía (HU-17 RF-05)', () => {
     expect(registro.tomadaEn).toBe('2026-11-12T15:00:00.000Z');
   });
 });
+
+import {
+  COMPONENTES_ACCESOS_POR_PISO,
+  GRUPOS_COMPONENTES_ACCESOS,
+  agregarFallaPiso,
+  crearFallaPiso,
+  eliminarFallaPiso,
+  generarListaPisosEdificio,
+  type FallaPisoRegistro,
+} from './fallasPiso';
+
+describe('Fallas por piso en Accesos (HU-17 RF-06)', () => {
+  it('incluye los tres grupos del cliente y la opción "Espacio entre puertas mayor a 12 cm"', () => {
+    expect(GRUPOS_COMPONENTES_ACCESOS.map((g) => g.titulo)).toEqual([
+      'Seguridad Crítica',
+      'Mecánica de Puerta',
+      'Llamadores',
+    ]);
+
+    const espacio = COMPONENTES_ACCESOS_POR_PISO.find(
+      (c) => c.etiqueta === 'Espacio entre puertas mayor a 12 cm',
+    );
+    expect(espacio).toBeDefined();
+    expect(espacio?.esFallaCritica).toBe(true);
+    expect(espacio?.grupoTitulo).toBe('Seguridad Crítica');
+  });
+
+  it('permite agregar varias fallas por piso usando la lista del edificio y eliminar una puntual', () => {
+    const pisos = generarListaPisosEdificio(4, true);
+    expect(pisos).toEqual(['SS', 'PB', '1', '2', '3', '4']);
+
+    const f1 = crearFallaPiso('3', 'espacio_entre_puertas', 'Puerta derecha 14 cm');
+    const f2 = crearFallaPiso('3', 'hojas_guias_patin', 'Patín inferior suelto');
+    const f3 = crearFallaPiso('PB', 'llamadores_piso');
+
+    let lista: FallaPisoRegistro[] = [];
+    lista = agregarFallaPiso(lista, f1);
+    lista = agregarFallaPiso(lista, f2);
+    lista = agregarFallaPiso(lista, f3);
+
+    expect(lista).toHaveLength(3);
+    expect(lista.filter((f) => f.piso === '3')).toHaveLength(2);
+
+    const trasEliminar = eliminarFallaPiso(lista, f2.id);
+    expect(trasEliminar).toHaveLength(2);
+    expect(trasEliminar.map((f) => f.id)).toEqual([f1.id, f3.id]);
+  });
+});

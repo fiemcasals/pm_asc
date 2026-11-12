@@ -15,6 +15,14 @@ interface NotificacionPanel {
   texto: string;
 }
 
+function formatearNombreEquipo(codigoAGC: string, nombre: string): string {
+  const limpio = nombre.trim();
+  if (limpio.toUpperCase().startsWith(codigoAGC.trim().toUpperCase())) {
+    return limpio;
+  }
+  return `${codigoAGC} · ${limpio}`;
+}
+
 export interface AccionesAlertaProps {
   maquina: MaquinaEca;
   alertaId: string;
@@ -307,7 +315,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
             <div className="alerta-card-body">
               <div className="alerta-card-info">
                 <h4 className="alerta-equipo-titulo" data-testid="titulo-fuera-de-servicio">
-                  {m.codigoAGC} - {m.nombre}
+                  {formatearNombreEquipo(m.codigoAGC, m.nombre)}
                 </h4>
                 <div className="alerta-ubicacion">
                   <strong>Edificio:</strong> {m.edificio.direccion} ({m.edificio.consorcio})
@@ -350,7 +358,6 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
                     className="foto-cabina-trabada"
                     data-testid="foto-cabina-trabada"
                   />
-                  <span className="foto-badge">Fotografía de Cabina Trabada</span>
                 </div>
               </div>
             </div>
@@ -401,7 +408,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
               <div className="cartel-title-group">
                 <span className="cartel-super-badge">ANOMALÍAS GRAVES DETECTADAS OPERANDO</span>
                 <h3 className="cartel-main-title" data-testid="titulo-reparacion-urgente">
-                  CARTEL GIGANTE: REPARACIÓN URGENTE — {m.codigoAGC} ({m.nombre})
+                  REPARACIÓN URGENTE — {formatearNombreEquipo(m.codigoAGC, m.nombre)}
                 </h3>
                 <div className="cartel-subtitle">
                   {m.edificio.direccion} — {m.edificio.consorcio} | Conservadora: {m.eca}
@@ -423,7 +430,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
             >
               <div className="checklist-header-row">
                 <h4 className="checklist-title">
-                  📋 Detalle del Checklist de Anomalías Graves Inspeccionadas:
+                  Checklist de Anomalías Graves
                 </h4>
                 <span className="checklist-count-tag">
                   {checklist.length} puntos críticos identificados

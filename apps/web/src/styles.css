@@ -1870,3 +1870,140 @@ dd {
   min-width: 0;
   padding: 0;
 }
+
+/* ── HU-06 RF-01: notificación emergente de falla crítica (Secretaría) ── */
+.falla-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  width: min(420px, calc(100vw - 32px));
+  background: var(--card);
+  border: 2px solid var(--danger);
+  border-left-width: 8px;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+  padding: 16px;
+  animation: falla-toast-entrada 0.25s ease-out;
+}
+
+.falla-toast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.falla-toast-header h3 {
+  margin: 0;
+  color: var(--danger);
+  font-size: 1.05rem;
+}
+
+.falla-toast-contador {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.falla-toast-maquina {
+  margin: 10px 0 6px;
+  font-weight: 600;
+}
+
+.falla-toast-fallas {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.falla-toast-meta {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.falla-toast-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  text-decoration: none;
+}
+
+.btn-danger:hover {
+  background: #991b1b;
+}
+
+@keyframes falla-toast-entrada {
+  from { transform: translateY(-12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .falla-toast { animation: none; }
+}
+
+/* ── HU-12 RF-02 (FIX): Contraste de contenedores y textos en Modo Oscuro ── */
+:root,
+[data-theme='dark'] {
+  --surface-sunken: #101217;
+}
+
+[data-theme='light'] {
+  --surface-sunken: #f8fafc;
+}
+
+[data-theme='dark'] .audit-grid {
+  background: var(--card-subtle, #101217);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--text, #f4f5f6);
+}
+
+[data-theme='dark'] .audit-grid strong {
+  color: var(--muted, #8a8f98);
+}
+
+[data-theme='dark'] .cartel-bloqueo-tercera-visita {
+  background: var(--danger-bg, rgba(239, 68, 68, 0.13)) !important;
+  border-color: var(--danger-border, rgba(248, 113, 113, 0.35)) !important;
+  color: var(--text, #f4f5f6) !important;
+}
+
+[data-theme='dark'] [data-testid='badge-recargo-45-habilitado'] {
+  background: var(--danger-bg, rgba(239, 68, 68, 0.16)) !important;
+  color: var(--danger, #f87171) !important;
+  border-color: var(--danger-border, rgba(248, 113, 113, 0.4)) !important;
+}
+
+[data-theme='dark'] .ficha-table [style*='220, 38, 38'],
+[data-theme='dark'] .ficha-table [style*='185, 28, 28'] {
+  color: #fca5a5 !important;
+}
+
+[data-theme='dark'] [data-testid='total-liquidacion-consorcio'] {
+  color: var(--text, #f4f5f6) !important;
+}
+
+[data-theme='dark'] [data-testid='total-liquidacion-consorcio'][style*='185, 28, 28'] {
+  color: #fca5a5 !important;
+}
+
+[data-theme='dark'] .solo-lectura-pill,
+[data-theme='dark'] .badge-modo-consulta {
+  background: var(--card-subtle, #101217);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--muted, #8a8f98);
+}
+
+[data-theme='dark'] .consorcio-item-dir,
+[data-theme='dark'] .bloqueo-hint,
+[data-theme='dark'] .maquina-meta,
+[data-theme='dark'] .modal-subtitle,
+[data-theme='dark'] .photo-placeholder {
+  color: var(--muted, #8a8f98);
+}

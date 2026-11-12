@@ -269,10 +269,10 @@ describe('eca module', () => {
         }),
       );
 
-      // Cartel naranja gigante
       expect(html).toContain('cartel-reparacion-urgente-gigante');
       expect(html).toContain('data-testid="cartel-reparacion-urgente"');
-      expect(html).toContain('CARTEL GIGANTE: REPARACIÓN URGENTE');
+      expect(html).toContain('REPARACIÓN URGENTE');
+      expect(html).not.toContain('CARTEL GIGANTE');
 
       // Motivo de anomalías graves operando
       expect(html).toContain('Freno electromagnético con deslizamiento crítico de 18cm y cables deshilachados');

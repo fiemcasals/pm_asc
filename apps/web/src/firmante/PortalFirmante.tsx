@@ -8,7 +8,15 @@ import {
 } from './firmante';
 import { ModalAuditoria } from './ModalAuditoria';
 
-export function PortalFirmante() {
+interface PortalFirmanteProps {
+  maquinaInicialId?: string | null;
+  onConsumirMaquinaInicial?: () => void;
+}
+
+export function PortalFirmante({
+  maquinaInicialId,
+  onConsumirMaquinaInicial,
+}: PortalFirmanteProps) {
   const [maquinas, setMaquinas] = useState<MaquinaAsignada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +38,15 @@ export function PortalFirmante() {
   useEffect(() => {
     void cargarDatos();
   }, []);
+
+  useEffect(() => {
+    if (!maquinaInicialId || maquinas.length === 0) return;
+    const encontrada = maquinas.find((m) => m.id === maquinaInicialId);
+    if (encontrada) {
+      setMaquinaSeleccionada(encontrada);
+      onConsumirMaquinaInicial?.();
+    }
+  }, [maquinaInicialId, maquinas, onConsumirMaquinaInicial]);
 
   const handleAutorizar = async (maquinaId: string) => {
     const res = await autorizarFirmaMaquina(maquinaId);

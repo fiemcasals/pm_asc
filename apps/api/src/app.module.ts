@@ -7,6 +7,8 @@ import { PgUsuariosRepository } from './auth/pg-usuarios.repository';
 import { RolesGuard } from './auth/roles.guard';
 import { UsuariosRepository } from './auth/usuarios.repository';
 import { APP_CONFIG, AppConfig } from './config';
+import { ChecklistController } from './checklist/checklist.controller';
+import { ChecklistService } from './checklist/checklist.service';
 import { ConsorciosController } from './consorcios/consorcios.controller';
 import { ConsorciosRepository } from './consorcios/consorcios.repository';
 import { PgConsorciosRepository } from './consorcios/pg-consorcios.repository';
@@ -54,6 +56,7 @@ export class AppModule implements NestModule {
         UsuariosController,
         ConsentimientoController,
         ConsorciosController,
+        ChecklistController,
         FirmanteController,
         EcaController,
         WhatsAppController,
@@ -71,6 +74,7 @@ export class AppModule implements NestModule {
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,
+        ChecklistService,
         EcaService,
         WhatsAppFormatterService,
         WhatsAppConnectorService,

@@ -334,4 +334,24 @@ export const MIGRATIONS: Migration[] = [
         );
     `,
   },
+  {
+    id: '010_checklist_inspecciones',
+    sql: `
+      -- Inspecciones ejecutadas por el RT usando el motor de checklist configurable (HU-17 RF-01).
+      CREATE TABLE inspecciones_checklist (
+        id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id      text NOT NULL,
+        maquina_id        text NOT NULL,
+        referencia_agc    text NOT NULL,
+        tipo_maquina      text NOT NULL CHECK (tipo_maquina IN ('traccion', 'hidraulico', 'montavehiculos')),
+        estado_equipo     text NOT NULL DEFAULT 'en_uso' CHECK (estado_equipo IN ('en_uso', 'fuera_de_servicio')),
+        version_checklist text NOT NULL,
+        datos             jsonb NOT NULL DEFAULT '{}'::jsonb,
+        created_at        timestamptz NOT NULL DEFAULT now(),
+        updated_at        timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX inspecciones_checklist_consorcio_idx ON inspecciones_checklist (consorcio_id, maquina_id);
+    `,
+  },
 ];

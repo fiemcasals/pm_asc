@@ -1,6 +1,6 @@
 # Empezá acá: este repo está conectado a Scrum Master AI
 
-_Generado automáticamente el 2026-10-09T16:58:23.584Z -- no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T11:00:19.326Z -- no editar a mano, se sobreescribe en cada publicación._
 
 Si el usuario te pidió leer la documentación de este proyecto, o arrancó una conversación
 sobre "qué sigue", "cargar tareas", "sincronizar tests", "reportar avance" o
@@ -157,6 +157,10 @@ El documento del rol (`scrumDocs/roles/<rol>.md`) dice **qué** puede hacer esa 
 campos, estados y endpoints. El skill (`.claude/skills/<rol>-sync/SKILL.md`) dice **cómo**
 se hace, paso a paso. Los dos ya están en este repo: no hace falta que el usuario escriba
 ningún slash command, seguilos vos directamente.
+
+Si no soportás skills, no te falta nada: ese `SKILL.md` es un archivo markdown común y la
+ruta es sólo dónde está. Abrilo y seguí los pasos como cualquier otro documento del repo —
+todo lo que hace falta son llamadas HTTP a la API y comandos de git.
 
 Los pasos 1 a 4 de acá ya cubren las credenciales, el rol y el proyecto, así que salteá
 esos pasos del skill. Lo que **no** se saltea es la sección 5: el formato del cuerpo rige

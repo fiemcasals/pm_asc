@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T14:35:39.610Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T14:35:40.901Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -20,13 +20,13 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 12 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
 | 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | Hacer | Sin asignar | RF-01 | — |
 | 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | Hacer | Sin asignar | RF-01 | — |
-| 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hacer | Sin asignar | RF-01, RF-01 | — |
+| 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hacer | gonza | RF-01, RF-01 | — |
 | 16 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 17 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Hacer | gonza | RF-02 | — |
 | 18 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 19 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 20 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 21 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | Hacer | Sin asignar | RNF-01, RF-01 | — |
+| 21 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | Hacer | gonza | RNF-01, RF-01 | — |
 | 22 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 23 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 24 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
@@ -50,14 +50,14 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 42 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 43 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
 | 44 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 45 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Hacer | Sin asignar | RF-01, RF-03 | — |
+| 45 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Hacer | gonza | RF-01, RF-03 | — |
 | 46 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | Sin asignar | RF-02, RF-05 | — |
 | 47 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 48 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | Sin asignar | RF-02, RF-01, RF-05 | — |
 | 49 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 50 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 51 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | Sin asignar | RF-02, RF-05 | — |
-| 52 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hacer | Sin asignar | RF-01, RF-02 | — |
+| 52 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hacer | gonza | RF-01, RF-02 | — |
 | 53 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
 | 54 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
 | 55 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hacer | Sin asignar | RF-04 | — |

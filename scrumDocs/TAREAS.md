@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T12:45:21.082Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T12:56:10.994Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -315,6 +315,15 @@ Implementar el sistema visual NEO estilo Linear con soporte Dark/Light, vista be
 1. El shell principal ofrece botón 'Cambiar tema visual' entre modo oscuro y claro, vista bento 'Estado del sistema' y botón 'Alternar barra lateral' que al colapsar a 80px mantiene expandir al lado del cuadrado violeta sin superposición.
 2. La barra superior incluye el buscador inline con placeholder 'Buscar consorcio, máquina (M1, M2) o portal…' sin modal Ctrl+K; al escribir muestra resultados agrupados y al elegir uno navega directo al consorcio en Secretaría o modal de auditoría en Firmante.
 3. El Medidor de Cobertura Mensual en Portal ECA aplica recuadros con colores neón diferenciados de alto contraste para 'Inspeccionadas', 'Firmadas (Legal AGC)', 'Pendientes de Visita', 'Con Advertencia' y 'Flota Total'.
+
+### RF-02: FIX: Corregir contraste de textos y contenedores en Modo Oscuro (Funcional)
+
+Corregir en styles.css los fondos claros heredados (.audit-grid en ModalAuditoria, --surface-sunken en formulario de visita fallida y total de facturación, cartel de bloqueo por tercera visita, badges y textos atenuados) cuando data-theme='dark' está activo para garantizar lectura legible en todo el sistema.
+
+**Condiciones de aprobación**
+
+1. En Portal Firmante (ModalAuditoria), el bloque '1. Estado de la Inspección' (.audit-grid) muestra fondo oscuro (--card-subtle) y texto legible de alto contraste (--text / --muted) en modo oscuro sin fondo blanco.
+2. En Secretaría (FichaConsorcio), las cajas '--surface-sunken' (formulario de visita fallida y fila total de facturación), el cartel de bloqueo por tercera visita y los indicadores de recargo del 45% muestran colores contrastados en modo oscuro.
 
 ## HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios
 

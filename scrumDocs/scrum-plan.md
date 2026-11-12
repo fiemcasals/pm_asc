@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:28:26.566Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:28:58.903Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -18,7 +18,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 10 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 11 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 12 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
-| 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | Hecho | germanG | RF-01 | — |
+| 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
 | 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | Hacer | germanG | RF-01 | — |
 | 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hecho | gonza | RF-01, RF-01 | — |
 | 16 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |

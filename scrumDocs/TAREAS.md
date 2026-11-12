@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T16:03:23.128Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T16:24:50.072Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -553,6 +553,18 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 
 ## HU-15: HU-15: Aislamiento de datos entre ECA
 
+### RF-01: Asociar la ECA al usuario y exponerla en la sesión (Funcional)
+
+Un usuario con rol eca hoy no sabe a qué Empresa Conservadora pertenece. Se agrega la ECA al usuario (el mismo nombre que figura en consorcios.eca_nombre) y el guard la deja disponible en la petición, para que el RLS la tome de la sesión.
+Origen: revisión de los PRs #28 y #29 contra la API de autenticación de HU-14 (12/11/2026). El middleware del RLS toma la ECA y el rol de los headers x-eca-actual y x-rol-actual, que cualquier cliente puede mandar; y los usuarios no tienen ECA asociada.
+
+**Condiciones de aprobación**
+
+1. POST /api/usuarios con rol "eca" exige el campo "eca" (nombre de la ECA); sin él responde 400. Con cualquier otro rol, "eca" se rechaza con 400.
+2. El login, el refresco y GET /api/auth/me devuelven la "eca" del usuario cuando tiene una.
+3. El guard deja la ECA en la petición (req.usuario.eca), tomada de la base en cada pedido: cambiarle la ECA a un usuario vale en el pedido siguiente.
+4. La migración agrega la columna sin romper usuarios existentes, y un test de integración contra PostgreSQL real la verifica.
+
 ### RNF-01: Row Level Security por ECA (No funcional)
 
 Aislar los datos de cada ECA en la base con Row Level Security de PostgreSQL, para que un error en una consulta no pueda mostrar datos de otra ECA.
@@ -575,6 +587,18 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 1. Un RT de Calle ve solo los edificios asignados a él, sin importar la ECA.
 2. Un Firmante ve solo las máquinas de los edificios donde figura como Firmante.
 3. Al quitar una asignación, ese usuario deja de ver el edificio en la siguiente consulta.
+
+### RNF-03: Tomar la ECA y el rol del RLS desde la sesión del usuario (No funcional)
+
+El contexto del RLS (eca, rol, usuario) tiene que salir de la sesión verificada (req.usuario), no de headers del cliente. El middleware corre antes que el guard, así que el contexto se arma en el guard o en un interceptor. Se elimina el fallback a una ECA por defecto: sin sesión no hay datos.
+Origen: revisión de los PRs #28 y #29 contra la API de autenticación de HU-14 (12/11/2026). El middleware del RLS toma la ECA y el rol de los headers x-eca-actual y x-rol-actual, que cualquier cliente puede mandar; y los usuarios no tienen ECA asociada.
+
+**Condiciones de aprobación**
+
+1. El contexto de RLS se arma con la ECA, el rol y el usuario de la sesión verificada. Los headers x-eca-actual, x-rol-actual y x-usuario-actual se ignoran.
+2. Un usuario de la ECA A que manda x-eca-actual con la ECA B sigue viendo solo los datos de la ECA A. Un test automático lo verifica y falla si ve filas de la B.
+3. Una petición sin sesión a una ruta con datos de ECA responde 401, y ninguna ruta cae a una ECA por defecto (RLS estricto siempre activo, sin variable de entorno).
+4. El RT de Calle y el Firmante siguen viendo solo los edificios que tienen asignados, de cualquier ECA, y nuestro consentimiento de ubicación sigue funcionando con el usuario de aplicación del RLS (npm run test:int en verde).
 
 ## HU-16: HU-16: Mapa del RT y llegada al edificio
 

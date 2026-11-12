@@ -2,11 +2,12 @@ import React from 'react';
 import {
   type ChecklistMotorConfig,
   type ChecklistSolapaConfig,
+  type EstadoEquipoUso,
   type SolapaId,
 } from './checklist.config';
 import {
-  contarRespondidosSolapa,
-  esSolapaCompleta,
+  evaluarEstadoSolapa,
+  type FotosPorEquipo,
   type ObservacionesChecklist,
   type RespuestasChecklist,
 } from './checklist.logic';
@@ -17,6 +18,8 @@ export interface ChecklistSolapaViewProps {
   onCambiarSolapa: (id: SolapaId) => void;
   respuestas: RespuestasChecklist;
   observaciones: ObservacionesChecklist;
+  fotos?: FotosPorEquipo;
+  estadoEquipo?: EstadoEquipoUso;
   onSeleccionarOpcion: (solapaId: SolapaId, itemId: string, opcionId: string) => void;
   onCambiarObservacion: (solapaId: SolapaId, texto: string) => void;
   extraEnSolapa?: (solapa: ChecklistSolapaConfig) => React.ReactNode;
@@ -34,6 +37,8 @@ export function ChecklistSolapaView({
   onCambiarSolapa,
   respuestas,
   observaciones,
+  fotos = {},
+  estadoEquipo = 'en_uso',
   onSeleccionarOpcion,
   onCambiarObservacion,
   extraEnSolapa,
@@ -47,17 +52,19 @@ export function ChecklistSolapaView({
 
   const obsActual = observaciones[solapaActiva.id] ?? '';
   const respuestasSolapa = respuestas[solapaActiva.id] ?? {};
+  const estadoActiva = evaluarEstadoSolapa(solapaActiva, respuestasSolapa, fotos, estadoEquipo);
 
   return (
     <div className="checklist-shell" data-testid="checklist-solapa-view">
       <div className="checklist-tablist" role="tablist" aria-label="Solapas de inspección">
         {config.solapas.map((solapa) => {
           const activa = solapa.id === solapaActiva.id;
-          const { respondidos, total } = contarRespondidosSolapa(
+          const { respondidos, total, completa } = evaluarEstadoSolapa(
             solapa,
             respuestas[solapa.id],
+            fotos,
+            estadoEquipo,
           );
-          const completa = esSolapaCompleta(solapa, respuestas[solapa.id]);
 
           return (
             <button
@@ -102,8 +109,13 @@ export function ChecklistSolapaView({
             <h3 className="checklist-panel-title">{solapaActiva.nombre}</h3>
             <span className="checklist-version">Motor v{config.version}</span>
           </div>
-          {esSolapaCompleta(solapaActiva, respuestasSolapa) && (
+          {estadoActiva.completa && (
             <span className="checklist-badge-completa">Completa</span>
+          )}
+          {!estadoActiva.completa && estadoActiva.faltanFotosObligatorias.length > 0 && (
+            <span className="checklist-badge-falta-foto" data-testid="badge-falta-foto-critica">
+              Falta foto obligatoria ({estadoActiva.faltanFotosObligatorias.length})
+            </span>
           )}
         </div>
 

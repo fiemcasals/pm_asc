@@ -2294,3 +2294,84 @@ dd {
     flex: 1 1 100%;
   }
 }
+
+
+/* ── HU-17 RF-05: Adjuntar Foto de Anomalía <= 500 KB ── */
+.checklist-badge-falta-foto {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.checklist-foto-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-focus);
+  background: var(--card);
+}
+
+.checklist-foto-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sr-only-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.checklist-foto-aviso {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.checklist-foto-opcional {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.checklist-foto-preview {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.checklist-foto-preview img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.checklist-foto-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+}

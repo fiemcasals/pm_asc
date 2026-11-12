@@ -11,6 +11,7 @@ import {
   type Usuario,
 } from './auth/sesion';
 import { InspeccionCampoView } from './checklist/InspeccionCampoView';
+import { cargarVisitaEnCurso, tieneProgresoVisita } from './checklist/offlineStore';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
@@ -249,6 +250,23 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   useEffect(() => {
     void fetchHealth().then(setHealth);
   }, []);
+
+  useEffect(() => {
+    if (usuario.rol !== 'rt_calle' && usuario.rol !== 'administrador') return;
+    let activo = true;
+    void cargarVisitaEnCurso()
+      .then((snap) => {
+        if (activo && tieneProgresoVisita(snap)) {
+          setVista('inspeccion');
+        }
+      })
+      .catch(() => {
+        // Entorno sin IndexedDB
+      });
+    return () => {
+      activo = false;
+    };
+  }, [usuario.rol]);
 
   const currentNav = navItems.find((item) => item.id === vista) ?? navItems[0];
   const systemOnline = health?.kind === 'ok';

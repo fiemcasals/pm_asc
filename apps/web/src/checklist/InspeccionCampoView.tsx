@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   obtenerChecklistParaTipo,
   requiereFotoChecklist,
@@ -32,6 +32,12 @@ import {
   obtenerSiguienteSolapa,
   obtenerSolapaAnterior,
 } from './navegacion';
+import {
+  cargarVisitaEnCurso,
+  guardarVisitaEnCurso,
+  limpiarVisitaEnCurso,
+  tieneProgresoVisita,
+} from './offlineStore';
 
 const EQUIPOS_DEMO = EQUIPOS_EDIFICIO_DEMO;
 
@@ -51,6 +57,96 @@ export function InspeccionCampoView() {
   const [avisoSala, setAvisoSala] = useState<string | null>(null);
   const [fotoError, setFotoError] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, ReturnType<typeof obtenerChecklistParaTipo>>>({});
+  const [enLinea, setEnLinea] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  );
+  const [ultimaSyncIdb, setUltimaSyncIdb] = useState<string | null>(null);
+  const [restauradaDesdeIdb, setRestauradaDesdeIdb] = useState<boolean>(false);
+  const hidratadoRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    const onOnline = () => setEnLinea(true);
+    const onOffline = () => setEnLinea(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+    void cargarVisitaEnCurso()
+      .then((snap) => {
+        if (!activo || !snap) return;
+        setEquipoId(snap.equipoId);
+        setSolapaActiva(snap.solapaActiva);
+        setTipoOverride(snap.tipoOverride ?? {});
+        setEstadoPorEquipo(snap.estadoPorEquipo ?? {});
+        setRespuestasPorEquipo(snap.respuestasPorEquipo ?? {});
+        setObsPorEquipo(snap.obsPorEquipo ?? {});
+        setFotosPorEquipo(snap.fotosPorEquipo ?? {});
+        setFallasPisoPorEquipo(snap.fallasPisoPorEquipo ?? {});
+        setUltimaSyncIdb(snap.actualizadaEn);
+        if (tieneProgresoVisita(snap)) {
+          setRestauradaDesdeIdb(true);
+        }
+      })
+      .catch(() => {
+        // Entorno sin IndexedDB
+      })
+      .finally(() => {
+        if (activo) hidratadoRef.current = true;
+      });
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hidratadoRef.current) return;
+    void guardarVisitaEnCurso({
+      equipoId,
+      solapaActiva,
+      tipoOverride,
+      estadoPorEquipo,
+      respuestasPorEquipo,
+      obsPorEquipo,
+      fotosPorEquipo,
+      fallasPisoPorEquipo,
+    })
+      .then((saved) => {
+        setUltimaSyncIdb(saved.actualizadaEn);
+      })
+      .catch(() => {
+        // Ignorar en entornos de prueba sin IDB
+      });
+  }, [
+    equipoId,
+    solapaActiva,
+    tipoOverride,
+    estadoPorEquipo,
+    respuestasPorEquipo,
+    obsPorEquipo,
+    fotosPorEquipo,
+    fallasPisoPorEquipo,
+  ]);
+
+  const handleReiniciarBorrador = () => {
+    setEquipoId(EQUIPOS_DEMO[0].maquinaId);
+    setSolapaActiva('sala_maquinas');
+    setTipoOverride({});
+    setEstadoPorEquipo({});
+    setRespuestasPorEquipo({});
+    setObsPorEquipo({});
+    setFotosPorEquipo({});
+    setFallasPisoPorEquipo({});
+    setAvisoSala(null);
+    setRestauradaDesdeIdb(false);
+    setUltimaSyncIdb(null);
+    void limpiarVisitaEnCurso().catch(() => {});
+  };
 
   const pisosEdificio = PISOS_EDIFICIO_DEFAULT;
   const fallasPisoActuales = fallasPisoPorEquipo[equipoId] ?? [];
@@ -441,6 +537,30 @@ export function InspeccionCampoView() {
           <p className="portal-desc">
             Edificio demo Av. Callao 450 · Selector provisorio hasta integrar inicio de visita (HU-17 RF-02).
           </p>
+        </div>
+        <div className="inspeccion-offline-bar">
+          <span
+            className={`checklist-idb-pill ${enLinea ? 'online' : 'offline'}`}
+            data-testid="estado-persistencia-idb"
+          >
+            {enLinea ? 'En línea' : 'Sin señal (offline)'} · IndexedDB{' '}
+            {ultimaSyncIdb
+              ? `guardado ${new Date(ultimaSyncIdb).toLocaleTimeString('es-AR')}`
+              : 'listo'}
+          </span>
+          {restauradaDesdeIdb && (
+            <span className="checklist-restored-pill" data-testid="badge-visita-restaurada">
+              Visita recuperada en {equipo.referenciaAgc} · {solapaActiva}
+            </span>
+          )}
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={handleReiniciarBorrador}
+            data-testid="btn-limpiar-borrador"
+          >
+            Limpiar borrador
+          </button>
         </div>
       </div>
 

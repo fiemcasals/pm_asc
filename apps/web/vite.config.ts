@@ -45,6 +45,21 @@ export default defineConfig(({ command, mode }) => {
         },
         // En desarrollo también se registra el service worker, para poder verificarlo.
         devOptions: { enabled: true, type: 'module' },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          navigateFallback: 'index.html',
+          navigateFallbackDenylist: [/^\/api\//],
+          runtimeCaching: [
+            {
+              urlPattern: /\/api\/checklist\/config/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'checklist-config-v1',
+                networkTimeoutSeconds: 3,
+              },
+            },
+          ],
+        },
       }),
     ],
     server: {
@@ -53,6 +68,14 @@ export default defineConfig(({ command, mode }) => {
       https: isDevServer ? localHttps() : undefined,
       // La política CORS la decide la API (apps/api/src/app.setup.ts), no el servidor de Vite.
       cors: false,
+      proxy: {
+        '/api': { target: `http://127.0.0.1:${apiPort}`, changeOrigin: false },
+      },
+    },
+    preview: {
+      port: 4173,
+      strictPort: true,
+      https: !process.env.VITEST ? localHttps() : undefined,
       proxy: {
         '/api': { target: `http://127.0.0.1:${apiPort}`, changeOrigin: false },
       },

@@ -2581,3 +2581,36 @@ dd {
     flex: 1 1 100%;
   }
 }
+
+/* ── HU-17 RNF-01: Persistencia offline IndexedDB + PWA ── */
+.inspeccion-offline-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.checklist-idb-pill,
+.checklist-restored-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.checklist-idb-pill.online {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.checklist-idb-pill.offline {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.checklist-restored-pill {
+  background: var(--accent-soft);
+  color: var(--accent);
+}

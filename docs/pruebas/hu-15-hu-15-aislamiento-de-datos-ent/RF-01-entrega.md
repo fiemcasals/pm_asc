@@ -16,7 +16,7 @@ Un usuario con rol `eca` no sabía a qué Empresa Conservadora pertenece, así q
   - Con cualquier otro rol (`rt_calle`, `firmante`, `secretaria`, `administrador`), mandar una `eca` también da **400**. Sin ella, o con `eca` vacía o nula, el alta funciona y la ECA queda en `null`.
 - **La sesión la devuelve:** el login, el refresco y `GET /api/auth/me` incluyen `eca` (el nombre, o `null`).
 - **El guard la deja en la petición:** `req.usuario.eca`, que el decorador `@UsuarioActual()` entrega a los controladores. Sale de la base **en cada pedido**, no del token, así que cambiar la ECA de un usuario vale desde el pedido siguiente, sin esperar a que el token de 15 minutos venza.
-- **Migración `010_eca_en_usuarios`:** agrega `usuarios.eca` (texto, admite `NULL`) y dos restricciones:
+- **Migración `011_eca_en_usuarios`:** agrega `usuarios.eca` (texto, admite `NULL`) y dos restricciones:
   - `usuarios_eca_solo_rol_eca`: solo el rol `eca` puede tener una ECA.
   - `usuarios_eca_no_vacia`: la ECA no puede ser vacía ni de solo espacios.
   - Los usuarios que ya existían quedan con `NULL` y siguen funcionando.
@@ -28,11 +28,11 @@ Igual que HU-14. Con el RLS que ya está en `dev`, el `.env` necesita además `D
 
 | Prueba | Resultado (12/11/2026) |
 |---|---|
-| Línea base de `dev`, antes de tocar nada | API 215/215, web 111/111, `test:int` 34/34 |
-| `npm run verify` | Tipos OK. API: 235 en verde, de los cuales 20 son nuevos (`auth-eca-usuario.e2e-spec`). Web: 111 en verde |
-| `npm run test:int` | 36 en verde, de los cuales 2 son nuevos en `auth.int-spec`: la migración y las restricciones contra PostgreSQL real, y el alta con login, refresco, `/me` y cambio de ECA en la base |
+| Línea base de `dev`, antes de tocar nada | API 215/215, web 111/111, `test:int` 34/34. Después se rebasó sobre el checklist de Gonzalo, ya mergeado, y se repitió todo: lo que sigue es de esa corrida |
+| `npm run verify` | Tipos OK. API: 246 en verde, de los cuales 20 son nuevos (`auth-eca-usuario.e2e-spec`). Web: 123 en verde |
+| `npm run test:int` | 37 en verde, de los cuales 2 son nuevos en `auth.int-spec`: la migración y las restricciones contra PostgreSQL real, y el alta con login, refresco, `/me` y cambio de ECA en la base |
 | `bash docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RF-01-entrega.sh` | 28 verificaciones, 28 OK |
-| `… RF-01-entrega.sh --carga 200` | 200 `GET /api/auth/me`, 0 fallidas · promedio 211 ms · p95 257 ms (en una segunda corrida: p95 303 ms). La máquina estaba cargada: `/api/health`, que no toca nada de esto, tardó 361 ms de promedio |
+| `… RF-01-entrega.sh --carga 200` | 200 `GET /api/auth/me`, 0 fallidas · promedio 155 ms · p95 186 ms. Antes de rebasar, con la máquina cargada, había dado p95 de 257 y 303 ms; en esa misma corrida `/api/health`, que no toca nada de esto, tardaba 361 ms de promedio |
 | Regresión de HU-14 | `RF-01-entrega.sh` 22/22, `RF-02-entrega.sh` 16/16, `RNF-01-entrega.sh` 23/23 |
 
 ## 3. Qué datos hacen falta
@@ -63,6 +63,7 @@ bash docs/pruebas/hu-14-hu-14-acceso-por-rol-y-sesion/RF-01-entrega.sh          
 - **La ECA es texto libre.** No se valida contra los edificios, porque hoy no hay un catálogo de ECA: es el mismo nombre que figura en `consorcios.eca_nombre`. Un error de tipeo al crear el usuario deja al usuario sin ver nada. Conviene un catálogo cuando se arme la pantalla de usuarios.
 - **No hay forma de cambiar la ECA de un usuario por API.** Solo se fija en el alta. Cambiarla hoy es un `UPDATE` en la base (así lo prueban el script y el test de integración). Un `PATCH /api/usuarios/:id` y la pantalla de usuarios no están en el backlog.
 - **Los usuarios `eca` que ya existían quedan con `eca` `NULL`.** No hay nada que migrar: no había ninguno de verdad, solo los de prueba. Si hubiera, habría que cargarles la ECA a mano.
+- **La migración se llama `011`.** `dev` ya tenía una `010` (`010_checklist_inspecciones`, del checklist), así que esta tarea se renumeró al rebasar. Quien haya aplicado antes la versión `010_eca_en_usuarios` (solo la base local de quien desarrolló esta tarea) tiene que renombrar su registro: `update schema_migrations set id = '011_eca_en_usuarios' where id = '010_eca_en_usuarios'`. Si no, la API intenta crear la columna otra vez, falla y no aplica nada más.
 - **El RLS todavía lee los headers.** Esta tarea solo pone la ECA en la sesión; que el contexto del RLS salga de ahí es `RNF-03`, de Gonzalo, que ahora está destrabada.
 - **Se corrigió el script de entrega de HU-14 (`RF-01-entrega.sh`)**, que daba de alta un usuario `eca` sin ECA y ahora recibiría 400. También se actualizaron dos tests viejos de `auth.e2e-spec.ts` por lo mismo.
 - **`auth.int-spec.ts` ahora sube el timeout a 60 s.** Es el hallazgo de QA de HU-14: bcrypt de costo 12 hace que, con la máquina cargada, 5 s no alcance.

@@ -1,4 +1,6 @@
-export type FallaCritica = 'CABLES_DESGASTADOS' | 'LIMITADOR_ANULADO';
+import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
+
+export type FallaCritica = 'CABLES_DESGASTADOS' | 'LIMITADOR_ANULADO' | (string & {});
 
 export interface EventoFallaCritica {
   tipo: 'falla-critica';
@@ -17,7 +19,15 @@ export interface EventoFallaCritica {
 
 export const URL_EVENTOS_FALLAS = '/api/fallas-criticas/eventos';
 
-export const ETIQUETA_FALLA: Record<FallaCritica, string> = {
+const ETIQUETAS_CHECKLIST: Record<string, string> = Object.fromEntries(
+  obtenerFallasCriticasDefinidas().map((f) => [
+    f.codigoFallaCritica,
+    `${f.itemEtiqueta}: ${f.opcionEtiqueta}`,
+  ]),
+);
+
+export const ETIQUETA_FALLA: Record<string, string> = {
+  ...ETIQUETAS_CHECKLIST,
   CABLES_DESGASTADOS: 'Cables de tracción desgastados',
   LIMITADOR_ANULADO: 'Limitador de velocidad anulado',
 };

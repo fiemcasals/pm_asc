@@ -152,13 +152,13 @@ describe('Autenticación contra PostgreSQL real (HU-14 RF-01)', () => {
     expect(ref.body.motivo).toBe('revocada');
   });
 
-  it('la migración 010 agrega usuarios.eca, no toca a los usuarios que ya existían y rechaza una ECA en otro rol (HU-15 RF-01 c4)', async () => {
+  it('la migración 011 agrega usuarios.eca, no toca a los usuarios que ya existían y rechaza una ECA en otro rol (HU-15 RF-01 c4)', async () => {
     const col = await pool.query<{ data_type: string; is_nullable: string }>(
       `SELECT data_type, is_nullable FROM information_schema.columns WHERE table_name = 'usuarios' AND column_name = 'eca'`,
     );
     expect(col.rows).toEqual([{ data_type: 'text', is_nullable: 'YES' }]);
 
-    const migracion = await pool.query(`SELECT 1 FROM schema_migrations WHERE id = '010_eca_en_usuarios'`);
+    const migracion = await pool.query(`SELECT 1 FROM schema_migrations WHERE id = '011_eca_en_usuarios'`);
     expect(migracion.rowCount).toBe(1);
 
     // Los usuarios que ya existían (los de las pruebas anteriores, sin ECA) siguen funcionando con eca NULL.

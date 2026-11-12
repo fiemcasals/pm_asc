@@ -28,6 +28,14 @@ describe('parsearEventoFalla', () => {
     expect(parsearEventoFalla(JSON.stringify(EVENTO))).toEqual(EVENTO);
   });
 
+  it('acepta códigos críticos del checklist de inspección (HU-17 RF-08)', () => {
+    const eventoChecklist: EventoFallaCritica = {
+      ...EVENTO,
+      fallas: ['PARACAIDAS_ANOMALIA', 'STOP_FOSA_DEFICIENTE_INEXISTENTE'],
+    };
+    expect(parsearEventoFalla(JSON.stringify(eventoChecklist))).toEqual(eventoChecklist);
+  });
+
   it.each([
     ['JSON inválido', '{no'],
     ['otro tipo', JSON.stringify({ ...EVENTO, tipo: 'ping' })],

@@ -118,7 +118,7 @@ fi
 
 echo "4. La migración agrega la columna sin romper a los usuarios existentes"
 if [ "$HAY_DB" -eq 1 ]; then
-  check "migración 010_eca_en_usuarios aplicada" "$(sql "select count(*) from schema_migrations where id = '010_eca_en_usuarios'")" "1"
+  check "migración 011_eca_en_usuarios aplicada" "$(sql "select count(*) from schema_migrations where id = '011_eca_en_usuarios'")" "1"
   check "columna usuarios.eca (text, admite NULL)" "$(sql "select data_type || '/' || is_nullable from information_schema.columns where table_name='usuarios' and column_name='eca'")" "text/YES"
   check "usuarios que no son de rol eca con ECA cargada" "$(sql "select count(*) from usuarios where rol <> 'eca' and eca is not null")" "0"
   check "el Administrador inicial sigue entrando → HTTP" "$("${CURL[@]}" -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d "{\"usuario\":\"$ADMIN_USUARIO\",\"password\":\"$ADMIN_PASSWORD\"}" "$BASE_URL/api/auth/login")" "200"

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T16:52:29.738Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T16:52:38.072Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -64,7 +64,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 56 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
 | 57 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hecho ✓ dev | gonza | RF-04 | — |
 | 58 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hecho ✓ dev | gonza | RF-04, RF-05 | — |
-| 59 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hecho | gonza | RF-04, RF-04 | — |
+| 59 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hecho ✓ dev | gonza | RF-04, RF-04 | — |
 | 60 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 61 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | gonza | RF-04, RF-05 | — |
 | 62 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hecho ✓ dev | gonza | RF-04, RF-05 | — |

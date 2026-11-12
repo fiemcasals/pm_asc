@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:17:18.713Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:17:21.736Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -57,7 +57,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 49 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 50 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 51 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
-| 52 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hacer | gonza | RF-01, RF-02 | — |
+| 52 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Haciendo | gonza | RF-01, RF-02 | — |
 | 53 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
 | 54 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
 | 55 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hacer | gonza | RF-04 | — |
@@ -303,6 +303,7 @@ EcaService.registrarAcuseRecibo ahora guarda el acuse en acuses_recibo_legal ANT
 - Estimado: 3h
 
 ### RF-04 — Pantalla de solapa generada desde el motor
+Inicio de desarrollo de HU-17 RF-04
 - Estimado: 5h
 
 ### RF-02 — Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo

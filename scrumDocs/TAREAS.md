@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:23:43.851Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:27:23.742Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -121,21 +121,27 @@ La pestaña Asignación de Roles de Trabajo hace un GET de roles por edificio al
 
 ### RF-01: Motor de Control Semafórico por Antigüedad de Visita (Funcional)
 
-Implementar las reglas de negocio del semáforo normativo según el día del mes: Verde (1 al 10), Amarillo (11 al 20) y Rojo (21 al 30).
+Calcular el color mensual de cada edificio para el mapa de la Secretaría. Definición del cliente (P2.c, cuestionario 06/11): un edificio pendiente toma el color del tramo del mes y pasa a verde en cuanto se inspecciona; el día 31 un pendiente es rojo. No hay seguimiento GPS de técnicos (P2.a, opción A).
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
 
 **Condiciones de aprobación**
 
-1. El servicio calcula el estado semaforico de cada edificio (Verde dias 1-10 cumplido, Amarillo dias 11-20 pendiente, Rojo dias 21-30 alerta critica).
-2. El endpoint POST /api/inspecciones/recordatorio-ruteo despacha el recordatorio actualizando la ruta en la tablet del tecnico.
+1. Un edificio inspeccionado con éxito en el mes en curso está en verde, cualquiera sea el día.
+2. Un edificio pendiente está en verde del día 1 al 10, en amarillo del 11 al 20 y en rojo del 21 al último día del mes, incluido el 31.
+3. El 1.º de cada mes todos los edificios vuelven a pendiente.
+4. El endpoint del semáforo devuelve, por edificio, su color, el día de la última inspección del mes y el RT de Calle asignado.
 
-### RF-02: Integración Visual del Semáforo en Mapa y Reasignación Rápida (Funcional)
+### RF-02: Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida (Funcional)
 
-Integrar el filtro semafórico sobre el mapa interactivo y habilitar el flujo operativo de reasignación con un clic para edificios críticos en rojo.
+Mapa de CABA para la Secretaría que muestra solo los edificios con el color del semáforo del mes (P2.a, opción A: sin técnicos en vivo). Para un edificio en rojo, el sistema sugiere al RT de Calle con menos edificios pendientes y la Secretaría confirma la reasignación (P2.d).
+Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
 
 **Condiciones de aprobación**
 
-1. Los pines de edificios en el mapa reflejan el color semaforico correspondiente segun su estado del mes.
-2. Para edificios con pin rojo, la secretaria cuenta con accion rapida de reasignacion a otro ingeniero con menor saturacion zonal.
+1. El mapa de la Secretaría muestra un pin por edificio con el color del semáforo del mes y una leyenda visible de los colores.
+2. El mapa no muestra la ubicación de ningún técnico.
+3. En un edificio en rojo, la acción "Reasignar" sugiere al RT de Calle con menos edificios pendientes del mes.
+4. La reasignación se aplica recién cuando la Secretaría la confirma, y queda registrada con usuario, fecha, RT anterior y RT nuevo.
 
 ## HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice
 

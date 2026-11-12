@@ -7,6 +7,8 @@ export interface Usuario {
   usuario: string;
   nombre: string;
   rol: Rol;
+  /** true si es RT de Calle y todavía no aceptó el aviso vigente de uso de ubicación. */
+  consentimientoUbicacionPendiente?: boolean;
 }
 
 export type ResultadoLogin =
@@ -15,6 +17,7 @@ export type ResultadoLogin =
 
 export const MENSAJE_SIN_CONEXION =
   'No hay conexión con el servidor. Para el primer ingreso hace falta señal.';
+export const MENSAJE_REVOCADA = 'Tu sesión fue cerrada por un Administrador. Volvé a ingresar.';
 
 /** Clave del perfil guardado en el dispositivo. Nunca se guarda el token. */
 export const CLAVE_PERFIL = 'mant_asc_sesion';
@@ -27,6 +30,26 @@ let accessToken: string | null = null;
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+// ---- Aviso de revocación: la app se suscribe para cerrar la sesión y mostrar el motivo.
+type OyenteRevocacion = () => void;
+const oyentesRevocacion = new Set<OyenteRevocacion>();
+
+/** Se llama cuando el servidor informa que un Administrador revocó la sesión. Devuelve cómo desuscribirse. */
+export function alRevocarse(oyente: OyenteRevocacion): () => void {
+  oyentesRevocacion.add(oyente);
+  return () => oyentesRevocacion.delete(oyente);
+}
+
+/**
+ * Cierra la sesión en el dispositivo por revocación. Sólo borra el perfil y el token:
+ * lo que el RT tenga pendiente de enviar queda guardado y no sale hasta un nuevo ingreso válido.
+ */
+function sesionRevocada(): void {
+  accessToken = null;
+  borrarPerfil();
+  oyentesRevocacion.forEach((o) => o());
 }
 
 /** Pantalla inicial de cada rol. */
@@ -55,21 +78,29 @@ function esUsuario(valor: unknown): valor is Usuario {
   );
 }
 
-async function leerMensaje(res: Response, porDefecto: string): Promise<string> {
+interface CuerpoError {
+  message: string;
+  motivo?: string;
+}
+
+async function leerError(res: Response, porDefecto: string): Promise<CuerpoError> {
   try {
-    const body = (await res.json()) as { message?: unknown };
-    if (typeof body.message === 'string') return body.message;
-    if (Array.isArray(body.message)) return body.message.join('. ');
+    const body = (await res.json()) as { message?: unknown; motivo?: unknown };
+    const motivo = typeof body.motivo === 'string' ? body.motivo : undefined;
+    if (typeof body.message === 'string') return { message: body.message, motivo };
+    if (Array.isArray(body.message)) return { message: body.message.join('. '), motivo };
   } catch {
     // cuerpo vacío o no JSON
   }
-  return porDefecto;
+  return { message: porDefecto };
 }
 
-async function pedirSesion(
-  url: string,
-  init: RequestInit,
-): Promise<{ kind: 'ok'; usuario: Usuario } | { kind: 'rechazo'; status: number; message: string } | { kind: 'sin-red' }> {
+type RespuestaSesion =
+  | { kind: 'ok'; usuario: Usuario }
+  | { kind: 'rechazo'; status: number; message: string; motivo?: string }
+  | { kind: 'sin-red' };
+
+async function pedirSesion(url: string, init: RequestInit): Promise<RespuestaSesion> {
   let res: Response;
   try {
     res = await fetch(url, { ...init, credentials: 'same-origin' });
@@ -77,7 +108,7 @@ async function pedirSesion(
     return { kind: 'sin-red' };
   }
   if (!res.ok) {
-    return { kind: 'rechazo', status: res.status, message: await leerMensaje(res, `Error ${res.status}`) };
+    return { kind: 'rechazo', status: res.status, ...(await leerError(res, `Error ${res.status}`)) };
   }
   const body = (await res.json()) as { accessToken?: unknown; usuario?: unknown };
   if (typeof body.accessToken !== 'string' || !esUsuario(body.usuario)) {
@@ -101,42 +132,89 @@ export async function login(usuario: string, password: string): Promise<Resultad
   return { kind: 'error', message: r.message };
 }
 
+// ---- Renovación del token con la cookie. Cada cookie sirve una sola vez: los llamados
+// simultáneos (React monta dos veces en desarrollo, o dos pedidos que vencen juntos)
+// comparten el mismo pedido, si no el segundo recibiría 401 y cerraría la sesión.
+let renovando: Promise<RespuestaSesion> | null = null;
+
+function renovar(): Promise<RespuestaSesion> {
+  renovando ??= pedirSesion('/api/auth/refresh', { method: 'POST' }).finally(() => {
+    renovando = null;
+  });
+  return renovando;
+}
+
 export type SesionInicial =
   | { kind: 'conectada'; usuario: Usuario }
   | { kind: 'sin-senal'; usuario: Usuario }
+  | { kind: 'revocada' }
   | { kind: 'sin-sesion' };
 
 /**
  * Al abrir la app: si hay un perfil guardado, renueva el token con la cookie.
  * - El servidor responde: sesión conectada.
- * - No hay red: se sigue con el perfil guardado (el RT puede trabajar sin señal).
- * - El servidor rechaza la sesión (venció o la revocaron): se borra el perfil y se pide ingresar.
+ * - No hay red (o el servidor está caído): se sigue con el perfil guardado.
+ * - Un Administrador revocó la sesión: se cierra y se informa.
+ * - El servidor la rechaza por otro motivo (venció): se borra el perfil y se pide ingresar.
  */
-export function restaurarSesion(): Promise<SesionInicial> {
-  // Cada cookie de refresco sirve una sola vez: dos pedidos simultáneos (React monta dos veces
-  // en desarrollo, o dos partes de la app al mismo tiempo) harían que el segundo reciba 401 y
-  // cierre la sesión. Los llamados concurrentes comparten el mismo pedido.
-  restaurando ??= restaurar().finally(() => {
-    restaurando = null;
-  });
-  return restaurando;
-}
-
-let restaurando: Promise<SesionInicial> | null = null;
-
-async function restaurar(): Promise<SesionInicial> {
+export async function restaurarSesion(): Promise<SesionInicial> {
   const perfil = leerPerfil();
   if (!perfil) return { kind: 'sin-sesion' };
 
-  const r = await pedirSesion('/api/auth/refresh', { method: 'POST' });
+  const r = await renovar();
   if (r.kind === 'ok') {
     guardarPerfil(r.usuario);
     return { kind: 'conectada', usuario: r.usuario };
   }
   if (r.kind === 'sin-red' || r.status >= 500) return { kind: 'sin-senal', usuario: perfil };
 
+  accessToken = null;
   borrarPerfil();
-  return { kind: 'sin-sesion' };
+  return r.motivo === 'revocada' ? { kind: 'revocada' } : { kind: 'sin-sesion' };
+}
+
+export class SesionRevocadaError extends Error {
+  constructor() {
+    super(MENSAJE_REVOCADA);
+    this.name = 'SesionRevocadaError';
+  }
+}
+
+/**
+ * fetch con la sesión del usuario: agrega el token y, si venció, lo renueva una vez y reintenta.
+ * Si el servidor informa que la sesión fue revocada, cierra la sesión, avisa a la app y lanza
+ * SesionRevocadaError: el pedido NO se reenvía, y lo pendiente queda para después de volver a ingresar.
+ */
+export async function fetchConSesion(url: string, init: RequestInit = {}): Promise<Response> {
+  const enviar = () => {
+    const headers = new Headers(init.headers);
+    if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+    return fetch(url, { ...init, headers, credentials: 'same-origin' });
+  };
+
+  let res = await enviar();
+  if (res.status !== 401) return res;
+
+  const error = await leerError(res.clone(), 'Error 401');
+  if (error.motivo === 'revocada') {
+    sesionRevocada();
+    throw new SesionRevocadaError();
+  }
+
+  const r = await renovar();
+  if (r.kind === 'rechazo' && r.motivo === 'revocada') {
+    sesionRevocada();
+    throw new SesionRevocadaError();
+  }
+  if (r.kind !== 'ok') return res;
+  guardarPerfil(r.usuario);
+
+  res = await enviar();
+  if (res.status === 401 && (await leerError(res.clone(), '')).motivo === 'revocada') {
+    sesionRevocada();
+    throw new SesionRevocadaError();
+  }
+  return res;
 }
 
 /** Cierra la sesión en el servidor si hay señal, y siempre en el dispositivo. */
@@ -160,7 +238,7 @@ export function leerPerfil(): Usuario | null {
   }
 }
 
-function guardarPerfil(usuario: Usuario): void {
+export function guardarPerfil(usuario: Usuario): void {
   try {
     globalThis.localStorage?.setItem(CLAVE_PERFIL, JSON.stringify(usuario));
   } catch {

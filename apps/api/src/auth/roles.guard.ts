@@ -38,7 +38,7 @@ export class RolesGuard implements CanActivate {
     private readonly auth: AuthService,
   ) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const requeridos = this.reflector.getAllAndOverride<Rol[] | undefined>(ROLES_KEY, [
       ctx.getHandler(),
       ctx.getClass(),
@@ -47,8 +47,9 @@ export class RolesGuard implements CanActivate {
 
     const req = ctx.switchToHttp().getRequest<RequestConUsuario>();
     const [tipo, token] = (req.headers.authorization ?? '').split(' ');
-    const usuario = tipo === 'Bearer' && token ? this.auth.verificar(token) : null;
-    if (!usuario) throw new UnauthorizedException('Tenés que iniciar sesión.');
+    if (tipo !== 'Bearer' || !token) throw new UnauthorizedException('Tenés que iniciar sesión.');
+    // Verifica firma y vencimiento, y además que el usuario siga activo y no le hayan revocado la sesión.
+    const usuario = await this.auth.autenticar(token);
 
     if (requeridos.length > 0 && !requeridos.includes(usuario.rol)) {
       throw new ForbiddenException('Tu rol no tiene acceso a este recurso.');

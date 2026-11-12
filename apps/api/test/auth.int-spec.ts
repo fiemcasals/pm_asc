@@ -100,6 +100,55 @@ describe('Autenticación contra PostgreSQL real (HU-14 RF-01)', () => {
     await http().post('/api/auth/refresh').set('Cookie', cookie).expect(401);
   });
 
+  it('el consentimiento de ubicación queda guardado con usuario, versión y fecha (RNF-01 c1)', async () => {
+    const rt = await http().post('/api/auth/login').send({ usuario: `${PREFIJO}rt`, password: PASSWORD }).expect(200);
+    expect(rt.body.usuario.consentimientoUbicacionPendiente).toBe(true);
+    const { body: texto } = await http().get('/api/consentimientos/ubicacion').expect(200);
+
+    await http()
+      .post('/api/consentimientos/ubicacion')
+      .set('Authorization', `Bearer ${rt.body.accessToken}`)
+      .send({ version: texto.version })
+      .expect(201);
+
+    const { rows } = await pool.query<{ version: string; segundos: string }>(
+      `SELECT c.version, extract(epoch FROM now() - c.aceptado_en) AS segundos
+       FROM consentimientos_ubicacion c JOIN usuarios u ON u.id = c.usuario_id WHERE u.usuario = $1`,
+      [`${PREFIJO}rt`],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].version).toBe(texto.version);
+    expect(Number(rows[0].segundos)).toBeLessThan(60);
+    const again = await http().post('/api/auth/login').send({ usuario: `${PREFIJO}rt`, password: PASSWORD }).expect(200);
+    expect(again.body.usuario.consentimientoUbicacionPendiente).toBe(false);
+  });
+
+  it('la revocación del Administrador marca usuario y sesiones en la base y corta token y refresco (RNF-01 c3)', async () => {
+    const usuario = `${PREFIJO}revocado`;
+    await alta(usuario, 'rt_calle');
+    const rt = await http().post('/api/auth/login').send({ usuario, password: PASSWORD }).expect(200);
+    const cookie = ([] as string[]).concat(rt.headers['set-cookie'])[0].split(';')[0];
+    const admin = await http().post('/api/auth/login').send({ usuario: `${PREFIJO}admin`, password: PASSWORD }).expect(200);
+    const id = (await pool.query<{ id: string }>('SELECT id FROM usuarios WHERE usuario = $1', [usuario])).rows[0].id;
+
+    await new Promise((r) => setTimeout(r, 1100)); // la revocación vale para tokens emitidos hasta ese segundo
+    await http().post(`/api/usuarios/${id}/revocar-sesiones`).set('Authorization', `Bearer ${admin.body.accessToken}`).expect(204);
+
+    const marcas = await pool.query<{ usuario_revocado: boolean; sesiones_revocadas: string }>(
+      `SELECT u.sesiones_revocadas_en IS NOT NULL AS usuario_revocado,
+              (SELECT count(*) FROM sesiones s WHERE s.usuario_id = u.id AND s.revocada_en IS NOT NULL) AS sesiones_revocadas
+       FROM usuarios u WHERE u.id = $1`,
+      [id],
+    );
+    expect(marcas.rows[0].usuario_revocado).toBe(true);
+    expect(Number(marcas.rows[0].sesiones_revocadas)).toBe(1);
+
+    const me = await http().get('/api/auth/me').set('Authorization', `Bearer ${rt.body.accessToken}`).expect(401);
+    expect(me.body.motivo).toBe('revocada');
+    const ref = await http().post('/api/auth/refresh').set('Cookie', cookie).expect(401);
+    expect(ref.body.motivo).toBe('revocada');
+  });
+
   it('5 intentos fallidos dejan el bloqueo guardado en la base y el 6.º responde 429', async () => {
     const usuario = `${PREFIJO}rt`;
     for (let i = 0; i < 5; i++) {

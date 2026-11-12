@@ -20,10 +20,16 @@ export abstract class UsuariosRepository {
   abstract crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null>;
   abstract contarPorRol(rol: Rol): Promise<number>;
 
-  abstract crearSesion(sesion: Omit<Sesion, 'id'>): Promise<Sesion>;
+  abstract crearSesion(sesion: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion>;
   abstract buscarSesion(refreshHash: string): Promise<Sesion | null>;
   /** Borra la sesión y devuelve si existía: así una rotación no se puede usar dos veces. */
   abstract borrarSesion(id: string): Promise<boolean>;
+
+  /** Marca revocadas todas las sesiones del usuario. Devuelve false si el usuario no existe. */
+  abstract revocarSesiones(usuarioId: string, ahora: Date): Promise<boolean>;
+
+  abstract registrarConsentimiento(usuarioId: string, version: string, ahora: Date): Promise<void>;
+  abstract tieneConsentimiento(usuarioId: string, version: string): Promise<boolean>;
 
   abstract leerIntentos(usuario: string): Promise<IntentosLogin>;
   abstract guardarIntentos(usuario: string, intentos: IntentosLogin): Promise<void>;
@@ -36,6 +42,7 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
   readonly usuarios = new Map<string, UsuarioGuardado>();
   readonly sesiones = new Map<string, Sesion>();
   readonly intentos = new Map<string, IntentosLogin>();
+  readonly consentimientos = new Map<string, Date>();
 
   async buscarPorUsuario(usuario: string): Promise<UsuarioGuardado | null> {
     const u = [...this.usuarios.values()].find((x) => clave(x.usuario) === clave(usuario));
@@ -49,7 +56,7 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
 
   async crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null> {
     if (await this.buscarPorUsuario(datos.usuario)) return null;
-    const u: UsuarioGuardado = { id: randomUUID(), activo: true, ...datos };
+    const u: UsuarioGuardado = { id: randomUUID(), activo: true, sesionesRevocadasEn: null, ...datos };
     this.usuarios.set(u.id, u);
     return { ...u };
   }
@@ -58,8 +65,8 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
     return [...this.usuarios.values()].filter((u) => u.rol === rol).length;
   }
 
-  async crearSesion(datos: Omit<Sesion, 'id'>): Promise<Sesion> {
-    const s: Sesion = { id: randomUUID(), ...datos };
+  async crearSesion(datos: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion> {
+    const s: Sesion = { id: randomUUID(), revocadaEn: null, ...datos };
     this.sesiones.set(s.id, s);
     return { ...s };
   }
@@ -71,6 +78,25 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
 
   async borrarSesion(id: string): Promise<boolean> {
     return this.sesiones.delete(id);
+  }
+
+  async revocarSesiones(usuarioId: string, ahora: Date): Promise<boolean> {
+    const u = this.usuarios.get(usuarioId);
+    if (!u) return false;
+    u.sesionesRevocadasEn = ahora;
+    for (const s of this.sesiones.values()) {
+      if (s.usuarioId === usuarioId && !s.revocadaEn) s.revocadaEn = ahora;
+    }
+    return true;
+  }
+
+  async registrarConsentimiento(usuarioId: string, version: string, ahora: Date): Promise<void> {
+    const k = `${usuarioId}|${version}`;
+    if (!this.consentimientos.has(k)) this.consentimientos.set(k, ahora);
+  }
+
+  async tieneConsentimiento(usuarioId: string, version: string): Promise<boolean> {
+    return this.consentimientos.has(`${usuarioId}|${version}`);
   }
 
   async leerIntentos(usuario: string): Promise<IntentosLogin> {

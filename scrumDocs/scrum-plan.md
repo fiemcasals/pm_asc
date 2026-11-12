@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T13:18:19.132Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T13:18:37.833Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -61,7 +61,7 @@ PR #24 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/24). Commit
 - Estimado: 2h
 
 ### RF-02 — Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios
-Inicio de implementación de HU-13 RF-02 (Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios).
+PR #25 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/25). Commit f9c05bd3f54b29226ffb2df3ca14bdb0b73427c8. Eliminados badges obvios ('Modo Consulta Oficial', 'Solo lectura: Sin edicion habilitada', '(Protegido)') y jerga tecnica ('(HU-07)', 'base oficial', 'Direccion Literal', 'Grilla Dinamica') en MedidorCobertura.tsx, PortalEca.tsx, FichaConsorcio.tsx y FormularioConsorcio.tsx. Verificado: npm run verify (API 22/22 170 tests, Web 6/6 79 tests), RF-02-entrega.sh 2/2 OK y --carga 20 0 fallas (avg 103 ms, p95 115 ms). 2 Tests desarrollo Aprobado y 2 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/f9c05bd3f54b29226ffb2df3ca14bdb0b73427c8/docs/pruebas/hu-13-hu-13-claridad-operativa-y-lim/RF-02-entrega.md
 - Estimado: 2h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
@@ -69,7 +69,7 @@ Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia A
 - Estimado: 4h
 
 ### RF-02 — FIX: Corregir contraste de textos y contenedores en Modo Oscuro
-Inicio de implementación de HU-12 RF-02 FIX (Contraste de textos y contenedores en Modo Oscuro).
+PR #23 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/23). Commit 95d426e89cbc0d414837b1f9c8f929d41fd15d06. Corregido contraste de textos y contenedores en Modo Oscuro en apps/web/src/styles.css (--surface-sunken, [data-theme='dark'] .audit-grid, .cartel-bloqueo-tercera-visita, badges 45%, total-liquidacion-consorcio, .ficha-table, .solo-lectura-pill, .badge-modo-consulta, textos atenuados). Verificado en rama aislada con npm run verify (API 22/22 170 tests, Web 6/6 79 tests), RF-02-entrega.sh 2/2 OK, --carga 20 0 fallas (avg 102 ms, p95 118 ms) y Playwright. 2 Tests desarrollo Aprobado y 2 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/95d426e89cbc0d414837b1f9c8f929d41fd15d06/docs/pruebas/hu-12-hu-12-interfaz-neo-linear-side/RF-02-entrega.md
 - Estimado: 1h
 
 ### RF-02 — UI de Secretaría: Carga y Ficha de Edificios y Máquinas

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T16:24:47.050Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T16:46:44.634Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -11,19 +11,19 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 3 | RF-01 | Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | — | — |
 | 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
 | 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
-| 6 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | Hacer | Sin asignar | — | — |
-| 7 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 8 | RF-01 | API de autenticación y roles | HU-14 | — | — | testing | germanG | RF-01 | — |
-| 9 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
-| 10 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
-| 11 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
-| 12 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 13 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
-| 14 | RF-02 | Pantalla de ingreso | HU-14 | — | — | testing | germanG | RF-01 | — |
-| 15 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | testing | germanG | RF-01 | — |
-| 16 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hecho | gonza | RF-01, RF-01 | — |
+| 6 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 7 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 8 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
+| 9 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
+| 10 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
+| 11 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 12 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
+| 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hecho | gonza | RF-01, RF-01 | — |
+| 16 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | Hacer | germanG | RF-01 | — |
 | 17 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 18 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Hecho | gonza | RF-02 | — |
+| 18 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Hecho ✓ dev | gonza | RF-02 | — |
 | 19 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 20 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
@@ -36,43 +36,44 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 28 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 29 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 30 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | Hacer | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
-| 31 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
-| 32 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 33 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 34 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 35 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | testing | dev-ma-2 | RF-01 | — |
-| 36 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | Hacer | germanG | RF-01 | — |
-| 37 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 38 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 39 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
-| 40 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | Sin asignar | RF-01 | — |
-| 41 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 42 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 43 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
-| 44 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 45 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 46 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Haciendo | gonza | RF-01, RF-03 | — |
-| 47 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | germanG | RF-02, RF-05 | — |
-| 48 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 49 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | germanG | RF-02, RF-01, RF-05 | — |
-| 50 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
-| 51 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 52 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
-| 53 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hecho | gonza | RF-01, RF-02 | — |
-| 54 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 55 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 56 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hecho | gonza | RF-04 | — |
-| 57 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hecho | gonza | RF-04, RF-05 | — |
-| 58 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hecho | gonza | RF-04, RF-04 | — |
-| 59 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 60 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | gonza | RF-04, RF-05 | — |
-| 61 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hecho | gonza | RF-04, RF-05 | — |
-| 62 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | germanG | RF-07, RF-03 | — |
-| 63 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
-| 64 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02, RF-02 | — |
-| 65 | RNF-01 | Sellado del informe | HU-18 | — | — | Hacer | germanG | RF-01 | — |
-| 66 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | Hacer | germanG | RF-01, RNF-01 | — |
-| 67 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hacer | Sin asignar | RF-05 | — |
+| 31 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | Hacer | gonza | RF-01, RNF-02 | — |
+| 32 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
+| 33 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
+| 34 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | Hacer | Sin asignar | RF-02 | — |
+| 35 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
+| 36 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | testing | dev-ma-2 | RF-01 | — |
+| 37 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | Hacer | germanG | RF-01 | — |
+| 38 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 39 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
+| 40 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
+| 41 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | Sin asignar | RF-01 | — |
+| 42 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 43 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 44 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
+| 45 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 46 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 47 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Haciendo | gonza | RF-01, RF-03 | — |
+| 48 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | germanG | RF-02, RF-05 | — |
+| 49 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
+| 50 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | germanG | RF-02, RF-01, RF-05 | — |
+| 51 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
+| 52 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 53 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
+| 54 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | Hecho | gonza | RF-01, RF-02 | — |
+| 55 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
+| 56 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 57 | RF-05 | Fotos por anomalía | HU-17 | — | — | Hecho | gonza | RF-04 | — |
+| 58 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | Hecho | gonza | RF-04, RF-05 | — |
+| 59 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | Hecho | gonza | RF-04, RF-04 | — |
+| 60 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 61 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | gonza | RF-04, RF-05 | — |
+| 62 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | Hecho | gonza | RF-04, RF-05 | — |
+| 63 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | germanG | RF-07, RF-03 | — |
+| 64 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
+| 65 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02, RF-02 | — |
+| 66 | RNF-01 | Sellado del informe | HU-18 | — | — | Hacer | germanG | RF-01 | — |
+| 67 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | Hacer | germanG | RF-01, RNF-01 | — |
+| 68 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hacer | Sin asignar | RF-05 | — |
 
 ## Detalle
 
@@ -95,9 +96,6 @@ PR #24 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/24). Commit
 ### RF-02 — Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios
 PR #25 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/25). Commit f9c05bd3f54b29226ffb2df3ca14bdb0b73427c8. Eliminados badges obvios ('Modo Consulta Oficial', 'Solo lectura: Sin edicion habilitada', '(Protegido)') y jerga tecnica ('(HU-07)', 'base oficial', 'Direccion Literal', 'Grilla Dinamica') en MedidorCobertura.tsx, PortalEca.tsx, FichaConsorcio.tsx y FormularioConsorcio.tsx. Verificado: npm run verify (API 22/22 170 tests, Web 6/6 79 tests), RF-02-entrega.sh 2/2 OK y --carga 20 0 fallas (avg 103 ms, p95 115 ms). 2 Tests desarrollo Aprobado y 2 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/f9c05bd3f54b29226ffb2df3ca14bdb0b73427c8/docs/pruebas/hu-13-hu-13-claridad-operativa-y-lim/RF-02-entrega.md
 - Estimado: 2h
-
-### RF-01 — Asociar la ECA al usuario y exponerla en la sesión
-- Estimado: 3h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
 Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia AGC única por edificio, borrado en cascada) y endpoints POST, GET, GET :id, PUT y DELETE en /api/consorcios. Mínimo necesario agregado: sistema de migraciones (SQL plano, aplicado al arrancar la API, tabla schema_migrations), porque RO-01 lo dejó asignado a esta tarea; GET (listado) y PUT/DELETE porque la descripción pide CRUD. Pruebas: npm run verify 36/36 en API (21 nuevos) y 4/4 en web; test:int 7/7 contra PostGIS real; script de entrega 5/5; carga 200 recorridos, 0 fallidos, p95 320 ms. 2 tests de desarrollo aprobados con evidencia; 2 de integración preparados para QA. Afuera: la ECA (HU-02), autenticación, paginación del listado y ubicación geográfica. Consorcio y edificio se modelaron como una sola entidad. PR: https://github.com/fiemcasals/pm_asc/pull/3
@@ -141,6 +139,9 @@ Pruebas:
 - npm run test:int -w apps/api: 7 suites / 26 tests OK (incluye rls-eca.int-spec.ts).
 - bash docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RNF-01-entrega.sh: 4 OK · 0 fallas; --carga 20: 20/20, promedio 74 ms, p95 86 ms, max 102 ms.
 - Estimado: 6h
+
+### RF-01 — Asociar la ECA al usuario y exponerla en la sesión
+- Estimado: 3h
 
 ### RF-04 — Horarios de atención por edificio editables por la Secretaría
 - Estimado: 3h
@@ -202,6 +203,9 @@ PR #5 abierto contra dev. Implementados GET /api/eca/cobertura y GET /api/eca/ma
 
 ### RF-01 — Mapa del RT con pines por horario
 - Estimado: 5h
+
+### RNF-03 — Tomar la ECA y el rol del RLS desde la sesión del usuario
+- Estimado: 4h
 
 ### RF-02 — UI Tablero Dinámico de Monitoreo General (Backoffice)
 - Estimado: 4h

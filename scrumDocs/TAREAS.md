@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T12:34:48.175Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T12:35:20.704Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -303,6 +303,38 @@ Conectar WhatsAppConnectorService con un proveedor real (WhatsApp Cloud API de M
 2. El destino es el teléfono de la ECA responsable del edificio asignada en la terna de roles; sin teléfono cargado, el envío no se hace y se informa el motivo.
 3. Si el proveedor rechaza el envío, la API informa el error que devolvió el proveedor y el envío queda registrado como fallido.
 4. Las credenciales del proveedor no quedan en el repositorio.
+
+## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
+
+### RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline (Funcional)
+
+Implementar el sistema visual NEO estilo Linear con soporte Dark/Light, vista bento 'Estado del sistema', sidebar colapsable a 80px con ícono de expandir al lado del logo violeta sin superposición, estilos neón en Medidor de Cobertura y buscador global inline en barra superior en reemplazo de Ctrl+K.
+
+**Condiciones de aprobación**
+
+1. El shell principal ofrece botón 'Cambiar tema visual' entre modo oscuro y claro, vista bento 'Estado del sistema' y botón 'Alternar barra lateral' que al colapsar a 80px mantiene expandir al lado del cuadrado violeta sin superposición.
+2. La barra superior incluye el buscador inline con placeholder 'Buscar consorcio, máquina (M1, M2) o portal…' sin modal Ctrl+K; al escribir muestra resultados agrupados y al elegir uno navega directo al consorcio en Secretaría o modal de auditoría en Firmante.
+3. El Medidor de Cobertura Mensual en Portal ECA aplica recuadros con colores neón diferenciados de alto contraste para 'Inspeccionadas', 'Firmadas (Legal AGC)', 'Pendientes de Visita', 'Con Advertencia' y 'Flota Total'.
+
+## HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios
+
+### RF-01: Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados (Funcional)
+
+Limpiar los encabezados y tarjetas de Alertas Críticas en el Portal ECA eliminando prefijos redundantes ('CARTEL GIGANTE:'), evitando códigos repetidos mediante formatearNombreEquipo ('M2: Ascensor Posterior') y removiendo la etiqueta redundante sobre la fotografía.
+
+**Condiciones de aprobación**
+
+1. En Alertas Críticas, las tarjetas de 'ANOMALÍAS GRAVES DETECTADAS OPERANDO' muestran 'REPARACIÓN URGENTE — M1: ...' sin el prefijo 'CARTEL GIGANTE:'.
+2. Los títulos de máquinas en alertas críticas usan formatearNombreEquipo sin duplicar el código (ej. 'M2: Ascensor Posterior' y no 'M2 - M2:') y sin rótulo superpuesto en la fotografía.
+
+### RF-02: Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios (Funcional)
+
+Remover rótulos redundantes y menciones técnicas internas en el Portal ECA y las pantallas de Consorcios para mostrar copy claro orientado al usuario final.
+
+**Condiciones de aprobación**
+
+1. El Portal ECA conserva el badge 'Solo lectura' y elimina los rótulos redundantes 'Modo Consulta Oficial', 'Solo lectura: Sin edición habilitada' y '(Protegido)'.
+2. Las vistas de Consorcios (FichaConsorcio y FormularioConsorcio) eliminan referencias técnicas internas como '(HU-07)', 'base oficial', 'Dirección Literal' y 'Grilla Dinámica' manteniendo toda su funcionalidad.
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

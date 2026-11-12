@@ -27,4 +27,6 @@ export abstract class ConsorciosRepository {
   abstract obtenerRoles(id: string): Promise<RolesEdificio | null>;
   /** Reemplaza la terna completa. `null` si el consorcio no existe. */
   abstract asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null>;
+  /** Quita la asignación de roles del edificio; `false` si no existía. */
+  abstract quitarRoles(id: string): Promise<boolean>;
 }

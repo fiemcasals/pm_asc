@@ -1,5 +1,5 @@
 import { APP_RLS_ROLE, deriveAppDatabaseUrl } from '../src/database/database.service';
-import { getRlsContext, runWithEcaContext } from '../src/database/rls-context';
+import { getRlsContext, runWithEcaContext, runWithRlsContext } from '../src/database/rls-context';
 
 describe('Contexto RLS y usuario de aplicación (HU-15 RNF-01)', () => {
   it('deriva la URL de conexión con el rol runtime sin privilegios ni BYPASSRLS usando DATABASE_APP_PASSWORD', () => {
@@ -39,5 +39,13 @@ describe('Contexto RLS y usuario de aplicación (HU-15 RNF-01)', () => {
 
     expect(resultados).toEqual(['ECA-ALPHA', 'ECA-BETA', null]);
     expect(getRlsContext()).toBeUndefined();
+  });
+
+  it('propaga rol y usuario junto con la ausencia de ECA para RT de Calle y Firmante multi-ECA', async () => {
+    const rt = await runWithRlsContext(
+      { eca: null, rol: 'rt_calle', usuario: 'rt@multi.test', esExplicito: true },
+      async () => getRlsContext(),
+    );
+    expect(rt).toEqual({ eca: null, rol: 'rt_calle', usuario: 'rt@multi.test', esExplicito: true });
   });
 });

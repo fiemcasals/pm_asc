@@ -278,4 +278,60 @@ export const MIGRATIONS: Migration[] = [
         WITH CHECK (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''));
     `,
   },
+  {
+    id: '009_rls_multi_eca_rt_firmante',
+    sql: `
+      -- Función SECURITY DEFINER para evaluar la asignación viva de RT de Calle o Firmante en roles_edificio
+      -- evitando recursión infinita en políticas RLS. Se consulta en vivo en cada query (revocación inmediata).
+      CREATE OR REPLACE FUNCTION usuario_asignado_en_edificio(p_consorcio_id uuid)
+      RETURNS boolean
+      LANGUAGE sql
+      STABLE
+      SECURITY DEFINER
+      SET search_path = public
+      AS $$
+        SELECT EXISTS (
+          SELECT 1 FROM roles_edificio r
+           WHERE r.consorcio_id = p_consorcio_id
+             AND NULLIF(current_setting('app.usuario_actual', true), '') IS NOT NULL
+             AND (
+               (current_setting('app.rol_actual', true) = 'rt_calle'
+                 AND (r.rt_calle_nombre = current_setting('app.usuario_actual', true)
+                   OR r.rt_calle_email = current_setting('app.usuario_actual', true)))
+               OR
+               (current_setting('app.rol_actual', true) = 'firmante'
+                 AND (r.firmante_nombre = current_setting('app.usuario_actual', true)
+                   OR r.firmante_email = current_setting('app.usuario_actual', true)))
+             )
+        );
+      $$;
+
+      REVOKE ALL ON FUNCTION usuario_asignado_en_edificio(uuid) FROM PUBLIC;
+      GRANT EXECUTE ON FUNCTION usuario_asignado_en_edificio(uuid) TO ascensores_app;
+
+      -- Lectura multi-ECA para RT de Calle y Firmante únicamente en edificios asignados.
+      DROP POLICY IF EXISTS rls_consorcios_rt_firmante_select ON consorcios;
+      CREATE POLICY rls_consorcios_rt_firmante_select ON consorcios
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(id));
+
+      DROP POLICY IF EXISTS rls_maquinas_rt_firmante_select ON maquinas;
+      CREATE POLICY rls_maquinas_rt_firmante_select ON maquinas
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+
+      DROP POLICY IF EXISTS rls_roles_edificio_rt_firmante_select ON roles_edificio;
+      CREATE POLICY rls_roles_edificio_rt_firmante_select ON roles_edificio
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+
+      DROP POLICY IF EXISTS rls_visitas_fallidas_rt_firmante_select ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_rt_firmante_select ON visitas_fallidas
+        FOR SELECT
+        USING (
+          consorcio_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          AND usuario_asignado_en_edificio(consorcio_id::uuid)
+        );
+    `,
+  },
 ];

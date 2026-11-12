@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T12:34:49.547Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T12:35:21.991Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -58,6 +58,13 @@ graph TD
     REQ_1791910396892["RF-02: Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo"]
     REQ_1794155773535["RF-03: No informar como entregado un WhatsApp que no se envió"]
     REQ_1794155774018["RF-04: Enviar las alertas por WhatsApp a través de un proveedor real"]
+  end
+  subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
+    REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]
+  end
+  subgraph US_1794486885243["HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios"]
+    REQ_1794486918510["RF-01: Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados"]
+    REQ_1794486918616["RF-02: Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885

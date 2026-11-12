@@ -223,3 +223,153 @@ describe('Navegación por estaciones y sala compartida (HU-17 RF-07)', () => {
     expect(obtenerSolapaAnterior(config.solapas, 'cabina')?.id).toBe('sala_maquinas');
   });
 });
+
+import {
+  OFFLINE_DB_NAME,
+  STORE_COLA_FALLAS,
+  STORE_VISITAS,
+  cargarVisitaEnCurso,
+  guardarVisitaEnCurso,
+  limpiarVisitaEnCurso,
+  tieneProgresoVisita,
+} from './offlineStore';
+
+function crearIdbEnMemoria(): IDBFactory {
+  const stores = new Map<string, Map<string, unknown>>();
+  const keyPaths = new Map<string, string>();
+
+  const makeReq = <T,>(run: () => T): IDBRequest<T> => {
+    const req: Record<string, unknown> = { result: undefined, error: null, onsuccess: null, onerror: null };
+    queueMicrotask(() => {
+      try {
+        req.result = run();
+        if (typeof req.onsuccess === 'function') (req.onsuccess as () => void)();
+      } catch (err) {
+        req.error = err;
+        if (typeof req.onerror === 'function') (req.onerror as () => void)();
+      }
+    });
+    return req as unknown as IDBRequest<T>;
+  };
+
+  return {
+    open(_name: string) {
+      const req: Record<string, unknown> = {
+        result: undefined,
+        error: null,
+        onupgradeneeded: null,
+        onsuccess: null,
+        onerror: null,
+      };
+      const db = {
+        objectStoreNames: { contains: (s: string) => stores.has(s) },
+        createObjectStore: (s: string, opts: { keyPath: string }) => {
+          stores.set(s, new Map());
+          keyPaths.set(s, opts.keyPath);
+          return {};
+        },
+        close: () => {},
+        transaction: (storeName: string) => {
+          const tx: Record<string, unknown> = { oncomplete: null, onerror: null, onabort: null };
+          queueMicrotask(() => {
+            if (typeof tx.oncomplete === 'function') (tx.oncomplete as () => void)();
+          });
+          tx.objectStore = () => {
+            const map = stores.get(storeName)!;
+            const kp = keyPaths.get(storeName)!;
+            return {
+              put: (val: Record<string, unknown>) => makeReq(() => {
+                map.set(String(val[kp]), val);
+                return val[kp];
+              }),
+              get: (k: string) => makeReq(() => map.get(k)),
+              delete: (k: string) => makeReq(() => {
+                map.delete(k);
+                return undefined;
+              }),
+            };
+          };
+          return tx;
+        },
+      };
+      queueMicrotask(() => {
+        req.result = db;
+        if (!stores.has(STORE_VISITAS) && typeof req.onupgradeneeded === 'function') {
+          (req.onupgradeneeded as () => void)();
+        }
+        if (typeof req.onsuccess === 'function') (req.onsuccess as () => void)();
+      });
+      return req as unknown as IDBOpenDBRequest;
+    },
+  } as unknown as IDBFactory;
+}
+
+describe('Persistencia offline en IndexedDB (HU-17 RNF-01)', () => {
+  it('guarda y recupera visita con 3 equipos y 20 fotos comprimidas sin tocar LocalStorage', async () => {
+    const idb = crearIdbEnMemoria();
+    const fotosM1: FotosPorEquipo = {};
+    const fotosM2: FotosPorEquipo = {};
+    const fotosM3: FotosPorEquipo = {};
+
+    for (let i = 0; i < 20; i += 1) {
+      const paso = comprimirDataUrlHastaTope(
+        (escala, calidad) => `data:image/jpeg;base64,${'B'.repeat(Math.round(450_000 * escala * calidad))}`,
+        MAX_FOTO_BYTES,
+      );
+      const target = i < 7 ? fotosM1 : i < 14 ? fotosM2 : fotosM3;
+      const maq = i < 7 ? 'demo-m1' : i < 14 ? 'demo-m2' : 'demo-m3';
+      const ref = i < 7 ? 'M1' : i < 14 ? 'M2' : 'M3';
+      target[`cabina:item_${i}`] = {
+        id: `f-${i}`,
+        maquinaId: maq,
+        referenciaAgc: ref,
+        solapaId: 'cabina',
+        itemId: `item_${i}`,
+        itemEtiqueta: `Ítem ${i}`,
+        dataUrl: paso.dataUrl,
+        sizeBytes: paso.sizeBytes,
+        tomadaEn: new Date().toISOString(),
+      };
+    }
+
+    const saved = await guardarVisitaEnCurso(
+      {
+        equipoId: 'demo-m2',
+        solapaActiva: 'cabina',
+        tipoOverride: {},
+        estadoPorEquipo: { 'demo-m2': 'en_uso' },
+        respuestasPorEquipo: {
+          'demo-m1': { sala_maquinas: { cables_traccion: 'correctos' } },
+          'demo-m2': { cabina: { iluminacion_cabina: 'falla' } },
+        },
+        obsPorEquipo: { 'demo-m2': { cabina: 'Revisar tubo LED' } },
+        fotosPorEquipo: {
+          'demo-m1': fotosM1,
+          'demo-m2': fotosM2,
+          'demo-m3': fotosM3,
+        },
+        fallasPisoPorEquipo: {},
+      },
+      idb,
+    );
+
+    expect(OFFLINE_DB_NAME).toBe('mant_asc_inspeccion_db');
+    expect(STORE_COLA_FALLAS).toBe('cola_fallas_criticas');
+    expect(saved.equipoId).toBe('demo-m2');
+    expect(saved.solapaActiva).toBe('cabina');
+
+    const loaded = await cargarVisitaEnCurso(idb);
+    expect(tieneProgresoVisita(loaded)).toBe(true);
+    expect(loaded?.equipoId).toBe('demo-m2');
+    expect(loaded?.solapaActiva).toBe('cabina');
+    const totalFotos =
+      Object.keys(loaded?.fotosPorEquipo['demo-m1'] ?? {}).length +
+      Object.keys(loaded?.fotosPorEquipo['demo-m2'] ?? {}).length +
+      Object.keys(loaded?.fotosPorEquipo['demo-m3'] ?? {}).length;
+    expect(totalFotos).toBe(20);
+    expect(globalThis.localStorage).toBeUndefined();
+
+    await limpiarVisitaEnCurso(idb);
+    expect(await cargarVisitaEnCurso(idb)).toBeNull();
+  });
+});

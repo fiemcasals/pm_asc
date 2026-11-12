@@ -2375,3 +2375,135 @@ dd {
   gap: 2px;
   font-size: 0.8rem;
 }
+
+/* ── HU-17 RF-06: Fallas por Piso en Accesos ── */
+.checklist-fallas-piso-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.checklist-fallas-piso-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checklist-fallas-piso-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.checklist-fallas-piso-sub {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.checklist-fallas-piso-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-focus);
+  background: var(--card);
+}
+
+.checklist-fallas-piso-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.checklist-fallas-piso-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.checklist-fallas-piso-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checklist-falla-piso-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.checklist-falla-piso-item.es-critica {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.checklist-falla-piso-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.checklist-falla-piso-tags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.falla-piso-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.falla-grupo-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.checklist-falla-piso-comp {
+  font-size: 0.88rem;
+}
+
+.checklist-falla-piso-det {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.checklist-falla-piso-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .checklist-fallas-piso-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

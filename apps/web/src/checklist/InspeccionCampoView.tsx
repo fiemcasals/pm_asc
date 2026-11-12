@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   obtenerChecklistParaTipo,
   requiereFotoChecklist,
+  type ChecklistSolapaConfig,
   type EstadoEquipoUso,
   type SolapaId,
   type TipoMaquinaChecklist,
@@ -14,6 +15,16 @@ import {
   type RespuestasChecklist,
 } from './checklist.logic';
 import { ChecklistSolapaView } from './ChecklistSolapaView';
+import {
+  COMPONENTES_ACCESOS_POR_PISO,
+  GRUPOS_COMPONENTES_ACCESOS,
+  PISOS_EDIFICIO_DEFAULT,
+  agregarFallaPiso,
+  claveFotoFallaPiso,
+  crearFallaPiso,
+  eliminarFallaPiso,
+  type FallaPisoRegistro,
+} from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
 
 interface EquipoDemo {
@@ -37,8 +48,16 @@ export function InspeccionCampoView() {
   const [respuestasPorEquipo, setRespuestasPorEquipo] = useState<Record<string, RespuestasChecklist>>({});
   const [obsPorEquipo, setObsPorEquipo] = useState<Record<string, ObservacionesChecklist>>({});
   const [fotosPorEquipo, setFotosPorEquipo] = useState<Record<string, FotosPorEquipo>>({});
+  const [fallasPisoPorEquipo, setFallasPisoPorEquipo] = useState<Record<string, FallaPisoRegistro[]>>({});
+  const [formPisoAbierto, setFormPisoAbierto] = useState<boolean>(false);
+  const [pisoSeleccionado, setPisoSeleccionado] = useState<string>('PB');
+  const [componentePisoId, setComponentePisoId] = useState<string>(COMPONENTES_ACCESOS_POR_PISO[0].id);
+  const [detallePiso, setDetallePiso] = useState<string>('');
   const [fotoError, setFotoError] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, ReturnType<typeof obtenerChecklistParaTipo>>>({});
+
+  const pisosEdificio = PISOS_EDIFICIO_DEFAULT;
+  const fallasPisoActuales = fallasPisoPorEquipo[equipoId] ?? [];
 
   const equipo = useMemo(
     () => EQUIPOS_DEMO.find((e) => e.maquinaId === equipoId) ?? EQUIPOS_DEMO[0],
@@ -143,6 +162,210 @@ export function InspeccionCampoView() {
       delete actual[clave];
       return { ...prev, [equipo.maquinaId]: actual };
     });
+  };
+
+  const handleConfirmarFallaPiso = () => {
+    const nueva = crearFallaPiso(pisoSeleccionado, componentePisoId, detallePiso);
+    setFallasPisoPorEquipo((prev) => ({
+      ...prev,
+      [equipo.maquinaId]: agregarFallaPiso(prev[equipo.maquinaId] ?? [], nueva),
+    }));
+    setDetallePiso('');
+    setFormPisoAbierto(false);
+  };
+
+  const handleEliminarFallaPiso = (fallaId: string) => {
+    setFallasPisoPorEquipo((prev) => ({
+      ...prev,
+      [equipo.maquinaId]: eliminarFallaPiso(prev[equipo.maquinaId] ?? [], fallaId),
+    }));
+    const clave = claveFotoFallaPiso(fallaId);
+    setFotosPorEquipo((prev) => {
+      const actual = { ...(prev[equipo.maquinaId] ?? {}) };
+      delete actual[clave];
+      return { ...prev, [equipo.maquinaId]: actual };
+    });
+  };
+
+  const handleAdjuntarFotoFallaPiso = async (falla: FallaPisoRegistro, file: File | null) => {
+    if (!file) return;
+    setFotoError(null);
+    try {
+      const { dataUrl, sizeBytes } = await comprimirFotoAnomalia(file);
+      const nuevaFoto: FotoAnomalia = {
+        id: `foto-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        maquinaId: equipo.maquinaId,
+        referenciaAgc: equipo.referenciaAgc,
+        solapaId: 'accesos',
+        itemId: `piso:${falla.id}`,
+        itemEtiqueta: `Piso ${falla.piso} — ${falla.componenteEtiqueta}`,
+        dataUrl,
+        sizeBytes,
+        tomadaEn: new Date().toISOString(),
+      };
+      setFotosPorEquipo((prev) => ({
+        ...prev,
+        [equipo.maquinaId]: {
+          ...(prev[equipo.maquinaId] ?? {}),
+          [claveFotoFallaPiso(falla.id)]: nuevaFoto,
+        },
+      }));
+    } catch (err) {
+      setFotoError(err instanceof Error ? err.message : 'Error al procesar fotografía');
+    }
+  };
+
+  const renderExtraEnSolapa = (solapa: ChecklistSolapaConfig) => {
+    if (solapa.id !== 'accesos') return null;
+    const fotosEquipo = fotosPorEquipo[equipo.maquinaId] ?? {};
+
+    return (
+      <div className="checklist-fallas-piso-box" data-testid="fallas-piso-section">
+        <div className="checklist-fallas-piso-head">
+          <div>
+            <h4 className="checklist-fallas-piso-title">Fallas por Piso en Accesos</h4>
+            <p className="checklist-fallas-piso-sub">
+              Pisos del edificio: {pisosEdificio.join(', ')} ({fallasPisoActuales.length} registradas)
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => setFormPisoAbierto((prev) => !prev)}
+            data-testid="btn-agregar-falla-piso"
+          >
+            {formPisoAbierto ? 'Cerrar formulario' : '+ Agregar Falla en un Piso'}
+          </button>
+        </div>
+
+        {formPisoAbierto && (
+          <div className="checklist-fallas-piso-form" data-testid="form-falla-piso">
+            <div className="checklist-fallas-piso-grid">
+              <label className="inspeccion-field">
+                <span>Piso del edificio</span>
+                <select
+                  value={pisoSeleccionado}
+                  onChange={(e) => setPisoSeleccionado(e.target.value)}
+                  data-testid="select-piso-falla"
+                >
+                  {pisosEdificio.map((piso) => (
+                    <option key={piso} value={piso}>
+                      Piso {piso}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="inspeccion-field">
+                <span>Componente</span>
+                <select
+                  value={componentePisoId}
+                  onChange={(e) => setComponentePisoId(e.target.value)}
+                  data-testid="select-componente-falla"
+                >
+                  {GRUPOS_COMPONENTES_ACCESOS.map((grupo) => (
+                    <optgroup key={grupo.id} label={grupo.titulo}>
+                      {COMPONENTES_ACCESOS_POR_PISO.filter((c) => c.grupo === grupo.id).map((comp) => (
+                        <option key={comp.id} value={comp.id}>
+                          {comp.etiqueta}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="inspeccion-field">
+              <span>Detalle opcional (hoja, lado, observación puntual)</span>
+              <input
+                type="text"
+                value={detallePiso}
+                onChange={(e) => setDetallePiso(e.target.value)}
+                placeholder="Ej: puerta izquierda con luz de 14 cm"
+                data-testid="input-detalle-falla-piso"
+              />
+            </label>
+
+            <div className="checklist-fallas-piso-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleConfirmarFallaPiso}
+                data-testid="btn-confirmar-falla-piso"
+              >
+                Registrar falla en piso {pisoSeleccionado}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setFormPisoAbierto(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {fallasPisoActuales.length > 0 && (
+          <ul className="checklist-fallas-piso-lista" data-testid="lista-fallas-piso">
+            {fallasPisoActuales.map((falla) => {
+              const foto = fotosEquipo[claveFotoFallaPiso(falla.id)];
+              return (
+                <li
+                  key={falla.id}
+                  className={`checklist-falla-piso-item ${falla.esFallaCritica ? 'es-critica' : ''}`}
+                  data-testid={`falla-piso-item-${falla.id}`}
+                >
+                  <div className="checklist-falla-piso-info">
+                    <div className="checklist-falla-piso-tags">
+                      <span className="falla-piso-badge">Piso {falla.piso}</span>
+                      <span className="falla-grupo-badge">{falla.grupoTitulo}</span>
+                      {falla.esFallaCritica && (
+                        <span className="checklist-opcion-flag flag-critica">Crítica</span>
+                      )}
+                    </div>
+                    <strong className="checklist-falla-piso-comp">{falla.componenteEtiqueta}</strong>
+                    {falla.detalle && (
+                      <span className="checklist-falla-piso-det">{falla.detalle}</span>
+                    )}
+                    {foto && (
+                      <span className="checklist-foto-opcional">
+                        Foto adjunta ({Math.max(1, Math.round(foto.sizeBytes / 1024))} KB)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="checklist-falla-piso-btns">
+                    <label className="btn btn-secondary btn-sm">
+                      <span>{foto ? 'Cambiar foto' : 'Adjuntar foto'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="sr-only-input"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          void handleAdjuntarFotoFallaPiso(falla, f);
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleEliminarFallaPiso(falla.id)}
+                      data-testid={`btn-eliminar-falla-piso-${falla.id}`}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
   };
 
   const renderAccionFoto = (solapaId: SolapaId, itemId: string, opcionId: string) => {
@@ -288,6 +511,7 @@ export function InspeccionCampoView() {
         estadoEquipo={estadoActual}
         onSeleccionarOpcion={handleSeleccionarOpcion}
         onCambiarObservacion={handleCambiarObs}
+        extraEnSolapa={renderExtraEnSolapa}
         renderAccionItem={renderAccionFoto}
       />
     </section>

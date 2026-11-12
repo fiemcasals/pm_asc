@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T13:26:55.364Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T13:27:25.529Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -8,11 +8,11 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 2 | RNF-02 | Evitar que las pruebas de integración fallen al correr en paralelo | HU-01 | — | — | tested ✓ | germanG | — | — |
-| 3 | RF-01 | Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | Hecho ✓ dev | gonza | — | — |
-| 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | Hecho ✓ dev | gonza | — | — |
-| 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | Hecho | gonza | — | — |
+| 3 | RF-01 | Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | testing | gonza | — | — |
+| 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | testing | gonza | — | — |
+| 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | testing | gonza | — | — |
 | 6 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 7 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | Hecho ✓ dev | gonza | RF-01 | — |
+| 7 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | testing | gonza | RF-01 | — |
 | 8 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 9 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 10 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -28,7 +28,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 20 | RF-02 | Integración Visual del Semáforo en Mapa y Reasignación Rápida | HU-04 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 21 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
 | 22 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 23 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | Hecho ✓ dev | dev-ma-2 | RF-01 | — |
+| 23 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | testing | dev-ma-2 | RF-01 | — |
 | 24 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 25 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 26 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |

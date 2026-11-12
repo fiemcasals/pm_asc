@@ -22,6 +22,7 @@ export interface ChecklistSolapaViewProps {
   estadoEquipo?: EstadoEquipoUso;
   onSeleccionarOpcion: (solapaId: SolapaId, itemId: string, opcionId: string) => void;
   onCambiarObservacion: (solapaId: SolapaId, texto: string) => void;
+  headerSolapa?: (solapa: ChecklistSolapaConfig) => React.ReactNode;
   extraEnSolapa?: (solapa: ChecklistSolapaConfig) => React.ReactNode;
   renderAccionItem?: (solapaId: SolapaId, itemId: string, opcionId: string) => React.ReactNode;
   footerSolapa?: (solapa: ChecklistSolapaConfig) => React.ReactNode;
@@ -41,6 +42,7 @@ export function ChecklistSolapaView({
   estadoEquipo = 'en_uso',
   onSeleccionarOpcion,
   onCambiarObservacion,
+  headerSolapa,
   extraEnSolapa,
   renderAccionItem,
   footerSolapa,
@@ -118,6 +120,8 @@ export function ChecklistSolapaView({
             </span>
           )}
         </div>
+
+        {headerSolapa?.(solapaActiva)}
 
         <div className="checklist-subgrupos">
           {solapaActiva.subgrupos.map((subgrupo) => (

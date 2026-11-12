@@ -26,19 +26,14 @@ import {
   type FallaPisoRegistro,
 } from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
+import {
+  EQUIPOS_EDIFICIO_DEMO,
+  aplicarRespuestaConSalaCompartida,
+  obtenerSiguienteSolapa,
+  obtenerSolapaAnterior,
+} from './navegacion';
 
-interface EquipoDemo {
-  maquinaId: string;
-  referenciaAgc: string;
-  descripcion: string;
-  tipo: TipoMaquinaChecklist;
-}
-
-const EQUIPOS_DEMO: EquipoDemo[] = [
-  { maquinaId: 'demo-m1', referenciaAgc: 'M1', descripcion: 'Principal Tracción', tipo: 'traccion' },
-  { maquinaId: 'demo-m2', referenciaAgc: 'M2', descripcion: 'Servicio Hidráulico', tipo: 'hidraulico' },
-  { maquinaId: 'demo-m3', referenciaAgc: 'M3', descripcion: 'Montavehículos', tipo: 'montavehiculos' },
-];
+const EQUIPOS_DEMO = EQUIPOS_EDIFICIO_DEMO;
 
 export function InspeccionCampoView() {
   const [equipoId, setEquipoId] = useState<string>(EQUIPOS_DEMO[0].maquinaId);
@@ -53,6 +48,7 @@ export function InspeccionCampoView() {
   const [pisoSeleccionado, setPisoSeleccionado] = useState<string>('PB');
   const [componentePisoId, setComponentePisoId] = useState<string>(COMPONENTES_ACCESOS_POR_PISO[0].id);
   const [detallePiso, setDetallePiso] = useState<string>('');
+  const [avisoSala, setAvisoSala] = useState<string | null>(null);
   const [fotoError, setFotoError] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, ReturnType<typeof obtenerChecklistParaTipo>>>({});
 
@@ -94,18 +90,25 @@ export function InspeccionCampoView() {
 
   const handleSeleccionarOpcion = (solapaId: SolapaId, itemId: string, opcionId: string) => {
     setRespuestasPorEquipo((prev) => {
-      const equipoPrev = prev[equipo.maquinaId] ?? {};
-      const solapaPrev = equipoPrev[solapaId] ?? {};
-      return {
-        ...prev,
-        [equipo.maquinaId]: {
-          ...equipoPrev,
-          [solapaId]: {
-            ...solapaPrev,
-            [itemId]: opcionId,
-          },
-        },
-      };
+      const { respuestasPorEquipo: siguiente, propagadoAEquipos } =
+        aplicarRespuestaConSalaCompartida({
+          prevRespuestasPorEquipo: prev,
+          equipos: EQUIPOS_DEMO,
+          equipoActivoId: equipo.maquinaId,
+          config,
+          solapaId,
+          itemId,
+          opcionId,
+        });
+      if (propagadoAEquipos.length > 0 && equipo.salaCompartidaNombre) {
+        const refs = EQUIPOS_DEMO.filter((e) => propagadoAEquipos.includes(e.maquinaId))
+          .map((e) => e.referenciaAgc)
+          .join(', ');
+        setAvisoSala(
+          `Entorno sincronizado automáticamente en ${equipo.salaCompartidaNombre} (${refs}).`,
+        );
+      }
+      return siguiente;
     });
   };
 
@@ -511,8 +514,67 @@ export function InspeccionCampoView() {
         estadoEquipo={estadoActual}
         onSeleccionarOpcion={handleSeleccionarOpcion}
         onCambiarObservacion={handleCambiarObs}
+        headerSolapa={(solapa) => (
+          <div className="checklist-equipos-estacion" data-testid="selector-equipos-estacion">
+            <div className="checklist-equipos-bar" role="group" aria-label={`Equipos en ${solapa.nombre}`}>
+              {EQUIPOS_DEMO.map((eq) => {
+                const activo = eq.maquinaId === equipo.maquinaId;
+                return (
+                  <button
+                    key={eq.maquinaId}
+                    type="button"
+                    className={`checklist-equipo-pill ${activo ? 'active' : ''}`}
+                    onClick={() => setEquipoId(eq.maquinaId)}
+                    data-testid={`btn-equipo-${eq.referenciaAgc}`}
+                  >
+                    <strong>{eq.referenciaAgc}</strong>
+                    <span>{eq.descripcion}</span>
+                    {eq.salaCompartidaNombre && (
+                      <em className="checklist-sala-tag">{eq.salaCompartidaNombre}</em>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {solapa.id === 'sala_maquinas' && avisoSala && (
+              <p className="checklist-sala-aviso" role="status" data-testid="aviso-sala-compartida">
+                {avisoSala}
+              </p>
+            )}
+          </div>
+        )}
         extraEnSolapa={renderExtraEnSolapa}
         renderAccionItem={renderAccionFoto}
+        footerSolapa={(solapa) => {
+          const anterior = obtenerSolapaAnterior(config.solapas, solapa.id);
+          const siguiente = obtenerSiguienteSolapa(config.solapas, solapa.id);
+          return (
+            <div className="checklist-estacion-nav" data-testid="estacion-nav-footer">
+              {anterior && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setSolapaActiva(anterior.id)}
+                  data-testid="btn-estacion-anterior"
+                >
+                  ← Volver a {anterior.nombre}
+                </button>
+              )}
+              {siguiente && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setSolapaActiva(siguiente.id)}
+                  data-testid="btn-ir-estacion-siguiente"
+                >
+                  {solapa.id === 'sala_maquinas'
+                    ? 'Ir a Accesos/Cabinas →'
+                    : `Ir a ${siguiente.nombre} →`}
+                </button>
+              )}
+            </div>
+          );
+        }}
       />
     </section>
   );

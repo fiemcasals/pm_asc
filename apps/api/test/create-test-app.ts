@@ -129,6 +129,10 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
     this.roles.set(id, roles);
     return structuredClone(roles);
   }
+
+  async quitarRoles(id: string): Promise<boolean> {
+    return this.roles.delete(id);
+  }
 }
 
 export async function createTestApp(

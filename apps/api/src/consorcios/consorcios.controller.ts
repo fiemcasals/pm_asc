@@ -95,6 +95,14 @@ export class ConsorciosController {
     return roles;
   }
 
+  /** Quita la asignación vigente de roles en el edificio (revoca acceso de RT/Firmante de inmediato). */
+  @Delete(':id/roles')
+  @HttpCode(204)
+  async quitarRoles(@Param('id') id: string): Promise<void> {
+    exigirId(id);
+    if (!(await this.consorcios.quitarRoles(id))) throw new NotFoundException('Consorcio o asignación no encontrada');
+  }
+
   private validar(cuerpo: unknown) {
     const resultado = validarConsorcio(cuerpo);
     if (!resultado.ok) {

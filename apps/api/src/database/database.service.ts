@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nest
 import { Pool, PoolClient, QueryResultRow } from 'pg';
 import { APP_CONFIG, AppConfig } from '../config';
 import { runMigrations } from './migrator';
-import { getRlsContext, runWithEcaContext } from './rls-context';
+import { getRlsContext, RolRls, runWithEcaContext, runWithRlsContext } from './rls-context';
 
 export const APP_RLS_ROLE = 'ascensores_app';
 
@@ -109,7 +109,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     params: unknown[] = [],
   ): Promise<T[]> {
     const ctx = getRlsContext();
-    if (ctx?.eca) {
+    if (ctx?.eca || (ctx?.rol && ctx?.usuario)) {
       return this.transaction(async (client) => {
         const res = await client.query<T>(text, params);
         return res.rows;
@@ -119,14 +119,17 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return result.rows;
   }
 
-  /** Ejecuta `work` dentro de una transacción, aplicando `app.eca_actual` si existe contexto. */
+  /** Ejecuta `work` dentro de una transacción, aplicando contexto de ECA, rol y usuario si existe. */
   async transaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
     const ctx = getRlsContext();
     try {
       await client.query('BEGIN');
-      if (ctx?.eca) {
-        await client.query("SELECT set_config('app.eca_actual', $1, true)", [ctx.eca]);
+      if (ctx?.eca || ctx?.rol || ctx?.usuario) {
+        await client.query(
+          "SELECT set_config('app.eca_actual', $1, true), set_config('app.rol_actual', $2, true), set_config('app.usuario_actual', $3, true)",
+          [ctx?.eca ?? '', ctx?.rol ?? '', ctx?.usuario ?? ''],
+        );
       }
       const result = await work(client);
       await client.query('COMMIT');
@@ -142,6 +145,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   /** Atajo explícito para ejecutar consultas bajo una ECA específica o sin contexto (`null`). */
   conContextoEca<T>(eca: string | null, work: () => Promise<T>): Promise<T> {
     return runWithEcaContext(eca, work, true);
+  }
+
+  /** Ejecuta `work` como RT de Calle o Firmante multi-ECA usando asignación viva en `roles_edificio`. */
+  conContextoRol<T>(
+    rol: RolRls,
+    usuario: string,
+    work: () => Promise<T>,
+    eca: string | null = null,
+  ): Promise<T> {
+    return runWithRlsContext({ eca, rol, usuario, esExplicito: true }, work);
   }
 
   /** Inspecciona en tiempo de ejecución el usuario de conexión y las políticas RLS activas. */

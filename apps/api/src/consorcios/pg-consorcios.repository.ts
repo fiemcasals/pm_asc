@@ -313,4 +313,9 @@ export class PgConsorciosRepository extends ConsorciosRepository {
       return leerRoles(client, id);
     });
   }
+
+  async quitarRoles(id: string): Promise<boolean> {
+    const filas = await this.db.query('DELETE FROM roles_edificio WHERE consorcio_id = $1 RETURNING consorcio_id', [id]);
+    return filas.length > 0;
+  }
 }

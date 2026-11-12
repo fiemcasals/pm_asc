@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T14:47:21.866Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T14:55:57.457Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -22,7 +22,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | Hacer | germanG | RF-01 | — |
 | 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hacer | gonza | RF-01, RF-01 | — |
 | 16 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 17 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Haciendo | gonza | RF-02 | — |
+| 17 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Hecho | gonza | RF-02 | — |
 | 18 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 19 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 20 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |

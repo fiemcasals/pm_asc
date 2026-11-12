@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:40:55.048Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:46:51.023Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -348,7 +348,7 @@ PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/34. RF-06 implem
 - Estimado: 3h
 
 ### RNF-01 — Visita en curso sin señal
-Inicio desarrollo HU-17 RNF-01 (IndexedDB y modo offline PWA).
+PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/36. RNF-01 implementado con IndexedDB ('mant_asc_inspeccion_db', cero LocalStorage para respuestas/fotos) + Workbox PWA offline. Verificado: build PWA (7 entradas, 723.31 KiB), npm run verify (API 26 suites/207 tests, Web 9 files/106 tests incluyendo 3 equipos/20 fotos), Playwright RNF-01 offline reload OK (M2·cabina restaurado) y RNF-01-entrega.sh --carga 20 OK. TEST-1794494002009-6 se deja Pendiente por requerir celular Android físico y registro de modelo por QA.
 - Estimado: 5h
 
 ### RF-01 — Consolidación y firma en pantalla

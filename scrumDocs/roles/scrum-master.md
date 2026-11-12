@@ -1,6 +1,6 @@
 # Scrum Master — qué podés hacer en este proyecto
 
-_Generado automáticamente el 2026-10-09T16:58:17.213Z -- no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T11:00:11.945Z -- no editar a mano, se sobreescribe en cada publicación._
 
 Este es el documento de **tu** rol. El procedimiento paso a paso está en
 `.claude/skills/sm-sync/SKILL.md`.

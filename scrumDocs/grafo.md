@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T13:27:29.239Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:21:20.137Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -12,12 +12,15 @@ graph TD
     REQ_1791910394885["RF-02: UI de Secretaría: Carga y Ficha de Edificios y Máquinas"]
     REQ_1793979090598["RNF-01: Rechazar con 400 los textos que la base no puede guardar (carácter NUL)"]
     REQ_1794000103321["RNF-02: Evitar que las pruebas de integración fallen al correr en paralelo"]
+    REQ_1794493276677["RF-03: Importar el listado Excel de la AGC (máquinas, ubicaciones y estados)"]
+    REQ_1794493276926["RF-04: Horarios de atención por edificio editables por la Secretaría"]
   end
   subgraph US_1791560828789["HU-02: HU-02: Asignación de Roles Tripartitos por Edificio"]
     REQ_1791910395002["RF-01: API de Asignación Tripartita de Roles por Edificio"]
     REQ_1791910395101["RF-02: UI de Secretaría: Pestaña de Asignación de Roles de Trabajo"]
     REQ_1794015939180["RF-03: Evitar que un guardado pise una asignación más nueva"]
     REQ_1794015939447["RNF-01: Leer todas las ternas en una sola consulta"]
+    REQ_1794493275904["RF-04: Porcentajes de pago y abono configurables por máquina"]
   end
   subgraph US_1791560828900["HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA"]
     REQ_1791910395196["RF-01: Servicio de Telemetría GPS y Proximidad de Inspectores"]
@@ -34,15 +37,21 @@ graph TD
   subgraph US_1791560829152["HU-06: HU-06: Gestión de Fallas Críticas y Deslinde Legal"]
     REQ_1791910396411["RF-01: Recepción de Falla Crítica y Alerta Emergente en Secretaría"]
     REQ_1791910396553["RF-02: Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA"]
+    REQ_1794493274550["RF-03: Lista de Fallas Críticas definida por el cliente"]
+    REQ_1794493274814["RF-04: Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra"]
+    REQ_1794493275052["RF-05: Estado del ascensor: el RT lo marca y el Firmante lo confirma"]
   end
   subgraph US_1791560829237["HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita"]
     REQ_1791910395756["RF-01: Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio"]
     REQ_1791910395872["RF-02: Bloqueo por Advertencia 3 y Cálculo de Recargo del 45%"]
     REQ_1794013110546["RF-03: Persistir las visitas fallidas en PostgreSQL"]
+    REQ_1794493275499["RF-04: Recargo del 45 % una sola vez por máquina no inspeccionada"]
+    REQ_1794493275712["RF-05: Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas"]
   end
   subgraph US_1791560829306["HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC"]
     REQ_1791910395959["RF-01: API de Máquinas Asignadas y Autorización de Firma AGC"]
     REQ_1791910396039["RF-02: UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría"]
+    REQ_1794493276116["RF-03: Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]
@@ -52,12 +61,15 @@ graph TD
     REQ_1791910396649["RF-01: Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA"]
     REQ_1791910396729["RF-02: Descarga de Remito Técnico y Registro de Acuse de Recibo Legal"]
     REQ_1793980587652["RF-03: Registrar el acuse de recibo legal solo si quedó guardado en la base"]
+    REQ_1794493276394["RF-04: Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
     REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]
     REQ_1791910396892["RF-02: Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo"]
     REQ_1794155773535["RF-03: No informar como entregado un WhatsApp que no se envió"]
     REQ_1794155774018["RF-04: Enviar las alertas por WhatsApp a través de un proveedor real"]
+    REQ_1794493273993["RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría"]
+    REQ_1794493274385["RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]
@@ -70,11 +82,14 @@ graph TD
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885
   REQ_1791909582859 --> REQ_1793979090598
+  REQ_1791909582859 --> REQ_1794493276677
+  REQ_1791910394885 --> REQ_1794493276926
   REQ_1791909582859 --> REQ_1791910395002
   REQ_1791910395002 --> REQ_1791910395101
   REQ_1791910394885 --> REQ_1791910395101
   REQ_1791910395101 --> REQ_1794015939180
   REQ_1791910395101 --> REQ_1794015939447
+  REQ_1791910395101 --> REQ_1794493275904
   REQ_1791910395002 --> REQ_1791910395196
   REQ_1791910395196 --> REQ_1791910395292
   REQ_1791910395196 --> REQ_1791910395389
@@ -85,18 +100,25 @@ graph TD
   REQ_1791910395476 --> REQ_1791910395676
   REQ_1791910396167 --> REQ_1791910396411
   REQ_1791910396411 --> REQ_1791910396553
+  REQ_1791910396411 --> REQ_1794493274550
+  REQ_1794493274550 --> REQ_1794493274814
+  REQ_1794493274550 --> REQ_1794493275052
   REQ_1791910395565 --> REQ_1791910395756
   REQ_1791910395756 --> REQ_1791910395872
   REQ_1791910395676 --> REQ_1791910395872
   REQ_1791910395756 --> REQ_1794013110546
+  REQ_1794013110546 --> REQ_1794493275499
+  REQ_1794013110546 --> REQ_1794493275712
   REQ_1791910395002 --> REQ_1791910395959
   REQ_1791910395959 --> REQ_1791910396039
+  REQ_1791910396039 --> REQ_1794493276116
   REQ_1791910395959 --> REQ_1791910396167
   REQ_1791910396167 --> REQ_1791910396255
   REQ_1791910396255 --> REQ_1791910396649
   REQ_1791910396553 --> REQ_1791910396649
   REQ_1791910396649 --> REQ_1791910396729
   REQ_1791910396729 --> REQ_1793980587652
+  REQ_1793980587652 --> REQ_1794493276394
   REQ_1791910396729 --> REQ_1791910396804
   REQ_1791910396804 --> REQ_1791910396892
   REQ_1791910396804 --> REQ_1794155773535
@@ -104,5 +126,8 @@ graph TD
   REQ_1794155773535 --> REQ_1794155774018
   REQ_1791910396804 --> REQ_1794155774018
   REQ_1791910395002 --> REQ_1794155774018
+  REQ_1794155773535 --> REQ_1794493273993
+  REQ_1791910396892 --> REQ_1794493273993
+  REQ_1794493273993 --> REQ_1794493274385
   REQ_1794486918351 --> REQ_1794488168014
 ```

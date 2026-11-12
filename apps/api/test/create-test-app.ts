@@ -2,6 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
+import { Reloj, RELOJ, relojDelSistema } from '../src/auth/auth.types';
+import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usuarios.repository';
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
 import { Consorcio, ConsorcioInput, ConsorcioResumen } from '../src/consorcios/consorcio.types';
@@ -119,6 +121,7 @@ export async function createTestApp(
   database = fakeDatabase(),
   consorcios: ConsorciosRepository = new InMemoryConsorciosRepository(),
   visitasFallidas: VisitasFallidasRepository = new InMemoryVisitasFallidasRepository(),
+  auth: { usuarios?: UsuariosRepository; reloj?: Reloj } = {},
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   const config = loadConfig(env);
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(config)] })
@@ -128,6 +131,10 @@ export async function createTestApp(
     .useValue(consorcios)
     .overrideProvider(VisitasFallidasRepository)
     .useValue(visitasFallidas)
+    .overrideProvider(UsuariosRepository)
+    .useValue(auth.usuarios ?? new InMemoryUsuariosRepository())
+    .overrideProvider(RELOJ)
+    .useValue(auth.reloj ?? relojDelSistema)
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });

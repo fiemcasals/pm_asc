@@ -1,4 +1,11 @@
 import { DynamicModule, Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthController, UsuariosController } from './auth/auth.controller';
+import { AuthService } from './auth/auth.service';
+import { RELOJ, relojDelSistema } from './auth/auth.types';
+import { PgUsuariosRepository } from './auth/pg-usuarios.repository';
+import { RolesGuard } from './auth/roles.guard';
+import { UsuariosRepository } from './auth/usuarios.repository';
 import { APP_CONFIG, AppConfig } from './config';
 import { ConsorciosController } from './consorcios/consorcios.controller';
 import { ConsorciosRepository } from './consorcios/consorcios.repository';
@@ -27,6 +34,8 @@ export class AppModule {
       module: AppModule,
       controllers: [
         HealthController,
+        AuthController,
+        UsuariosController,
         ConsorciosController,
         FirmanteController,
         EcaController,
@@ -37,6 +46,10 @@ export class AppModule {
       providers: [
         { provide: APP_CONFIG, useValue: config },
         DatabaseService,
+        { provide: RELOJ, useValue: relojDelSistema },
+        { provide: UsuariosRepository, useClass: PgUsuariosRepository },
+        AuthService,
+        { provide: APP_GUARD, useClass: RolesGuard },
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,

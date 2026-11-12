@@ -108,4 +108,41 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX visitas_fallidas_consorcio_orden_idx ON visitas_fallidas (consorcio_id, orden ASC);
     `,
   },
+  {
+    id: '005_usuarios_y_sesiones',
+    sql: `
+      -- Usuarios del sistema (HU-14). La contraseña se guarda sólo como hash bcrypt.
+      CREATE TABLE usuarios (
+        id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        usuario       text NOT NULL,
+        nombre        text NOT NULL,
+        rol           text NOT NULL
+                      CHECK (rol IN ('rt_calle', 'secretaria', 'firmante', 'eca', 'administrador')),
+        password_hash text NOT NULL,
+        activo        boolean NOT NULL DEFAULT true,
+        created_at    timestamptz NOT NULL DEFAULT now()
+      );
+      -- El nombre de usuario no distingue mayúsculas: "Ana" y "ana" son la misma cuenta.
+      CREATE UNIQUE INDEX usuarios_usuario_unico ON usuarios (lower(usuario));
+
+      -- Sesiones de refresco: se guarda el hash SHA-256 del token, nunca el token.
+      -- Revocar una sesión es borrarla.
+      CREATE TABLE sesiones (
+        id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        usuario_id   uuid NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+        refresh_hash text NOT NULL UNIQUE,
+        expira_en    timestamptz NOT NULL,
+        creada_en    timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX sesiones_usuario_idx ON sesiones (usuario_id);
+
+      -- Intentos fallidos por nombre de usuario, exista o no la cuenta,
+      -- para que el bloqueo no revele qué usuarios existen.
+      CREATE TABLE intentos_login (
+        usuario         text PRIMARY KEY,
+        fallidos        integer NOT NULL DEFAULT 0,
+        bloqueado_hasta timestamptz
+      );
+    `,
+  },
 ];

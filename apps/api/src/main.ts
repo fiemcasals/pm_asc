@@ -24,6 +24,11 @@ async function bootstrap(): Promise<void> {
       ? `CORS habilitado para: ${config.corsOrigins.join(', ')}`
       : 'CORS deshabilitado',
   );
+  if (config.authSecretGenerado) {
+    logger.warn(
+      'AUTH_JWT_SECRET no está cargado: se generó uno al azar. Las sesiones no sobreviven a un reinicio de la API.',
+    );
+  }
 }
 
 void bootstrap();

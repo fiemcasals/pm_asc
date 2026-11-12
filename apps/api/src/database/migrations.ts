@@ -354,4 +354,14 @@ export const MIGRATIONS: Migration[] = [
       CREATE INDEX inspecciones_checklist_consorcio_idx ON inspecciones_checklist (consorcio_id, maquina_id);
     `,
   },
+  {
+    id: '011_eca_en_usuarios',
+    sql: `
+      -- ECA a la que pertenece un usuario (HU-15). Sólo la tienen los usuarios con rol 'eca':
+      -- el RLS toma de acá la ECA de la sesión. Los usuarios que ya existían quedan con NULL.
+      ALTER TABLE usuarios ADD COLUMN eca text;
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_eca_solo_rol_eca CHECK (rol = 'eca' OR eca IS NULL);
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_eca_no_vacia CHECK (eca IS NULL OR btrim(eca) <> '');
+    `,
+  },
 ];

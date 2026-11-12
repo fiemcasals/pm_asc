@@ -16,6 +16,8 @@ export interface UsuarioGuardado {
   activo: boolean;
   /** Momento en que un Administrador revocó sus sesiones: invalida los tokens emitidos antes. */
   sesionesRevocadasEn: Date | null;
+  /** ECA a la que pertenece (sólo los usuarios con rol "eca"); null para el resto. */
+  eca: string | null;
 }
 
 /** Lo que la API muestra de un usuario. */
@@ -24,10 +26,12 @@ export interface UsuarioPublico {
   usuario: string;
   nombre: string;
   rol: Rol;
+  /** ECA del usuario (sólo rol "eca"); null para el resto. */
+  eca: string | null;
 }
 
 export function aPublico(u: UsuarioGuardado): UsuarioPublico {
-  return { id: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol };
+  return { id: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol, eca: u.eca };
 }
 
 /** Lo que la API devuelve del usuario logueado: sus datos y lo que le falta aceptar. */
@@ -57,6 +61,8 @@ export interface UsuarioAutenticado {
   id: string;
   usuario: string;
   rol: Rol;
+  /** ECA del usuario, leída de la base en cada pedido (req.usuario.eca). */
+  eca: string | null;
 }
 
 /** Fuente de la hora actual: inyectable para poder probar vencimientos sin esperar. */

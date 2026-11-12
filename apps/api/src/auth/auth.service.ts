@@ -151,16 +151,12 @@ export class AuthService implements OnApplicationBootstrap {
     if (sesion) await this.usuarios.borrarSesion(sesion.id);
   }
 
-  /** Valida la firma y el vencimiento de un token de acceso. Devuelve null si falta, es falso o venció. */
-  verificar(accessToken: string): UsuarioAutenticado | null {
-    const payload = verificarAcceso(accessToken, this.config.authSecret, this.reloj.ahora());
-    return payload ? { id: payload.sub, usuario: payload.usuario, rol: payload.rol } : null;
-  }
-
   /**
    * Valida un token de acceso Y que el usuario siga habilitado: el token dura 15 minutos sin
    * consultar la base, así que sin este control una revocación tardaría hasta 15 minutos en valer.
    * Un token emitido en el mismo segundo de la revocación, o antes, se rechaza.
+   * La ECA del usuario (req.usuario.eca) sale de la base en cada pedido, no del token: cambiarla
+   * vale desde el pedido siguiente, sin esperar a que el token venza.
    */
   async autenticar(accessToken: string): Promise<UsuarioAutenticado> {
     const payload = verificarAcceso(accessToken, this.config.authSecret, this.reloj.ahora());
@@ -169,7 +165,7 @@ export class AuthService implements OnApplicationBootstrap {
     if (!usuario?.activo) throw new UnauthorizedException('Tenés que iniciar sesión.');
     const revocadas = usuario.sesionesRevocadasEn?.getTime();
     if (revocadas !== undefined && payload.iat < Math.ceil(revocadas / 1000)) throw sesionRevocada();
-    return { id: usuario.id, usuario: usuario.usuario, rol: usuario.rol };
+    return { id: usuario.id, usuario: usuario.usuario, rol: usuario.rol, eca: usuario.eca };
   }
 
   async perfil(id: string): Promise<UsuarioSesion> {
@@ -212,12 +208,14 @@ export class AuthService implements OnApplicationBootstrap {
     nombre: string;
     rol: Rol;
     password: string;
+    eca: string | null;
   }): Promise<UsuarioPublico> {
     const creado = await this.usuarios.crear({
       usuario: datos.usuario,
       nombre: datos.nombre,
       rol: datos.rol,
       passwordHash: await bcrypt.hash(datos.password, COSTO_BCRYPT),
+      eca: datos.eca,
     });
     if (!creado) throw new ConflictException(`El usuario "${datos.usuario}" ya existe.`);
     return aPublico(creado);

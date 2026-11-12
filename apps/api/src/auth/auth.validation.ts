@@ -4,6 +4,7 @@ import { esRol, Rol, ROLES } from './auth.types';
 /** bcrypt sólo usa los primeros 72 bytes: una contraseña más larga no se acepta al crearla. */
 const MAX_BYTES_PASSWORD = 72;
 const MIN_PASSWORD = 10;
+const MAX_ECA = 120;
 
 export function validarLogin(body: unknown): { usuario: string; password: string } {
   const b = (body ?? {}) as Record<string, unknown>;
@@ -21,6 +22,7 @@ export function validarNuevoUsuario(body: unknown): {
   nombre: string;
   rol: Rol;
   password: string;
+  eca: string | null;
 } {
   const b = (body ?? {}) as Record<string, unknown>;
   const errores: string[] = [];
@@ -38,6 +40,17 @@ export function validarNuevoUsuario(body: unknown): {
     errores.push(`password no puede superar los ${MAX_BYTES_PASSWORD} bytes`);
   }
 
+  // La ECA identifica a la Empresa Conservadora del usuario: obligatoria para el rol "eca" y
+  // prohibida para los demás (el RLS la toma de la sesión, así que no puede quedar ambigua).
+  let eca: string | null = null;
+  if (b.rol === 'eca') {
+    const e = typeof b.eca === 'string' ? b.eca.trim() : '';
+    if (!e || e.length > MAX_ECA) errores.push(`eca es obligatoria para el rol eca: el nombre de la ECA (hasta ${MAX_ECA} caracteres)`);
+    else eca = e;
+  } else if (b.eca !== undefined && b.eca !== null && b.eca !== '') {
+    errores.push('eca sólo se admite para el rol eca');
+  }
+
   if (errores.length > 0) throw new BadRequestException(errores);
-  return { usuario, nombre, rol: b.rol as Rol, password };
+  return { usuario, nombre, rol: b.rol as Rol, password, eca };
 }

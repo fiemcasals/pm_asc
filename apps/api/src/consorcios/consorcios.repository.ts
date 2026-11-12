@@ -1,4 +1,4 @@
-import { Consorcio, ConsorcioInput, ConsorcioResumen } from './consorcio.types';
+import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
 import { RolesEdificio, RolesInput } from './roles.types';
 
 /** Lanzado cuando la base rechaza una referencia AGC repetida dentro del mismo edificio. */
@@ -16,6 +16,8 @@ export class ReferenciaAgcDuplicadaError extends Error {
 export abstract class ConsorciosRepository {
   abstract crear(datos: ConsorcioInput): Promise<Consorcio>;
   abstract listar(): Promise<ConsorcioResumen[]>;
+  /** Lista solo consorcios con punto geográfico PostGIS asignado. */
+  abstract listarParaMapa(): Promise<ConsorcioMapaItem[]>;
   abstract obtener(id: string): Promise<Consorcio | null>;
   /** Reemplaza los datos y la lista completa de máquinas. `null` si el consorcio no existe. */
   abstract reemplazar(id: string, datos: ConsorcioInput): Promise<Consorcio | null>;

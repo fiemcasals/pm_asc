@@ -121,6 +121,24 @@ describe('/api/consorcios', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     });
+
+    it('GET /api/consorcios/mapa excluye consorcios sin ubicacion', async () => {
+      await http().post('/api/consorcios').send({
+        ...consorcio,
+        nombre: 'Con Mapa',
+        ubicacion: { latitud: -34.6118, longitud: -58.396 },
+      });
+      await http().post('/api/consorcios').send({ nombre: 'Sin Mapa', direccion: 'Calle 2' });
+
+      const res = await http().get('/api/consorcios/mapa');
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0]).toMatchObject({
+        nombre: 'Con Mapa',
+        ubicacion: { latitud: -34.6118, longitud: -58.396 },
+        cantidadMaquinas: 2,
+      });
+    });
   });
 
   describe('PUT /api/consorcios/:id', () => {

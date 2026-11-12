@@ -12,7 +12,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { validarConsorcio } from './consorcio.validation';
-import { Consorcio, ConsorcioResumen } from './consorcio.types';
+import { Consorcio, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
 import { RolesEdificio } from './roles.types';
 import { validarRoles } from './roles.validation';
@@ -39,6 +39,12 @@ export class ConsorciosController {
   @Get()
   listar(): Promise<ConsorcioResumen[]> {
     return this.consorcios.listar();
+  }
+
+  /** Consorcios con punto geográfico definido; los edificios sin ubicación quedan excluidos. */
+  @Get('mapa')
+  listarMapa(): Promise<ConsorcioMapaItem[]> {
+    return this.consorcios.listarParaMapa();
   }
 
   /** Ficha completa del edificio: dirección, datos de administración y máquinas. */

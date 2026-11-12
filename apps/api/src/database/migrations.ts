@@ -162,4 +162,23 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE sesiones ADD COLUMN revocada_en timestamptz;
     `,
   },
+  {
+    id: '007_datos_operativos_edificio_equipo',
+    sql: `
+      -- Datos operativos del edificio y del equipo para el trabajo en calle (HU-01 RF-05).
+      ALTER TABLE consorcios
+        ADD COLUMN IF NOT EXISTS encargado_nombre text,
+        ADD COLUMN IF NOT EXISTS encargado_telefono text,
+        ADD COLUMN IF NOT EXISTS pisos jsonb NOT NULL DEFAULT '[]'::jsonb,
+        ADD COLUMN IF NOT EXISTS ubicacion geometry(Point, 4326);
+
+      CREATE INDEX IF NOT EXISTS consorcios_ubicacion_gix
+        ON consorcios USING GIST (ubicacion);
+
+      ALTER TABLE maquinas
+        ADD COLUMN IF NOT EXISTS tipo text NOT NULL DEFAULT 'traccion'
+          CHECK (tipo IN ('traccion', 'hidraulico', 'montavehiculos')),
+        ADD COLUMN IF NOT EXISTS sala_compartida_id text;
+    `,
+  },
 ];

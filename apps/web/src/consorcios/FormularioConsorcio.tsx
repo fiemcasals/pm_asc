@@ -3,8 +3,14 @@ import {
   Consorcio,
   ConsorcioInput,
   crearConsorcio,
+  ETIQUETAS_TIPO_MAQUINA,
   MaquinaInput,
+  parsearListaPisos,
+  PuntoGeografico,
+  TIPOS_MAQUINA,
+  TipoMaquina,
 } from './consorcios';
+import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
 
 interface FormularioConsorcioProps {
   onConsorcioCreado: (nuevo: Consorcio) => void;
@@ -17,11 +23,15 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
   const [adminNombre, setAdminNombre] = useState('');
   const [adminTelefono, setAdminTelefono] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
+  const [encargadoNombre, setEncargadoNombre] = useState('');
+  const [encargadoTelefono, setEncargadoTelefono] = useState('');
+  const [pisosTexto, setPisosTexto] = useState('SS, PB, 1, 2, 3');
+  const [ubicacion, setUbicacion] = useState<PuntoGeografico | null>(null);
 
   // Grilla dinámica de máquinas AGC iniciada con M1 y M2 por defecto
   const [maquinas, setMaquinas] = useState<MaquinaInput[]>([
-    { referenciaAgc: 'M1', descripcion: 'Ascensor Principal' },
-    { referenciaAgc: 'M2', descripcion: 'Ascensor Secundario / Servicio' },
+    { referenciaAgc: 'M1', descripcion: 'Ascensor Principal', tipo: 'traccion', salaCompartidaId: null },
+    { referenciaAgc: 'M2', descripcion: 'Ascensor Secundario / Servicio', tipo: 'traccion', salaCompartidaId: null },
   ]);
 
   const [enviando, setEnviando] = useState(false);
@@ -32,7 +42,7 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
     const siguienteNumero = maquinas.length + 1;
     setMaquinas((prev) => [
       ...prev,
-      { referenciaAgc: `M${siguienteNumero}`, descripcion: '' },
+      { referenciaAgc: `M${siguienteNumero}`, descripcion: '', tipo: 'traccion', salaCompartidaId: null },
     ]);
   };
 
@@ -44,7 +54,7 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
     setMaquinas((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const actualizarMaquina = (index: number, campo: keyof MaquinaInput, valor: string) => {
+  const actualizarMaquina = (index: number, campo: keyof MaquinaInput, valor: string | null) => {
     setMaquinas((prev) =>
       prev.map((m, i) => (i === index ? { ...m, [campo]: valor } : m)),
     );
@@ -86,9 +96,17 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
         telefono: adminTelefono.trim() || null,
         email: adminEmail.trim() || null,
       },
+      encargado: {
+        nombre: encargadoNombre.trim() || null,
+        telefono: encargadoTelefono.trim() || null,
+      },
+      pisos: parsearListaPisos(pisosTexto),
+      ubicacion,
       maquinas: maquinas.map((m) => ({
         referenciaAgc: m.referenciaAgc.trim().toUpperCase(),
         descripcion: m.descripcion?.trim() || null,
+        tipo: (m.tipo || 'traccion') as TipoMaquina,
+        salaCompartidaId: m.salaCompartidaId?.trim() || null,
       })),
     };
 
@@ -233,6 +251,68 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
         </div>
       </fieldset>
 
+      {/* Datos Operativos para la Calle */}
+      <fieldset className="fieldset-section">
+        <legend className="fieldset-legend">2b. Datos Operativos para la Calle (Opcional)</legend>
+
+        <div className="form-grid-3">
+          <div className="form-field">
+            <label htmlFor="encargado-nombre" className="field-label">
+              Nombre del Encargado
+            </label>
+            <input
+              id="encargado-nombre"
+              type="text"
+              className="field-input"
+              placeholder="Ej. Carlos Gómez"
+              value={encargadoNombre}
+              onChange={(e) => setEncargadoNombre(e.target.value)}
+              data-testid="input-encargado-nombre"
+            />
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="encargado-telefono" className="field-label">
+              Teléfono del Encargado
+            </label>
+            <input
+              id="encargado-telefono"
+              type="tel"
+              className="field-input"
+              placeholder="Ej. 11-5555-6666"
+              value={encargadoTelefono}
+              onChange={(e) => setEncargadoTelefono(e.target.value)}
+              data-testid="input-encargado-telefono"
+            />
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="pisos-consorcio" className="field-label">
+              Lista de Pisos (separados por coma)
+            </label>
+            <input
+              id="pisos-consorcio"
+              type="text"
+              className="field-input"
+              placeholder="SS, PB, 1, 2, 3, ..."
+              value={pisosTexto}
+              onChange={(e) => setPisosTexto(e.target.value)}
+              data-testid="input-pisos"
+            />
+          </div>
+        </div>
+
+        <div className="form-field" style={{ marginTop: '12px' }}>
+          <span className="field-label">Ubicación Geográfica en Mapa (PostGIS)</span>
+          <MapaUbicacionConsorcio
+            ubicacion={ubicacion}
+            editable
+            onCambiarUbicacion={setUbicacion}
+            testId="mapa-alta-consorcio"
+          />
+        </div>
+      </fieldset>
+
       {/* Grilla Dinámica de Máquinas AGC */}
       <fieldset className="fieldset-section" data-testid="grilla-dinamica-maquinas">
         <div className="section-header-row">
@@ -278,6 +358,34 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
                   value={m.descripcion || ''}
                   onChange={(e) => actualizarMaquina(index, 'descripcion', e.target.value)}
                   data-testid={`input-desc-${index}`}
+                />
+              </div>
+
+              <div className="field-compact">
+                <label className="field-label-sm">Tipo</label>
+                <select
+                  className="field-input"
+                  value={m.tipo || 'traccion'}
+                  onChange={(e) => actualizarMaquina(index, 'tipo', e.target.value)}
+                  data-testid={`select-tipo-${index}`}
+                >
+                  {TIPOS_MAQUINA.map((tipo) => (
+                    <option key={tipo} value={tipo}>
+                      {ETIQUETAS_TIPO_MAQUINA[tipo]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field-compact">
+                <label className="field-label-sm">Sala de Máquinas</label>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="Ej. sala-principal"
+                  value={m.salaCompartidaId || ''}
+                  onChange={(e) => actualizarMaquina(index, 'salaCompartidaId', e.target.value)}
+                  data-testid={`input-sala-${index}`}
                 />
               </div>
 

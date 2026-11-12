@@ -1,4 +1,4 @@
-import { ArgumentsHost, BadRequestException, Catch, HttpException, Logger } from '@nestjs/common';
+import { ArgumentsHost, BadRequestException, Catch, ForbiddenException, HttpException, Logger } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 
 /**
@@ -36,6 +36,16 @@ export class TextoInvalidoFilter extends BaseExceptionFilter {
   private readonly logger = new Logger(TextoInvalidoFilter.name);
 
   override catch(exception: unknown, host: ArgumentsHost): void {
+    const pgCode =
+      typeof exception === 'object' && exception !== null ? (exception as { code?: unknown }).code : undefined;
+    if (!(exception instanceof HttpException) && pgCode === '42501') {
+      this.logger.warn('Operación rechazada por Row Level Security (SQLSTATE 42501)');
+      super.catch(
+        new ForbiddenException('Acceso denegado por aislamiento de datos entre ECA (RLS).'),
+        host,
+      );
+      return;
+    }
     if (!esErrorDeTextoInvalido(exception)) {
       super.catch(exception, host);
       return;

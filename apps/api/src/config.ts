@@ -9,6 +9,10 @@ export interface AppConfig {
   nodeEnv: string;
   port: number;
   databaseUrl: string;
+  /** URL opcional del usuario de aplicación sin BYPASSRLS ni propiedad de tablas. */
+  databaseAppUrl?: string;
+  /** Contraseña del usuario de aplicación (`ascensores_app`) tomada de `DATABASE_APP_PASSWORD`. */
+  databaseAppPassword?: string;
   /** Orígenes autorizados por CORS. Siempre vacío en producción. */
   corsOrigins: string[];
   /** Secreto con que se firman los tokens de acceso. */
@@ -51,6 +55,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     nodeEnv,
     port: Number(env.API_PORT ?? 3050),
     databaseUrl: env.DATABASE_URL ?? '',
+    databaseAppUrl: env.DATABASE_APP_URL || undefined,
+    databaseAppPassword: env.DATABASE_APP_PASSWORD?.trim() || undefined,
     corsOrigins,
     authSecret: secretoCargado || randomBytes(48).toString('base64url'),
     authSecretGenerado: !secretoCargado,

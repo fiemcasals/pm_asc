@@ -181,4 +181,101 @@ export const MIGRATIONS: Migration[] = [
         ADD COLUMN IF NOT EXISTS sala_compartida_id text;
     `,
   },
+  {
+    id: '008_rls_por_eca',
+    sql: `
+      -- Rol runtime sin SUPERUSER ni BYPASSRLS ni propiedad de tablas (HU-15 RNF-01).
+      -- La contraseña se sincroniza desde DATABASE_APP_PASSWORD (.env) en DatabaseService.onModuleInit().
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ascensores_app') THEN
+          CREATE ROLE ascensores_app LOGIN
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+        ELSE
+          ALTER ROLE ascensores_app WITH LOGIN
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+        END IF;
+      END $$;
+
+      -- Discriminador de ECA propietaria para tablas operativas que no lo tenían explícito.
+      ALTER TABLE consorcios
+        ADD COLUMN IF NOT EXISTS eca_nombre text NOT NULL
+        DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'ECA_SISTEMA_DEV');
+
+      ALTER TABLE visitas_fallidas
+        ADD COLUMN IF NOT EXISTS eca_nombre text NOT NULL
+        DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'ECA_SISTEMA_DEV');
+
+      CREATE INDEX IF NOT EXISTS consorcios_eca_nombre_idx ON consorcios (eca_nombre);
+      CREATE INDEX IF NOT EXISTS visitas_fallidas_eca_nombre_idx ON visitas_fallidas (eca_nombre);
+
+      -- Permisos sobre todas las tablas/secuencias existentes y sobre las que creen futuras migraciones.
+      GRANT USAGE ON SCHEMA public TO ascensores_app;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ascensores_app;
+      GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ascensores_app;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ascensores_app;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public
+        GRANT USAGE, SELECT ON SEQUENCES TO ascensores_app;
+
+      -- RLS activo en TODAS las tablas con datos de una ECA.
+      ALTER TABLE consorcios ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE maquinas ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE roles_edificio ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE acuses_recibo_legal ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE visitas_fallidas ENABLE ROW LEVEL SECURITY;
+
+      -- Sin contexto app.eca_actual (NULL o ''), la comparación con NULL devuelve 0 filas.
+      DROP POLICY IF EXISTS rls_consorcios_eca ON consorcios;
+      CREATE POLICY rls_consorcios_eca ON consorcios
+        USING (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''))
+        WITH CHECK (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''));
+
+      DROP POLICY IF EXISTS rls_maquinas_eca ON maquinas;
+      CREATE POLICY rls_maquinas_eca ON maquinas
+        USING (
+          EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = maquinas.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        )
+        WITH CHECK (
+          EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = maquinas.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_roles_edificio_eca ON roles_edificio;
+      CREATE POLICY rls_roles_edificio_eca ON roles_edificio
+        USING (
+          eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          OR EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = roles_edificio.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        )
+        WITH CHECK (
+          eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          OR EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = roles_edificio.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_acuses_recibo_eca ON acuses_recibo_legal;
+      CREATE POLICY rls_acuses_recibo_eca ON acuses_recibo_legal
+        USING (eca = NULLIF(current_setting('app.eca_actual', true), ''))
+        WITH CHECK (eca = NULLIF(current_setting('app.eca_actual', true), ''));
+
+      DROP POLICY IF EXISTS rls_visitas_fallidas_eca ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_eca ON visitas_fallidas
+        USING (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''))
+        WITH CHECK (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''));
+    `,
+  },
 ];

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { getRlsContext, runWithEcaContext } from '../database/rls-context';
 import { FirmanteService } from '../firmante/firmante.service';
 import {
   AcuseReciboResponse,
@@ -158,18 +159,22 @@ export class EcaService {
     const remitoUrl = `/api/eca/remito/${alertaId}`;
 
     if (this.db) {
-      await this.db.query(
-        `INSERT INTO acuses_recibo_legal (alerta_id, maquina_id, eca, usuario, fecha_hora, tipo_alerta, remito_url)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          alertaId,
-          maquina.id,
-          maquina.eca,
-          usuario,
-          fechaHora,
-          maquina.alertaCritica.tipo,
-          remitoUrl,
-        ],
+      const ctx = getRlsContext();
+      const ecaParaDb = ctx?.esExplicito ? ctx.eca : maquina.eca;
+      await runWithEcaContext(ecaParaDb, () =>
+        this.db!.query(
+          `INSERT INTO acuses_recibo_legal (alerta_id, maquina_id, eca, usuario, fecha_hora, tipo_alerta, remito_url)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            alertaId,
+            maquina.id,
+            maquina.eca,
+            usuario,
+            fechaHora,
+            maquina.alertaCritica!.tipo,
+            remitoUrl,
+          ],
+        ),
       );
     }
 

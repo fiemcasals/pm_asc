@@ -1,4 +1,4 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthController, ConsentimientoController, UsuariosController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
@@ -11,6 +11,8 @@ import { ConsorciosController } from './consorcios/consorcios.controller';
 import { ConsorciosRepository } from './consorcios/consorcios.repository';
 import { PgConsorciosRepository } from './consorcios/pg-consorcios.repository';
 import { DatabaseService } from './database/database.service';
+import { EcaContextMiddleware } from './database/eca-context.middleware';
+import { SeguridadRlsController } from './database/seguridad-rls.controller';
 import { EcaController } from './eca/eca.controller';
 import { EcaService } from './eca/eca.service';
 import { FallasCriticasController } from './fallas-criticas/fallas-criticas.controller';
@@ -28,7 +30,21 @@ import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-falli
 import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
 
 @Module({})
-export class AppModule {
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(EcaContextMiddleware)
+      .forRoutes(
+        ConsorciosController,
+        VisitasFallidasController,
+        EcaController,
+        FirmanteController,
+        FallasCriticasController,
+        SeguridadRlsController,
+        HealthController,
+      );
+  }
+
   static register(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
@@ -43,6 +59,7 @@ export class AppModule {
         WhatsAppController,
         VisitasFallidasController,
         FallasCriticasController,
+        SeguridadRlsController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },

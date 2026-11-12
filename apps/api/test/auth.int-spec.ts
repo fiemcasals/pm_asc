@@ -17,6 +17,9 @@ loadEnvFileInto(process.env);
 const PREFIJO = 'int-auth-';
 const PASSWORD = 'Clave-Segura-2026';
 
+// bcrypt de costo 12 tarda ~250 ms por hash a propósito: con la máquina cargada, 5 s no alcanza.
+jest.setTimeout(60_000);
+
 describe('Autenticación contra PostgreSQL real (HU-14 RF-01)', () => {
   let app: INestApplication;
   let pool: Pool;
@@ -147,6 +150,55 @@ describe('Autenticación contra PostgreSQL real (HU-14 RF-01)', () => {
     expect(me.body.motivo).toBe('revocada');
     const ref = await http().post('/api/auth/refresh').set('Cookie', cookie).expect(401);
     expect(ref.body.motivo).toBe('revocada');
+  });
+
+  it('la migración 010 agrega usuarios.eca, no toca a los usuarios que ya existían y rechaza una ECA en otro rol (HU-15 RF-01 c4)', async () => {
+    const col = await pool.query<{ data_type: string; is_nullable: string }>(
+      `SELECT data_type, is_nullable FROM information_schema.columns WHERE table_name = 'usuarios' AND column_name = 'eca'`,
+    );
+    expect(col.rows).toEqual([{ data_type: 'text', is_nullable: 'YES' }]);
+
+    const migracion = await pool.query(`SELECT 1 FROM schema_migrations WHERE id = '010_eca_en_usuarios'`);
+    expect(migracion.rowCount).toBe(1);
+
+    // Los usuarios que ya existían (los de las pruebas anteriores, sin ECA) siguen funcionando con eca NULL.
+    const conEca = await pool.query(`SELECT count(*)::int AS n FROM usuarios WHERE rol <> 'eca' AND eca IS NOT NULL`);
+    expect(conEca.rows[0].n).toBe(0);
+    await http().post('/api/auth/login').send({ usuario: `${PREFIJO}admin`, password: PASSWORD }).expect(200);
+
+    // La base misma impide una ECA en un usuario que no es de rol eca, y una ECA vacía.
+    await expect(
+      pool.query(`INSERT INTO usuarios (usuario, nombre, rol, password_hash, eca) VALUES ($1, 'X', 'rt_calle', 'x', 'Una ECA')`, [`${PREFIJO}mal1`]),
+    ).rejects.toMatchObject({ code: '23514', constraint: 'usuarios_eca_solo_rol_eca' });
+    await expect(
+      pool.query(`INSERT INTO usuarios (usuario, nombre, rol, password_hash, eca) VALUES ($1, 'X', 'eca', 'x', '   ')`, [`${PREFIJO}mal2`]),
+    ).rejects.toMatchObject({ code: '23514', constraint: 'usuarios_eca_no_vacia' });
+  });
+
+  it('el alta de un usuario eca guarda su ECA, la devuelven login, refresco y /me, y cambiarla en la base vale en el pedido siguiente (HU-15 RF-01 c1 a c3)', async () => {
+    const admin = await http().post('/api/auth/login').send({ usuario: `${PREFIJO}admin`, password: PASSWORD }).expect(200);
+    const auth = `Bearer ${admin.body.accessToken}`;
+    const usuario = `${PREFIJO}eca`;
+
+    await http().post('/api/usuarios').set('Authorization', auth)
+      .send({ usuario, nombre: 'ECA', rol: 'eca', password: PASSWORD }).expect(400);
+    await http().post('/api/usuarios').set('Authorization', auth)
+      .send({ usuario: `${PREFIJO}rt-con-eca`, nombre: 'RT', rol: 'rt_calle', eca: 'Una ECA', password: PASSWORD }).expect(400);
+    const alta = await http().post('/api/usuarios').set('Authorization', auth)
+      .send({ usuario, nombre: 'ECA', rol: 'eca', eca: '  Conservación Porteña S.R.L.  ', password: PASSWORD }).expect(201);
+    expect(alta.body.eca).toBe('Conservación Porteña S.R.L.');
+    expect((await pool.query('SELECT eca FROM usuarios WHERE usuario = $1', [usuario])).rows[0].eca).toBe('Conservación Porteña S.R.L.');
+
+    const login = await http().post('/api/auth/login').send({ usuario, password: PASSWORD }).expect(200);
+    expect(login.body.usuario.eca).toBe('Conservación Porteña S.R.L.');
+    const cookie = ([] as string[]).concat(login.headers['set-cookie'])[0].split(';')[0];
+    const refresco = await http().post('/api/auth/refresh').set('Cookie', cookie).expect(200);
+    expect(refresco.body.usuario.eca).toBe('Conservación Porteña S.R.L.');
+
+    const token = `Bearer ${refresco.body.accessToken}`;
+    expect((await http().get('/api/auth/me').set('Authorization', token).expect(200)).body.eca).toBe('Conservación Porteña S.R.L.');
+    await pool.query('UPDATE usuarios SET eca = $2 WHERE usuario = $1', [usuario, 'Otra Conservadora S.A.']);
+    expect((await http().get('/api/auth/me').set('Authorization', token).expect(200)).body.eca).toBe('Otra Conservadora S.A.');
   });
 
   it('5 intentos fallidos dejan el bloqueo guardado en la base y el 6.º responde 429', async () => {

@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:28:33.826Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:28:55.070Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -19,15 +19,6 @@ Como Secretaria quiero asignar a cada edificio (con sus máquinas) el RT de Call
 
 - 1. Dado un edificio registrado, cuando la secretaria selecciona el RT de Calle, el Usuario Firmante y la ECA responsable, entonces el sistema guarda la terna y aplica el esquema de asignación.
 - 2. Dado que se reasigna un RT de Calle o Firmante, cuando se guardan los cambios, entonces se actualiza inmediatamente la vista de ruteo y firma de los usuarios afectados.
-
-## HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA
-
-Como Secretaria quiero visualizar en tiempo real la ubicación GPS de los técnicos en calle sobre el mapa de CABA para desviar al recurso más cercano ante llamados de emergencia. (Este ítem no es necesario, sólo necesitaría poder visualizar el semáforo de edificios a los cuales ya se realizaron los controles)
-
-### Criterios de Aceptacion
-
-- 1. Dado que los técnicos tienen sus tablets activas, cuando la secretaria abre el mapa principal, entonces visualiza los pines de ubicación en vivo de los ingenieros.
-- 2. Dado un llamado de emergencia con personas atrapadas en un ascensor, cuando la secretaria selecciona el edificio, entonces el mapa resalta qué técnico está más próximo para su desvío.
 
 ## HU-04: HU-04: Semáforo de Control Mensual y Reasignación Operativa
 

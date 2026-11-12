@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T13:17:42.845Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T13:18:19.132Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -12,7 +12,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | Haciendo | gonza | — | — |
 | 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | Haciendo | gonza | — | — |
 | 6 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 7 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | Haciendo | gonza | RF-01 | — |
+| 7 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | Hecho | gonza | RF-01 | — |
 | 8 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 9 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 10 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -53,11 +53,11 @@ PR contra dev. maxWorkers: 1 en jest.int.config.js: la suite de integración cor
 - Estimado: 1h
 
 ### RF-01 — Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline
-Inicio de implementación de HU-12 RF-01 (Shell NEO Linear, Sidebar Colapsable, Cobertura Neón y Buscador Global Inline).
+PR #22 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/22). Commit 5dffa1d7be6a0ed82b11415f10287710ab6ded13. Implementado sistema visual NEO Linear Dark/Light, vista bento 'Estado del sistema', sidebar colapsable a 80px con boton expandir junto al logo violeta sin superposicion, buscador global inline en barra superior sin modal Ctrl+K y estilos neon en Medidor de Cobertura. Verificado: npm run verify (tsc 0 errores; API Jest 22/22, 170 tests; Web Vitest 7/7, 82 tests), RF-01-entrega.sh 4/4 OK y --carga 20 0 fallas (avg 142 ms, p95 154 ms). 3 Tests desarrollo Aprobado y 3 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/5dffa1d7be6a0ed82b11415f10287710ab6ded13/docs/pruebas/hu-12-hu-12-interfaz-neo-linear-side/RF-01-entrega.md
 - Estimado: 6h
 
 ### RF-01 — Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados
-Inicio de implementación de HU-13 RF-01 (Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados).
+PR #24 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/24). Commit 9c236cb067e335a7beda45c6594326f6ccf47c4e. Eliminados prefijos obvios ('CARTEL GIGANTE:') y codigos duplicados (M2 - M2:) usando formatearNombreEquipo y limpiado rotulo sobre fotografia en apps/web/src/eca/AlertasCriticas.tsx + tests en eca.test.ts. Verificado: npm run verify (API 22/22 170 tests, Web 6/6 79 tests, eca.test.ts 22/22), RF-01-entrega.sh 2/2 OK y --carga 20 0 fallas (avg 62 ms, p95 72 ms). 2 Tests desarrollo Aprobado y 2 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/9c236cb067e335a7beda45c6594326f6ccf47c4e/docs/pruebas/hu-13-hu-13-claridad-operativa-y-lim/RF-01-entrega.md
 - Estimado: 2h
 
 ### RF-02 — Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios

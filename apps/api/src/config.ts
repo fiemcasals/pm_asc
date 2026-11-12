@@ -1,4 +1,9 @@
+import { randomBytes } from 'node:crypto';
+
 export const APP_CONFIG = Symbol('APP_CONFIG');
+
+/** Largo mínimo del secreto de firma de tokens (HS256): 32 bytes. */
+const MIN_AUTH_SECRET = 32;
 
 export interface AppConfig {
   nodeEnv: string;
@@ -6,6 +11,15 @@ export interface AppConfig {
   databaseUrl: string;
   /** Orígenes autorizados por CORS. Siempre vacío en producción. */
   corsOrigins: string[];
+  /** Secreto con que se firman los tokens de acceso. */
+  authSecret: string;
+  /**
+   * true si AUTH_JWT_SECRET no estaba cargado y se generó uno al azar: funciona, pero
+   * las sesiones no sobreviven a un reinicio de la API.
+   */
+  authSecretGenerado: boolean;
+  /** Primer Administrador: se crea al arrancar sólo si todavía no hay ninguno. */
+  adminInicial: { usuario: string; password: string } | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -25,10 +39,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error('CORS_ORIGINS no admite "*": indicá los orígenes exactos.');
   }
 
+  const secretoCargado = env.AUTH_JWT_SECRET?.trim() ?? '';
+  if (secretoCargado && secretoCargado.length < MIN_AUTH_SECRET) {
+    throw new Error(`AUTH_JWT_SECRET tiene que tener al menos ${MIN_AUTH_SECRET} caracteres.`);
+  }
+
+  const adminUsuario = env.ADMIN_INICIAL_USUARIO?.trim() ?? '';
+  const adminPassword = env.ADMIN_INICIAL_PASSWORD ?? '';
+
   return {
     nodeEnv,
     port: Number(env.API_PORT ?? 3050),
     databaseUrl: env.DATABASE_URL ?? '',
     corsOrigins,
+    authSecret: secretoCargado || randomBytes(48).toString('base64url'),
+    authSecretGenerado: !secretoCargado,
+    adminInicial: adminUsuario && adminPassword ? { usuario: adminUsuario, password: adminPassword } : null,
   };
 }

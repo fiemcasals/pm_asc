@@ -1,0 +1,192 @@
+/* Pantalla de ingreso (HU-14 RF-02). Pensada primero para el celular del RT:
+   sin anchos fijos mayores a la pantalla, campos de 16px para que el celular no haga zoom. */
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 22px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+}
+
+.login-logo-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+
+.login-title {
+  margin: 0 0 4px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-password {
+  display: flex;
+  gap: 8px;
+}
+
+.login-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+
+.login-input:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.login-ver {
+  flex: none;
+  min-width: 72px;
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card-hover);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.login-error {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: 8px;
+}
+
+.login-submit {
+  min-height: 48px;
+  margin-top: 4px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.login-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Vista provisoria del RT de Calle hasta que llegue el mapa (HU-16). */
+.rt-inicio {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sesion-aviso {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 8px;
+}
+
+/* Aviso de uso de ubicación (HU-14 RNF-01). */
+.consentimiento {
+  max-width: 440px;
+}
+
+.consentimiento-titulo {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.consentimiento-texto {
+  max-height: 55vh;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.consentimiento-texto p {
+  margin: 0 0 10px;
+}
+
+.consentimiento-version {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.consentimiento-salir {
+  width: 100%;
+}
+
+.login-aviso {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 8px;
+}

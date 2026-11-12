@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T14:55:57.457Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T14:56:39.468Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -134,6 +134,14 @@ Filtro global de errores (database/database-error.filter.ts, registrado en app.s
 - Estimado: 3h
 
 ### RF-05 — Datos operativos del edificio y del equipo para la calle
+PR #26 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/26
+Rama: feature/hu-01-hu-01-gestion-y-alta-de-eca-y/req-1794493998460-datos-operativos-del-edificio-y-del-equi
+Documentacion: docs/pruebas/hu-01-hu-01-gestion-y-alta-de-eca-y/RF-05-entrega.md y RF-05-datos-operativos-edificio-equipo.md
+Pruebas ejecutadas tras ultimo cambio:
+- npm run verify: API 22 suites / 172 tests OK; Web 7 files / 85 tests OK; tsc --noEmit 0 errores.
+- npm run test:int -w apps/api (PostgreSQL + PostGIS): 6 suites / 25 tests OK.
+- bash docs/pruebas/hu-01-hu-01-gestion-y-alta-de-eca-y/RF-05-entrega.sh: 4 OK · 0 fallas.
+- bash docs/pruebas/hu-01-hu-01-gestion-y-alta-de-eca-y/RF-05-entrega.sh --carga 20: 20 corridas, 0 fallas HTTP != 200, promedio 60 ms, p95 73 ms, max 74 ms.
 - Estimado: 4h
 
 ### RF-02 — UI de Secretaría: Pestaña de Asignación de Roles de Trabajo

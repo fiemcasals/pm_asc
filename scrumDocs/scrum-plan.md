@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T16:49:44.689Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T16:50:58.387Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -21,7 +21,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hecho ✓ dev | gonza | RF-01, RF-01 | — |
-| 16 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | Hacer | germanG | RF-01 | — |
+| 16 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | Haciendo | germanG | RF-01 | — |
 | 17 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 18 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Hecho ✓ dev | gonza | RF-02 | — |
 | 19 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:29:08.374Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:34:14.927Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -343,7 +343,7 @@ PR #21 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/21). Commit
 - Estimado: 0h
 
 ### RF-06 — Fallas por piso en Accesos
-Inicio de desarrollo de HU-17 RF-06
+PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/34. RF-06 implementado en InspeccionCampoView.tsx + fallasPiso.ts (Seguridad Critica con 'Espacio entre puertas mayor a 12 cm', Mecanica de Puerta y Llamadores, multiples fallas por piso y eliminacion puntual). Pruebas de desarrollo Aprobadas (3/3). Verificado: npm run verify (API 26 suites/207 tests, Web 8 files/88 tests), Playwright 360x800 (scrollWidth=360) y RF-06-entrega.sh --carga 20 (promedio 9.03 ms). Nota Scrum API: PATCH status=pr_open devuelve 400 'sin condiciones de aprobacion (acceptanceCriteria)' pese a tener 3 criterios cargados y 3/3 tests de desarrollo aprobados.
 - Estimado: 3h
 
 ### RNF-01 — Visita en curso sin señal

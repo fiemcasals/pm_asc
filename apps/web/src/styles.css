@@ -1947,3 +1947,63 @@ dd {
 @media (prefers-reduced-motion: reduce) {
   .falla-toast { animation: none; }
 }
+
+/* ── HU-12 RF-02 (FIX): Contraste de contenedores y textos en Modo Oscuro ── */
+:root,
+[data-theme='dark'] {
+  --surface-sunken: #101217;
+}
+
+[data-theme='light'] {
+  --surface-sunken: #f8fafc;
+}
+
+[data-theme='dark'] .audit-grid {
+  background: var(--card-subtle, #101217);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--text, #f4f5f6);
+}
+
+[data-theme='dark'] .audit-grid strong {
+  color: var(--muted, #8a8f98);
+}
+
+[data-theme='dark'] .cartel-bloqueo-tercera-visita {
+  background: var(--danger-bg, rgba(239, 68, 68, 0.13)) !important;
+  border-color: var(--danger-border, rgba(248, 113, 113, 0.35)) !important;
+  color: var(--text, #f4f5f6) !important;
+}
+
+[data-theme='dark'] [data-testid='badge-recargo-45-habilitado'] {
+  background: var(--danger-bg, rgba(239, 68, 68, 0.16)) !important;
+  color: var(--danger, #f87171) !important;
+  border-color: var(--danger-border, rgba(248, 113, 113, 0.4)) !important;
+}
+
+[data-theme='dark'] .ficha-table [style*='220, 38, 38'],
+[data-theme='dark'] .ficha-table [style*='185, 28, 28'] {
+  color: #fca5a5 !important;
+}
+
+[data-theme='dark'] [data-testid='total-liquidacion-consorcio'] {
+  color: var(--text, #f4f5f6) !important;
+}
+
+[data-theme='dark'] [data-testid='total-liquidacion-consorcio'][style*='185, 28, 28'] {
+  color: #fca5a5 !important;
+}
+
+[data-theme='dark'] .solo-lectura-pill,
+[data-theme='dark'] .badge-modo-consulta {
+  background: var(--card-subtle, #101217);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--muted, #8a8f98);
+}
+
+[data-theme='dark'] .consorcio-item-dir,
+[data-theme='dark'] .bloqueo-hint,
+[data-theme='dark'] .maquina-meta,
+[data-theme='dark'] .modal-subtitle,
+[data-theme='dark'] .photo-placeholder {
+  color: var(--muted, #8a8f98);
+}

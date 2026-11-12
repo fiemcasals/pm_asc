@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T14:23:41.171Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T14:27:20.738Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -19,40 +19,38 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 11 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
 | 12 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 13 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
-| 14 | RF-01 | Servicio de Telemetría GPS y Proximidad de Inspectores | HU-03 | — | — | Hacer | germanG | RF-01 | — |
-| 15 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
-| 16 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 17 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 18 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 19 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 20 | RF-02 | UI Mapa de Flota interactivo CABA y Despacho de Emergencia | HU-03 | — | — | Hacer | germanG | RF-01 | — |
-| 21 | RF-02 | Integración Visual del Semáforo en Mapa y Reasignación Rápida | HU-04 | — | — | Hacer | germanG | RF-01 | — |
-| 22 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
-| 23 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 24 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 25 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
-| 26 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 27 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 28 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 29 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | testing | dev-ma-2 | RF-01 | — |
-| 30 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 31 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 32 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
-| 33 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | Sin asignar | RF-01 | — |
-| 34 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 35 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 36 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
-| 37 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 38 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 39 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 40 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
-| 41 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 42 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 43 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 44 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 45 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
-| 46 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02 | — |
-| 47 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hacer | Sin asignar | RF-05 | — |
+| 14 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
+| 15 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
+| 16 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
+| 17 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
+| 18 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
+| 19 | RF-02 | Integración Visual del Semáforo en Mapa y Reasignación Rápida | HU-04 | — | — | Hacer | germanG | RF-01 | — |
+| 20 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
+| 21 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
+| 22 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
+| 23 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
+| 24 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
+| 25 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | Hacer | Sin asignar | RF-02 | — |
+| 26 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
+| 27 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | testing | dev-ma-2 | RF-01 | — |
+| 28 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 29 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
+| 30 | RF-02 | Generación de PDF Legal MAICON S.R.L. y Despacho por Email a ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
+| 31 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | Sin asignar | RF-01 | — |
+| 32 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 33 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 34 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
+| 35 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 36 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 37 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
+| 38 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
+| 39 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 40 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
+| 41 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
+| 42 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 43 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
+| 44 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02 | — |
+| 45 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hacer | Sin asignar | RF-05 | — |
 
 ## Detalle
 
@@ -106,9 +104,6 @@ Filtro global de errores (database/database-error.filter.ts, registrado en app.s
 Pestaña Asignación de Roles de Trabajo implementada en Secretaría y corregida tras la revisión del PR #18. npm run verify: API 144/144 y web 64/64. Integración 21/21. RF-02-entrega.sh: 10 OK; carga de 200 con 0 fallidas. Fallas forzadas en Chrome: 18 OK. Toca App.tsx como mínimo necesario: la barra principal avisa si hay cambios sin guardar. Tests de integración preparados para QA. El scroll horizontal de 96 px a 390 px viene de la barra principal de App.tsx y no se tocó.
 - Estimado: 3h
 
-### RF-01 — Servicio de Telemetría GPS y Proximidad de Inspectores
-- Estimado: 4h
-
 ### RF-01 — Motor de Control Semafórico por Antigüedad de Visita
 - Estimado: 4h
 
@@ -124,9 +119,6 @@ Implementada la API de Máquinas Asignadas (GET /api/firmante/maquinas) y Autori
 
 ### RF-04 — Porcentajes de pago y abono configurables por máquina
 - Estimado: 3h
-
-### RF-02 — UI Mapa de Flota interactivo CABA y Despacho de Emergencia
-- Estimado: 5h
 
 ### RF-02 — Integración Visual del Semáforo en Mapa y Reasignación Rápida
 - Estimado: 4h

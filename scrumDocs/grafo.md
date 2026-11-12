@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:21:24.106Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:23:45.206Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -21,10 +21,6 @@ graph TD
     REQ_1794015939180["RF-03: Evitar que un guardado pise una asignación más nueva"]
     REQ_1794015939447["RNF-01: Leer todas las ternas en una sola consulta"]
     REQ_1794493275904["RF-04: Porcentajes de pago y abono configurables por máquina"]
-  end
-  subgraph US_1791560828900["HU-03: HU-03: Mapa Interactivo de Flota y Rastreo GPS en CABA"]
-    REQ_1791910395196["RF-01: Servicio de Telemetría GPS y Proximidad de Inspectores"]
-    REQ_1791910395292["RF-02: UI Mapa de Flota interactivo CABA y Despacho de Emergencia"]
   end
   subgraph US_1791560828979["HU-04: HU-04: Semáforo de Control Mensual y Reasignación Operativa"]
     REQ_1791910395389["RF-01: Motor de Control Semafórico por Antigüedad de Visita"]
@@ -90,11 +86,8 @@ graph TD
   REQ_1791910395101 --> REQ_1794015939180
   REQ_1791910395101 --> REQ_1794015939447
   REQ_1791910395101 --> REQ_1794493275904
-  REQ_1791910395002 --> REQ_1791910395196
-  REQ_1791910395196 --> REQ_1791910395292
-  REQ_1791910395196 --> REQ_1791910395389
+  REQ_1791910395002 --> REQ_1791910395389
   REQ_1791910395389 --> REQ_1791910395476
-  REQ_1791910395292 --> REQ_1791910395476
   REQ_1791910395389 --> REQ_1791910395565
   REQ_1791910395565 --> REQ_1791910395676
   REQ_1791910395476 --> REQ_1791910395676

@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:28:58.143Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:33:26.297Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -14,6 +14,7 @@ graph TD
     REQ_1794000103321["RNF-02: Evitar que las pruebas de integración fallen al correr en paralelo"]
     REQ_1794493276677["RF-03: Importar el listado Excel de la AGC (máquinas, ubicaciones y estados)"]
     REQ_1794493276926["RF-04: Horarios de atención por edificio editables por la Secretaría"]
+    REQ_1794493998460["RF-05: Datos operativos del edificio y del equipo para la calle"]
   end
   subgraph US_1791560828789["HU-02: HU-02: Asignación de Roles Tripartitos por Edificio"]
     REQ_1791910395002["RF-01: API de Asignación Tripartita de Roles por Edificio"]
@@ -43,6 +44,7 @@ graph TD
     REQ_1794013110546["RF-03: Persistir las visitas fallidas en PostgreSQL"]
     REQ_1794493275499["RF-04: Recargo del 45 % una sola vez por máquina no inspeccionada"]
     REQ_1794493275712["RF-05: Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas"]
+    REQ_1794494000358["RF-06: Pantalla de constancia de visita fallida en el celular del RT"]
   end
   subgraph US_1791560829306["HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC"]
     REQ_1791910395959["RF-01: API de Máquinas Asignadas y Autorización de Firma AGC"]
@@ -75,11 +77,41 @@ graph TD
     REQ_1794486918510["RF-01: Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados"]
     REQ_1794486918616["RF-02: Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios"]
   end
+  subgraph US_1794493997927["HU-14: Acceso por rol y sesión en el celular"]
+    REQ_1794493998753["RF-01: API de autenticación y roles"]
+    REQ_1794493998996["RF-02: Pantalla de ingreso"]
+    REQ_1794493999191["RNF-01: Consentimiento de ubicación y revocación de sesiones"]
+  end
+  subgraph US_1794493998112["HU-15: Aislamiento de datos entre ECA"]
+    REQ_1794493999440["RNF-01: Row Level Security por ECA"]
+    REQ_1794493999670["RNF-02: Acceso de RT y Firmante a edificios de varias ECA"]
+  end
+  subgraph US_1794493998209["HU-16: Mapa del RT y llegada al edificio"]
+    REQ_1794493999840["RF-01: Mapa del RT con pines por horario"]
+    REQ_1794494000129["RF-02: Tarjeta del edificio y validación de presencia a 30 m"]
+  end
+  subgraph US_1794493998283["HU-17: Inspección técnica por solapas"]
+    REQ_1794494000545["RF-01: Motor del checklist configurable"]
+    REQ_1794494000700["RF-02: Selección de equipo y pregunta de uso"]
+    REQ_1794494000869["RF-03: Reporte de parada de un equipo fuera de servicio"]
+    REQ_1794494001043["RF-04: Pantalla de solapa generada desde el motor"]
+    REQ_1794494001295["RF-05: Fotos por anomalía"]
+    REQ_1794494001529["RF-06: Fallas por piso en Accesos"]
+    REQ_1794494001754["RF-07: Navegación por estaciones y sala compartida"]
+    REQ_1794494001967["RNF-01: Visita en curso sin señal"]
+    REQ_1794494002220["RF-08: Las Fallas Críticas del checklist llegan a la Secretaría"]
+  end
+  subgraph US_1794493998373["HU-18: Cierre, firma y envío del informe"]
+    REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
+    REQ_1794494002697["RNF-01: Sellado del informe"]
+    REQ_1794494002926["RNF-02: Cola de sincronización del celular"]
+  end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885
   REQ_1791909582859 --> REQ_1793979090598
   REQ_1791909582859 --> REQ_1794493276677
   REQ_1791910394885 --> REQ_1794493276926
+  REQ_1791910394885 --> REQ_1794493998460
   REQ_1791909582859 --> REQ_1791910395002
   REQ_1791910395002 --> REQ_1791910395101
   REQ_1791910394885 --> REQ_1791910395101
@@ -102,6 +134,8 @@ graph TD
   REQ_1791910395756 --> REQ_1794013110546
   REQ_1794013110546 --> REQ_1794493275499
   REQ_1794013110546 --> REQ_1794493275712
+  REQ_1794494000129 --> REQ_1794494000358
+  REQ_1794493275712 --> REQ_1794494000358
   REQ_1791910395002 --> REQ_1791910395959
   REQ_1791910395959 --> REQ_1791910396039
   REQ_1791910396039 --> REQ_1794493276116
@@ -124,4 +158,39 @@ graph TD
   REQ_1791910396553 --> REQ_1794493273993
   REQ_1794493273993 --> REQ_1794493274385
   REQ_1794486918351 --> REQ_1794488168014
+  REQ_1791560828605 --> REQ_1794493998753
+  REQ_1794493998753 --> REQ_1794493998996
+  REQ_1794493998753 --> REQ_1794493999191
+  REQ_1794493998753 --> REQ_1794493999440
+  REQ_1791909582859 --> REQ_1794493999440
+  REQ_1794493999440 --> REQ_1794493999670
+  REQ_1791910395002 --> REQ_1794493999670
+  REQ_1794493998996 --> REQ_1794493999840
+  REQ_1794493999670 --> REQ_1794493999840
+  REQ_1794493998460 --> REQ_1794493999840
+  REQ_1794493276926 --> REQ_1794493999840
+  REQ_1794493999840 --> REQ_1794494000129
+  REQ_1791560828605 --> REQ_1794494000545
+  REQ_1794493274550 --> REQ_1794494000545
+  REQ_1794494000129 --> REQ_1794494000700
+  REQ_1794494000545 --> REQ_1794494000700
+  REQ_1794493998460 --> REQ_1794494000700
+  REQ_1794494000700 --> REQ_1794494000869
+  REQ_1794493275052 --> REQ_1794494000869
+  REQ_1794494000545 --> REQ_1794494001043
+  REQ_1794494000700 --> REQ_1794494001043
+  REQ_1794494001043 --> REQ_1794494001295
+  REQ_1794494001043 --> REQ_1794494001529
+  REQ_1794494001295 --> REQ_1794494001529
+  REQ_1794494001043 --> REQ_1794494001754
+  REQ_1794493998460 --> REQ_1794494001754
+  REQ_1794494001043 --> REQ_1794494001967
+  REQ_1794494001295 --> REQ_1794494001967
+  REQ_1794494001043 --> REQ_1794494002220
+  REQ_1794493274814 --> REQ_1794494002220
+  REQ_1794494001754 --> REQ_1794494002445
+  REQ_1794494000869 --> REQ_1794494002445
+  REQ_1794494002445 --> REQ_1794494002697
+  REQ_1794494002445 --> REQ_1794494002926
+  REQ_1794494001967 --> REQ_1794494002926
 ```

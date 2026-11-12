@@ -36,12 +36,18 @@ import {
   cargarVisitaEnCurso,
   guardarVisitaEnCurso,
   limpiarVisitaEnCurso,
+  listarColaInformesCriticos,
   tieneProgresoVisita,
 } from './offlineStore';
+import {
+  construirPayloadInformeCritico,
+  despacharOEncolarInformeCritico,
+  sincronizarColaFallasCriticas,
+} from './fallasCriticasChecklist';
 
 const EQUIPOS_DEMO = EQUIPOS_EDIFICIO_DEMO;
 
-export function InspeccionCampoView() {
+export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspectorNombre?: string } = {}) {
   const [equipoId, setEquipoId] = useState<string>(EQUIPOS_DEMO[0].maquinaId);
   const [tipoOverride, setTipoOverride] = useState<Record<string, TipoMaquinaChecklist>>({});
   const [estadoPorEquipo, setEstadoPorEquipo] = useState<Record<string, EstadoEquipoUso>>({});
@@ -62,13 +68,38 @@ export function InspeccionCampoView() {
   );
   const [ultimaSyncIdb, setUltimaSyncIdb] = useState<string | null>(null);
   const [restauradaDesdeIdb, setRestauradaDesdeIdb] = useState<boolean>(false);
+  const [avisoInformeCritico, setAvisoInformeCritico] = useState<string | null>(null);
+  const [pendientesColaCriticos, setPendientesColaCriticos] = useState<number>(0);
+  const [guardandoSolapa, setGuardandoSolapa] = useState<boolean>(false);
   const hidratadoRef = useRef<boolean>(false);
 
+  const refrescarYSincronizarCola = async (enRed: boolean) => {
+    try {
+      const colaInicial = await listarColaInformesCriticos();
+      setPendientesColaCriticos(colaInicial.length);
+      if (enRed && colaInicial.length > 0) {
+        const res = await sincronizarColaFallasCriticas();
+        setPendientesColaCriticos(res.pendientes);
+        if (res.enviados > 0) {
+          setAvisoInformeCritico(
+            `Conexión restablecida: ${res.enviados} informe(s) de Falla Crítica enviado(s) a Secretaría y Firmante.`,
+          );
+        }
+      }
+    } catch {
+      // Sin IndexedDB
+    }
+  };
+
   useEffect(() => {
-    const onOnline = () => setEnLinea(true);
+    const onOnline = () => {
+      setEnLinea(true);
+      void refrescarYSincronizarCola(true);
+    };
     const onOffline = () => setEnLinea(false);
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
+    void refrescarYSincronizarCola(typeof navigator !== 'undefined' ? navigator.onLine : true);
     return () => {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
@@ -132,6 +163,54 @@ export function InspeccionCampoView() {
     fotosPorEquipo,
     fallasPisoPorEquipo,
   ]);
+
+  const handleGuardarSolapa = async (solapa: ChecklistSolapaConfig) => {
+    setGuardandoSolapa(true);
+    setFotoError(null);
+    try {
+      await guardarVisitaEnCurso({
+        equipoId,
+        solapaActiva,
+        tipoOverride,
+        estadoPorEquipo,
+        respuestasPorEquipo,
+        obsPorEquipo,
+        fotosPorEquipo,
+        fallasPisoPorEquipo,
+      }).catch(() => {});
+
+      const payload = construirPayloadInformeCritico({
+        equipo,
+        solapa,
+        respuestasSolapa: (respuestasPorEquipo[equipo.maquinaId] ?? {})[solapa.id],
+        fallasPiso: fallasPisoPorEquipo[equipo.maquinaId] ?? [],
+        fotos: fotosPorEquipo[equipo.maquinaId] ?? {},
+        observacionSolapa: (obsPorEquipo[equipo.maquinaId] ?? {})[solapa.id],
+        inspector: inspectorNombre,
+      });
+
+      if (!payload) {
+        setAvisoInformeCritico(`Solapa ${solapa.nombre} (${equipo.referenciaAgc}) guardada en IndexedDB.`);
+        return;
+      }
+
+      const resultado = await despacharOEncolarInformeCritico({ payload, enLinea });
+      setPendientesColaCriticos(resultado.pendientesEnCola);
+      if (resultado.estado === 'enviado') {
+        setAvisoInformeCritico(
+          `Informe de Falla Crítica enviado (${resultado.informeId ?? 'OK'}) a Secretaría y Firmante.`,
+        );
+      } else {
+        setAvisoInformeCritico(
+          `Sin señal: informe de Falla Crítica guardado en el celular (${resultado.pendientesEnCola} pendiente) y se enviará una sola vez al volver la conexión.`,
+        );
+      }
+    } catch (err) {
+      setFotoError(err instanceof Error ? err.message : 'Error al guardar solapa');
+    } finally {
+      setGuardandoSolapa(false);
+    }
+  };
 
   const handleReiniciarBorrador = () => {
     setEquipoId(EQUIPOS_DEMO[0].maquinaId);
@@ -553,6 +632,11 @@ export function InspeccionCampoView() {
               Visita recuperada en {equipo.referenciaAgc} · {solapaActiva}
             </span>
           )}
+          {pendientesColaCriticos > 0 && (
+            <span className="checklist-cola-pill" data-testid="badge-cola-criticos">
+              Cola crítica offline: {pendientesColaCriticos}
+            </span>
+          )}
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -563,6 +647,12 @@ export function InspeccionCampoView() {
           </button>
         </div>
       </div>
+
+      {avisoInformeCritico && (
+        <div className="card checklist-critico-banner" role="status" data-testid="aviso-informe-critico">
+          {avisoInformeCritico}
+        </div>
+      )}
 
       {fotoError && (
         <div className="card error-banner" role="alert">
@@ -670,6 +760,15 @@ export function InspeccionCampoView() {
           const siguiente = obtenerSiguienteSolapa(config.solapas, solapa.id);
           return (
             <div className="checklist-estacion-nav" data-testid="estacion-nav-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={guardandoSolapa}
+                onClick={() => void handleGuardarSolapa(solapa)}
+                data-testid="btn-guardar-solapa"
+              >
+                {guardandoSolapa ? 'Guardando…' : `Guardar ${solapa.nombre}`}
+              </button>
               {anterior && (
                 <button
                   type="button"

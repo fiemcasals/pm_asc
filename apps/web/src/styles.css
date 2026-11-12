@@ -2614,3 +2614,20 @@ dd {
   background: var(--accent-soft);
   color: var(--accent);
 }
+
+.checklist-cola-pill {
+  background: #fff3e0;
+  color: #b45309;
+  border: 1px solid #f59e0b;
+}
+
+.checklist-critico-banner {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}

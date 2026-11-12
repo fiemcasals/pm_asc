@@ -1,18 +1,21 @@
-/** Las dos fallas que la HU-06 define como críticas. */
-export type FallaCritica = 'CABLES_DESGASTADOS' | 'LIMITADOR_ANULADO';
+/** Códigos de fallas críticas: incluye los 2 base de HU-06 y el motor HU-17. */
+export type FallaCritica = 'CABLES_DESGASTADOS' | 'LIMITADOR_ANULADO' | (string & {});
 
 /** Lo que manda el RT de calle al cargar el informe de una máquina. */
 export interface InformeFallaInput {
+  clientReportId?: string;
   maquinaId: string;
   inspector: string;
   cablesDesgastados: boolean;
   limitadorAnulado: boolean;
+  fallasCriticas?: FallaCritica[];
   observaciones?: string;
   fotografias?: string[];
 }
 
 export interface InformeFalla {
   id: string;
+  clientReportId?: string;
   maquinaId: string;
   codigoAGC: string;
   nombreMaquina: string;

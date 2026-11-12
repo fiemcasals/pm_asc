@@ -142,3 +142,50 @@ export function tieneProgresoVisita(snapshot: VisitaEnCursoSnapshot | null): boo
   );
   return tieneResp || tieneObs || tieneFotos || tieneFallasPiso;
 }
+
+export async function encolarInformeCritico(
+  item: InformeCriticoEncolado,
+  customFactory?: IDBFactory,
+): Promise<void> {
+  const db = await abrirInspeccionDb(customFactory);
+  try {
+    const tx = db.transaction(STORE_COLA_FALLAS, 'readwrite');
+    tx.objectStore(STORE_COLA_FALLAS).put(item);
+    await txDone(tx);
+  } finally {
+    db.close();
+  }
+}
+
+export async function listarColaInformesCriticos(
+  customFactory?: IDBFactory,
+): Promise<InformeCriticoEncolado[]> {
+  if (!customFactory && !globalThis.indexedDB) return [];
+  const db = await abrirInspeccionDb(customFactory);
+  try {
+    const tx = db.transaction(STORE_COLA_FALLAS, 'readonly');
+    const store = tx.objectStore(STORE_COLA_FALLAS);
+    if (typeof store.getAll === 'function') {
+      const rows = await requestToPromise<InformeCriticoEncolado[]>(store.getAll());
+      return Array.isArray(rows) ? rows : [];
+    }
+    return [];
+  } finally {
+    db.close();
+  }
+}
+
+export async function eliminarInformeDeCola(
+  clientReportId: string,
+  customFactory?: IDBFactory,
+): Promise<void> {
+  if (!customFactory && !globalThis.indexedDB) return;
+  const db = await abrirInspeccionDb(customFactory);
+  try {
+    const tx = db.transaction(STORE_COLA_FALLAS, 'readwrite');
+    tx.objectStore(STORE_COLA_FALLAS).delete(clientReportId);
+    await txDone(tx);
+  } finally {
+    db.close();
+  }
+}

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:28:56.406Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:33:30.322Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -45,6 +45,18 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 2. La Secretaría puede editar hasta 2 franjas por día de la semana; una franja con hora de fin anterior a la de inicio o superpuesta con la otra se rechaza con 400.
 3. La Secretaría puede marcar un edificio como "A coordinar", que reemplaza las franjas.
 4. La API informa si un edificio está abierto en un momento dado, considerando cerrado los feriados.
+
+### RF-05: Datos operativos del edificio y del equipo para la calle (Funcional)
+
+El RT necesita en la calle datos que hoy la ficha no guarda: encargado y su teléfono, pisos, ubicación del edificio en el mapa, tipo de cada equipo y sala de máquinas compartida. La administración (nombre, teléfono, email) ya existe. Los horarios van en la tarea "Horarios de atención por edificio".
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Un edificio guarda encargado, teléfono del encargado y lista de pisos, y la Secretaría los edita desde la ficha.
+2. Un edificio guarda su ubicación como punto geográfico (PostGIS), que la Secretaría puede ajustar sobre el mapa; un edificio sin ubicación no aparece en los mapas y la ficha lo advierte.
+3. Cada equipo guarda su tipo: tracción, hidráulico o montavehículos.
+4. Dos o más equipos del mismo edificio pueden compartir una sala de máquinas, y la ficha muestra cuáles la comparten.
 
 ### RNF-01: Rechazar con 400 los textos que la base no puede guardar (carácter NUL) (No funcional)
 
@@ -284,6 +296,19 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 3. Una segunda visita fallida del mismo edificio en el mismo día responde 409 y no suma advertencia.
 4. El contador de advertencias vuelve a cero solo con una visita exitosa.
 
+### RF-06: Pantalla de constancia de visita fallida en el celular del RT (Funcional)
+
+HU-07 describe el reporte del RT, pero nadie construye la pantalla. Al tocar "No se pudo realizar la inspección" se registra la constancia con GPS y hora no editables, causa y foto del ingreso.
+Causa: el cliente confirmó solo "Encargado o responsable ausente" (P9.a); queda pendiente si "consorcio cerrado" y "administración que cancela" también cuentan, por eso la lista de causas es configurable.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. La pantalla exige elegir la causa; la causa por defecto es "Encargado o responsable ausente" y la lista sale de configuración.
+2. "Guardar Advertencia de Visita" queda deshabilitado hasta tener causa y foto del ingreso.
+3. El registro guarda coordenadas, precisión del GPS, hora del dispositivo y hora del servidor, y ninguna se puede editar.
+4. Al guardar, el contador de advertencias del edificio suma 1 y el pin desaparece del mapa del RT por ese día; un segundo intento el mismo día se rechaza con el motivo.
+
 ## HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC
 
 ### RF-01: API de Máquinas Asignadas y Autorización de Firma AGC (Funcional)
@@ -485,6 +510,243 @@ Remover rótulos redundantes y menciones técnicas internas en el Portal ECA y l
 
 1. El Portal ECA conserva el badge 'Solo lectura' y elimina los rótulos redundantes 'Modo Consulta Oficial', 'Solo lectura: Sin edición habilitada' y '(Protegido)'.
 2. Las vistas de Consorcios (FichaConsorcio y FormularioConsorcio) eliminan referencias técnicas internas como '(HU-07)', 'base oficial', 'Dirección Literal' y 'Grilla Dinámica' manteniendo toda su funcionalidad.
+
+## HU-14: Acceso por rol y sesión en el celular
+
+### RF-01: API de autenticación y roles (Funcional)
+
+Login con usuario y contraseña, sesión con token de acceso corto y token de refresco en cookie httpOnly, y control de acceso por rol (RT de Calle, Secretaría, Firmante, ECA, Administrador) en todas las rutas.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. POST /api/auth/login responde 200 con credenciales válidas y 401 con inválidas, con el mismo mensaje exista o no el usuario.
+2. La contraseña se guarda con bcrypt, costo 12 o superior; nunca en texto plano ni en los logs.
+3. El token de acceso vence a los 15 minutos y se renueva con un token de refresco guardado en cookie httpOnly, Secure y SameSite.
+4. Una ruta con rol requerido responde 401 sin sesión y 403 con un rol distinto.
+5. Tras 5 intentos fallidos seguidos para el mismo usuario, el login responde 429 durante 15 minutos.
+
+### RF-02: Pantalla de ingreso (Funcional)
+
+Pantalla de login de la PWA, pensada primero para el celular del RT.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. La pantalla muestra el logo de MAICON S.R.L., "Usuario / Email", "Contraseña" con opción de ver u ocultar, e "Ingresar al Sistema".
+2. Con credenciales válidas redirige a la pantalla inicial del rol; el RT de Calle entra a su mapa.
+3. Con credenciales inválidas muestra el error y no navega.
+4. En un celular de 360 px de ancho la pantalla se usa sin desplazamiento horizontal.
+5. Una sesión ya iniciada sigue disponible sin señal hasta que el RT cierra sesión.
+
+### RNF-01: Consentimiento de ubicación y revocación de sesiones (No funcional)
+
+Los RT usan su celular personal (P2), así que la ubicación es un dato personal (Ley 25.326): se pide consentimiento informado y solo se toma al validar la presencia, sin seguimiento. Un Administrador tiene que poder cortar el acceso de un celular perdido o de un RT que deja la empresa.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. En su primer ingreso el RT ve el aviso de uso de ubicación (para qué, cuándo se toma y quién la ve) y no puede seguir sin aceptarlo; la aceptación queda registrada con fecha y versión del texto.
+2. La app toma la ubicación solo al iniciar una inspección o registrar una visita fallida; no hay seguimiento en segundo plano.
+3. Un Administrador puede revocar las sesiones de un usuario; desde ese momento el refresco y cualquier envío de ese celular responden 401.
+4. Al recibir el 401 por revocación, la app cierra la sesión y lo informa; lo pendiente no se envía hasta un nuevo ingreso válido.
+
+## HU-15: Aislamiento de datos entre ECA
+
+### RNF-01: Row Level Security por ECA (No funcional)
+
+Aislar los datos de cada ECA en la base con Row Level Security de PostgreSQL, para que un error en una consulta no pueda mostrar datos de otra ECA.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Toda tabla con datos de una ECA tiene RLS activo con una política por ECA.
+2. La API se conecta con un usuario de base sin permiso BYPASSRLS y que no es dueño de las tablas.
+3. Una consulta sin contexto de ECA devuelve 0 filas.
+4. Un test automático crea datos de 2 ECA y falla si una puede leer filas de la otra.
+
+### RNF-02: Acceso de RT y Firmante a edificios de varias ECA (No funcional)
+
+El RT de Calle y el Firmante trabajan para varias ECA: ven lo que tienen asignado en la terna de roles (HU-02), sin importar la ECA.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Un RT de Calle ve solo los edificios asignados a él, sin importar la ECA.
+2. Un Firmante ve solo las máquinas de los edificios donde figura como Firmante.
+3. Al quitar una asignación, ese usuario deja de ver el edificio en la siguiente consulta.
+
+## HU-16: Mapa del RT y llegada al edificio
+
+### RF-01: Mapa del RT con pines por horario (Funcional)
+
+Pantalla inicial del RT en el celular: mapa con sus edificios pendientes, coloreados según estén abiertos ahora. Es un mapa distinto del de la Secretaría (que muestra el semáforo del mes).
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. El encabezado muestra saludo, zona y hora actual, como "Hola Ing. Aliado 1 | Zona Norte | 11:30 hs".
+2. Una función de cálculo devuelve verde (abierto), rojo (cerrado) o amarillo ("A coordinar"), con tests para dentro de franja, fuera de franja, feriado y "A coordinar".
+3. Los pines cambian de color al cruzar una franja horaria sin recargar la pantalla, y el mapa muestra la leyenda de colores.
+4. El mapa no muestra edificios de otro RT, ni los ya resueltos en el día, ni los bloqueados.
+5. En un celular de 360 px de ancho el mapa y el encabezado se usan sin desplazamiento horizontal.
+
+### RF-02: Tarjeta del edificio y validación de presencia a 30 m (Funcional)
+
+Tarjeta de contacto del edificio y botones de inicio que aparecen recién a 30 m (P1). Si el GPS no logra precisión suficiente, se permite con foto del frente y justificación, y la Secretaría lo revisa (P1 y P1.c).
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Al tocar un pin se muestran dirección, estado, encargado y horarios; el botón de llamada abre el marcador con el teléfono del encargado y "Cómo llegar" abre Google Maps con destino en el edificio.
+2. A 30 m o menos aparecen "Iniciar Inspección" y "No se pudo realizar la inspección"; más lejos no aparecen.
+3. Si la precisión del GPS no alcanza, aparece "Sin buena señal GPS", que exige foto del frente y justificación escrita, y marca la visita para revisión de la Secretaría.
+4. Al iniciar se registran coordenadas, precisión, hora del dispositivo y hora del servidor, y ninguna se puede editar.
+
+## HU-17: Inspección técnica por solapas
+
+### RF-01: Motor del checklist configurable (Funcional)
+
+Las 5 solapas (Sala de Máquinas, Cabina, Accesos, Caja, Fosa), sus subgrupos, ítems y opciones se definen en configuración, para que una pantalla genérica las dibuje y los cambios del cliente no obliguen a reprogramar pantallas.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Las 5 solapas, subgrupos, ítems y opciones se definen en un archivo de configuración versionado, no en pantallas programadas una por una.
+2. Cada opción indica si es falla, si es Falla Crítica y si la foto es obligatoria; la foto es obligatoria en Falla Crítica y en equipo Fuera de Servicio, y opcional en el resto (P5).
+3. Cada ítem indica a qué tipos de equipo aplica: en hidráulicos no aparecen poleas, cables ni extensión de cables de tracción, y aparece "Aceite de batea".
+4. Un test verifica que la configuración incluye todos los ítems del documento del cliente y que las opciones críticas son exactamente las de la lista definida por el cliente.
+5. Cada inspección guarda qué versión del checklist se usó.
+
+### RF-02: Selección de equipo y pregunta de uso (Funcional)
+
+Después de "Iniciar Inspección", el RT elige el equipo y responde si está en uso o fuera de servicio.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Muestra los equipos del edificio con su referencia AGC y su tipo.
+2. "SÍ, EN USO" habilita las solapas y "NO, FUERA DE SERVICIO" abre el reporte de parada.
+3. No se puede avanzar sin responder la pregunta.
+
+### RF-03: Reporte de parada de un equipo fuera de servicio (Funcional)
+
+Reporte de un equipo detenido. Según el cliente (P4), el RT marca el estado y el Firmante lo confirma en coordinación con la Secretaría; el aviso va a la Secretaría y al Firmante.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. "Guardar Reporte de Parada" se habilita solo con causa y al menos una foto.
+2. Al guardar, el equipo queda "Fuera de Servicio — Pendiente de confirmación" y la Secretaría y el Firmante reciben el aviso.
+3. El pin del edificio desaparece del mapa del RT recién cuando todos sus equipos están resueltos.
+
+### RF-04: Pantalla de solapa generada desde el motor (Funcional)
+
+Una sola pantalla, pensada para celular, que dibuja cualquiera de las 5 solapas a partir de la configuración del checklist.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Una sola pantalla dibuja las 5 solapas a partir de la configuración.
+2. Cada solapa tiene "Observaciones" de texto libre (el dictado usa el micrófono del teclado del celular).
+3. Una solapa queda con tilde solo cuando todos sus ítems que aplican al equipo están respondidos.
+4. En un celular de 360 px de ancho cada opción se puede tocar sin zoom y sin desplazamiento horizontal.
+
+### RF-05: Fotos por anomalía (Funcional)
+
+Fotos tomadas con la cámara del celular al marcar una falla. Obligatorias en Falla Crítica y Fuera de Servicio, opcionales en el resto (P5). Pendiente de MAICON: si la foto de cables y la del frente son siempre obligatorias (P7.a vs. P13).
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Marcar una falla muestra "Adjuntar Foto de Anomalía" con el nombre del ítem; una opción correcta no lo muestra.
+2. Una Falla Crítica sin foto impide completar la solapa; una falla común sin foto sí se puede completar.
+3. Las fotos se comprimen a 500 KB o menos antes de guardarse en el celular.
+4. Cada foto guarda a qué equipo, solapa e ítem corresponde, y la hora en que se tomó.
+
+### RF-06: Fallas por piso en Accesos (Funcional)
+
+En la solapa Accesos, las fallas se cargan por piso, como describe el documento del cliente.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. "+ Agregar Falla en un Piso" permite elegir un piso de la lista del edificio y el componente.
+2. Los componentes son los del documento del cliente: Mecánica de Puerta, Seguridad Crítica y Llamadores, incluido "Espacio entre puertas mayor a 12 cm".
+3. Se pueden cargar varias fallas por piso y eliminar una antes de cerrar la solapa.
+
+### RF-07: Navegación por estaciones y sala compartida (Funcional)
+
+El RT recorre el edificio por estaciones (sala de máquinas, accesos, cabinas) y no por equipo: en cada solapa cambia entre M1, M2, M3. La sala compartida se carga una sola vez.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Cada solapa muestra los selectores de equipo (M1, M2, M3) y cambiar de equipo conserva lo cargado.
+2. Los datos de entorno cargados en una sala compartida aparecen en los demás equipos de esa sala sin volver a cargarlos.
+3. "Ir a Accesos/Cabinas" lleva a la estación siguiente.
+
+### RF-08: Las Fallas Críticas del checklist llegan a la Secretaría (Funcional)
+
+Conectar el checklist con la recepción de Fallas Críticas (HU-06): hoy esa recepción recibe el informe por API, pero ninguna pantalla del RT lo genera.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Al guardar una solapa con una opción crítica, se registra el informe de Falla Crítica con el edificio, el equipo, las fallas y sus fotos.
+2. La Secretaría y el Firmante reciben la alerta como define HU-06.
+3. Sin señal, el informe queda en el celular y se envía al volver la conexión, una sola vez.
+
+### RNF-01: Visita en curso sin señal (No funcional)
+
+El RT trabaja en salas de máquinas y fosas sin señal, con su celular Android personal (P2). Nada de lo cargado se puede perder.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Respuestas y fotos se guardan en IndexedDB al cargarlas, nunca en LocalStorage.
+2. Cerrar y reabrir la app sin señal recupera la visita en el mismo punto.
+3. La app abre sin señal si ya se cargó una vez con señal.
+4. Una visita de 3 equipos con 20 fotos se completa sin conexión en un celular Android real, y queda registrado el modelo usado en la prueba.
+
+## HU-18: Cierre, firma y envío del informe
+
+### RF-01: Consolidación y firma en pantalla (Funcional)
+
+Firma única del encargado para todo el edificio. Datos obligatorios definidos por el cliente (P7) y cierre "Sin firma" (P8), que decide el Firmante.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. "Consolidar Informe y Proceder a Firma" se habilita solo con todas las solapas de todos los equipos completas o resueltos como fuera de servicio.
+2. La firma se captura con el dedo y no se acepta vacía.
+3. Exige nombre, apellido y carácter de quien firma (Encargado, Administrador o Propietario); el DNI es opcional.
+4. "Sin firma" exige motivo y foto, y el informe queda marcado para que lo vean la Secretaría y el Firmante.
+
+### RNF-01: Sellado del informe (No funcional)
+
+El informe cerrado no se puede modificar y se puede demostrar que no cambió: es lo que da valor probatorio a la firma electrónica (Ley 25.506).
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Al cerrar se calcula un hash SHA-256 del contenido, la firma y las fotos.
+2. Se guardan la hora del dispositivo y la del servidor.
+3. Un intento de modificar un informe cerrado responde 409 y queda registrado.
+4. Una función verifica que el hash coincide y lo informa en la auditoría.
+
+### RNF-02: Cola de sincronización del celular (No funcional)
+
+Lo que el RT cierra sin señal queda en cola y se envía solo cuando vuelve la conexión, sin duplicar ni perder fotos.
+Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y respuestas de MAICON del 06/11 y 12/11/2026.
+
+**Condiciones de aprobación**
+
+1. Lo pendiente queda en cola y la app muestra "N inspecciones sin subir".
+2. Al volver la señal con la app abierta, la cola se envía sola.
+3. Reenviar el mismo informe no lo duplica, gracias a un identificador generado en el celular.
+4. Un envío interrumpido se reintenta sin perder fotos.
+5. Si la sesión venció, lo pendiente se conserva y se envía después de volver a ingresar.
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

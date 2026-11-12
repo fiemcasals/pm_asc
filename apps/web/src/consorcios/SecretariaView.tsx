@@ -11,7 +11,11 @@ import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
 import { puedeSalir } from './roles';
 
-function EdificiosPanel() {
+interface EdificiosPanelProps {
+  consorcioInicialId?: string | null;
+}
+
+function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
   const [consorcios, setConsorcios] = useState<ConsorcioResumen[]>([]);
   const [consorcioSeleccionado, setConsorcioSeleccionado] = useState<Consorcio | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -48,8 +52,8 @@ function EdificiosPanel() {
   };
 
   useEffect(() => {
-    void cargarConsorcios();
-  }, []);
+    void cargarConsorcios(consorcioInicialId ?? undefined);
+  }, [consorcioInicialId]);
 
   const handleConsorcioCreado = (nuevo: Consorcio) => {
     setMostrarFormulario(false);
@@ -123,7 +127,7 @@ function EdificiosPanel() {
           </div>
 
           {cargando ? (
-            <div className="loading-box">Cargando consorcios desde PostgreSQL…</div>
+            <div className="loading-box">Cargando consorcios…</div>
           ) : filtrados.length === 0 ? (
             <div className="empty-box">
               {consorcios.length === 0
@@ -182,8 +186,18 @@ function EdificiosPanel() {
   );
 }
 
-export function SecretariaView() {
+interface SecretariaViewProps {
+  consorcioInicialId?: string | null;
+}
+
+export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
   const [pestana, setPestana] = useState<'edificios' | 'roles'>('edificios');
+
+  useEffect(() => {
+    if (consorcioInicialId) {
+      setPestana('edificios');
+    }
+  }, [consorcioInicialId]);
 
   return (
     <>
@@ -204,7 +218,11 @@ export function SecretariaView() {
         </button>
       </nav>
 
-      {pestana === 'edificios' ? <EdificiosPanel /> : <AsignacionRoles />}
+      {pestana === 'edificios' ? (
+        <EdificiosPanel consorcioInicialId={consorcioInicialId} />
+      ) : (
+        <AsignacionRoles />
+      )}
 
       <AlertaFallaCritica />
     </>

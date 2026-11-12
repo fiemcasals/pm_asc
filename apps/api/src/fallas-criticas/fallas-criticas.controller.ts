@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Header, Param, Post, Sse } from '@nestjs/common';
 import { Observable, interval, map, merge } from 'rxjs';
+import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
 import { FallasCriticasService } from './fallas-criticas.service';
-import { FallaCritica, InformeFalla, RegistrarInformeResponse } from './fallas-criticas.types';
+import {
+  EventoFallaCritica,
+  FallaCritica,
+  InformeFalla,
+  RegistrarInformeResponse,
+} from './fallas-criticas.types';
 
 /** Cada cuánto se manda un `ping` por el canal para que ningún proxy corte la conexión ociosa. */
 export const PING_MS = 25_000;
@@ -11,7 +17,15 @@ interface MensajeSse {
   data: string;
 }
 
+const ETIQUETAS_CHECKLIST: Record<string, string> = Object.fromEntries(
+  obtenerFallasCriticasDefinidas().map((f) => [
+    f.codigoFallaCritica,
+    `${f.itemEtiqueta}: ${f.opcionEtiqueta}`,
+  ]),
+);
+
 export const ETIQUETA_FALLA: Record<FallaCritica, string> = {
+  ...ETIQUETAS_CHECKLIST,
   CABLES_DESGASTADOS: 'Cables de tracción desgastados',
   LIMITADOR_ANULADO: 'Limitador de velocidad anulado',
 };
@@ -19,6 +33,12 @@ export const ETIQUETA_FALLA: Record<FallaCritica, string> = {
 @Controller('fallas-criticas')
 export class FallasCriticasController {
   constructor(private readonly service: FallasCriticasService) {}
+
+  /** Lista de informes críticos activos para Secretaría y Firmante. */
+  @Get('informes')
+  listar(): EventoFallaCritica[] {
+    return this.service.listarEventosCriticos();
+  }
 
   /** El RT de calle carga el informe de una máquina. */
   @Post('informes')
@@ -55,7 +75,7 @@ function esc(texto: string): string {
 
 export function renderInforme(informe: InformeFalla): string {
   const fallas = informe.fallasCriticas.length
-    ? `<ul>${informe.fallasCriticas.map((f) => `<li>${esc(ETIQUETA_FALLA[f])}</li>`).join('')}</ul>`
+    ? `<ul>${informe.fallasCriticas.map((f) => `<li>${esc(ETIQUETA_FALLA[f] ?? f)}</li>`).join('')}</ul>`
     : '<p>Sin fallas críticas.</p>';
   const fotos = informe.fotografias.length
     ? informe.fotografias

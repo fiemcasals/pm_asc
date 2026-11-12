@@ -10,6 +10,8 @@ import {
   restaurarSesion,
   type Usuario,
 } from './auth/sesion';
+import { InspeccionCampoView } from './checklist/InspeccionCampoView';
+import { cargarVisitaEnCurso, tieneProgresoVisita } from './checklist/offlineStore';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
@@ -19,6 +21,7 @@ import { type ThemeMode, type Vista } from './ui/command';
 import { GlobalSearch } from './ui/GlobalSearch';
 import {
   IconBrand,
+  IconChecklist,
   IconEca,
   IconFirmante,
   IconMoon,
@@ -84,6 +87,13 @@ const NAV_ITEMS: Array<{
     shortLabel: 'Firmante',
     testId: 'tab-firmante',
     icon: IconFirmante,
+  },
+  {
+    id: 'inspeccion',
+    label: 'Inspección Técnica (Checklist)',
+    shortLabel: 'Inspección',
+    testId: 'tab-inspeccion',
+    icon: IconChecklist,
   },
   {
     id: 'eca',
@@ -191,8 +201,8 @@ interface EscritorioProps {
 
 function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const esRt = usuario.rol === 'rt_calle';
-  // El RT de Calle sólo ve su recorrido; el resto, los portales de oficina.
-  const navItems = esRt ? [NAV_RT] : NAV_ITEMS;
+  // El RT de Calle ve su mapa y la inspección técnica; el resto, los portales del sistema.
+  const navItems = esRt ? [NAV_RT, NAV_ITEMS[1]] : NAV_ITEMS;
   const [vista, setVista] = useState<Vista>(() => pantallaInicial(usuario.rol));
   const [health, setHealth] = useState<HealthState | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
@@ -240,6 +250,23 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   useEffect(() => {
     void fetchHealth().then(setHealth);
   }, []);
+
+  useEffect(() => {
+    if (usuario.rol !== 'rt_calle' && usuario.rol !== 'administrador') return;
+    let activo = true;
+    void cargarVisitaEnCurso()
+      .then((snap) => {
+        if (activo && tieneProgresoVisita(snap)) {
+          setVista('inspeccion');
+        }
+      })
+      .catch(() => {
+        // Entorno sin IndexedDB
+      });
+    return () => {
+      activo = false;
+    };
+  }, [usuario.rol]);
 
   const currentNav = navItems.find((item) => item.id === vista) ?? navItems[0];
   const systemOnline = health?.kind === 'ok';
@@ -404,6 +431,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               onConsumirMaquinaInicial={() => setMaquinaBuscadaId(null)}
             />
           )}
+          {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} />}
           {vista === 'eca' && <PortalEca />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />
@@ -498,6 +526,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               type="button"
               className={`neo-mobile-btn ${active ? 'active' : ''}`}
               onClick={() => irA(item.id)}
+              data-testid={`mob-${item.testId}`}
             >
               <Icon size={17} />
               <span>{item.shortLabel}</span>

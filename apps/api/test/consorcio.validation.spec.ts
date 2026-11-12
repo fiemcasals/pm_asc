@@ -4,9 +4,12 @@ const valido = {
   nombre: 'Consorcio Av. Rivadavia 1234',
   direccion: 'Av. Rivadavia 1234, CABA',
   administracion: { nombre: 'Administración Pérez', telefono: '11 4444-5555', email: 'admin@perez.com' },
+  encargado: { nombre: 'Carlos Gómez', telefono: '11 5555-6666' },
+  pisos: ['SS', 'PB', '1', '2'],
+  ubicacion: { latitud: -34.6118, longitud: -58.396 },
   maquinas: [
-    { referenciaAgc: 'M1', descripcion: 'Derecha' },
-    { referenciaAgc: 'M2', descripcion: 'Izquierda' },
+    { referenciaAgc: 'M1', descripcion: 'Derecha', tipo: 'traccion' as const, salaCompartidaId: 'sala-principal' },
+    { referenciaAgc: 'M2', descripcion: 'Izquierda', tipo: 'hidraulico' as const, salaCompartidaId: null },
   ],
 };
 
@@ -22,7 +25,7 @@ describe('validarConsorcio', () => {
     expect(r).toEqual({ ok: true, valor: valido });
   });
 
-  it('sólo exige nombre y dirección: administración y máquinas son opcionales', () => {
+  it('sólo exige nombre y dirección: administración, datos operativos y máquinas son opcionales', () => {
     const r = validarConsorcio({ nombre: 'Edificio Sur', direccion: 'Calle 1' });
     expect(r).toEqual({
       ok: true,
@@ -30,19 +33,39 @@ describe('validarConsorcio', () => {
         nombre: 'Edificio Sur',
         direccion: 'Calle 1',
         administracion: { nombre: null, telefono: null, email: null },
+        encargado: { nombre: null, telefono: null },
+        pisos: [],
+        ubicacion: null,
         maquinas: [],
       },
     });
   });
 
-  it('recorta espacios y pasa la referencia AGC a mayúsculas', () => {
+  it('recorta espacios, pasa la referencia AGC a mayúsculas y asigna tipo traccion por defecto', () => {
     const r = validarConsorcio({
       nombre: '  Edificio  ',
       direccion: ' Calle 1 ',
+      pisos: [' pb ', '1', 'PB'],
       maquinas: [{ referenciaAgc: ' m3 ', descripcion: '   ' }],
     });
     expect(r.ok && r.valor.nombre).toBe('Edificio');
-    expect(r.ok && r.valor.maquinas).toEqual([{ referenciaAgc: 'M3', descripcion: null }]);
+    expect(r.ok && r.valor.pisos).toEqual(['pb', '1']);
+    expect(r.ok && r.valor.maquinas).toEqual([
+      { referenciaAgc: 'M3', descripcion: null, tipo: 'traccion', salaCompartidaId: null },
+    ]);
+  });
+
+  it('rechaza ubicacion o tipo de máquina inválidos', () => {
+    const e = errores({
+      ...valido,
+      ubicacion: { latitud: -120, longitud: 250 },
+      maquinas: [{ referenciaAgc: 'M1', tipo: 'neumatico' }],
+    });
+    expect(e).toEqual([
+      'ubicacion.latitud tiene que estar entre -90 y 90',
+      'ubicacion.longitud tiene que estar entre -180 y 180',
+      'maquinas[0].tipo debe ser uno de: traccion, hidraulico, montavehiculos',
+    ]);
   });
 
   it('rechaza un cuerpo que no es un objeto', () => {

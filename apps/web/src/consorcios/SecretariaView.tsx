@@ -3,12 +3,15 @@ import { AlertaFallaCritica } from '../fallas/AlertaFallaCritica';
 import { AsignacionRoles } from './AsignacionRoles';
 import {
   Consorcio,
+  ConsorcioMapaItem,
   ConsorcioResumen,
   fetchConsorcioById,
   fetchConsorcios,
+  fetchConsorciosMapa,
 } from './consorcios';
 import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
+import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
 import { puedeSalir } from './roles';
 
 interface EdificiosPanelProps {
@@ -17,6 +20,8 @@ interface EdificiosPanelProps {
 
 function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
   const [consorcios, setConsorcios] = useState<ConsorcioResumen[]>([]);
+  const [consorciosMapa, setConsorciosMapa] = useState<ConsorcioMapaItem[]>([]);
+  const [mostrarMapaGlobal, setMostrarMapaGlobal] = useState(false);
   const [consorcioSeleccionado, setConsorcioSeleccionado] = useState<Consorcio | null>(null);
   const [cargando, setCargando] = useState(true);
   const [cargandoFicha, setCargandoFicha] = useState(false);
@@ -27,9 +32,12 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
   const cargarConsorcios = async (seleccionarId?: string) => {
     setCargando(true);
     setError(null);
-    const res = await fetchConsorcios();
+    const [res, resMapa] = await Promise.all([fetchConsorcios(), fetchConsorciosMapa()]);
     if (res.ok && res.data) {
       setConsorcios(res.data);
+      if (resMapa.ok && resMapa.data) {
+        setConsorciosMapa(resMapa.data);
+      }
 
       // Si se especifica un id para seleccionar (ej. recién creado), o si hay al menos uno
       const idParaSeleccionar = seleccionarId || (consorcioSeleccionado ? consorcioSeleccionado.id : res.data[0]?.id);
@@ -61,6 +69,11 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
     void cargarConsorcios(nuevo.id);
   };
 
+  const handleConsorcioActualizado = (actualizado: Consorcio) => {
+    setConsorcioSeleccionado(actualizado);
+    void cargarConsorcios(actualizado.id);
+  };
+
   const filtrados = consorcios.filter(
     (c) =>
       c.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -80,14 +93,46 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
           </p>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={() => setMostrarFormulario(!mostrarFormulario)}
-          data-testid="btn-toggle-formulario"
-        >
-          {mostrarFormulario ? '✕ Cerrar Formulario' : '+ Alta de Nuevo Consorcio'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setMostrarMapaGlobal((prev) => !prev)}
+            data-testid="btn-toggle-mapa-edificios"
+          >
+            {mostrarMapaGlobal ? '✕ Ocultar Mapa' : `🗺️ Vista Mapa (${consorciosMapa.length}/${consorcios.length})`}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => setMostrarFormulario(!mostrarFormulario)}
+            data-testid="btn-toggle-formulario"
+          >
+            {mostrarFormulario ? '✕ Cerrar Formulario' : '+ Alta de Nuevo Consorcio'}
+          </button>
+        </div>
       </div>
+
+      {mostrarMapaGlobal && (
+        <div className="consorcio-form-card" style={{ marginBottom: '16px' }} data-testid="panel-vista-mapa">
+          <div className="section-header-row" style={{ marginBottom: '8px' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>
+              Vista Geográfica de Edificios Empadronados ({consorciosMapa.length})
+            </h3>
+            <span className="text-muted" style={{ fontSize: '13px' }}>
+              Excluidos sin ubicación: {Math.max(0, consorcios.length - consorciosMapa.length)}
+            </span>
+          </div>
+          <MapaUbicacionConsorcio
+            ubicacion={null}
+            marcadores={consorciosMapa.map((c) => ({
+              id: c.id,
+              etiqueta: c.nombre,
+              subtitulo: c.direccion,
+              ubicacion: c.ubicacion,
+            }))}
+            testId="mapa-global-consorcios"
+          />
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-error" role="alert">
@@ -174,7 +219,7 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
           {cargandoFicha ? (
             <div className="loading-box">Cargando ficha técnica y máquinas…</div>
           ) : consorcioSeleccionado ? (
-            <FichaConsorcio consorcio={consorcioSeleccionado} />
+            <FichaConsorcio consorcio={consorcioSeleccionado} onConsorcioActualizado={handleConsorcioActualizado} />
           ) : (
             <div className="empty-box" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               Seleccione un consorcio de la lista para visualizar su ficha técnica completa y máquinas asociadas.

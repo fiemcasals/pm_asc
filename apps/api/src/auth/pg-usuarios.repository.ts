@@ -11,6 +11,7 @@ interface UsuarioRow {
   password_hash: string;
   activo: boolean;
   sesiones_revocadas_en: Date | null;
+  eca: string | null;
 }
 
 interface SesionRow {
@@ -32,9 +33,10 @@ const aUsuario = (r: UsuarioRow): UsuarioGuardado => ({
   passwordHash: r.password_hash,
   activo: r.activo,
   sesionesRevocadasEn: r.sesiones_revocadas_en ? new Date(r.sesiones_revocadas_en) : null,
+  eca: r.eca,
 });
 
-const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en';
+const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca';
 const COLUMNAS_SESION = 'id, usuario_id, refresh_hash, expira_en, revocada_en';
 
 const aSesion = (r: SesionRow): Sesion => ({
@@ -70,11 +72,11 @@ export class PgUsuariosRepository extends UsuariosRepository {
 
   async crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null> {
     const rows = await this.db.query<UsuarioRow>(
-      `INSERT INTO usuarios (usuario, nombre, rol, password_hash)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO usuarios (usuario, nombre, rol, password_hash, eca)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (lower(usuario)) DO NOTHING
        RETURNING ${COLUMNAS_USUARIO}`,
-      [datos.usuario.trim(), datos.nombre, datos.rol, datos.passwordHash],
+      [datos.usuario.trim(), datos.nombre, datos.rol, datos.passwordHash, datos.eca ?? null],
     );
     return rows[0] ? aUsuario(rows[0]) : null;
   }

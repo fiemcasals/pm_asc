@@ -162,4 +162,206 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE sesiones ADD COLUMN revocada_en timestamptz;
     `,
   },
+  {
+    id: '007_datos_operativos_edificio_equipo',
+    sql: `
+      -- Datos operativos del edificio y del equipo para el trabajo en calle (HU-01 RF-05).
+      ALTER TABLE consorcios
+        ADD COLUMN IF NOT EXISTS encargado_nombre text,
+        ADD COLUMN IF NOT EXISTS encargado_telefono text,
+        ADD COLUMN IF NOT EXISTS pisos jsonb NOT NULL DEFAULT '[]'::jsonb,
+        ADD COLUMN IF NOT EXISTS ubicacion geometry(Point, 4326);
+
+      CREATE INDEX IF NOT EXISTS consorcios_ubicacion_gix
+        ON consorcios USING GIST (ubicacion);
+
+      ALTER TABLE maquinas
+        ADD COLUMN IF NOT EXISTS tipo text NOT NULL DEFAULT 'traccion'
+          CHECK (tipo IN ('traccion', 'hidraulico', 'montavehiculos')),
+        ADD COLUMN IF NOT EXISTS sala_compartida_id text;
+    `,
+  },
+  {
+    id: '008_rls_por_eca',
+    sql: `
+      -- Rol runtime sin SUPERUSER ni BYPASSRLS ni propiedad de tablas (HU-15 RNF-01).
+      -- La contraseña se sincroniza desde DATABASE_APP_PASSWORD (.env) en DatabaseService.onModuleInit().
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ascensores_app') THEN
+          CREATE ROLE ascensores_app LOGIN
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+        ELSE
+          ALTER ROLE ascensores_app WITH LOGIN
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+        END IF;
+      END $$;
+
+      -- Discriminador de ECA propietaria para tablas operativas que no lo tenían explícito.
+      ALTER TABLE consorcios
+        ADD COLUMN IF NOT EXISTS eca_nombre text NOT NULL
+        DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'ECA_SISTEMA_DEV');
+
+      ALTER TABLE visitas_fallidas
+        ADD COLUMN IF NOT EXISTS eca_nombre text NOT NULL
+        DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'ECA_SISTEMA_DEV');
+
+      CREATE INDEX IF NOT EXISTS consorcios_eca_nombre_idx ON consorcios (eca_nombre);
+      CREATE INDEX IF NOT EXISTS visitas_fallidas_eca_nombre_idx ON visitas_fallidas (eca_nombre);
+
+      -- Permisos sobre todas las tablas/secuencias existentes y sobre las que creen futuras migraciones.
+      GRANT USAGE ON SCHEMA public TO ascensores_app;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ascensores_app;
+      GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ascensores_app;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ascensores_app;
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public
+        GRANT USAGE, SELECT ON SEQUENCES TO ascensores_app;
+
+      -- RLS activo en TODAS las tablas con datos de una ECA.
+      ALTER TABLE consorcios ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE maquinas ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE roles_edificio ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE acuses_recibo_legal ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE visitas_fallidas ENABLE ROW LEVEL SECURITY;
+
+      -- Sin contexto app.eca_actual (NULL o ''), la comparación con NULL devuelve 0 filas.
+      DROP POLICY IF EXISTS rls_consorcios_eca ON consorcios;
+      CREATE POLICY rls_consorcios_eca ON consorcios
+        USING (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''))
+        WITH CHECK (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''));
+
+      DROP POLICY IF EXISTS rls_maquinas_eca ON maquinas;
+      CREATE POLICY rls_maquinas_eca ON maquinas
+        USING (
+          EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = maquinas.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        )
+        WITH CHECK (
+          EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = maquinas.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_roles_edificio_eca ON roles_edificio;
+      CREATE POLICY rls_roles_edificio_eca ON roles_edificio
+        USING (
+          eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          OR EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = roles_edificio.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        )
+        WITH CHECK (
+          eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          OR EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = roles_edificio.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_acuses_recibo_eca ON acuses_recibo_legal;
+      CREATE POLICY rls_acuses_recibo_eca ON acuses_recibo_legal
+        USING (eca = NULLIF(current_setting('app.eca_actual', true), ''))
+        WITH CHECK (eca = NULLIF(current_setting('app.eca_actual', true), ''));
+
+      DROP POLICY IF EXISTS rls_visitas_fallidas_eca ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_eca ON visitas_fallidas
+        USING (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''))
+        WITH CHECK (eca_nombre = NULLIF(current_setting('app.eca_actual', true), ''));
+    `,
+  },
+  {
+    id: '009_rls_multi_eca_rt_firmante',
+    sql: `
+      -- Función SECURITY DEFINER para evaluar la asignación viva de RT de Calle o Firmante en roles_edificio
+      -- evitando recursión infinita en políticas RLS. Se consulta en vivo en cada query (revocación inmediata).
+      CREATE OR REPLACE FUNCTION usuario_asignado_en_edificio(p_consorcio_id uuid)
+      RETURNS boolean
+      LANGUAGE sql
+      STABLE
+      SECURITY DEFINER
+      SET search_path = public
+      AS $$
+        SELECT EXISTS (
+          SELECT 1 FROM roles_edificio r
+           WHERE r.consorcio_id = p_consorcio_id
+             AND NULLIF(current_setting('app.usuario_actual', true), '') IS NOT NULL
+             AND (
+               (current_setting('app.rol_actual', true) = 'rt_calle'
+                 AND (r.rt_calle_nombre = current_setting('app.usuario_actual', true)
+                   OR r.rt_calle_email = current_setting('app.usuario_actual', true)))
+               OR
+               (current_setting('app.rol_actual', true) = 'firmante'
+                 AND (r.firmante_nombre = current_setting('app.usuario_actual', true)
+                   OR r.firmante_email = current_setting('app.usuario_actual', true)))
+             )
+        );
+      $$;
+
+      REVOKE ALL ON FUNCTION usuario_asignado_en_edificio(uuid) FROM PUBLIC;
+      GRANT EXECUTE ON FUNCTION usuario_asignado_en_edificio(uuid) TO ascensores_app;
+
+      -- Lectura multi-ECA para RT de Calle y Firmante únicamente en edificios asignados.
+      DROP POLICY IF EXISTS rls_consorcios_rt_firmante_select ON consorcios;
+      CREATE POLICY rls_consorcios_rt_firmante_select ON consorcios
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(id));
+
+      DROP POLICY IF EXISTS rls_maquinas_rt_firmante_select ON maquinas;
+      CREATE POLICY rls_maquinas_rt_firmante_select ON maquinas
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+
+      DROP POLICY IF EXISTS rls_roles_edificio_rt_firmante_select ON roles_edificio;
+      CREATE POLICY rls_roles_edificio_rt_firmante_select ON roles_edificio
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+
+      DROP POLICY IF EXISTS rls_visitas_fallidas_rt_firmante_select ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_rt_firmante_select ON visitas_fallidas
+        FOR SELECT
+        USING (
+          consorcio_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          AND usuario_asignado_en_edificio(consorcio_id::uuid)
+        );
+    `,
+  },
+  {
+    id: '010_checklist_inspecciones',
+    sql: `
+      -- Inspecciones ejecutadas por el RT usando el motor de checklist configurable (HU-17 RF-01).
+      CREATE TABLE inspecciones_checklist (
+        id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id      text NOT NULL,
+        maquina_id        text NOT NULL,
+        referencia_agc    text NOT NULL,
+        tipo_maquina      text NOT NULL CHECK (tipo_maquina IN ('traccion', 'hidraulico', 'montavehiculos')),
+        estado_equipo     text NOT NULL DEFAULT 'en_uso' CHECK (estado_equipo IN ('en_uso', 'fuera_de_servicio')),
+        version_checklist text NOT NULL,
+        datos             jsonb NOT NULL DEFAULT '{}'::jsonb,
+        created_at        timestamptz NOT NULL DEFAULT now(),
+        updated_at        timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX inspecciones_checklist_consorcio_idx ON inspecciones_checklist (consorcio_id, maquina_id);
+    `,
+  },
+  {
+    id: '011_eca_en_usuarios',
+    sql: `
+      -- ECA a la que pertenece un usuario (HU-15). Sólo la tienen los usuarios con rol 'eca':
+      -- el RLS toma de acá la ECA de la sesión. Los usuarios que ya existían quedan con NULL.
+      ALTER TABLE usuarios ADD COLUMN eca text;
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_eca_solo_rol_eca CHECK (rol = 'eca' OR eca IS NULL);
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_eca_no_vacia CHECK (eca IS NULL OR btrim(eca) <> '');
+    `,
+  },
 ];

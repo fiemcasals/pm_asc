@@ -12,7 +12,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { validarConsorcio } from './consorcio.validation';
-import { Consorcio, ConsorcioResumen } from './consorcio.types';
+import { Consorcio, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
 import { RolesEdificio } from './roles.types';
 import { validarRoles } from './roles.validation';
@@ -39,6 +39,12 @@ export class ConsorciosController {
   @Get()
   listar(): Promise<ConsorcioResumen[]> {
     return this.consorcios.listar();
+  }
+
+  /** Consorcios con punto geográfico definido; los edificios sin ubicación quedan excluidos. */
+  @Get('mapa')
+  listarMapa(): Promise<ConsorcioMapaItem[]> {
+    return this.consorcios.listarParaMapa();
   }
 
   /** Ficha completa del edificio: dirección, datos de administración y máquinas. */
@@ -87,6 +93,14 @@ export class ConsorciosController {
     const roles = await this.consorcios.asignarRoles(id, resultado.valor);
     if (!roles) throw new NotFoundException('Consorcio no encontrado');
     return roles;
+  }
+
+  /** Quita la asignación vigente de roles en el edificio (revoca acceso de RT/Firmante de inmediato). */
+  @Delete(':id/roles')
+  @HttpCode(204)
+  async quitarRoles(@Param('id') id: string): Promise<void> {
+    exigirId(id);
+    if (!(await this.consorcios.quitarRoles(id))) throw new NotFoundException('Consorcio o asignación no encontrada');
   }
 
   private validar(cuerpo: unknown) {

@@ -1,3 +1,23 @@
+export const TIPOS_MAQUINA = ['traccion', 'hidraulico', 'montavehiculos'] as const;
+
+export type TipoMaquina = (typeof TIPOS_MAQUINA)[number];
+
+export const ETIQUETAS_TIPO_MAQUINA: Record<TipoMaquina, string> = {
+  traccion: 'Tracción',
+  hidraulico: 'Hidráulico',
+  montavehiculos: 'Montavehículos',
+};
+
+export interface PuntoGeografico {
+  latitud: number;
+  longitud: number;
+}
+
+export interface Encargado {
+  nombre: string | null;
+  telefono: string | null;
+}
+
 export interface Administracion {
   nombre: string | null;
   telefono: string | null;
@@ -7,17 +27,24 @@ export interface Administracion {
 export interface MaquinaInput {
   referenciaAgc: string;
   descripcion: string | null;
+  tipo?: TipoMaquina;
+  salaCompartidaId?: string | null;
 }
 
 export interface ConsorcioInput {
   nombre: string;
   direccion: string;
   administracion: Administracion;
+  encargado?: Encargado;
+  pisos?: string[];
+  ubicacion?: PuntoGeografico | null;
   maquinas: MaquinaInput[];
 }
 
 export interface Maquina extends MaquinaInput {
   id: string;
+  tipo?: TipoMaquina;
+  salaCompartidaId?: string | null;
 }
 
 export interface Consorcio {
@@ -25,6 +52,9 @@ export interface Consorcio {
   nombre: string;
   direccion: string;
   administracion: Administracion;
+  encargado?: Encargado;
+  pisos?: string[];
+  ubicacion?: PuntoGeografico | null;
   maquinas: Maquina[];
   createdAt: string;
   updatedAt: string;
@@ -35,6 +65,46 @@ export interface ConsorcioResumen {
   nombre: string;
   direccion: string;
   cantidadMaquinas: number;
+}
+
+export interface ConsorcioMapaItem extends ConsorcioResumen {
+  ubicacion: PuntoGeografico;
+}
+
+export interface SalaCompartidaGrupo {
+  salaId: string;
+  maquinas: Maquina[];
+}
+
+/** Agrupa las máquinas que comparten sala dentro del mismo edificio (2 o más equipos). */
+export function agruparSalasCompartidas(maquinas: Maquina[]): SalaCompartidaGrupo[] {
+  const porSala = new Map<string, Maquina[]>();
+  for (const m of maquinas) {
+    const sala = m.salaCompartidaId?.trim();
+    if (!sala) continue;
+    const lista = porSala.get(sala) ?? [];
+    lista.push(m);
+    porSala.set(sala, lista);
+  }
+  return [...porSala.entries()]
+    .filter(([, grupo]) => grupo.length >= 2)
+    .map(([salaId, grupo]) => ({ salaId, maquinas: grupo }));
+}
+
+/** Convierte texto separado por comas (ej. "SS, PB, 1, 2") en lista única preservando orden. */
+export function parsearListaPisos(texto: string): string[] {
+  const resultado: string[] = [];
+  const vistos = new Set<string>();
+  for (const parte of texto.split(',')) {
+    const limpio = parte.trim();
+    if (!limpio) continue;
+    const clave = limpio.toUpperCase();
+    if (!vistos.has(clave)) {
+      vistos.add(clave);
+      resultado.push(limpio);
+    }
+  }
+  return resultado;
 }
 
 export interface FetchResult<T> {
@@ -88,6 +158,42 @@ export async function crearConsorcio(input: ConsorcioInput): Promise<FetchResult
     }
 
     return { ok: true, data: json as Consorcio };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function actualizarConsorcio(id: string, input: ConsorcioInput): Promise<FetchResult<Consorcio>> {
+  try {
+    const res = await fetch(`/api/consorcios/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: json.message || 'Error al actualizar consorcio',
+        errores: Array.isArray(json.errores) ? json.errores : undefined,
+      };
+    }
+
+    return { ok: true, data: json as Consorcio };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function fetchConsorciosMapa(): Promise<FetchResult<ConsorcioMapaItem[]>> {
+  try {
+    const res = await fetch('/api/consorcios/mapa');
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo cargar el mapa de consorcios` };
+    }
+    const data = (await res.json()) as ConsorcioMapaItem[];
+    return { ok: true, data };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
   }

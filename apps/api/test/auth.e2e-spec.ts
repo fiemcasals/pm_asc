@@ -125,7 +125,7 @@ describe('Autenticación y roles (HU-14 RF-01)', () => {
         await http()
           .post('/api/usuarios')
           .set('Authorization', `Bearer ${sesion.accessToken}`)
-          .send({ usuario: 'eca1', nombre: 'ECA Uno', rol: 'eca', password: 'Otra-Clave-Nueva-1' })
+          .send({ usuario: 'eca1', nombre: 'ECA Uno', rol: 'eca', eca: 'ECA Uno S.A.', password: 'Otra-Clave-Nueva-1' })
           .expect(201);
       } finally {
         espias.forEach((e) => e.mockRestore());
@@ -186,7 +186,7 @@ describe('Autenticación y roles (HU-14 RF-01)', () => {
   });
 
   describe('Condición 4: ruta con rol requerido responde 401 sin sesión y 403 con otro rol', () => {
-    const nuevo = { usuario: 'nuevo1', nombre: 'Nuevo', rol: 'eca', password: PASSWORD };
+    const nuevo = { usuario: 'nuevo1', nombre: 'Nuevo', rol: 'eca', eca: 'ECA Nueva S.A.', password: PASSWORD };
 
     it('sin token responde 401', async () => {
       await http().post('/api/usuarios').send(nuevo).expect(401);
@@ -214,7 +214,7 @@ describe('Autenticación y roles (HU-14 RF-01)', () => {
         .set('Authorization', `Bearer ${body.accessToken}`)
         .send(nuevo)
         .expect(201);
-      expect(res.body).toMatchObject({ usuario: 'nuevo1', rol: 'eca' });
+      expect(res.body).toMatchObject({ usuario: 'nuevo1', rol: 'eca', eca: 'ECA Nueva S.A.' });
       expect(res.body.passwordHash).toBeUndefined();
     });
 

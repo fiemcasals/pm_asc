@@ -6,6 +6,8 @@ export interface NuevoUsuario {
   nombre: string;
   rol: Rol;
   passwordHash: string;
+  /** ECA del usuario; sólo para el rol "eca". */
+  eca?: string | null;
 }
 
 /**
@@ -56,7 +58,13 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
 
   async crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null> {
     if (await this.buscarPorUsuario(datos.usuario)) return null;
-    const u: UsuarioGuardado = { id: randomUUID(), activo: true, sesionesRevocadasEn: null, ...datos };
+    const u: UsuarioGuardado = {
+      id: randomUUID(),
+      activo: true,
+      sesionesRevocadasEn: null,
+      ...datos,
+      eca: datos.eca ?? null,
+    };
     this.usuarios.set(u.id, u);
     return { ...u };
   }

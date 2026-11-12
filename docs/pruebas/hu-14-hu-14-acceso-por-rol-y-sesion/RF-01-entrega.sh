@@ -79,10 +79,13 @@ if [ "$code" != "200" ]; then
 fi
 TOKEN_ADMIN="$(json "$TMP/admin" 'b.accessToken')"
 
+# alta USUARIO ROL → código HTTP. Desde HU-15 el rol eca exige el campo "eca" (nombre de la ECA).
 alta() {
+  local extra=""
+  [ "$2" = "eca" ] && extra=",\"eca\":\"ECA Entrega S.A.\""
   "${CURL[@]}" -o "$TMP/alta" -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
     -H "Authorization: Bearer $TOKEN_ADMIN" \
-    -d "{\"usuario\":\"$1\",\"nombre\":\"Entrega $2\",\"rol\":\"$2\",\"password\":\"$CLAVE\"}" "$BASE_URL/api/usuarios"
+    -d "{\"usuario\":\"$1\",\"nombre\":\"Entrega $2\",\"rol\":\"$2\"$extra,\"password\":\"$CLAVE\"}" "$BASE_URL/api/usuarios"
 }
 
 RT="rf01-entrega-rt-$SUFIJO"

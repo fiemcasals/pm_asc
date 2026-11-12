@@ -6,27 +6,57 @@ import {
   suscribirFallasCriticas,
 } from './fallas';
 
+const vistasPorRol: Record<string, Set<string>> = {
+  secretaria: new Set(),
+  firmante: new Set(),
+};
+
 /**
- * Notificación emergente del panel de Secretaría: escucha las fallas críticas en tiempo real y
- * muestra cada una con aviso sonoro y enlace directo al informe. Si llegan varias, se apilan y
- * se muestran de a una, la más vieja primero, hasta que se marquen como vistas.
+ * Notificación emergente para Secretaría y Firmante: carga los informes críticos recientes y
+ * escucha en tiempo real (SSE) nuevos reportes con aviso sonoro y enlace directo al informe.
  */
-export function AlertaFallaCritica() {
+export function AlertaFallaCritica({ rol = 'secretaria' }: { rol?: 'secretaria' | 'firmante' }) {
   const [pendientes, setPendientes] = useState<EventoFallaCritica[]>([]);
 
-  useEffect(
-    () =>
-      suscribirFallasCriticas((evento) => {
-        setPendientes((actuales) =>
-          actuales.some((e) => e.informeId === evento.informeId) ? actuales : [...actuales, evento],
-        );
-        reproducirAvisoSonoro();
-      }),
-    [],
-  );
+  useEffect(() => {
+    let activo = true;
+    void fetch('/api/fallas-criticas/informes')
+      .then((res) => (res.ok ? (res.json() as Promise<EventoFallaCritica[]>) : []))
+      .then((lista) => {
+        if (!activo || !Array.isArray(lista)) return;
+        const yaVistas = vistasPorRol[rol] ?? new Set<string>();
+        setPendientes((actuales) => {
+          const ids = new Set(actuales.map((e) => e.informeId));
+          const nuevos = lista.filter((ev) => !yaVistas.has(ev.informeId) && !ids.has(ev.informeId));
+          return nuevos.length > 0 ? [...actuales, ...nuevos] : actuales;
+        });
+      })
+      .catch(() => {
+        // Sin conexión o endpoint no disponible aún
+      });
+
+    const unsub = suscribirFallasCriticas((evento) => {
+      const yaVistas = vistasPorRol[rol] ?? new Set<string>();
+      if (yaVistas.has(evento.informeId)) return;
+      setPendientes((actuales) =>
+        actuales.some((e) => e.informeId === evento.informeId) ? actuales : [...actuales, evento],
+      );
+      reproducirAvisoSonoro();
+    });
+
+    return () => {
+      activo = false;
+      unsub();
+    };
+  }, [rol]);
 
   const actual = pendientes[0];
   if (!actual) return null;
+
+  const marcarVista = () => {
+    (vistasPorRol[rol] ??= new Set()).add(actual.informeId);
+    setPendientes((p) => p.slice(1));
+  };
 
   return (
     <div
@@ -51,7 +81,7 @@ export function AlertaFallaCritica() {
       </p>
       <ul className="falla-toast-fallas">
         {actual.fallas.map((f) => (
-          <li key={f}>{ETIQUETA_FALLA[f]}</li>
+          <li key={f}>{ETIQUETA_FALLA[f] ?? f}</li>
         ))}
       </ul>
       <p className="falla-toast-meta">
@@ -70,7 +100,7 @@ export function AlertaFallaCritica() {
         </a>
         <button
           className="btn btn-secondary"
-          onClick={() => setPendientes((p) => p.slice(1))}
+          onClick={marcarVista}
           data-testid="alerta-falla-entendido"
         >
           Entendido

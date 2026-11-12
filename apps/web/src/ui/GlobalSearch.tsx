@@ -70,6 +70,14 @@ export function GlobalSearch({
         action: () => onNavigate('firmante'),
       },
       {
+        id: 'nav-inspeccion',
+        group: 'Navegación',
+        title: 'Inspección Técnica (Checklist)',
+        subtitle: 'Relevamiento móvil por solapas para RT de Calle',
+        keywords: 'inspeccion checklist solapas rt calle ascensor',
+        action: () => onNavigate('inspeccion'),
+      },
+      {
         id: 'nav-eca',
         group: 'Navegación',
         title: 'Portal ECA (Conservadoras)',

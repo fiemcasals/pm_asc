@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T16:49:35.987Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T16:49:44.689Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -27,7 +27,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 19 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 20 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | Hecho | gonza | RNF-01, RF-01 | — |
+| 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | Hecho ✓ dev | gonza | RNF-01, RF-01 | — |
 | 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 25 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |

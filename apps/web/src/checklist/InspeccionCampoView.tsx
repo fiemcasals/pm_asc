@@ -1,16 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   obtenerChecklistParaTipo,
+  requiereFotoChecklist,
   type EstadoEquipoUso,
   type SolapaId,
   type TipoMaquinaChecklist,
 } from './checklist.config';
 import {
+  claveFotoAnomalia,
   fetchChecklistConfig,
+  type FotosPorEquipo,
   type ObservacionesChecklist,
   type RespuestasChecklist,
 } from './checklist.logic';
 import { ChecklistSolapaView } from './ChecklistSolapaView';
+import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
 
 interface EquipoDemo {
   maquinaId: string;
@@ -32,6 +36,8 @@ export function InspeccionCampoView() {
   const [solapaActiva, setSolapaActiva] = useState<SolapaId>('sala_maquinas');
   const [respuestasPorEquipo, setRespuestasPorEquipo] = useState<Record<string, RespuestasChecklist>>({});
   const [obsPorEquipo, setObsPorEquipo] = useState<Record<string, ObservacionesChecklist>>({});
+  const [fotosPorEquipo, setFotosPorEquipo] = useState<Record<string, FotosPorEquipo>>({});
+  const [fotoError, setFotoError] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, ReturnType<typeof obtenerChecklistParaTipo>>>({});
 
   const equipo = useMemo(
@@ -54,6 +60,18 @@ export function InspeccionCampoView() {
   }, [tipoActual]);
 
   const config = configs[tipoActual] ?? obtenerChecklistParaTipo(tipoActual);
+
+  const itemsPorId = useMemo(() => {
+    const mapa = new Map<string, { itemEtiqueta: string; opciones: readonly { id: string; esFalla: boolean; esFallaCritica: boolean; fotoObligatoria: boolean }[] }>();
+    for (const s of config.solapas) {
+      for (const sub of s.subgrupos) {
+        for (const it of sub.items) {
+          mapa.set(it.id, { itemEtiqueta: it.etiqueta, opciones: it.opciones });
+        }
+      }
+    }
+    return mapa;
+  }, [config]);
 
   const handleSeleccionarOpcion = (solapaId: SolapaId, itemId: string, opcionId: string) => {
     setRespuestasPorEquipo((prev) => {
@@ -85,6 +103,108 @@ export function InspeccionCampoView() {
     });
   };
 
+  const handleAdjuntarFoto = async (
+    solapaId: SolapaId,
+    itemId: string,
+    itemEtiqueta: string,
+    file: File | null,
+  ) => {
+    if (!file) return;
+    setFotoError(null);
+    try {
+      const { dataUrl, sizeBytes } = await comprimirFotoAnomalia(file);
+      const nuevaFoto: FotoAnomalia = {
+        id: `foto-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        maquinaId: equipo.maquinaId,
+        referenciaAgc: equipo.referenciaAgc,
+        solapaId,
+        itemId,
+        itemEtiqueta,
+        dataUrl,
+        sizeBytes,
+        tomadaEn: new Date().toISOString(),
+      };
+      setFotosPorEquipo((prev) => ({
+        ...prev,
+        [equipo.maquinaId]: {
+          ...(prev[equipo.maquinaId] ?? {}),
+          [claveFotoAnomalia(solapaId, itemId)]: nuevaFoto,
+        },
+      }));
+    } catch (err) {
+      setFotoError(err instanceof Error ? err.message : 'Error al procesar fotografía');
+    }
+  };
+
+  const handleQuitarFoto = (solapaId: SolapaId, itemId: string) => {
+    const clave = claveFotoAnomalia(solapaId, itemId);
+    setFotosPorEquipo((prev) => {
+      const actual = { ...(prev[equipo.maquinaId] ?? {}) };
+      delete actual[clave];
+      return { ...prev, [equipo.maquinaId]: actual };
+    });
+  };
+
+  const renderAccionFoto = (solapaId: SolapaId, itemId: string, opcionId: string) => {
+    const meta = itemsPorId.get(itemId);
+    const opcion = meta?.opciones.find((o) => o.id === opcionId);
+    if (!meta || !opcion || !opcion.esFalla) return null;
+
+    const obligatoria =
+      requiereFotoChecklist(opcion, 'en_uso') ||
+      (opcion.esFalla && estadoActual === 'fuera_de_servicio');
+    const foto = (fotosPorEquipo[equipo.maquinaId] ?? {})[claveFotoAnomalia(solapaId, itemId)];
+
+    return (
+      <div className="checklist-foto-box" data-testid={`foto-box-${itemId}`}>
+        <label className="checklist-foto-btn" data-testid={`btn-adjuntar-foto-${itemId}`}>
+          <span>Adjuntar Foto de Anomalía — {meta.itemEtiqueta}</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only-input"
+            data-testid={`input-foto-${itemId}`}
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              void handleAdjuntarFoto(solapaId, itemId, meta.itemEtiqueta, f);
+            }}
+          />
+        </label>
+
+        {obligatoria && !foto && (
+          <p className="checklist-foto-aviso" data-testid={`foto-obligatoria-${itemId}`}>
+            Foto obligatoria para completar esta solapa ({opcion.esFallaCritica ? 'Falla Crítica' : 'Fuera de Servicio'}).
+          </p>
+        )}
+
+        {!obligatoria && !foto && (
+          <p className="checklist-foto-opcional">Foto opcional para falla común.</p>
+        )}
+
+        {foto && (
+          <div className="checklist-foto-preview" data-testid={`foto-preview-${itemId}`}>
+            <img src={foto.dataUrl} alt={`Anomalía en ${meta.itemEtiqueta}`} />
+            <div className="checklist-foto-meta">
+              <strong>{foto.referenciaAgc} · {foto.solapaId}</strong>
+              <span>{foto.itemEtiqueta} · {Math.max(1, Math.round(foto.sizeBytes / 1024))} KB</span>
+              <time dateTime={foto.tomadaEn}>
+                {new Date(foto.tomadaEn).toLocaleTimeString('es-AR')}
+              </time>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => handleQuitarFoto(solapaId, itemId)}
+              >
+                Quitar foto
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <section className="portal-inspeccion" aria-labelledby="inspeccion-titulo">
       <div className="portal-header inspeccion-header">
@@ -97,6 +217,12 @@ export function InspeccionCampoView() {
           </p>
         </div>
       </div>
+
+      {fotoError && (
+        <div className="card error-banner" role="alert">
+          {fotoError}
+        </div>
+      )}
 
       <div className="card inspeccion-context-bar" data-testid="inspeccion-context-bar">
         <div className="inspeccion-context-row">
@@ -158,10 +284,12 @@ export function InspeccionCampoView() {
         onCambiarSolapa={setSolapaActiva}
         respuestas={respuestasPorEquipo[equipo.maquinaId] ?? {}}
         observaciones={obsPorEquipo[equipo.maquinaId] ?? {}}
+        fotos={fotosPorEquipo[equipo.maquinaId] ?? {}}
+        estadoEquipo={estadoActual}
         onSeleccionarOpcion={handleSeleccionarOpcion}
         onCambiarObservacion={handleCambiarObs}
+        renderAccionItem={renderAccionFoto}
       />
     </section>
   );
 }
-

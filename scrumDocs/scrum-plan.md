@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T15:25:14.989Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T15:25:33.174Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -303,7 +303,13 @@ EcaService.registrarAcuseRecibo ahora guarda el acuse en acuses_recibo_legal ANT
 - Estimado: 3h
 
 ### RF-04 — Pantalla de solapa generada desde el motor
-Inicio de desarrollo de HU-17 RF-04
+PR #32 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/32
+Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494001043-pantalla-de-solapa-generada-desde-el-mot
+- Pantalla única genérica ChecklistSolapaView.tsx dibujando las 5 solapas desde el motor configurable.
+- Campo libre Observaciones por solapa apto para dictado en teclado móvil; tilde verde solo al responder 100% de ítems aplicables.
+- Validado en viewport 360px con Playwright: scrollWidth=360 innerWidth=360 sin overflow horizontal ni zoom (RF-04-paso-1/2.png).
+- Dependencias: stack sobre HU-17 RF-01 (PR #30); incluye selector provisorio de equipo hasta HU-17 RF-02 (to_do germanG).
+- Verificado: npm run verify (API 26/207 OK, Web 8/84 OK), test:int (8/29 OK), RF-04-entrega.sh (2 OK; carga 20 corridas prom 7 ms p95 7 ms).
 - Estimado: 5h
 
 ### RF-02 — Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo

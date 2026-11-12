@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T16:03:02.157Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T16:03:19.966Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -12,14 +12,14 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
 | 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
 | 6 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 7 | RF-01 | API de autenticación y roles | HU-14 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
+| 7 | RF-01 | API de autenticación y roles | HU-14 | — | — | testing | germanG | RF-01 | — |
 | 8 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
 | 9 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 10 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 11 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 12 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
-| 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
-| 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
+| 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | testing | germanG | RF-01 | — |
+| 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | testing | germanG | RF-01 | — |
 | 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | Hecho | gonza | RF-01, RF-01 | — |
 | 16 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 17 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | Hecho | gonza | RF-02 | — |

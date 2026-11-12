@@ -1,12 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
 import { PortalEca } from './eca/PortalEca';
 import { PortalFirmante } from './firmante/PortalFirmante';
 import { fetchHealth, type HealthState } from './health';
+import { type ThemeMode, type Vista } from './ui/command';
+import { GlobalSearch } from './ui/GlobalSearch';
+import {
+  IconBrand,
+  IconEca,
+  IconFirmante,
+  IconMoon,
+  IconPanelLeft,
+  IconSecretaria,
+  IconSistema,
+  IconSun,
+} from './ui/Icons';
 
 type SwState = 'verificando' | 'registrado' | 'no-soportado' | 'no-registrado';
-type Vista = 'firmante' | 'eca' | 'secretaria' | 'sistema';
+
+const THEME_STORAGE_KEY = 'mant_asc_theme';
 
 function useServiceWorkerState(): SwState {
   const [state, setState] = useState<SwState>('verificando');
@@ -38,88 +51,319 @@ const SW_LABEL: Record<SwState, string> = {
   'no-registrado': 'No registrado',
 };
 
+const NAV_ITEMS: Array<{
+  id: Vista;
+  label: string;
+  shortLabel: string;
+  testId: string;
+  icon: (props: { size?: number }) => React.ReactElement;
+}> = [
+  {
+    id: 'firmante',
+    label: 'Portal Firmante (RT Legal)',
+    shortLabel: 'Firmante',
+    testId: 'tab-firmante',
+    icon: IconFirmante,
+  },
+  {
+    id: 'eca',
+    label: 'Portal ECA (Conservadoras)',
+    shortLabel: 'Portal ECA',
+    testId: 'tab-eca',
+    icon: IconEca,
+  },
+  {
+    id: 'secretaria',
+    label: 'Secretaría (Edificios y Máquinas)',
+    shortLabel: 'Secretaría',
+    testId: 'tab-secretaria',
+    icon: IconSecretaria,
+  },
+  {
+    id: 'sistema',
+    label: 'Estado del Sistema',
+    shortLabel: 'Sistema',
+    testId: 'tab-sistema',
+    icon: IconSistema,
+  },
+];
+
+function getInitialTheme(): ThemeMode {
+  if (typeof window === 'undefined') return 'dark';
+  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  return stored === 'light' ? 'light' : 'dark';
+}
+
 export function App() {
   const [vista, setVista] = useState<Vista>('firmante');
   const [health, setHealth] = useState<HealthState | null>(null);
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [consorcioBuscadoId, setConsorcioBuscadoId] = useState<string | null>(null);
+  const [maquinaBuscadaId, setMaquinaBuscadaId] = useState<string | null>(null);
   const swState = useServiceWorkerState();
 
-  const irA = (destino: Vista) => {
-    if (destino === vista || puedeSalir()) setVista(destino);
-  };
+  const irA = useCallback(
+    (destino: Vista) => {
+      if (destino === vista || puedeSalir()) setVista(destino);
+    },
+    [vista],
+  );
+
+  const handleSelectConsorcio = useCallback(
+    (consorcioId: string) => {
+      if (vista === 'secretaria' || puedeSalir()) {
+        setConsorcioBuscadoId(consorcioId);
+        setVista('secretaria');
+      }
+    },
+    [vista],
+  );
+
+  const handleSelectMaquina = useCallback(
+    (maquinaId: string) => {
+      if (vista === 'firmante' || puedeSalir()) {
+        setMaquinaBuscadaId(maquinaId);
+        setVista('firmante');
+      }
+    },
+    [vista],
+  );
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     void fetchHealth().then(setHealth);
   }, []);
 
+  const currentNav = NAV_ITEMS.find((item) => item.id === vista) ?? NAV_ITEMS[0];
+  const systemOnline = health?.kind === 'ok';
+  const systemDotClass =
+    health === null ? 'dot-pending' : systemOnline ? 'dot-ok' : 'dot-error';
+
   return (
-    <main className="page">
-      <header className="app-header">
-        <div>
-          <h1>Inspecciones de Ascensores</h1>
-          <p className="subtitle">Sistema Operativo y Control AGC — CABA</p>
+    <div className={`neo-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* Sidebar Desktop estilo Linear */}
+      <aside className="neo-sidebar" aria-label="Navegación principal">
+        <div className="neo-sidebar-top">
+          <div className="neo-brand">
+            <span className="neo-brand-mark">
+              <IconBrand size={16} />
+            </span>
+            {!sidebarCollapsed && (
+              <div className="neo-brand-text">
+                <span className="neo-brand-name">mant_asc</span>
+                <span className="neo-brand-env">AGC · CABA</span>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="neo-icon-btn"
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            title={sidebarCollapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+            aria-label="Alternar barra lateral"
+          >
+            <IconPanelLeft size={15} />
+          </button>
         </div>
 
-        <nav className="nav-tabs" aria-label="Secciones del sistema">
-          <button
-            className={`tab-btn ${vista === 'firmante' ? 'active' : ''}`}
-            onClick={() => irA('firmante')}
-            data-testid="tab-firmante"
-          >
-            Portal Firmante (RT Legal)
-          </button>
-          <button
-            className={`tab-btn ${vista === 'eca' ? 'active' : ''}`}
-            onClick={() => irA('eca')}
-            data-testid="tab-eca"
-          >
-            Portal ECA (Conservadoras)
-          </button>
-          <button
-            className={`tab-btn ${vista === 'secretaria' ? 'active' : ''}`}
-            onClick={() => irA('secretaria')}
-            data-testid="tab-secretaria"
-          >
-            Secretaría (Edificios y Máquinas)
-          </button>
-          <button
-            className={`tab-btn ${vista === 'sistema' ? 'active' : ''}`}
-            onClick={() => irA('sistema')}
-            data-testid="tab-sistema"
-          >
-            Estado del Sistema
-          </button>
+        <nav className="neo-nav-group" aria-label="Secciones del sistema">
+          {!sidebarCollapsed && <div className="neo-nav-label">PORTALES</div>}
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = vista === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`tab-btn neo-nav-item ${active ? 'active' : ''}`}
+                onClick={() => irA(item.id)}
+                data-testid={item.testId}
+                title={sidebarCollapsed ? item.label : undefined}
+              >
+                <Icon size={16} />
+                {!sidebarCollapsed && <span className="neo-nav-text">{item.label}</span>}
+              </button>
+            );
+          })}
         </nav>
-      </header>
 
-      {vista === 'firmante' && <PortalFirmante />}
-      {vista === 'eca' && <PortalEca />}
-      {vista === 'secretaria' && <SecretariaView />}
-      {vista === 'sistema' && (
-        <section className="card" aria-labelledby="estado-titulo">
-          <h2 id="estado-titulo">Estado del sistema</h2>
-          <dl>
-            <dt>API</dt>
-            <dd data-testid="estado-api">
-              {health === null
-                ? 'Verificando…'
-                : health.kind === 'api-error'
-                  ? health.message
-                  : 'En línea'}
-            </dd>
+        <div className="neo-sidebar-footer">
+          <button
+            type="button"
+            className="neo-status-pill"
+            onClick={() => irA('sistema')}
+            title="Ver detalle del estado del sistema"
+          >
+            <span className={`neo-dot ${systemDotClass}`} />
+            {!sidebarCollapsed && (
+              <span className="neo-status-label">
+                {health === null
+                  ? 'Conectando…'
+                  : systemOnline
+                    ? 'API + PostGIS OK'
+                    : 'Revisar sistema'}
+              </span>
+            )}
+          </button>
 
-            <dt>Base de datos</dt>
-            <dd data-testid="estado-db">
-              {health === null && 'Verificando…'}
-              {health?.kind === 'ok' && `En línea (PostGIS ${health.postgis})`}
-              {health?.kind === 'db-error' && health.message}
-              {health?.kind === 'api-error' && 'Sin datos'}
-            </dd>
+          <button
+            type="button"
+            className="neo-icon-btn"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            aria-label="Cambiar tema visual"
+            data-testid="btn-toggle-theme"
+          >
+            {theme === 'dark' ? <IconSun size={15} /> : <IconMoon size={15} />}
+          </button>
+        </div>
+      </aside>
 
-            <dt>Service worker</dt>
-            <dd data-testid="estado-sw">{SW_LABEL[swState]}</dd>
-          </dl>
-        </section>
-      )}
-    </main>
+      {/* Workspace principal */}
+      <div className="neo-workspace">
+        <header className="neo-topbar">
+          <div className="neo-breadcrumb">
+            <span className="neo-breadcrumb-root">Inspecciones de Ascensores</span>
+            <span className="neo-breadcrumb-sep">/</span>
+            <h1 className="neo-topbar-title">{currentNav.label}</h1>
+          </div>
+
+          <div className="neo-topbar-actions">
+            <GlobalSearch
+              onNavigate={irA}
+              onSelectConsorcio={handleSelectConsorcio}
+              onSelectMaquina={handleSelectMaquina}
+            />
+
+            <button
+              type="button"
+              className="neo-icon-btn neo-mobile-theme-btn"
+              onClick={toggleTheme}
+              aria-label="Cambiar tema visual"
+            >
+              {theme === 'dark' ? <IconSun size={15} /> : <IconMoon size={15} />}
+            </button>
+          </div>
+        </header>
+
+        <main className="page neo-main">
+          {vista === 'firmante' && (
+            <PortalFirmante
+              maquinaInicialId={maquinaBuscadaId}
+              onConsumirMaquinaInicial={() => setMaquinaBuscadaId(null)}
+            />
+          )}
+          {vista === 'eca' && <PortalEca />}
+          {vista === 'secretaria' && (
+            <SecretariaView consorcioInicialId={consorcioBuscadoId} />
+          )}
+          {vista === 'sistema' && (
+            <section className="neo-bento-section" aria-labelledby="estado-titulo">
+              <div className="portal-header">
+                <div>
+                  <h2 id="estado-titulo" className="portal-title">
+                    Estado del sistema
+                  </h2>
+                  <p className="portal-desc">
+                    Telemetría en tiempo real de la API NestJS, PostgreSQL + PostGIS y Service Worker PWA.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setHealth(null);
+                    void fetchHealth().then(setHealth);
+                  }}
+                >
+                  Actualizar
+                </button>
+              </div>
+
+              <div className="neo-bento-grid">
+                <article className="card neo-bento-card">
+                  <span className="neo-bento-kicker">BACKEND · NESTJS</span>
+                  <div className="neo-bento-row">
+                    <span className={`neo-dot ${health === null ? 'dot-pending' : health.kind === 'api-error' ? 'dot-error' : 'dot-ok'}`} />
+                    <strong className="neo-bento-value" data-testid="estado-api">
+                      {health === null
+                        ? 'Verificando…'
+                        : health.kind === 'api-error'
+                          ? health.message
+                          : 'En línea'}
+                    </strong>
+                  </div>
+                  <p className="neo-bento-sub">Proxy local `/api` → puerto `:3050`</p>
+                </article>
+
+                <article className="card neo-bento-card">
+                  <span className="neo-bento-kicker">BASE DE DATOS</span>
+                  <div className="neo-bento-row">
+                    <span className={`neo-dot ${health?.kind === 'ok' ? 'dot-ok' : health === null ? 'dot-pending' : 'dot-error'}`} />
+                    <strong className="neo-bento-value" data-testid="estado-db">
+                      {health === null && 'Verificando…'}
+                      {health?.kind === 'ok' && `En línea (PostGIS ${health.postgis})`}
+                      {health?.kind === 'db-error' && health.message}
+                      {health?.kind === 'api-error' && 'Sin datos'}
+                    </strong>
+                  </div>
+                  <p className="neo-bento-sub">PostgreSQL 16 + PostGIS (Docker :5433)</p>
+                </article>
+
+                <article className="card neo-bento-card">
+                  <span className="neo-bento-kicker">MODO OFFLINE · PWA</span>
+                  <div className="neo-bento-row">
+                    <span className={`neo-dot ${swState === 'registrado' ? 'dot-ok' : swState === 'verificando' ? 'dot-pending' : 'dot-error'}`} />
+                    <strong className="neo-bento-value" data-testid="estado-sw">
+                      {SW_LABEL[swState]}
+                    </strong>
+                  </div>
+                  <p className="neo-bento-sub">Caché local para trabajo en sala de máquinas</p>
+                </article>
+
+                <article className="card neo-bento-card">
+                  <span className="neo-bento-kicker">INTERFAZ · NEO LINEAR</span>
+                  <div className="neo-bento-row">
+                    <strong className="neo-bento-value">
+                      {theme === 'dark' ? 'Oscuro (Command)' : 'Claro (High Contrast)'}
+                    </strong>
+                  </div>
+                  <p className="neo-bento-sub">Rama experimental local `GONZA`</p>
+                </article>
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
+
+      {/* Barra inferior mobile PWA */}
+      <nav className="neo-mobile-nav" aria-label="Navegación móvil">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const active = vista === item.id;
+          return (
+            <button
+              key={`mob-${item.id}`}
+              type="button"
+              className={`neo-mobile-btn ${active ? 'active' : ''}`}
+              onClick={() => irA(item.id)}
+            >
+              <Icon size={17} />
+              <span>{item.shortLabel}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

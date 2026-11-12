@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
 import './styles.css';
+import './neo.css';
 
 // Service worker: guarda la app en el dispositivo para que abra sin conexión.
 registerSW({ immediate: true });

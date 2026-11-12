@@ -1,6 +1,6 @@
 # 📋 Estándar de pruebas y evidencias
 
-_Generado automáticamente el 2026-10-09T16:58:05.574Z -- no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-12T11:00:00.350Z -- no editar a mano, se sobreescribe en cada publicación._
 
 Esto es **cómo se redacta y se certifica una prueba en este proyecto**. Aplica a quien
 desarrolla (etapa `desarrollo`) y a quien hace QA (etapa `integracion`): los dos cargan

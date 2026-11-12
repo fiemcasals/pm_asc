@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-12T14:33:34.046Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T14:33:45.192Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -77,20 +77,20 @@ graph TD
     REQ_1794486918510["RF-01: Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados"]
     REQ_1794486918616["RF-02: Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios"]
   end
-  subgraph US_1794493997927["HU-14: Acceso por rol y sesión en el celular"]
+  subgraph US_1794493997927["HU-14: HU-14: Acceso por rol y sesión en el celular"]
     REQ_1794493998753["RF-01: API de autenticación y roles"]
     REQ_1794493998996["RF-02: Pantalla de ingreso"]
     REQ_1794493999191["RNF-01: Consentimiento de ubicación y revocación de sesiones"]
   end
-  subgraph US_1794493998112["HU-15: Aislamiento de datos entre ECA"]
+  subgraph US_1794493998112["HU-15: HU-15: Aislamiento de datos entre ECA"]
     REQ_1794493999440["RNF-01: Row Level Security por ECA"]
     REQ_1794493999670["RNF-02: Acceso de RT y Firmante a edificios de varias ECA"]
   end
-  subgraph US_1794493998209["HU-16: Mapa del RT y llegada al edificio"]
+  subgraph US_1794493998209["HU-16: HU-16: Mapa del RT y llegada al edificio"]
     REQ_1794493999840["RF-01: Mapa del RT con pines por horario"]
     REQ_1794494000129["RF-02: Tarjeta del edificio y validación de presencia a 30 m"]
   end
-  subgraph US_1794493998283["HU-17: Inspección técnica por solapas"]
+  subgraph US_1794493998283["HU-17: HU-17: Inspección técnica por solapas"]
     REQ_1794494000545["RF-01: Motor del checklist configurable"]
     REQ_1794494000700["RF-02: Selección de equipo y pregunta de uso"]
     REQ_1794494000869["RF-03: Reporte de parada de un equipo fuera de servicio"]
@@ -101,7 +101,7 @@ graph TD
     REQ_1794494001967["RNF-01: Visita en curso sin señal"]
     REQ_1794494002220["RF-08: Las Fallas Críticas del checklist llegan a la Secretaría"]
   end
-  subgraph US_1794493998373["HU-18: Cierre, firma y envío del informe"]
+  subgraph US_1794493998373["HU-18: HU-18: Cierre, firma y envío del informe"]
     REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
     REQ_1794494002697["RNF-01: Sellado del informe"]
     REQ_1794494002926["RNF-02: Cola de sincronización del celular"]

@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-12T11:06:55.655Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-12T12:34:46.676Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -102,3 +102,22 @@ Como Empresa Conservadora (ECA) quiero recibir mensajes instantáneos de WhatsAp
 
 1. Dado que el RT de calle consolida un informe con Alerta de Reparación Urgente o Fuera de Uso, cuando el servidor lo procesa, entonces en menos de 5 segundos envía un mensaje de WhatsApp a través de la API al celular del responsable de la ECA.
 2. Dado el mensaje de WhatsApp recibido, cuando el usuario abre el enlace adjunto, entonces puede visualizar de forma directa la fotografía de la falla y el informe técnico firmado.
+
+## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
+
+Como operador de mant_asc (Secretaría, Firmante y ECA) quiero una interfaz moderna estilo Linear con modo oscuro/claro, sidebar colapsable sin superposición, tarjetas neón de cobertura y un buscador global inline en la barra superior para navegar edificios y máquinas sin fricción.
+
+### Criterios de Aceptacion
+
+1. Dado el shell principal de la aplicación, cuando el usuario alterna entre modo oscuro y claro o colapsa el sidebar a 80px, entonces los íconos del encabezado quedan lado a lado sin superponerse y la vista se adapta con contraste NEO.
+2. Dado el buscador inline de la barra superior, cuando el operador escribe al menos 2 caracteres de un consorcio o máquina, entonces visualiza resultados agrupados y al seleccionar uno navega directo al consorcio o modal de auditoría sin usar modal Ctrl+K.
+3. Dado el Medidor de Cobertura Mensual del Portal ECA, cuando se visualizan las tarjetas de estado (Inspeccionadas, Firmadas, Pendientes, Con Advertencia y Flota Total), entonces presentan bordes y acentos neón diferenciados de alto contraste.
+
+## HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios
+
+Como usuario del Portal ECA y Secretaría quiero pantallas libres de prefijos redundantes, textos obvios y jerga técnica interna para leer alertas críticas y fichas de consorcio con información directa y accionable.
+
+### Criterios de Aceptacion
+
+1. Dado el centro de Alertas Críticas del Portal ECA, cuando se muestran equipos en Fuera de Servicio o con Anomalías Graves, entonces no aparecen los prefijos 'CARTEL GIGANTE:', códigos duplicados como 'M2 - M2:' ni etiquetas redundantes sobre la fotografía.
+2. Dado el Portal ECA y las vistas de Consorcios, cuando el operador consulta fichas, formularios o encabezados de solo lectura, entonces no se muestran badges obvios ni referencias técnicas internas ('(HU-07)', 'PostgreSQL', 'base oficial', 'Dirección Literal', 'Grilla Dinámica').

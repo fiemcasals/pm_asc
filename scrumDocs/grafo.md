@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-13T14:55:09.536Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-13T15:10:43.115Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -22,10 +22,13 @@ graph TD
     REQ_1794015939180["RF-03: Evitar que un guardado pise una asignación más nueva"]
     REQ_1794015939447["RNF-01: Leer todas las ternas en una sola consulta"]
     REQ_1794493275904["RF-04: Porcentajes de pago y abono configurables por máquina"]
+    REQ_1794582637611["RF-05: Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar"]
   end
   subgraph US_1791560828979["HU-04: HU-04: Semáforo de Control Mensual y Reasignación Operativa"]
     REQ_1791910395389["RF-01: Motor de Control Semafórico por Antigüedad de Visita"]
     REQ_1791910395476["RF-02: Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida"]
+    REQ_1794582638375["RNF-01: Índice por fecha para el semáforo y medición con volumen"]
+    REQ_1794582638528["RF-03: Refrescar el panel de reasignación cuando el RT del edificio cambió"]
   end
   subgraph US_1791560829061["HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice"]
     REQ_1791910395565["RF-01: API de Monitoreo Backoffice y Acciones Comerciales"]
@@ -60,6 +63,7 @@ graph TD
     REQ_1791910396729["RF-02: Descarga de Remito Técnico y Registro de Acuse de Recibo Legal"]
     REQ_1793980587652["RF-03: Registrar el acuse de recibo legal solo si quedó guardado en la base"]
     REQ_1794493276394["RF-04: Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse"]
+    REQ_1794582638119["RF-05: Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
     REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]
@@ -108,6 +112,12 @@ graph TD
     REQ_1794494002697["RNF-01: Sellado del informe"]
     REQ_1794494002926["RNF-02: Cola de sincronización del celular"]
   end
+  subgraph US_1794582638721["RO-02: Documentar las variables de entorno obligatorias y avisar claro si faltan"]
+    REQ_1794582638732["RF-01: Documentar las variables de entorno obligatorias y avisar claro si faltan"]
+  end
+  subgraph US_1794582638806["RO-03: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto"]
+    REQ_1794582638813["RF-01: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto"]
+  end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885
   REQ_1791909582859 --> REQ_1793979090598
@@ -120,8 +130,11 @@ graph TD
   REQ_1791910395101 --> REQ_1794015939180
   REQ_1791910395101 --> REQ_1794015939447
   REQ_1791910395101 --> REQ_1794493275904
+  REQ_1791910395476 --> REQ_1794582637611
   REQ_1791910395002 --> REQ_1791910395389
   REQ_1791910395389 --> REQ_1791910395476
+  REQ_1791910395476 --> REQ_1794582638375
+  REQ_1791910395476 --> REQ_1794582638528
   REQ_1791910395389 --> REQ_1791910395565
   REQ_1791910395565 --> REQ_1791910395676
   REQ_1791910395476 --> REQ_1791910395676
@@ -148,6 +161,7 @@ graph TD
   REQ_1791910396649 --> REQ_1791910396729
   REQ_1791910396729 --> REQ_1793980587652
   REQ_1793980587652 --> REQ_1794493276394
+  REQ_1791910396729 --> REQ_1794582638119
   REQ_1791910396729 --> REQ_1791910396804
   REQ_1791910396804 --> REQ_1791910396892
   REQ_1791910396804 --> REQ_1794155773535

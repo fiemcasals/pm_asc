@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-13T15:23:50.971Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-13T15:30:15.997Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -829,23 +829,3 @@ Inicializar el monorepo (web React+Vite PWA, API NestJS, PostgreSQL+PostGIS en D
 3. Con la configuración de producción, la API no devuelve encabezados CORS.
 4. docker compose up levanta PostgreSQL con PostGIS, y /api/health informa la versión de PostGIS.
 5. https://localhost:8050 carga la app web y registra el service worker.
-
-## RO-02: Documentar las variables de entorno obligatorias y avisar claro si faltan
-
-### RF-01: Documentar las variables de entorno obligatorias y avisar claro si faltan (Funcional)
-
-Desde HU-15 la API se conecta con un rol sin privilegios y necesita DATABASE_APP_PASSWORD, y AUTH_JWT_SECRET para las sesiones. El README no las menciona y, sin ellas, toda consulta responde 500 sin explicar por qué (costó un rato detectarlo). Origen: hallazgo de HU-04 RF-01.
-
-**Condiciones de aprobación**
-
-_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._
-
-## RO-03: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto
-
-### RF-01: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto (Funcional)
-
-Con HU-15 RNF-03 todas las rutas con datos piden sesión. Los scripts de entrega de las tarjetas anteriores (HU-01, HU-07, HU-08, HU-10, HU-11, etc.) crean edificios y leen datos sin sesión y dejan de funcionar. Los de HU-04 ya se actualizaron. Origen: integración de HU-15 RNF-03.
-
-**Condiciones de aprobación**
-
-_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._

@@ -471,4 +471,14 @@ export const MIGRATIONS: Migration[] = [
         ON inspecciones_checklist (created_at) INCLUDE (consorcio_id, maquina_id);
     `,
   },
+  {
+    id: '016_usuarios_contacto',
+    sql: `
+      -- HU-02 RF-05: el teléfono y el email del RT de Calle viven en su usuario, así al reasignar un edificio la terna
+      -- se completa con los datos del RT nuevo en vez de quedar sin contacto. Opcionales: sólo se cargan a los rt_calle.
+      ALTER TABLE usuarios
+        ADD COLUMN IF NOT EXISTS telefono text,
+        ADD COLUMN IF NOT EXISTS email text;
+    `,
+  },
 ];

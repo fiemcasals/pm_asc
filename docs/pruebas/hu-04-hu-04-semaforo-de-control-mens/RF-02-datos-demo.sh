@@ -4,8 +4,8 @@
 #   bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh            # crea los datos
 #   bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh --limpiar  # los borra
 #
-# Crea: una Secretaría (usuario demo.secretaria, clave Demo-Clave-2026), cuatro RT de Calle (rt.ana, rt.beto,
-# rt.carla, rt.diego) y cinco edificios "DEMO …": dos de rt.beto (pendientes), uno de rt.ana (pendiente), uno de
+# Crea: una Secretaría (usuario demo.secretaria) y un Administrador (demo.admin), los dos con clave Demo-Clave-2026, cuatro RT de Calle con
+# teléfono y email (rt.ana, rt.beto, rt.carla, rt.diego) y cinco edificios "DEMO …": dos de rt.beto (pendientes), uno de rt.ana (pendiente), uno de
 # rt.carla con sus 2 máquinas inspeccionadas el 5/11/2026, y uno de rt.carla SIN ubicación. Con «Ver el semáforo al día»
 # en 25/11/2026 los cuatro pendientes están en rojo.
 #
@@ -27,8 +27,8 @@ sql() { docker exec "$DB_CONTAINER" psql -U ascensores -d "$DB_NAME" -tAc "$1"; 
 if [ "${1:-}" = "--limpiar" ]; then
   sql "delete from inspecciones_checklist where consorcio_id in (select id::text from consorcios where nombre like 'DEMO %')" >/dev/null
   sql "delete from consorcios where nombre like 'DEMO %'" >/dev/null   # borra también roles y reasignaciones
-  sql "delete from usuarios where usuario in ('demo.secretaria','rt.ana','rt.beto','rt.carla','rt.diego')" >/dev/null
-  sql "delete from intentos_login where usuario = 'demo.secretaria'" >/dev/null
+  sql "delete from usuarios where usuario in ('demo.secretaria','demo.admin','rt.ana','rt.beto','rt.carla','rt.diego')" >/dev/null
+  sql "delete from intentos_login where usuario in ('demo.secretaria','demo.admin')" >/dev/null
   sql "select 'quedan → edificios DEMO: '||(select count(*) from consorcios where nombre like 'DEMO %')||' · reasignaciones: '||(select count(*) from reasignaciones_rt)||' · usuarios demo y rt: '||(select count(*) from usuarios where usuario like 'demo.%' or usuario like 'rt.%')"
   exit 0
 fi
@@ -42,7 +42,9 @@ fi
 
 HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Demo-Clave-2026",4))')"
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.secretaria','Secretaria Demo','secretaria','$HASH')" >/dev/null
-for rt in rt.ana rt.beto rt.carla rt.diego; do sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$rt','$rt','rt_calle','sin-login')" >/dev/null; done
+sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.admin','Administrador Demo','administrador','$HASH')" >/dev/null
+# Desde HU-02 RF-05 la terna toma el teléfono y el email del RT nuevo: un RT sin contacto no puede recibir un edificio.
+for rt in rt.ana rt.beto rt.carla rt.diego; do sql "insert into usuarios (usuario, nombre, rol, password_hash, telefono, email) values ('$rt','$rt','rt_calle','sin-login','11 4444-${rt#rt.}','$rt@demo.com')" >/dev/null; done
 
 # Con el RLS estricto (HU-15 RNF-03) crear edificios y roles pide sesión: se ingresa como la Secretaría demo.
 CLAVE="Demo-Clave-2026"

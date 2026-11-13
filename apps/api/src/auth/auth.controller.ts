@@ -1,8 +1,8 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Req, Res } from '@nestjs/common';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService, DURACION_REFRESCO_MS, LoginBloqueadoException, ResultadoSesion } from './auth.service';
-import { UsuarioAutenticado, UsuarioPublico, UsuarioSesion } from './auth.types';
-import { validarLogin, validarNuevoUsuario } from './auth.validation';
+import { UsuarioAutenticado, UsuarioConContacto, UsuarioPublico, UsuarioSesion } from './auth.types';
+import { validarContacto, validarLogin, validarNuevoUsuario } from './auth.validation';
 import { Roles, UsuarioActual } from './roles.guard';
 
 /** Cookie del token de refresco: sólo la lee el servidor y sólo viaja a /api/auth. */
@@ -85,6 +85,20 @@ export class UsuariosController {
   @Roles('administrador')
   crear(@Body() body: unknown): Promise<UsuarioPublico> {
     return this.auth.crearUsuario(validarNuevoUsuario(body));
+  }
+
+  /** El usuario con su teléfono y email de contacto. */
+  @Get(':id')
+  @Roles('administrador')
+  uno(@Param('id') id: string): Promise<UsuarioConContacto> {
+    return this.auth.usuarioConContacto(id);
+  }
+
+  /** Carga o edita el teléfono y el email de un RT de Calle (lo que se copia a la terna al reasignarle un edificio). */
+  @Put(':id/contacto')
+  @Roles('administrador')
+  contacto(@Param('id') id: string, @Body() body: unknown): Promise<UsuarioConContacto> {
+    return this.auth.guardarContacto(id, validarContacto(body));
   }
 
   /** Corta todas las sesiones del usuario (celular perdido, RT que deja la empresa). */

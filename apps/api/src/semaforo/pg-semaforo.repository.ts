@@ -98,7 +98,8 @@ export class PgSemaforoRepository extends SemaforoRepository {
   /**
    * Cambia el RT y escribe el registro en la misma transacción. El RT nuevo queda identificado por su nombre de
    * usuario, que es lo que el RLS compara: el anterior pierde el acceso al edificio y el nuevo lo gana en el acto.
-   * El teléfono y el email de la terna eran del RT anterior, así que se vacían en vez de dejárselos al nuevo.
+   * La terna se completa con el teléfono y el email del usuario del RT nuevo (HU-02 RF-05): nunca se queda con los del
+   * anterior ni sin contacto. Si el RT nuevo no tiene ni teléfono ni email cargados no se aplica nada (`sin_contacto`).
    */
   async reasignarRt(pedida: ReasignacionPedida): Promise<ResultadoReasignacion> {
     return this.db.transaction(async (client) => {
@@ -110,11 +111,18 @@ export class PgSemaforoRepository extends SemaforoRepository {
       if (actual.rowCount === 0) return { ok: false, motivo: 'sin_terna' } as const;
       if (actual.rows[0].rt_calle_nombre !== pedida.rtAnterior) return { ok: false, motivo: 'rt_cambio' } as const;
 
+      const contacto = await client.query<{ telefono: string | null; email: string | null }>(
+        `SELECT telefono, email FROM usuarios WHERE rol = 'rt_calle' AND activo AND usuario = $1`,
+        [pedida.rtNuevo],
+      );
+      const nuevo = contacto.rows[0];
+      if (!nuevo || (!nuevo.telefono && !nuevo.email)) return { ok: false, motivo: 'sin_contacto' } as const;
+
       await client.query(
         `UPDATE roles_edificio
-            SET rt_calle_nombre = $2, rt_calle_telefono = NULL, rt_calle_email = NULL, updated_at = now()
+            SET rt_calle_nombre = $2, rt_calle_telefono = $3, rt_calle_email = $4, updated_at = now()
           WHERE consorcio_id = $1`,
-        [pedida.consorcioId, pedida.rtNuevo],
+        [pedida.consorcioId, pedida.rtNuevo, nuevo.telefono, nuevo.email],
       );
       const registro = await client.query<FilaReasignacion>(
         `INSERT INTO reasignaciones_rt (consorcio_id, rt_anterior, rt_nuevo, usuario)

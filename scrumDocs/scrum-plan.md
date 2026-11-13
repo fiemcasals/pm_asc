@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-13T14:44:01.047Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-13T14:44:34.814Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -190,7 +190,7 @@ Pruebas:
 - Estimado: 3h
 
 ### RF-02 — Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida
-Inicio de desarrollo del requerimiento
+Pestaña Semáforo en la Secretaría: mapa de CABA con un pin por edificio del color de su semáforo, leyenda visible, nota de que no hay seguimiento de técnicos, totales y lista por urgencia. Reasignar (sólo en edificios en rojo) abre un panel con RT actual, RT sugerido (el de menos edificios pendientes del mes, sin el actual; un edificio inspeccionado no pesa) y selector; se aplica recién con Confirmar reasignación. Backend: GET .../reasignacion/sugerencia (sólo sugiere), POST .../reasignacion y GET .../reasignaciones, con sesión de Secretaría o Administrador (401 sin sesión, 403 otro rol). Migración 012: reasignaciones_rt con usuario (de la sesión, nunca del cuerpo), fecha (del servidor), RT anterior y nuevo; cambio y registro en una transacción; FOR UPDATE contra confirmaciones simultáneas; registro de sólo lectura y alta para la app (RLS sin política de UPDATE/DELETE). Al reasignar el RT anterior deja de ver el edificio y el nuevo lo ve (probado con RLS real). Pruebas: npm run verify 352/352 en API (42 nuevos) y 139/139 en web (16 nuevos); test:int 65/65 contra PostGIS real (15 nuevos). Mutaciones: 8 de 8 detectadas; la de la carrera sobrevivió la primera vez y se rehízo de forma determinista. Script de entrega 14/14; carga de 200 sugerencias: 0 fallidas, p95 26 ms. Navegador (login real como Secretaría): flujo completo con guía y 6 capturas resaltadas, consola sin errores; antes de confirmar la base no había cambiado; se corrigieron dos tablas que se cortaban a la derecha. 4 tests de desarrollo aprobados con evidencia; 4 de integración preparados para QA como Manual, con script de datos de demostración. Mínimo necesario agregado fuera de la descripción: database.service.ts tenía la lista de tablas con RLS del diagnóstico de seguridad repetida en 2 consultas y dejaba fuera la tabla nueva sin avisar (ahora una constante; se actualizó rls-eca.int-spec); props opcionales en MapaUbicacionConsorcio; selector Ver el semáforo al día (no estaba en la tarjeta, sirve para verificar los colores sin esperar al calendario). A confirmar: RT de Calle = usuario activo con rol rt_calle y la terna guarda su nombre de usuario; al reasignar se vacían teléfono y email de la terna (eran del RT anterior) y el edificio queda con un RT sin contacto; la carga cuenta sólo edificios que ve la ECA de la petición. Afuera: avisos a los RT, deshacer, mapa con calles reales, pruebas de componentes React (sin jsdom). PR: https://github.com/fiemcasals/pm_asc/pull/44
 - Estimado: 4h
 
 ### RF-01 — API de Monitoreo Backoffice y Acciones Comerciales

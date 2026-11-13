@@ -461,4 +461,14 @@ export const MIGRATIONS: Migration[] = [
         WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
     `,
   },
+  {
+    id: '015_indice_inspecciones_por_fecha',
+    sql: `
+      -- HU-04 RNF-01: el semáforo filtra las inspecciones por rango de created_at (el mes consultado) y sólo necesita
+      -- consorcio_id y maquina_id para cruzarlas con las máquinas. Con INCLUDE la consulta se resuelve con el índice,
+      -- sin leer la tabla, y deja de recorrer todas las inspecciones históricas.
+      CREATE INDEX IF NOT EXISTS inspecciones_checklist_created_at_idx
+        ON inspecciones_checklist (created_at) INCLUDE (consorcio_id, maquina_id);
+    `,
+  },
 ];

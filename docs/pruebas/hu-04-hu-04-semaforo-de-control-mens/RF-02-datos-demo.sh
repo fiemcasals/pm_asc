@@ -44,6 +44,14 @@ HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("De
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.secretaria','Secretaria Demo','secretaria','$HASH')" >/dev/null
 for rt in rt.ana rt.beto rt.carla rt.diego; do sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$rt','$rt','rt_calle','sin-login')" >/dev/null; done
 
+# Con el RLS estricto (HU-15 RNF-03) crear edificios y roles pide sesión: se ingresa como la Secretaría demo.
+CLAVE="Demo-Clave-2026"
+printf '{"usuario":"demo.secretaria","password":"%s"}' "$CLAVE" > "$TMP/login.json"
+"${CURL[@]}" -o "$TMP/login-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
+TOKEN="$(json "$TMP/login-resp.json" 'b.accessToken')"
+[ -n "$TOKEN" ] && [ "$TOKEN" != "undefined" ] || { echo "No se pudo ingresar como demo.secretaria (¿DATABASE_APP_PASSWORD y AUTH_JWT_SECRET definidas?)"; exit 1; }
+CURL+=(-H "Authorization: Bearer $TOKEN")
+
 edificio() { # edificio <nombre> <direccion> <lat> <lon|""> <rt> [inspeccionar]
   if [ -n "$4" ]; then UB="\"ubicacion\":{\"latitud\":$3,\"longitud\":$4},"; else UB=""; fi
   printf '{"nombre":"%s","direccion":"%s",%s"maquinas":[{"referenciaAgc":"M1"},{"referenciaAgc":"M2"}]}' "$1" "$2" "$UB" > "$TMP/a.json"

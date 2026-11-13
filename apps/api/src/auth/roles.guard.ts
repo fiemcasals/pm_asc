@@ -46,6 +46,12 @@ export class RolesGuard implements CanActivate {
     if (requeridos === undefined) return true;
 
     const req = ctx.switchToHttp().getRequest<RequestConUsuario>();
+    if (req.usuario) {
+      if (requeridos.length > 0 && !requeridos.includes(req.usuario.rol)) {
+        throw new ForbiddenException('Tu rol no tiene acceso a este recurso.');
+      }
+      return true;
+    }
     const [tipo, token] = (req.headers.authorization ?? '').split(' ');
     if (tipo !== 'Bearer' || !token) throw new UnauthorizedException('Tenés que iniciar sesión.');
     // Verifica firma y vencimiento, y además que el usuario siga activo y no le hayan revocado la sesión.

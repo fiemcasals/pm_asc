@@ -408,4 +408,57 @@ export const MIGRATIONS: Migration[] = [
         );
     `,
   },
+  {
+    id: '013_rls_admin_secretaria',
+    sql: `
+      -- Políticas RLS para administrador y secretaría en todas las tablas protegidas por ECA (HU-15 RNF-03)
+      DROP POLICY IF EXISTS rls_consorcios_admin_secretaria ON consorcios;
+      CREATE POLICY rls_consorcios_admin_secretaria ON consorcios
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_maquinas_admin_secretaria ON maquinas;
+      CREATE POLICY rls_maquinas_admin_secretaria ON maquinas
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_roles_edificio_admin_secretaria ON roles_edificio;
+      CREATE POLICY rls_roles_edificio_admin_secretaria ON roles_edificio
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_acuses_recibo_admin_secretaria ON acuses_recibo_legal;
+      CREATE POLICY rls_acuses_recibo_admin_secretaria ON acuses_recibo_legal
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_visitas_fallidas_admin_secretaria ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_admin_secretaria ON visitas_fallidas
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      -- Eliminar valor por defecto ECA_SISTEMA_DEV en consorcios y visitas_fallidas
+      ALTER TABLE consorcios
+        ALTER COLUMN eca_nombre SET DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'SIN_ASIGNAR');
+
+      ALTER TABLE visitas_fallidas
+        ALTER COLUMN eca_nombre SET DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'SIN_ASIGNAR');
+    `,
+  },
+  {
+    id: '014_rls_admin_secretaria_reasignaciones',
+    sql: `
+      -- La Secretaría y el Administrador leen y registran las reasignaciones del RT (HU-04 RF-02) bajo el RLS estricto
+      -- de HU-15 RNF-03, donde no tienen ECA propia. Siguen sin poder modificar ni borrar un registro: sólo SELECT e INSERT.
+      DROP POLICY IF EXISTS rls_reasignaciones_rt_admin_secretaria_select ON reasignaciones_rt;
+      CREATE POLICY rls_reasignaciones_rt_admin_secretaria_select ON reasignaciones_rt
+        FOR SELECT
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_reasignaciones_rt_admin_secretaria_insert ON reasignaciones_rt;
+      CREATE POLICY rls_reasignaciones_rt_admin_secretaria_insert ON reasignaciones_rt
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+    `,
+  },
 ];

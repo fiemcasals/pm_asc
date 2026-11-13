@@ -78,7 +78,7 @@ Para la pantalla, los de la guía. El script crea 1 Secretaría, 4 RT (`RF02-ent
 
 ## 4. Endpoints y pantallas
 
-Tres rutas nuevas (arriba) y una pestaña nueva: `Semáforo` en la Secretaría. `GET /api/semaforo` (RF-01) sigue sin pedir sesión.
+Tres rutas nuevas (arriba) y una pestaña nueva: `Semáforo` en la Secretaría. `GET /api/semaforo` (RF-01) ahora también pide sesión de Secretaría o Administrador (ver la actualización al final).
 
 ## 4.5. Cómo se corre integrado
 
@@ -101,3 +101,15 @@ Las **condiciones 1 y 2 son de pantalla** y no se pueden recorrer con `curl`: se
 - **Los componentes de React no tienen pruebas propias** (el proyecto no usa jsdom): lo que se prueba con `vitest` es la lógica y el cliente de la API; la pantalla se verificó en el navegador.
 - **Por lectura del código, no probado:** `EcaContextMiddleware` toma la ECA de `req.user`, pero el guard de sesión escribe `req.usuario` y corre después, así que la ECA del usuario logueado probablemente no llega al RLS y todo cae en la ECA de desarrollo. Está así desde HU-15 y no se tocó.
 - **Regresión:** esta tarjeta no pertenece a ningún módulo (`moduleId` vacío). Se corrió la batería completa: 352 de API, 139 de web y 65 de integración en verde, incluidas las de RLS, roles, consorcios, checklist y semáforo.
+
+## 6. Actualización: integración con HU-15 RNF-03 (RLS desde la sesión)
+
+Después de certificar esta tarjeta se integró **HU-15 RNF-03** (PR #43), que cambia el modelo de seguridad: el contexto del RLS sale de la **sesión verificada** y no de encabezados del cliente, y **sin sesión no hay datos**. Para que esta tarjeta siga funcionando se hicieron estos cambios:
+
+- **`GET /api/semaforo` pide sesión de Secretaría o Administrador** (sin sesión 401, otro rol 403). Con el RLS estricto una petición sin sesión no vería ningún edificio.
+- **Migración `014_rls_admin_secretaria_reasignaciones`:** la Secretaría y el Administrador leen y registran en `reasignaciones_rt` (sólo SELECT e INSERT: siguen sin poder modificar ni borrar). Sin ella, bajo el RLS estricto no podrían ni ver su propio registro. La migración del PR pasó de `012` a `013` porque `012` ya estaba aplicada con `reasignaciones_rt`.
+- **La web manda la sesión** en todas las llamadas a `/api/consorcios`, `/api/visitas-fallidas` y `/api/semaforo` (`fetchConSesion`). Sin esto, la pantalla de Secretaría entera (Edificios, Roles y Semáforo) habría dejado de cargar con un 401.
+- **Pruebas:** las suites de integración del semáforo y la reasignación inician sesión con el helper del PR y ya no usan los encabezados `x-eca-actual` / `x-rol-actual` (se ignoran): ahora prueban que **se ignoran**, que un usuario de ECA o un RT de Calle recibe 403 y que el efecto de la reasignación sobre el acceso del RT se verifica con la sesión de cada RT. Los scripts `RF-01-entrega.sh`, `RF-02-entrega.sh` y `RF-02-datos-demo.sh` ingresan como una Secretaría de prueba.
+- **Resultado del árbol integrado:** API 353/353, web 139/139, integración 66/66 y 14 migraciones; y en el navegador, Edificios, Roles, Semáforo y la reasignación andan con sesión.
+
+**Lo que esto deja pendiente:** los scripts de entrega de **otras tarjetas** (HU-01 RF-01, HU-01 RNF-01, HU-10 RF-03, etc.) crean edificios sin sesión y dejaron de funcionar; hay que actualizarlos.

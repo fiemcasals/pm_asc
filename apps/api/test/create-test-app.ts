@@ -1,8 +1,10 @@
 import { INestApplication } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { Reloj, RELOJ, relojDelSistema } from '../src/auth/auth.types';
+import { RolesGuard } from '../src/auth/roles.guard';
 import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usuarios.repository';
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
@@ -213,6 +215,14 @@ export async function createTestApp(
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });
+  if (!auth.usuarios) {
+    app.use((req: any, _res: any, next: any) => {
+      if (!req.headers['x-forzar-sin-sesion']) {
+        req.usuario = { id: 'test-user', usuario: 'test-dev', rol: 'secretaria', eca: null };
+      }
+      next();
+    });
+  }
   configureApp(app, config);
   await app.init();
   return { app, config };

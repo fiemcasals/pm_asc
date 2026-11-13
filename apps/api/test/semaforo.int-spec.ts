@@ -7,6 +7,7 @@ import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { loadEnvFileInto } from '../src/env-file';
 import { SemaforoEdificio } from '../src/semaforo/semaforo.types';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real (HU-04 RF-01): el semáforo contra PostgreSQL de verdad. Requiere la base levantada con
 // `npm run db:up`, DATABASE_URL y DATABASE_APP_PASSWORD (en el .env de la raíz o en el entorno).
@@ -20,6 +21,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
   let pool: Pool;
   const inspeccionesCreadas: string[] = [];
   const ids: Record<string, { consorcio: string; maquinas: string[] }> = {};
+  let auth = ''; // sesión de la Secretaría: con el RLS estricto (HU-15 RNF-03) todas las rutas con datos la piden
 
   beforeAll(async () => {
     const config = loadConfig();
@@ -27,6 +29,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
     app = await NestFactory.create(AppModule.register(config), { logger: false });
     configureApp(app, config);
     await app.init();
+    auth = `Bearer ${(await asegurarUsuarioPrueba(pool, config, { usuario: `${PREFIJO}-secretaria`, rol: 'secretaria' })).token}`;
 
     // A: 2 máquinas, las dos inspeccionadas el 5/11 → inspeccionado. Con RT de Calle asignado.
     await crearEdificio('A', ['M1', 'M2']);
@@ -59,15 +62,20 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
       await pool.query('DELETE FROM inspecciones_checklist WHERE id = ANY($1)', [inspeccionesCreadas]);
     }
     await pool.query('DELETE FROM consorcios WHERE nombre LIKE $1', [`${PREFIJO}%`]);
+    await pool.query('DELETE FROM usuarios WHERE usuario LIKE $1', [`${PREFIJO}%`]);
     await app.close();
     await pool.end();
   });
 
   const http = () => request(app.getHttpServer());
+  const api = {
+    get: (u: string) => http().get(u).set('Authorization', auth),
+    post: (u: string) => http().post(u).set('Authorization', auth),
+    put: (u: string) => http().put(u).set('Authorization', auth),
+  };
 
   async function crearEdificio(clave: string, referencias: string[]) {
-    const res = await http()
-      .post('/api/consorcios')
+    const res = await api.post('/api/consorcios')
       .send({
         nombre: `${PREFIJO} ${clave}`,
         direccion: `Calle ${clave} 100, CABA`,
@@ -78,8 +86,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
   }
 
   async function asignarRt(clave: string, nombre: string) {
-    const res = await http()
-      .put(`/api/consorcios/${ids[clave].consorcio}/roles`)
+    const res = await api.put(`/api/consorcios/${ids[clave].consorcio}/roles`)
       .send({
         rtCalle: { nombre, telefono: '11 5555-0000' },
         firmante: { nombre: 'Firmante Prueba', email: 'firmante@prueba.com' },
@@ -90,8 +97,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
 
   /** Registra una inspección por la API real y le fija el instante, que la API fija en "ahora". */
   async function inspeccionar(clave: string, indiceMaquina: number, instanteIso: string) {
-    const res = await http()
-      .post('/api/checklist/inspecciones')
+    const res = await api.post('/api/checklist/inspecciones')
       .send({
         consorcioId: ids[clave].consorcio,
         maquinaId: ids[clave].maquinas[indiceMaquina],
@@ -107,7 +113,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
 
   /** El semáforo a `fecha`, limitado a los edificios de esta prueba y por clave (A..G). */
   async function semaforoA(fecha: string, cabeceras: Record<string, string> = {}) {
-    const res = await http().get('/api/semaforo').query({ fecha }).set(cabeceras);
+    const res = await api.get('/api/semaforo').query({ fecha }).set(cabeceras);
     expect(res.status).toBe(200);
     const porClave: Record<string, SemaforoEdificio> = {};
     for (const e of res.body.edificios as SemaforoEdificio[]) {
@@ -188,7 +194,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
   it('una inspección que declara un edificio pero trae la máquina de otro no cuenta para ninguno de los dos', async () => {
     // Se registra una inspección del edificio C pero con el id de la máquina de F: no es una máquina de C, y
     // tampoco debe contarse para F (su registro dice que es de C). F conserva su única inspección, la del día 1.
-    const res = await http().post('/api/checklist/inspecciones').send({
+    const res = await api.post('/api/checklist/inspecciones').send({
       consorcioId: ids.C.consorcio, maquinaId: ids.F.maquinas[0], referenciaAgc: 'M1', tipoMaquina: 'traccion', estadoEquipo: 'en_uso', datos: {},
     });
     inspeccionesCreadas.push(res.body.id);
@@ -210,15 +216,20 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
     expect(cuerpo.totales.verde + cuerpo.totales.amarillo + cuerpo.totales.rojo).toBe(cuerpo.edificios.length);
   });
 
-  it('RLS: otra ECA no ve estos edificios ni sus inspecciones', async () => {
-    const { cuerpo, porClave } = await semaforoA('2026-11-12', { 'x-eca-actual': 'ECA_OTRA_QUE_NO_EXISTE' });
+  it('sin sesión 401; un usuario de una ECA 403; y los encabezados de ECA o de rol que mande el cliente se ignoran', async () => {
+    expect((await http().get('/api/semaforo').query({ fecha: '2026-11-12' })).status).toBe(401);
 
-    expect(Object.keys(porClave)).toEqual([]);
-    expect(cuerpo.edificios.filter((e: SemaforoEdificio) => e.nombre.startsWith(PREFIJO))).toEqual([]);
+    const eca = await asegurarUsuarioPrueba(pool, loadConfig(), { usuario: `${PREFIJO}-eca`, rol: 'eca', eca: 'ECA_OTRA_QUE_NO_EXISTE' });
+    const deEca = await http().get('/api/semaforo').query({ fecha: '2026-11-12' }).set('Authorization', `Bearer ${eca.token}`);
+    expect(deEca.status).toBe(403);
+
+    // La Secretaría con encabezados de otra ECA y de otro rol sigue viendo sus edificios: el contexto sale de la sesión.
+    const { porClave } = await semaforoA('2026-11-12', { 'x-eca-actual': 'ECA_OTRA_QUE_NO_EXISTE', 'x-rol-actual': 'rt_calle' });
+    expect(Object.keys(porClave).sort()).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
   });
 
   it('una fecha inválida responde 400', async () => {
-    const res = await http().get('/api/semaforo').query({ fecha: '2026-02-30' });
+    const res = await api.get('/api/semaforo').query({ fecha: '2026-02-30' });
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('Datos inválidos');
   });

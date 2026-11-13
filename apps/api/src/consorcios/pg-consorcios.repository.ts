@@ -310,6 +310,9 @@ export class PgConsorciosRepository extends ConsorciosRepository {
           eca.nombre, eca.telefono, eca.email,
         ],
       );
+      if (eca?.nombre) {
+        await client.query('UPDATE consorcios SET eca_nombre = $1 WHERE id = $2', [eca.nombre, id]);
+      }
       return leerRoles(client, id);
     });
   }

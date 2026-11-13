@@ -6,6 +6,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Roles } from '../auth/roles.guard';
 import { VisitasFallidasService } from './visitas-fallidas.service';
 import {
   BloqueoConsorcioInfo,
@@ -18,6 +19,7 @@ import {
 } from './visitas-fallidas.types';
 
 @Controller('visitas-fallidas')
+@Roles()
 export class VisitasFallidasController {
   constructor(private readonly service: VisitasFallidasService) {}
 

@@ -38,6 +38,16 @@ describe('GET /api/semaforo (HU-04 RF-01)', () => {
     await app?.close();
   });
 
+  it('sin sesión responde 401: el RLS estricto no mostraría ningún edificio (HU-15 RNF-03)', async () => {
+    const http = await arrancar();
+    repo.edificios = [edificio()];
+
+    const res = await http.get('/api/semaforo').set('x-forzar-sin-sesion', '1');
+
+    expect(res.status).toBe(401);
+    expect(repo.fechasConsultadas).toHaveLength(0);
+  });
+
   it('criterio 4: devuelve por edificio su color, el día de la última inspección del mes y el RT de Calle asignado', async () => {
     const http = await arrancar();
     repo.edificios = [

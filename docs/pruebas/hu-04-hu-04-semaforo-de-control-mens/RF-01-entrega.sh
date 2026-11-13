@@ -48,6 +48,8 @@ limpiar() {
     [ -n "$id" ] && sql "delete from inspecciones_checklist where consorcio_id = '$id'" >/dev/null
     [ -n "$id" ] && "${CURL[@]}" -o /dev/null -X DELETE "$BASE_URL/api/consorcios/$id"
   done
+  sql "delete from usuarios where usuario = '$PREFIJO-sec'" >/dev/null
+  sql "delete from intentos_login where usuario = '$PREFIJO-sec'" >/dev/null
   rm -rf "$TMP"
 }
 trap limpiar EXIT
@@ -71,6 +73,17 @@ inspeccionar() { # inspeccionar <clave> <n.º de máquina 1..> <instante ISO con
   [ "$code" = "201" ] || { echo "  ❌ no se pudo registrar la inspección de $1 (HTTP $code)"; exit 1; }
   [ -n "${3:-}" ] && sql "update inspecciones_checklist set created_at = '$3'::timestamptz where id = '$(json "$TMP/insp-resp.json" 'b.id')'" >/dev/null
 }
+
+# Con el RLS estricto (HU-15 RNF-03) las rutas con datos piden sesión: se crea una Secretaría de prueba y se ingresa.
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+if [ -z "$(sql 'select 1')" ]; then echo "  ❌ no hay acceso a la base por docker ($DB_CONTAINER)"; exit 1; fi
+HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Clave-Segura-2026",4))')"
+sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$PREFIJO-sec','$PREFIJO-sec','secretaria','$HASH')" >/dev/null
+printf '{"usuario":"%s-sec","password":"Clave-Segura-2026"}' "$PREFIJO" > "$TMP/login.json"
+"${CURL[@]}" -o "$TMP/login-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
+TOKEN="$(json "$TMP/login-resp.json" 'b.accessToken')"
+[ -n "$TOKEN" ] && [ "$TOKEN" != "undefined" ] || { echo "  ❌ no se pudo ingresar como Secretaría (¿DATABASE_APP_PASSWORD y AUTH_JWT_SECRET definidas?)"; exit 1; }
+CURL+=(-H "Authorization: Bearer $TOKEN")
 
 if [ "$CARGA" -gt 0 ]; then
   EDIFICIOS_CARGA=30

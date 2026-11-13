@@ -1,3 +1,4 @@
+import { fetchConSesion } from '../auth/sesion';
 import type { FetchResult } from './consorcios';
 
 export interface Responsable {
@@ -104,7 +105,7 @@ function cuerpoResponsable(datos: DatosResponsable) {
 
 export async function fetchRoles(consorcioId: string): Promise<FetchResult<RolesEdificio>> {
   try {
-    const res = await fetch(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`);
+    const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`);
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudieron obtener los roles` };
     }
@@ -119,7 +120,7 @@ export async function guardarRoles(
   formulario: FormularioRoles,
 ): Promise<FetchResult<RolesEdificio>> {
   try {
-    const res = await fetch(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`, {
+    const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

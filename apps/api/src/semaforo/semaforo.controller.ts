@@ -12,8 +12,10 @@ export class SemaforoController {
   /**
    * Semáforo mensual de edificios (HU-04 RF-01): por edificio, su color, el día de la última inspección del
    * mes y el RT de Calle asignado. `?fecha=AAAA-MM-DD` calcula el semáforo "a ese día"; sin ella, hoy.
+   * Pide sesión de Secretaría o Administrador: con el RLS estricto (HU-15 RNF-03) una petición sin sesión no vería ningún edificio.
    */
   @Get()
+  @Roles('secretaria', 'administrador')
   obtener(@Query('fecha') fecha?: unknown): Promise<SemaforoResponse> {
     return this.semaforo.obtener(fecha);
   }

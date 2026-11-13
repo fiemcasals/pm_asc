@@ -56,27 +56,31 @@ for rt in a b c d; do sql "insert into usuarios (usuario, nombre, rol, password_
 
 edificio() { # edificio <clave> <rt> → ids en $TMP/<clave>.id y .maq
   printf '{"nombre":"%s %s","direccion":"Calle %s","maquinas":[{"referenciaAgc":"M1"}]}' "$P" "$1" "$1" > "$TMP/a.json"
-  curl -s -o "$TMP/r.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/a.json" "$BASE_URL/api/consorcios"
+  "${CURL[@]}" -o "$TMP/r.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/a.json" "$BASE_URL/api/consorcios"
   local id; id="$(json "$TMP/r.json" 'b.id')"; [ -n "$id" ] || { echo "  ❌ no se pudo crear el edificio $1 (¿están corriendo npm run db:up y npm run dev?)"; exit 1; }
   IDS+=("$id"); echo "$id" > "$TMP/$1.id"; json "$TMP/r.json" 'b.maquinas[0].id' > "$TMP/$1.maq"
   printf '{"rtCalle":{"nombre":"%s","telefono":"11 5555-0000"},"firmante":{"nombre":"Firmante","email":"f@f.com"},"eca":{"nombre":"ECA","email":"e@e.com"}}' "$2" > "$TMP/ro.json"
-  curl -s -o /dev/null -X PUT -H 'Content-Type: application/json' -d @"$TMP/ro.json" "$BASE_URL/api/consorcios/$id/roles"
+  "${CURL[@]}" -o /dev/null -X PUT -H 'Content-Type: application/json' -d @"$TMP/ro.json" "$BASE_URL/api/consorcios/$id/roles"
 }
 inspeccionado() { # inspeccionado <clave>: una inspección del 5/11
   printf '{"consorcioId":"%s","maquinaId":"%s","referenciaAgc":"M1","tipoMaquina":"traccion","estadoEquipo":"en_uso","datos":{}}' "$(cat "$TMP/$1.id")" "$(cat "$TMP/$1.maq")" > "$TMP/i.json"
-  curl -s -o "$TMP/ir.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/i.json" "$BASE_URL/api/checklist/inspecciones"
+  "${CURL[@]}" -o "$TMP/ir.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/i.json" "$BASE_URL/api/checklist/inspecciones"
   sql "update inspecciones_checklist set created_at='2026-11-05T10:00:00-03:00' where id='$(json "$TMP/ir.json" 'b.id')'" >/dev/null
 }
-
-# R: el edificio en rojo, del RT "a". "b" tiene 2 pendientes; "c", 1 pendiente y 1 inspeccionado (no pesa); "d", ninguno.
-edificio R "$P-a"; edificio B1 "$P-b"; edificio B2 "$P-b"; edificio C1 "$P-c"; edificio C2 "$P-c"; inspeccionado C2
-R="$(cat "$TMP/R.id")"
 
 printf '{"usuario":"%s-sec","password":"%s"}' "$P" "$PASSWORD" > "$TMP/login.json"
 curl -s -o "$TMP/login-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
 TOKEN="$(json "$TMP/login-resp.json" 'b.accessToken')"
 [ -n "$TOKEN" ] || { echo "  ❌ no se pudo ingresar como Secretaría (¿DATABASE_APP_PASSWORD y AUTH_JWT_SECRET definidas?)"; exit 1; }
 AUTH="Authorization: Bearer $TOKEN"
+CURL_SIN_SESION=("${CURL[@]}")   # para comprobar el 401
+CURL+=(-H "$AUTH")                  # el resto va con la sesión (el RLS estricto la pide en todas las rutas con datos)
+
+# R: el edificio en rojo, del RT "a". "b" tiene 2 pendientes; "c", 1 pendiente y 1 inspeccionado (no pesa); "d", ninguno.
+edificio R "$P-a"; edificio B1 "$P-b"; edificio B2 "$P-b"; edificio C1 "$P-c"; edificio C2 "$P-c"; inspeccionado C2
+R="$(cat "$TMP/R.id")"
+
+
 
 if [ "$CARGA" -gt 0 ]; then
   echo "== Modo carga: $CARGA sugerencias (GET …/reasignacion/sugerencia) con 5 edificios y 4 RT de prueba"
@@ -123,7 +127,7 @@ code="$("${CURL[@]}" -o /dev/null -w '%{http_code}' -X POST -H "$AUTH" -H 'Conte
 [ "$code" = "409" ] && pass "un edificio que no está en rojo (15/11, amarillo) → HTTP $code" || fail "no rojo → HTTP $code"
 code="$("${CURL[@]}" -o /dev/null -w '%{http_code}' -X POST -H "$AUTH" -H 'Content-Type: application/json' -d "{\"fecha\":\"$FECHA\",\"rtAnterior\":\"$P-d\",\"rtNuevo\":\"$P-sec\"}" "$BASE_URL/api/semaforo/$R/reasignacion")"
 [ "$code" = "400" ] && pass "un RT nuevo que no es RT de Calle (la Secretaría) → HTTP $code" || fail "RT inválido → HTTP $code"
-code="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/semaforo/$R/reasignacion/sugerencia?fecha=$FECHA")"
+code="$("${CURL_SIN_SESION[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/semaforo/$R/reasignacion/sugerencia?fecha=$FECHA")"
 [ "$code" = "401" ] && pass "sin sesión → HTTP $code" || fail "sin sesión → HTTP $code"
 [ "$(sql "select count(*) from reasignaciones_rt where consorcio_id='$R'")" = "1" ] && pass "los rechazos no dejaron registros (sigue 1)" || fail "los rechazos dejaron registros"
 

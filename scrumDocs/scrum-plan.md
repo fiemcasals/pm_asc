@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-13T16:57:30.876Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-13T16:57:41.056Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -37,7 +37,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 29 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 30 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | Hacer | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
 | 31 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | tested ✓ | dev-ma-2 | RF-01, RNF-02 | — |
-| 32 | RF-05 | Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar | HU-02 | — | — | testing | germanG | RF-02 | — |
+| 32 | RF-05 | Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 33 | RNF-01 | Índice por fecha para el semáforo y medición con volumen | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
 | 34 | RF-03 | Refrescar el panel de reasignación cuando el RT del edificio cambió | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
 | 35 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
@@ -61,7 +61,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 53 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | germanG | RF-02, RF-01, RF-05 | — |
 | 54 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 55 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 56 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | Hacer | germanG | RF-02 | — |
+| 56 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | Haciendo | germanG | RF-02 | — |
 | 57 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 58 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 59 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |

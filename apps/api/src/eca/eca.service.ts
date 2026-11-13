@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { getRlsContext, runWithEcaContext } from '../database/rls-context';
 import { FirmanteService } from '../firmante/firmante.service';
@@ -10,8 +10,16 @@ import {
   RemitoTecnicoResponse,
 } from './eca.types';
 
+interface FilaAcuse {
+  id: string;
+  usuario: string;
+  fecha_hora: Date;
+}
+
 @Injectable()
 export class EcaService {
+  private readonly logger = new Logger(EcaService.name);
+
   constructor(
     private readonly firmanteService: FirmanteService,
     @Optional() private readonly db?: DatabaseService,
@@ -66,6 +74,13 @@ export class EcaService {
     mes: string = '2026-11',
   ): Promise<AlertaFlotaItem[]> {
     const maquinas = await this.getMaquinasFlota(ecaIdentificador, mes);
+    try {
+      await this.cargarAcusesGuardados(maquinas.filter((m) => Boolean(m.alertaCritica)));
+    } catch (err) {
+      // Con la base caída la lista de alertas igual se muestra (con lo que haya en memoria): no se tira un portal de
+      // emergencias por no poder releer los acuses. El alta del acuse sí falla, porque ese no puede perderse.
+      this.logger.warn(`No se pudieron releer los acuses de recibo guardados: ${err instanceof Error ? err.message : String(err)}`);
+    }
 
     return maquinas
       .filter((m) => Boolean(m.alertaCritica))
@@ -82,6 +97,31 @@ export class EcaService {
             : 'Reparación Urgente'),
         alerta: m.alertaCritica!,
       }));
+  }
+
+  /**
+   * El acuse guardado en la base es el que vale: al reiniciar la API la memoria arranca sin acuses, así que se vuelven a
+   * leer. Se busca por alerta y por la ECA de la máquina (más el RLS), así que el acuse de otra ECA o de otra alerta no se
+   * mezcla. Sin base configurada no hay nada que leer.
+   */
+  private async cargarAcusesGuardados(maquinas: MaquinaEca[]): Promise<void> {
+    if (!this.db || maquinas.length === 0) return;
+    const ctx = getRlsContext();
+    const porEca = new Map<string, MaquinaEca[]>();
+    for (const m of maquinas) porEca.set(m.eca, [...(porEca.get(m.eca) ?? []), m]);
+
+    for (const [eca, delGrupo] of porEca) {
+      const filas = await runWithEcaContext(ctx?.esExplicito ? ctx.eca : eca, () =>
+        this.db!.query<FilaAcuse & { alerta_id: string }>(
+          'SELECT alerta_id, id, usuario, fecha_hora FROM acuses_recibo_legal WHERE eca = $1 AND alerta_id = ANY($2::text[])',
+          [eca, delGrupo.map((m) => m.alertaCritica!.id)],
+        ),
+      );
+      for (const fila of filas) {
+        const alerta = delGrupo.find((m) => m.alertaCritica!.id === fila.alerta_id)?.alertaCritica;
+        if (alerta) alerta.acuseRecibo = { fechaHora: new Date(fila.fecha_hora).toISOString(), usuario: fila.usuario };
+      }
+    }
   }
 
   /**
@@ -154,47 +194,54 @@ export class EcaService {
         ? 'operador.legal@maicon.com.ar'
         : 'responsable.tecnico@eca.com.ar');
 
-    const fechaHora = new Date().toISOString();
-    const acuseId = `ACU-${Date.now()}`;
     const remitoUrl = `/api/eca/remito/${alertaId}`;
+    let acuse = { id: `ACU-${Date.now()}`, fechaHora: new Date().toISOString(), usuario };
+    let yaRegistrado = false;
 
     if (this.db) {
       const ctx = getRlsContext();
       const ecaParaDb = ctx?.esExplicito ? ctx.eca : maquina.eca;
-      await runWithEcaContext(ecaParaDb, () =>
-        this.db!.query(
+      const guardado = await runWithEcaContext(ecaParaDb, async () => {
+        // ON CONFLICT: la base garantiza un acuse por alerta; si ya existía, no se inserta otro.
+        const nueva = await this.db!.query<FilaAcuse>(
           `INSERT INTO acuses_recibo_legal (alerta_id, maquina_id, eca, usuario, fecha_hora, tipo_alerta, remito_url)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            alertaId,
-            maquina.id,
-            maquina.eca,
-            usuario,
-            fechaHora,
-            maquina.alertaCritica!.tipo,
-            remitoUrl,
-          ],
-        ),
-      );
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (alerta_id) DO NOTHING
+           RETURNING id, usuario, fecha_hora`,
+          [alertaId, maquina.id, maquina.eca, usuario, acuse.fechaHora, maquina.alertaCritica!.tipo, remitoUrl],
+        );
+        if (nueva.length > 0) return { fila: nueva[0], yaRegistrado: false };
+        const previa = await this.db!.query<FilaAcuse>(
+          'SELECT id, usuario, fecha_hora FROM acuses_recibo_legal WHERE alerta_id = $1',
+          [alertaId],
+        );
+        return { fila: previa[0], yaRegistrado: true };
+      });
+      if (!guardado.fila) {
+        // Hay un acuse de esa alerta pero no es visible para esta petición: no se puede informar ni duplicar.
+        throw new ConflictException(`La alerta ${alertaId} ya tiene un acuse que no corresponde a tu ECA.`);
+      }
+      acuse = { id: `ACU-${guardado.fila.id}`, fechaHora: new Date(guardado.fila.fecha_hora).toISOString(), usuario: guardado.fila.usuario };
+      yaRegistrado = guardado.yaRegistrado;
+    } else if (maquina.alertaCritica.acuseRecibo) {
+      // Sin base (pruebas unitarias, desarrollo sin base): se devuelve el que ya estaba en memoria.
+      const previo = maquina.alertaCritica.acuseRecibo;
+      acuse = { id: acuse.id, fechaHora: previo.fechaHora, usuario: previo.usuario };
+      yaRegistrado = true;
     }
 
-    maquina.alertaCritica.acuseRecibo = {
-      fechaHora,
-      usuario,
-    };
+    maquina.alertaCritica.acuseRecibo = { fechaHora: acuse.fechaHora, usuario: acuse.usuario };
 
     return {
       ok: true,
-      mensaje: `Acuse de recibo legal registrado exitosamente para ${maquina.eca}`,
+      mensaje: yaRegistrado
+        ? `El acuse de recibo legal de esta alerta ya estaba registrado para ${maquina.eca}: se devuelve el original.`
+        : `Acuse de recibo legal registrado exitosamente para ${maquina.eca}`,
       alertaId,
       maquinaId: maquina.id,
       eca: maquina.eca,
-      acuse: {
-        id: acuseId,
-        fechaHora,
-        usuario,
-        remitoUrl,
-      },
+      yaRegistrado,
+      acuse: { ...acuse, remitoUrl },
     };
   }
 

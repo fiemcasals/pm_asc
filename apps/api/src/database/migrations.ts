@@ -481,4 +481,20 @@ export const MIGRATIONS: Migration[] = [
         ADD COLUMN IF NOT EXISTS email text;
     `,
   },
+  {
+    id: '017_acuses_recibo_unicos_por_alerta',
+    sql: `
+      -- HU-10 RF-05: un acuse de recibo legal por alerta. Si ya hubiera repetidos (cada POST insertaba una fila nueva) se
+      -- conserva el primero, que es el que vale legalmente, y se borran los posteriores; después la base lo impide sola.
+      DELETE FROM acuses_recibo_legal a
+       USING (
+         SELECT id, row_number() OVER (PARTITION BY alerta_id ORDER BY fecha_hora, created_at, id) AS orden
+           FROM acuses_recibo_legal
+       ) repetidos
+       WHERE a.id = repetidos.id AND repetidos.orden > 1;
+
+      ALTER TABLE acuses_recibo_legal
+        ADD CONSTRAINT acuses_recibo_alerta_unica UNIQUE (alerta_id);
+    `,
+  },
 ];

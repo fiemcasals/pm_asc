@@ -56,6 +56,8 @@ export interface AcuseReciboResponse {
   alertaId: string;
   maquinaId: string;
   eca: string;
+  /** true si la alerta ya tenía acuse: se devuelve el registrado, no se crea otro. */
+  yaRegistrado: boolean;
   acuse: {
     id: string;
     fechaHora: string;

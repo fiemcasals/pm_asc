@@ -28,6 +28,8 @@ import {
 export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'query'> {
   /** Consultas recibidas por query(), en orden. */
   consultas: { texto: string; params: unknown[] }[];
+  /** Acuses de recibo que la base falsa "guardó" (HU-10 RF-05). */
+  acuses: FilaAcuseFalsa[];
   /** Si tiene valor, cada query() falla con este error. Se puede cambiar o quitar en medio de una prueba. */
   errorDeQuery: Error | null;
 }
@@ -37,9 +39,39 @@ export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'que
  * - `fail`: checkHealth() falla (la base "no responde").
  * - `errorDeQuery`: query() falla con ese error. Sin él, query() registra la consulta y devuelve [].
  */
+/** Un acuse guardado en la base falsa. */
+export interface FilaAcuseFalsa {
+  id: string;
+  alerta_id: string;
+  eca: string;
+  usuario: string;
+  fecha_hora: Date;
+}
+
+/**
+ * Lo que PostgreSQL contestaría a las consultas de acuses de recibo (HU-10 RF-05): un acuse por alerta
+ * (INSERT … ON CONFLICT DO NOTHING RETURNING devuelve la fila sólo si se insertó) y la relectura por alerta.
+ * Devuelve undefined para cualquier otra consulta.
+ */
+function respuestaDeAcuses(acuses: FilaAcuseFalsa[], texto: string, params: unknown[]): unknown[] | undefined {
+  if (texto.includes('INSERT INTO acuses_recibo_legal')) {
+    const [alertaId, , eca, usuario, fechaHora] = params as [string, string, string, string, string];
+    if (acuses.some((a) => a.alerta_id === alertaId)) return [];
+    const fila = { id: `acuse-${acuses.length + 1}`, alerta_id: alertaId, eca, usuario, fecha_hora: new Date(fechaHora) };
+    acuses.push(fila);
+    return [fila];
+  }
+  if (texto.includes('FROM acuses_recibo_legal WHERE alerta_id = $1')) return acuses.filter((a) => a.alerta_id === params[0]);
+  if (texto.includes('FROM acuses_recibo_legal WHERE eca = $1')) {
+    return acuses.filter((a) => a.eca === params[0] && (params[1] as string[]).includes(a.alerta_id));
+  }
+  return undefined;
+}
+
 export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}): FakeDatabase {
   const fake: FakeDatabase = {
     consultas: [],
+    acuses: [],
     errorDeQuery: opts.errorDeQuery ?? null,
     checkHealth: async () => {
       if (opts.fail) throw new Error('connection refused');
@@ -48,7 +80,7 @@ export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}
     query: (async (texto: string, params: unknown[] = []) => {
       fake.consultas.push({ texto, params });
       if (fake.errorDeQuery) throw fake.errorDeQuery;
-      return [];
+      return respuestaDeAcuses(fake.acuses, texto, params) ?? [];
     }) as FakeDatabase['query'],
   };
   return fake;

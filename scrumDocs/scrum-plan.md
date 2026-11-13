@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-12T17:27:52.271Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-13T12:17:21.433Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -20,14 +20,14 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 12 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hacer | Sin asignar | RF-01 | — |
 | 13 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 14 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | testing | gonza | RF-01, RF-01 | — |
-| 16 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | testing | germanG | RF-01 | — |
+| 15 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
+| 16 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
 | 17 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
-| 18 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | testing | gonza | RF-02 | — |
+| 18 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
 | 19 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 20 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hacer | germanG | RF-01 | — |
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | testing | gonza | RNF-01, RF-01 | — |
+| 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
 | 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 25 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
@@ -36,12 +36,12 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 28 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 29 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 30 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | Hacer | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
-| 31 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | Hacer | gonza | RF-01, RNF-02 | — |
+| 31 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | Haciendo | gonza | RF-01, RNF-02 | — |
 | 32 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 33 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 34 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 35 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 36 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | testing | dev-ma-2 | RF-01 | — |
+| 36 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
 | 37 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | Hacer | germanG | RF-01 | — |
 | 38 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 39 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |

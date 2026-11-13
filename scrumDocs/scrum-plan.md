@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-13T17:05:04.258Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-13T17:05:08.108Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -61,7 +61,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 53 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | germanG | RF-02, RF-01, RF-05 | — |
 | 54 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 55 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 56 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | Hecho | germanG | RF-02 | — |
+| 56 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | Hecho ✓ dev | germanG | RF-02 | — |
 | 57 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 58 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 59 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |

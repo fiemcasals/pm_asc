@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-13T13:12:18.771Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-13T13:12:53.388Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -163,7 +163,7 @@ Pestaña Asignación de Roles de Trabajo implementada en Secretaría y corregida
 - Estimado: 3h
 
 ### RF-01 — Motor de Control Semafórico por Antigüedad de Visita
-Inicio de desarrollo del requerimiento
+GET /api/semaforo (módulo nuevo apps/api/src/semaforo/): edificio con todas sus máquinas inspeccionadas en el mes = verde cualquiera sea el día; pendiente = verde 1-10, amarillo 11-20, rojo 21 al último día incluido el 31; el 1.º de cada mes todos vuelven a pendiente (la ventana del mes arranca en el día 1, sin proceso programado). Devuelve por edificio color, estado, máquinas inspeccionadas, día de la última inspección del mes y RT de Calle; ordenado rojos primero. Día y mes en hora de Buenos Aires (no UTC); ?fecha=AAAA-MM-DD calcula el semáforo a ese día y una fecha inválida da 400. Una consulta SQL, con RLS por ECA. Pruebas: npm run verify 310/310 en API (64 nuevos), web sin cambios; test:int 50/50 contra PostGIS real (13 nuevos). Mutaciones: 6 de 6 detectadas; la de la inspección de máquina ajena sobrevivió la primera vez y se reforzó la prueba. Script de entrega 17/17; carga de 200 consultas con 30 edificios sembrados: 0 fallidas, p95 12 ms. Borde de la medianoche de Buenos Aires probado con inspecciones reales (23:30 del 31/10 cuenta en octubre; 00:10 del 1/11 en noviembre). 4 tests de desarrollo aprobados con evidencia; 4 de integración preparados para QA como Manual (hay que fechar inspecciones en la base). Mínimo necesario agregado: SemaforoController en el middleware de contexto de ECA en app.module.ts (sin eso el RLS devuelve 0 edificios) y InMemorySemaforoRepository en create-test-app.ts (aditivo). Asunción a confirmar: 'inspeccionado con éxito' = todas las máquinas con al menos una inspección en inspecciones_checklist en el mes, porque todavía no existe el concepto de inspección cumplida/firmada (HU-18); un edificio sin máquinas queda pendiente. Afuera: el mapa, Enviar recordatorio y Reasignar (HU-04 RF-02); sin @Roles todavía; sin paginación ni medición con cientos de edificios. Novedad de entorno: la API necesita DATABASE_APP_PASSWORD y AUTH_JWT_SECRET (RLS de HU-15). PR: https://github.com/fiemcasals/pm_asc/pull/42
 - Estimado: 4h
 
 ### RF-01 — API de Máquinas Asignadas y Autorización de Firma AGC

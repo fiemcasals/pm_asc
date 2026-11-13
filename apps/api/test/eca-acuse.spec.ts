@@ -26,7 +26,7 @@ describe('EcaService.registrarAcuseRecibo (HU-10 RF-03)', () => {
       const orden: string[] = [];
       const query = jest.fn(async (_texto: string, _params?: unknown[]) => {
         orden.push(`INSERT (acuse en memoria: ${acuseEnMemoria(firmante) === null ? 'no' : 'sí'})`);
-        return [];
+        return [{ id: 'u1', usuario: _params?.[3], fecha_hora: _params?.[4] }]; // el RETURNING del INSERT
       });
       const ecaService = new EcaService(firmante, baseConQuery(query));
 

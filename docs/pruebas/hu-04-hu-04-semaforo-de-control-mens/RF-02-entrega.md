@@ -5,7 +5,7 @@
 - **Depende de:** HU-04 RF-01 (`GET /api/semaforo`), integrada y certificada
 - **Fuente de las reglas:** definiciones del cliente P2.a (sin técnicos en vivo, opción A) y P2.d (se sugiere al RT con menos pendientes y la Secretaría confirma)
 - **Guía visual, con capturas:** [RF-02-semaforo-secretaria.md](RF-02-semaforo-secretaria.md)
-- **Script del flujo integrado:** [RF-02-entrega.sh](RF-02-entrega.sh)
+- **Script del flujo integrado:** [RF-02-entrega.sh](RF-02-entrega.sh) · **Datos de demostración:** [RF-02-datos-demo.sh](RF-02-datos-demo.sh)
 
 ## 1. Qué quedó implementado
 

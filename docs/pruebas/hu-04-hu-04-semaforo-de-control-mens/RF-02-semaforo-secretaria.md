@@ -13,7 +13,14 @@ flowchart LR
   C -- no --> H[Aviso: sólo se reasigna un edificio en rojo]
 ```
 
-**Datos que hacen falta.** Al menos: 3 usuarios con rol RT de Calle, y 4 edificios con ubicación, máquinas y terna asignada (uno con RT distinto de los demás), de los cuales uno ya inspeccionado este mes y uno sin ubicación. El script `RF-02-entrega.sh` arma datos parecidos para el flujo por API; para esta guía se usaron los edificios `DEMO …` y los usuarios `rt.ana`, `rt.beto`, `rt.carla` y `rt.diego` (ya borrados).
+**Datos que hacen falta.** Una Secretaría, tres o más RT de Calle y cuatro edificios con ubicación, máquinas y terna (uno ya inspeccionado este mes y uno sin ubicación). Se crean todos con un comando, y se borran con otro:
+
+```bash
+bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh            # crea los datos
+bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh --limpiar  # los borra
+```
+
+Ingresar como `demo.secretaria` con la clave `Demo-Clave-2026`. Las capturas de esta guía se sacaron con esos mismos datos.
 
 ## Paso 1 — Abrir la pestaña `Semáforo`
 

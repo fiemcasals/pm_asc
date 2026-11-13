@@ -127,10 +127,13 @@ export async function mensajeDeError(res: Response, porDefecto: string): Promise
 
 const conFecha = (fecha?: string) => (fecha ? `?fecha=${encodeURIComponent(fecha)}` : '');
 
-async function pedir<T>(url: string, porDefecto: string, init?: RequestInit, conSesion = false): Promise<FetchResult<T>> {
+/** El resultado de una llamada; si la API respondió con error, también el código HTTP (para distinguir un 409). */
+export type ResultadoApi<T> = FetchResult<T> & { status?: number };
+
+async function pedir<T>(url: string, porDefecto: string, init?: RequestInit, conSesion = false): Promise<ResultadoApi<T>> {
   try {
     const res = conSesion ? await fetchConSesion(url, init) : await fetch(url, init);
-    if (!res.ok) return { ok: false, error: await mensajeDeError(res, porDefecto) };
+    if (!res.ok) return { ok: false, error: await mensajeDeError(res, porDefecto), status: res.status };
     return { ok: true, data: (await res.json()) as T };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
@@ -153,7 +156,7 @@ export function fetchSugerencia(consorcioId: string, fecha?: string): Promise<Fe
 export function confirmarReasignacion(
   consorcioId: string,
   datos: { rtAnterior: string; rtNuevo: string; fecha?: string },
-): Promise<FetchResult<RegistroReasignacion>> {
+): Promise<ResultadoApi<RegistroReasignacion>> {
   return pedir(
     `/api/semaforo/${consorcioId}/reasignacion`,
     'No se pudo aplicar la reasignación',

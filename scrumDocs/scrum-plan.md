@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-13T13:19:14.107Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-13T14:11:20.022Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -25,7 +25,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 17 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | Hacer | Sin asignar | RF-02 | — |
 | 18 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
 | 19 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
-| 20 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hecho | germanG | RF-01 | — |
+| 20 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
 | 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
@@ -59,15 +59,15 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 51 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 52 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 53 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
-| 54 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | testing | gonza | RF-01, RF-02 | — |
+| 54 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 55 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
 | 56 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | Sin asignar | RF-03 | — |
-| 57 | RF-05 | Fotos por anomalía | HU-17 | — | — | testing | gonza | RF-04 | — |
-| 58 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | testing | gonza | RF-04, RF-05 | — |
-| 59 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | testing | gonza | RF-04, RF-04 | — |
+| 57 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
+| 58 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 59 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
 | 60 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 61 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | gonza | RF-04, RF-05 | — |
-| 62 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | testing | gonza | RF-04, RF-05 | — |
+| 62 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 63 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | germanG | RF-07, RF-03 | — |
 | 64 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-01, RF-01 | — |
 | 65 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | Hacer | Sin asignar | RF-03, RF-02, RF-02 | — |
@@ -207,6 +207,7 @@ PR #5 abierto contra dev. Implementados GET /api/eca/cobertura y GET /api/eca/ma
 - Estimado: 5h
 
 ### RNF-03 — Tomar la ECA y el rol del RLS desde la sesión del usuario
+Implementaci�n finalizada y verificada. Contexto RLS extra�do de req.usuario. PR #43 abierto contra dev. 4 tests de desarrollo aprobados con evidencia cuantitativa. Script de entrega RNF-03-entrega.sh pasando 5/5 y carga 50 corridas en verde.
 - Estimado: 4h
 
 ### RF-02 — UI Tablero Dinámico de Monitoreo General (Backoffice)

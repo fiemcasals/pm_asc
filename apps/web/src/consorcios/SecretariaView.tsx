@@ -12,6 +12,7 @@ import {
 import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
 import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
+import { SemaforoView } from '../semaforo/SemaforoView';
 import { puedeSalir } from './roles';
 
 interface EdificiosPanelProps {
@@ -236,7 +237,7 @@ interface SecretariaViewProps {
 }
 
 export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
-  const [pestana, setPestana] = useState<'edificios' | 'roles'>('edificios');
+  const [pestana, setPestana] = useState<'edificios' | 'roles' | 'semaforo'>('edificios');
 
   useEffect(() => {
     if (consorcioInicialId) {
@@ -261,13 +262,18 @@ export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
         >
           Asignación de Roles de Trabajo
         </button>
+        <button
+          className={`tab-btn ${pestana === 'semaforo' ? 'active' : ''}`}
+          onClick={() => puedeSalir() && setPestana('semaforo')}
+          data-testid="pestana-semaforo"
+        >
+          Semáforo
+        </button>
       </nav>
 
-      {pestana === 'edificios' ? (
-        <EdificiosPanel consorcioInicialId={consorcioInicialId} />
-      ) : (
-        <AsignacionRoles />
-      )}
+      {pestana === 'edificios' && <EdificiosPanel consorcioInicialId={consorcioInicialId} />}
+      {pestana === 'roles' && <AsignacionRoles />}
+      {pestana === 'semaforo' && <SemaforoView />}
 
       <AlertaFallaCritica />
     </>

@@ -10,6 +10,12 @@ import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '
 import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
+import {
+  ReasignacionPedida,
+  RegistroReasignacion,
+  ResultadoReasignacion,
+  RtDisponible,
+} from '../src/semaforo/reasignacion.types';
 import { SemaforoRepository } from '../src/semaforo/semaforo.repository';
 import { EdificioBase, FechaCalendario } from '../src/semaforo/semaforo.types';
 import {
@@ -137,14 +143,48 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
   }
 }
 
-/** Semáforo en memoria: devuelve los edificios que se le carguen y anota las fechas que le consultaron. */
+/**
+ * Semáforo en memoria: devuelve los edificios que se le carguen y anota las fechas que le consultaron.
+ * La reasignación se comporta como la real: sin terna o con el RT cambiado no se aplica; si se aplica, cambia
+ * el RT del edificio (vaciando sus contactos) y escribe el registro.
+ */
 export class InMemorySemaforoRepository extends SemaforoRepository {
   edificios: EdificioBase[] = [];
+  rtDisponibles: RtDisponible[] = [];
+  readonly registros: RegistroReasignacion[] = [];
   readonly fechasConsultadas: FechaCalendario[] = [];
+  /** Cuántas veces se pidió aplicar una reasignación (aunque no se haya aplicado). */
+  intentosDeReasignar = 0;
 
   async leerEdificios(fecha: FechaCalendario): Promise<EdificioBase[]> {
     this.fechasConsultadas.push(fecha);
     return structuredClone(this.edificios);
+  }
+
+  async listarRtDisponibles(): Promise<RtDisponible[]> {
+    return structuredClone(this.rtDisponibles);
+  }
+
+  async reasignarRt(pedida: ReasignacionPedida): Promise<ResultadoReasignacion> {
+    this.intentosDeReasignar += 1;
+    const edificio = this.edificios.find((e) => e.id === pedida.consorcioId);
+    if (!edificio?.rtCalle) return { ok: false, motivo: 'sin_terna' };
+    if (edificio.rtCalle.nombre !== pedida.rtAnterior) return { ok: false, motivo: 'rt_cambio' };
+    edificio.rtCalle = { nombre: pedida.rtNuevo, telefono: null, email: null };
+    const registro: RegistroReasignacion = {
+      id: randomUUID(),
+      consorcioId: pedida.consorcioId,
+      rtAnterior: pedida.rtAnterior,
+      rtNuevo: pedida.rtNuevo,
+      usuario: pedida.usuario,
+      fecha: new Date().toISOString(),
+    };
+    this.registros.unshift(registro);
+    return { ok: true, registro };
+  }
+
+  async listarReasignaciones(consorcioId: string): Promise<RegistroReasignacion[]> {
+    return structuredClone(this.registros.filter((r) => r.consorcioId === consorcioId));
   }
 }
 

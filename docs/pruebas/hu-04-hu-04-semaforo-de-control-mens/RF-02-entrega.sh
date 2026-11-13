@@ -52,7 +52,8 @@ if [ -z "$(sql 'select 1')" ]; then echo "  ❌ no hay acceso a la base por dock
 
 HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync(process.argv[1],4))' "$PASSWORD")"
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$P-sec','$P-sec','secretaria','$HASH')" >/dev/null
-for rt in a b c d; do sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$P-$rt','$P-$rt','rt_calle','sin-login')" >/dev/null; done
+# Con HU-02 RF-05 el contacto del RT vive en su usuario y la terna lo toma al reasignar: cada RT de prueba lo tiene.
+for rt in a b c d; do sql "insert into usuarios (usuario, nombre, rol, password_hash, telefono, email) values ('$P-$rt','$P-$rt','rt_calle','sin-login','11 4444-$rt','$P-$rt@rt.com')" >/dev/null; done
 
 edificio() { # edificio <clave> <rt> → ids en $TMP/<clave>.id y .maq
   printf '{"nombre":"%s %s","direccion":"Calle %s","maquinas":[{"referenciaAgc":"M1"}]}' "$P" "$1" "$1" > "$TMP/a.json"
@@ -114,7 +115,7 @@ code="$("${CURL[@]}" -o "$TMP/conf-resp.json" -w '%{http_code}' -X POST -H "$AUT
 reg="$(sql "select usuario||'|'||rt_anterior||'|'||rt_nuevo||'|'||(fecha > now() - interval '1 minute')::text from reasignaciones_rt where consorcio_id='$R'")"
 [ "$reg" = "$P-sec|$P-a|$P-d|true" ] && pass "registro en la base: usuario $P-sec (de la sesión, no del cuerpo), anterior …-a, nuevo …-d, fecha de hace menos de 1 minuto" || fail "registro: '$reg'"
 rt="$(sql "select rt_calle_nombre||'|'||coalesce(rt_calle_telefono,'∅')||'|'||coalesce(rt_calle_email,'∅') from roles_edificio where consorcio_id='$R'")"
-[ "$rt" = "$P-d|∅|∅" ] && pass "el edificio pasó al RT nuevo y los contactos del anterior se vaciaron" || fail "terna: '$rt'"
+[ "$rt" = "$P-d|11 4444-d|$P-d@rt.com" ] && pass "el edificio pasó al RT nuevo y la terna tiene el contacto del RT nuevo (no el del anterior)" || fail "terna: '$rt'"
 "${CURL[@]}" -o "$TMP/sem.json" "$BASE_URL/api/semaforo?fecha=$FECHA"
 [ "$(json "$TMP/sem.json" 'b.edificios.find(e=>e.id==="'"$R"'").rtCalle.nombre')" = "$P-d" ] && pass "el semáforo ya muestra al RT nuevo" || fail "el semáforo no refleja el cambio"
 "${CURL[@]}" -o "$TMP/hist.json" -H "$AUTH" "$BASE_URL/api/semaforo/$R/reasignaciones"

@@ -45,6 +45,10 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
       tokensRt[rt] = (await asegurarUsuarioPrueba(admin, config, { usuario: rt, rol: 'rt_calle' })).token;
     }
     await alta(usuarios.inactivo, 'rt_calle', false);
+    // Desde HU-02 RF-05 la terna toma el contacto del usuario del RT nuevo: sin contacto la reasignación se rechaza.
+    for (const rt of [usuarios.ana, usuarios.beto, usuarios.carla]) {
+      await admin.query('UPDATE usuarios SET telefono = $2, email = $3 WHERE usuario = $1', [rt, `11 4444-${rt.slice(-4)}`, `${rt}@rt.com`]);
+    }
 
     const login = await http().post('/api/auth/login').send({ usuario: usuarios.secretaria, password: PASSWORD });
     expect(login.status).toBe(200);
@@ -164,8 +168,8 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
       expect(filas[0].id).toBe(res.body.id);
       expect(new Date(filas[0].fecha).getTime()).toBeGreaterThanOrEqual(antes - 2000); // fecha del servidor, de ahora
       expect(new Date(filas[0].fecha).getTime()).toBeLessThanOrEqual(Date.now() + 2000);
-      // El RT cambió y los contactos del anterior se vaciaron (eran de ana, no de carla).
-      expect(await rtEnBase('R')).toEqual({ rt_calle_nombre: usuarios.carla, rt_calle_telefono: null, rt_calle_email: null });
+      // El RT cambió y la terna quedó con el contacto de carla, no con el de ana.
+      expect(await rtEnBase('R')).toEqual({ rt_calle_nombre: usuarios.carla, rt_calle_telefono: `11 4444-${usuarios.carla.slice(-4)}`, rt_calle_email: `${usuarios.carla}@rt.com` });
     });
 
     it('el semáforo ya muestra al RT nuevo, y la carga de los RT cambió', async () => {

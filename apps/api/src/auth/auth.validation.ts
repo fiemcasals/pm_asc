@@ -54,3 +54,35 @@ export function validarNuevoUsuario(body: unknown): {
   if (errores.length > 0) throw new BadRequestException(errores);
   return { usuario, nombre, rol: b.rol as Rol, password, eca };
 }
+
+const MAX_TELEFONO = 50;
+const MAX_EMAIL = 200;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Teléfono y email de contacto de un RT de Calle. Los dos son opcionales y vacío o null los borra, pero el cuerpo tiene
+ * que traer al menos uno de los dos campos (aunque sea null): un cuerpo vacío no borra el contacto por error.
+ */
+export function validarContacto(body: unknown): { telefono: string | null; email: string | null } {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const errores: string[] = [];
+  if (b.telefono === undefined && b.email === undefined) errores.push('mandá telefono, email o los dos (null los borra)');
+
+  const texto = (valor: unknown, campo: string, max: number): string | null => {
+    if (valor === undefined || valor === null) return null;
+    if (typeof valor !== 'string') {
+      errores.push(`${campo} tiene que ser un texto`);
+      return null;
+    }
+    const t = valor.trim();
+    if (t.length > max) errores.push(`${campo} no puede superar los ${max} caracteres`);
+    return t === '' ? null : t;
+  };
+  const telefono = texto(b.telefono, 'telefono', MAX_TELEFONO);
+  const email = texto(b.email, 'email', MAX_EMAIL);
+  if (email !== null && !EMAIL.test(email)) errores.push('email no es un email válido');
+
+  if (errores.length > 0) throw new BadRequestException(errores);
+  return { telefono, email };
+}
+

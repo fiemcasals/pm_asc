@@ -148,11 +148,13 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
 /**
  * Semáforo en memoria: devuelve los edificios que se le carguen y anota las fechas que le consultaron.
  * La reasignación se comporta como la real: sin terna o con el RT cambiado no se aplica; si se aplica, cambia
- * el RT del edificio (vaciando sus contactos) y escribe el registro.
+ * el RT del edificio (con el contacto del RT nuevo) y escribe el registro.
  */
 export class InMemorySemaforoRepository extends SemaforoRepository {
   edificios: EdificioBase[] = [];
   rtDisponibles: RtDisponible[] = [];
+  /** Contacto de cada RT por nombre de usuario; el que no figura tiene un teléfono de prueba. */
+  contactos: Record<string, { telefono: string | null; email: string | null }> = {};
   readonly registros: RegistroReasignacion[] = [];
   readonly fechasConsultadas: FechaCalendario[] = [];
   /** Cuántas veces se pidió aplicar una reasignación (aunque no se haya aplicado). */
@@ -172,7 +174,9 @@ export class InMemorySemaforoRepository extends SemaforoRepository {
     const edificio = this.edificios.find((e) => e.id === pedida.consorcioId);
     if (!edificio?.rtCalle) return { ok: false, motivo: 'sin_terna' };
     if (edificio.rtCalle.nombre !== pedida.rtAnterior) return { ok: false, motivo: 'rt_cambio' };
-    edificio.rtCalle = { nombre: pedida.rtNuevo, telefono: null, email: null };
+    const contacto = this.contactos[pedida.rtNuevo] ?? { telefono: '+54 11 5555-0000', email: null };
+    if (!contacto.telefono && !contacto.email) return { ok: false, motivo: 'sin_contacto' };
+    edificio.rtCalle = { nombre: pedida.rtNuevo, telefono: contacto.telefono, email: contacto.email };
     const registro: RegistroReasignacion = {
       id: randomUUID(),
       consorcioId: pedida.consorcioId,

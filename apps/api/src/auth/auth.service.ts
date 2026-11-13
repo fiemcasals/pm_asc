@@ -13,11 +13,13 @@ import {
 import bcrypt from 'bcryptjs';
 import { APP_CONFIG, AppConfig } from '../config';
 import {
+  aConContacto,
   aPublico,
   Reloj,
   RELOJ,
   Rol,
   UsuarioAutenticado,
+  UsuarioConContacto,
   UsuarioGuardado,
   UsuarioPublico,
   UsuarioSesion,
@@ -172,6 +174,28 @@ export class AuthService implements OnApplicationBootstrap {
     const usuario = await this.usuarios.buscarPorId(id);
     if (!usuario?.activo) throw new UnauthorizedException('La sesión no es válida. Volvé a ingresar.');
     return this.aSesion(usuario);
+  }
+
+  /** El usuario con su teléfono y email de contacto (sólo lo ve el Administrador). */
+  async usuarioConContacto(id: string): Promise<UsuarioConContacto> {
+    const usuario = await this.usuarios.buscarPorId(id);
+    if (!usuario) throw new NotFoundException('No existe ese usuario.');
+    return aConContacto(usuario);
+  }
+
+  /**
+   * Carga o edita el teléfono y el email de un RT de Calle. Al reasignarle un edificio, la terna se completa con
+   * estos datos. A los demás roles no se les cargan: su contacto no se usa en ninguna terna.
+   */
+  async guardarContacto(id: string, contacto: { telefono: string | null; email: string | null }): Promise<UsuarioConContacto> {
+    const usuario = await this.usuarios.buscarPorId(id);
+    if (!usuario) throw new NotFoundException('No existe ese usuario.');
+    if (usuario.rol !== 'rt_calle') {
+      throw new ConflictException('El teléfono y el email sólo se cargan a usuarios con rol rt_calle.');
+    }
+    const guardado = await this.usuarios.guardarContacto(id, contacto.telefono, contacto.email);
+    if (!guardado) throw new NotFoundException('No existe ese usuario.');
+    return aConContacto(guardado);
   }
 
   /** Revoca todas las sesiones del usuario: el refresco y cualquier pedido con sus tokens dan 401. */

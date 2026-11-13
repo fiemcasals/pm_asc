@@ -98,6 +98,11 @@ export class SemaforoService {
       usuario,
     });
     if (!resultado.ok) {
+      if (resultado.motivo === 'sin_contacto') {
+        throw new ConflictException(
+          `El RT "${pedido.rtNuevo}" no tiene teléfono ni email cargados: pedile al Administrador que los cargue antes de asignarle el edificio.`,
+        );
+      }
       throw new ConflictException(
         resultado.motivo === 'rt_cambio'
           ? 'El RT del edificio cambió mientras confirmabas. Se actualizó el panel con el RT vigente.'

@@ -295,6 +295,16 @@ describe('Reasignación del RT de Calle de un edificio en rojo (HU-04 RF-02)', (
       noAplica();
     });
 
+    it('409 si el RT nuevo no tiene teléfono ni email cargados (HU-02 RF-05): no cambia nada y el aviso dice cuál RT', async () => {
+      await arrancar();
+      repo.contactos.carla = { telefono: null, email: null };
+      const res = await reasignar({ rtAnterior: 'ana', rtNuevo: 'carla' });
+      expect(res.status).toBe(409);
+      expect(res.body.message).toContain('"carla" no tiene teléfono ni email');
+      expect(repo.edificios[0].rtCalle?.nombre).toBe('ana');
+      expect(repo.registros).toHaveLength(0);
+    });
+
     it('409 si el edificio no está en rojo (verificado con la fecha de hoy)', async () => {
       await arrancar('2026-11-12T15:00:00Z');
       const res = await reasignar({ rtAnterior: 'ana', rtNuevo: 'carla' });

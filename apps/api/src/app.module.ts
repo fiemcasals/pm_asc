@@ -22,6 +22,10 @@ import { FallasCriticasService } from './fallas-criticas/fallas-criticas.service
 import { FirmanteController } from './firmante/firmante.controller';
 import { FirmanteService } from './firmante/firmante.service';
 import { HealthController } from './health/health.controller';
+import { PgSemaforoRepository } from './semaforo/pg-semaforo.repository';
+import { SemaforoController } from './semaforo/semaforo.controller';
+import { SemaforoRepository } from './semaforo/semaforo.repository';
+import { SemaforoService } from './semaforo/semaforo.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
@@ -43,6 +47,7 @@ export class AppModule implements NestModule {
         FirmanteController,
         FallasCriticasController,
         SeguridadRlsController,
+        SemaforoController,
         HealthController,
       );
   }
@@ -63,6 +68,7 @@ export class AppModule implements NestModule {
         VisitasFallidasController,
         FallasCriticasController,
         SeguridadRlsController,
+        SemaforoController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -81,6 +87,8 @@ export class AppModule implements NestModule {
         WhatsAppTriggerService,
         VisitasFallidasService,
         FallasCriticasService,
+        { provide: SemaforoRepository, useClass: PgSemaforoRepository },
+        SemaforoService,
       ],
     };
   }

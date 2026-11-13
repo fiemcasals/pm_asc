@@ -10,6 +10,8 @@ import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '
 import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
+import { SemaforoRepository } from '../src/semaforo/semaforo.repository';
+import { EdificioBase, FechaCalendario } from '../src/semaforo/semaforo.types';
 import {
   InMemoryVisitasFallidasRepository,
   VisitasFallidasRepository,
@@ -135,12 +137,24 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
   }
 }
 
+/** Semáforo en memoria: devuelve los edificios que se le carguen y anota las fechas que le consultaron. */
+export class InMemorySemaforoRepository extends SemaforoRepository {
+  edificios: EdificioBase[] = [];
+  readonly fechasConsultadas: FechaCalendario[] = [];
+
+  async leerEdificios(fecha: FechaCalendario): Promise<EdificioBase[]> {
+    this.fechasConsultadas.push(fecha);
+    return structuredClone(this.edificios);
+  }
+}
+
 export async function createTestApp(
   env: NodeJS.ProcessEnv,
   database = fakeDatabase(),
   consorcios: ConsorciosRepository = new InMemoryConsorciosRepository(),
   visitasFallidas: VisitasFallidasRepository = new InMemoryVisitasFallidasRepository(),
   auth: { usuarios?: UsuariosRepository; reloj?: Reloj } = {},
+  semaforo: SemaforoRepository = new InMemorySemaforoRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   const config = loadConfig(env);
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(config)] })
@@ -154,6 +168,8 @@ export async function createTestApp(
     .useValue(auth.usuarios ?? new InMemoryUsuariosRepository())
     .overrideProvider(RELOJ)
     .useValue(auth.reloj ?? relojDelSistema)
+    .overrideProvider(SemaforoRepository)
+    .useValue(semaforo)
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });

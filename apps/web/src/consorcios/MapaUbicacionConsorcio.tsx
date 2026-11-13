@@ -6,6 +6,10 @@ export interface MarcadorMapa {
   etiqueta: string;
   subtitulo?: string;
   ubicacion: PuntoGeografico;
+  /** Color del pin (por defecto, verde azulado). El semáforo lo usa para pintar cada edificio según su estado. */
+  color?: string;
+  /** Nombre del color, para leerlo sin mirar el pin (accesibilidad y pruebas). */
+  colorNombre?: string;
 }
 
 interface MapaUbicacionConsorcioProps {
@@ -14,6 +18,10 @@ interface MapaUbicacionConsorcioProps {
   editable?: boolean;
   onCambiarUbicacion?: (punto: PuntoGeografico | null) => void;
   testId?: string;
+  /** Si se pasa, los marcadores se pueden elegir (clic o teclado) y devuelven el id del edificio. */
+  onSeleccionarMarcador?: (id: string) => void;
+  /** Marcador resaltado con un aro, el que está seleccionado. */
+  marcadorSeleccionadoId?: string | null;
 }
 
 // Límites geográficos de CABA para proyectar lat/lon en coordenadas del lienzo SVG (600x260).
@@ -54,6 +62,8 @@ export function MapaUbicacionConsorcio({
   editable = false,
   onCambiarUbicacion,
   testId = 'mapa-postgis-caba',
+  onSeleccionarMarcador,
+  marcadorSeleccionadoId = null,
 }: MapaUbicacionConsorcioProps) {
   const manejarClickMapa = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!editable || !onCambiarUbicacion) return;
@@ -128,9 +138,24 @@ export function MapaUbicacionConsorcio({
         {/* Marcadores múltiples (Vista Mapa de Edificios) */}
         {marcadores.map((m) => {
           const p = proyectar(m.ubicacion);
+          const elegible = Boolean(onSeleccionarMarcador);
           return (
-            <g key={m.id} data-testid={`marcador-mapa-${m.id}`}>
-              <circle cx={p.x} cy={p.y} r="7" fill="#0f766e" stroke="#ffffff" strokeWidth="2" />
+            <g
+              key={m.id}
+              data-testid={`marcador-mapa-${m.id}`}
+              data-color={m.colorNombre}
+              role={elegible ? 'button' : undefined}
+              tabIndex={elegible ? 0 : undefined}
+              aria-label={m.subtitulo ? `${m.etiqueta}. ${m.subtitulo}` : m.etiqueta}
+              style={elegible ? { cursor: 'pointer' } : undefined}
+              onClick={elegible ? (e) => { e.stopPropagation(); onSeleccionarMarcador?.(m.id); } : undefined}
+              onKeyDown={elegible ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSeleccionarMarcador?.(m.id); } } : undefined}
+            >
+              <title>{m.subtitulo ? `${m.etiqueta} — ${m.subtitulo}` : m.etiqueta}</title>
+              {marcadorSeleccionadoId === m.id && (
+                <circle cx={p.x} cy={p.y} r="13" fill="none" stroke="#0f172a" strokeWidth="2" strokeDasharray="3 2" />
+              )}
+              <circle cx={p.x} cy={p.y} r="7" fill={m.color ?? '#0f766e'} stroke="#ffffff" strokeWidth="2" />
               <text x={p.x + 10} y={p.y + 4} fontSize="11" fill="#0f172a" fontWeight="700">
                 {m.etiqueta}
               </text>

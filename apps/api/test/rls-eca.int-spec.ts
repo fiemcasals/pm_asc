@@ -15,6 +15,7 @@ const TABLAS_ECA = [
   'acuses_recibo_legal',
   'consorcios',
   'maquinas',
+  'reasignaciones_rt',
   'roles_edificio',
   'visitas_fallidas',
 ];

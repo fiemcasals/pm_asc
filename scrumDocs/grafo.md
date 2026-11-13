@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-13T15:23:52.503Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-13T15:30:17.533Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -111,12 +111,6 @@ graph TD
     REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
     REQ_1794494002697["RNF-01: Sellado del informe"]
     REQ_1794494002926["RNF-02: Cola de sincronización del celular"]
-  end
-  subgraph US_1794582638721["RO-02: Documentar las variables de entorno obligatorias y avisar claro si faltan"]
-    REQ_1794582638732["RF-01: Documentar las variables de entorno obligatorias y avisar claro si faltan"]
-  end
-  subgraph US_1794582638806["RO-03: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto"]
-    REQ_1794582638813["RF-01: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885

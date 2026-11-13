@@ -1,5 +1,5 @@
 import { DynamicModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthController, ConsentimientoController, UsuariosController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { RELOJ, relojDelSistema } from './auth/auth.types';
@@ -14,6 +14,7 @@ import { ConsorciosRepository } from './consorcios/consorcios.repository';
 import { PgConsorciosRepository } from './consorcios/pg-consorcios.repository';
 import { DatabaseService } from './database/database.service';
 import { EcaContextMiddleware } from './database/eca-context.middleware';
+import { RlsContextInterceptor } from './database/rls-context.interceptor';
 import { SeguridadRlsController } from './database/seguridad-rls.controller';
 import { EcaController } from './eca/eca.controller';
 import { EcaService } from './eca/eca.service';
@@ -71,6 +72,7 @@ export class AppModule implements NestModule {
         { provide: UsuariosRepository, useClass: PgUsuariosRepository },
         AuthService,
         { provide: APP_GUARD, useClass: RolesGuard },
+        { provide: APP_INTERCEPTOR, useClass: RlsContextInterceptor },
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,

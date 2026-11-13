@@ -7,6 +7,7 @@ import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { MENSAJE_TEXTO_INVALIDO } from '../src/database/database-error.filter';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real (RNF-01): el carácter NUL contra PostgreSQL de verdad. Requiere la base
 // levantada con `npm run db:up` y DATABASE_URL (en el .env de la raíz o en el entorno).
@@ -18,6 +19,7 @@ describe('Carácter NUL contra PostgreSQL + PostGIS real (RNF-01)', () => {
   let app: INestApplication;
   let pool: Pool;
   let warn: jest.SpyInstance;
+  let authToken = '';
 
   beforeAll(async () => {
     const config = loadConfig();
@@ -25,6 +27,8 @@ describe('Carácter NUL contra PostgreSQL + PostGIS real (RNF-01)', () => {
     app = await NestFactory.create(AppModule.register(config), { logger: false });
     configureApp(app, config);
     await app.init();
+    const u = await asegurarUsuarioPrueba(pool, config, { usuario: 'texto_int_admin', rol: 'secretaria' });
+    authToken = u.token;
   });
 
   beforeEach(() => {
@@ -35,11 +39,20 @@ describe('Carácter NUL contra PostgreSQL + PostGIS real (RNF-01)', () => {
 
   afterAll(async () => {
     await pool.query('DELETE FROM consorcios WHERE nombre LIKE $1', [`${PREFIJO}%`]);
+    await pool.query('DELETE FROM usuarios WHERE usuario = $1', ['texto_int_admin']);
     await app.close();
     await pool.end();
   });
 
-  const http = () => request(app.getHttpServer());
+  const http = () => {
+    const req = request(app.getHttpServer());
+    return {
+      post: (url: string) => req.post(url).set('Authorization', `Bearer ${authToken}`),
+      get: (url: string) => req.get(url).set('Authorization', `Bearer ${authToken}`),
+      put: (url: string) => req.put(url).set('Authorization', `Bearer ${authToken}`),
+      delete: (url: string) => req.delete(url).set('Authorization', `Bearer ${authToken}`),
+    };
+  };
   const filas = async (tabla: 'consorcios' | 'maquinas') =>
     Number((await pool.query(`SELECT count(*) AS n FROM ${tabla}`)).rows[0].n);
 

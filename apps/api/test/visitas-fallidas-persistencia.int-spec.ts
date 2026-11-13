@@ -6,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real (HU-07 RF-03): persistencia de visitas fallidas contra PostgreSQL + PostGIS de verdad.
 // Requiere la base levantada con `npm run db:up` y DATABASE_URL configurado.
@@ -17,6 +18,7 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
   let app: INestApplication | null = null;
   let pool: Pool;
   let warn: jest.SpyInstance;
+  let authToken = '';
   const consorciosCreados: string[] = [];
   const prefijosLimpieza = [`${PREFIJO}-`];
 
@@ -32,13 +34,15 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
     const config = loadConfig();
     pool = new Pool({ connectionString: config.databaseUrl });
     app = await arrancarApi();
+    const u = await asegurarUsuarioPrueba(pool, config, { usuario: 'vf_int_admin', rol: 'secretaria' });
+    authToken = u.token;
   });
 
   beforeEach(() => {
     warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
-  afterEach(() => warn.mockRestore());
+  afterEach(() => warn?.mockRestore());
 
   afterAll(async () => {
     for (const prefix of prefijosLimpieza) {
@@ -50,9 +54,19 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
       ]);
       await pool.query('DELETE FROM consorcios WHERE id = ANY($1)', [consorciosCreados]);
     }
+    await pool.query('DELETE FROM usuarios WHERE usuario = $1', ['vf_int_admin']);
     if (app) await app.close();
     await pool.end();
   });
+
+  const http = (inst: any = app) => {
+    return {
+      post: (url: string) => request(inst.getHttpServer()).post(url).set('Authorization', `Bearer ${authToken}`),
+      get: (url: string) => request(inst.getHttpServer()).get(url).set('Authorization', `Bearer ${authToken}`),
+      put: (url: string) => request(inst.getHttpServer()).put(url).set('Authorization', `Bearer ${authToken}`),
+      delete: (url: string) => request(inst.getHttpServer()).delete(url).set('Authorization', `Bearer ${authToken}`),
+    };
+  };
 
   const totalVisitas = async (consorcioId?: string) => {
     const res = consorcioId
@@ -62,10 +76,10 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
   };
 
   it('criterio 1: al registrar una visita fallida, queda guardada en PostgreSQL con todos sus datos', async () => {
-    const http = request(app!.getHttpServer());
+    const httpInst = http(app);
 
     // Crear consorcio real en PostgreSQL para validar también resolución de datos y máquinas
-    const resCons = await http.post('/api/consorcios').send({
+    const resCons = await httpInst.post('/api/consorcios').send({
       nombre: `${PREFIJO} Edificio Anchorena`,
       direccion: 'Anchorena 1450, CABA',
       administracion: {
@@ -80,7 +94,7 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
     consorciosCreados.push(consorcioId);
 
     const gpsTimestamp = '2026-11-11T14:15:00.000Z';
-    const resVisita = await http.post('/api/visitas-fallidas').send({
+    const resVisita = await httpInst.post('/api/visitas-fallidas').send({
       consorcioId,
       motivo: 'Sala de máquinas bajo llave sin encargado',
       fotoFrenteUrl: 'https://storage.maicon.com.ar/fotos/anchorena-frente.jpg',
@@ -122,7 +136,7 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
 
   it('criterio 2: después de reiniciar la API, conserva el historial y la siguiente visita continúa la numeración', async () => {
     const consorcioId = `${PREFIJO}-reinicio-${Date.now()}`;
-    const http1 = request(app!.getHttpServer());
+    const http1 = http(app);
 
     // 1ra y 2da visita antes del reinicio
     const v1 = await http1.post('/api/visitas-fallidas').send({
@@ -148,10 +162,11 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
     // REINICIO REAL DE LA API: cerrar la instancia completa y levantar otra limpia
     await app!.close();
     app = await arrancarApi();
-    const http2 = request(app.getHttpServer());
+    const http2 = http(app);
 
     // Al consultar tras el reinicio, conserva ambas visitas intactas
-    const histRes = await http2.get(`/api/visitas-fallidas/consorcio/${consorcioId}`).expect(200);
+    const histRes = await http2.get(`/api/visitas-fallidas/consorcio/${consorcioId}`);
+    expect(histRes.status).toBe(200);
     expect(histRes.body.totalAdvertencias).toBe(2);
     expect(histRes.body.ultimaAdvertencia).toBe(2);
     expect(histRes.body.bloqueadoPorTerceraVisita).toBe(false);
@@ -185,10 +200,10 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
 
   it('criterio 3 (texto rechazado por PostgreSQL): NUL responde 400 sin guardar filas y no altera el conteo', async () => {
     const consorcioId = `${PREFIJO}-nul-${Date.now()}`;
-    const http = request(app!.getHttpServer());
+    const httpInst = http(app);
     const antesGlobal = await totalVisitas();
 
-    const resFallo = await http.post('/api/visitas-fallidas').send({
+    const resFallo = await httpInst.post('/api/visitas-fallidas').send({
       consorcioId,
       motivo: 'Motivo con \u0000 nulo',
       fotoFrenteUrl: 'https://storage.maicon.com.ar/nul.jpg',
@@ -203,7 +218,7 @@ describe('Visitas fallidas contra PostgreSQL + PostGIS real (HU-07 RF-03)', () =
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('SQLSTATE 22021'));
 
     // Un registro válido posterior debe entrar como Advertencia 1
-    const resValido = await http.post('/api/visitas-fallidas').send({
+    const resValido = await httpInst.post('/api/visitas-fallidas').send({
       consorcioId,
       motivo: 'Motivo válido posterior al rechazo',
       fotoFrenteUrl: 'https://storage.maicon.com.ar/ok.jpg',

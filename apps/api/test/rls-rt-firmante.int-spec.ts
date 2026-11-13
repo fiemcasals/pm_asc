@@ -7,6 +7,7 @@ import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { DatabaseService } from '../src/database/database.service';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 loadEnvFileInto(process.env);
 
@@ -14,6 +15,9 @@ describe('Acceso RLS multi-ECA para RT de Calle y Firmante (HU-15 RNF-02)', () =
   let app: INestApplication;
   let adminPool: Pool;
   let dbService: DatabaseService;
+  let adminToken = '';
+  let rtToken = '';
+  let firmanteToken = '';
   const creados: string[] = [];
 
   beforeAll(async () => {
@@ -23,12 +27,24 @@ describe('Acceso RLS multi-ECA para RT de Calle y Firmante (HU-15 RNF-02)', () =
     configureApp(app, config);
     await app.init();
     dbService = app.get(DatabaseService);
+
+    const uAdmin = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rt_firmante_admin', rol: 'secretaria' });
+    const uRt = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rt.multi@campo.test', rol: 'rt_calle' });
+    const uFirm = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'firmante.multi@legal.test', rol: 'firmante' });
+    adminToken = uAdmin.token;
+    rtToken = uRt.token;
+    firmanteToken = uFirm.token;
   });
 
   afterAll(async () => {
     if (creados.length > 0) {
       await adminPool.query('DELETE FROM consorcios WHERE id = ANY($1)', [creados]);
     }
+    await adminPool.query('DELETE FROM usuarios WHERE usuario IN ($1, $2, $3)', [
+      'rt_firmante_admin',
+      'rt.multi@campo.test',
+      'firmante.multi@legal.test',
+    ]);
     await app.close();
     await adminPool.end();
   });
@@ -46,7 +62,7 @@ describe('Acceso RLS multi-ECA para RT de Calle y Firmante (HU-15 RNF-02)', () =
   }): Promise<string> {
     const c = await http()
       .post('/api/consorcios')
-      .set('x-eca-actual', opts.eca)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         nombre: opts.nombre,
         direccion: 'Calle MultiECA 100',
@@ -57,7 +73,7 @@ describe('Acceso RLS multi-ECA para RT de Calle y Firmante (HU-15 RNF-02)', () =
 
     await http()
       .put(`/api/consorcios/${c.body.id}/roles`)
-      .set('x-eca-actual', opts.eca)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         rtCalle: { nombre: opts.rtNombre, email: opts.rtEmail },
         firmante: { nombre: opts.firmanteNombre, email: opts.firmanteEmail },
@@ -105,8 +121,7 @@ describe('Acceso RLS multi-ECA para RT de Calle y Firmante (HU-15 RNF-02)', () =
     // Criterio 1: RT de Calle lee edificios de ECA-UNO y ECA-DOS, y NO el edificio ajeno
     const listaRt = await http()
       .get('/api/consorcios')
-      .set('x-rol-actual', 'rt_calle')
-      .set('x-usuario-actual', 'rt.multi@campo.test')
+      .set('Authorization', `Bearer ${rtToken}`)
       .expect(200);
     const idsRt = listaRt.body.map((c: { id: string }) => c.id);
     expect(idsRt).toContain(idEca1);
@@ -123,18 +138,17 @@ describe('Acceso RLS multi-ECA para RT de Calle y Firmante (HU-15 RNF-02)', () =
     expect(maquinasFirmante.some((m) => m.consorcio_id === idAjeno)).toBe(false);
 
     // Criterio 3: Al quitar la asignación del edificio en ECA-DOS, desaparece en la consulta inmediata (sin relogueo)
-    await http().delete(`/api/consorcios/${idEca2}/roles`).set('x-eca-actual', 'ECA-DOS').expect(204);
+    await http().delete(`/api/consorcios/${idEca2}/roles`).set('Authorization', `Bearer ${adminToken}`).expect(204);
 
     const listaRtTrasBaja = await http()
       .get('/api/consorcios')
-      .set('x-rol-actual', 'rt_calle')
-      .set('x-usuario-actual', 'rt.multi@campo.test')
+      .set('Authorization', `Bearer ${rtToken}`)
       .expect(200);
     const idsRtTrasBaja = listaRtTrasBaja.body.map((c: { id: string }) => c.id);
     expect(idsRtTrasBaja).toContain(idEca1);
     expect(idsRtTrasBaja).not.toContain(idEca2);
 
-    await http().get(`/api/consorcios/${idEca2}`).set('x-rol-actual', 'rt_calle').set('x-usuario-actual', 'rt.multi@campo.test').expect(404);
+    await http().get(`/api/consorcios/${idEca2}`).set('Authorization', `Bearer ${rtToken}`).expect(404);
 
     const maquinasTrasBaja = await dbService.conContextoRol('firmante', 'firmante.multi@legal.test', () =>
       dbService.query<{ consorcio_id: string }>('SELECT consorcio_id FROM maquinas'),

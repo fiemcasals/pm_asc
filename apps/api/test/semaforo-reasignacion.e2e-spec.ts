@@ -76,7 +76,8 @@ describe('Reasignación del RT de Calle de un edificio en rojo (HU-04 RF-02)', (
     return http().post(`/api/semaforo/${id}/reasignacion`).send(cuerpo as object).set('Authorization', auth);
   };
   const rtDelRojo = async () => {
-    const res = await http().get('/api/semaforo');
+    const auth = await token('secretaria1');
+    const res = await http().get('/api/semaforo').set('Authorization', auth);
     return res.body.edificios.find((e: { id: string }) => e.id === ROJO).rtCalle?.nombre;
   };
 
@@ -98,9 +99,13 @@ describe('Reasignación del RT de Calle de un edificio en rojo (HU-04 RF-02)', (
       expect((await sugerencia('admin1')).status).toBe(200);
     });
 
-    it('el semáforo en sí (GET /api/semaforo) sigue sin pedir sesión', async () => {
+    it('el semáforo en sí (GET /api/semaforo) también pide sesión de la Secretaría: sin sesión 401, RT de Calle 403', async () => {
       await arrancar();
-      expect((await http().get('/api/semaforo')).status).toBe(200);
+      const authRt = await token('rt1');
+      const authSecretaria = await token('secretaria1');
+      expect((await http().get('/api/semaforo')).status).toBe(401);
+      expect((await http().get('/api/semaforo').set('Authorization', authRt)).status).toBe(403);
+      expect((await http().get('/api/semaforo').set('Authorization', authSecretaria)).status).toBe(200);
     });
   });
 

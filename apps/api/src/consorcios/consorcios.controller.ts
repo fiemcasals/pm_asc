@@ -11,6 +11,7 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { Roles } from '../auth/roles.guard';
 import { validarConsorcio } from './consorcio.validation';
 import { Consorcio, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
@@ -25,6 +26,7 @@ function exigirId(id: string): void {
 }
 
 @Controller('consorcios')
+@Roles()
 export class ConsorciosController {
   constructor(private readonly consorcios: ConsorciosRepository) {}
 

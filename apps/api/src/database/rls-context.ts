@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
-export type RolRls = 'eca' | 'rt_calle' | 'firmante';
+export type RolRls = 'eca' | 'rt_calle' | 'firmante' | 'secretaria' | 'administrador';
 
 export interface RlsContextData {
   eca: string | null;
@@ -10,8 +10,6 @@ export interface RlsContextData {
 }
 
 const storage = new AsyncLocalStorage<RlsContextData>();
-
-export const ECA_CONTEXTO_DEV_PRE_AUTH = 'ECA_SISTEMA_DEV';
 
 export function getRlsContext(): RlsContextData | undefined {
   return storage.getStore();

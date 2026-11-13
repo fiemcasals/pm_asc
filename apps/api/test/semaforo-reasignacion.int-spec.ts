@@ -8,6 +8,7 @@ import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { deriveAppDatabaseUrl } from '../src/database/database.service';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real (HU-04 RF-02): la reasignación contra PostgreSQL de verdad. Requiere la base levantada con
 // `npm run db:up`, DATABASE_URL, DATABASE_APP_PASSWORD y AUTH_JWT_SECRET (en el .env de la raíz o en el entorno).
@@ -16,7 +17,6 @@ loadEnvFileInto(process.env);
 const P = 'RF02-int';
 const PASSWORD = 'Clave-Segura-2026';
 const FECHA_ROJO = '2026-11-25'; // un pendiente está en rojo
-const ECA_DEV = 'ECA_SISTEMA_DEV'; // la ECA con la que la API crea edificios sin sesión de ECA
 
 describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 RF-02)', () => {
   let app: INestApplication;
@@ -25,6 +25,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   const usuarios = { secretaria: `${P}-secretaria`, ana: `${P}-ana`, beto: `${P}-beto`, carla: `${P}-carla`, inactivo: `${P}-inactivo` };
   const ids: Record<string, { consorcio: string; maquina: string }> = {};
   let auth = '';
+  const tokensRt: Record<string, string> = {}; // sesiones de los RT: para ver qué edificios ve cada uno
 
   beforeAll(async () => {
     const config = loadConfig();
@@ -40,10 +41,14 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
     const alta = (usuario: string, rol: string, activo = true, h = 'sin-login') =>
       admin.query('INSERT INTO usuarios (usuario, nombre, rol, password_hash, activo) VALUES ($1, $1, $2, $3, $4)', [usuario, rol, h, activo]);
     await alta(usuarios.secretaria, 'secretaria', true, hash);
-    await alta(usuarios.ana, 'rt_calle');
-    await alta(usuarios.beto, 'rt_calle');
-    await alta(usuarios.carla, 'rt_calle');
+    for (const rt of [usuarios.ana, usuarios.beto, usuarios.carla]) {
+      tokensRt[rt] = (await asegurarUsuarioPrueba(admin, config, { usuario: rt, rol: 'rt_calle' })).token;
+    }
     await alta(usuarios.inactivo, 'rt_calle', false);
+
+    const login = await http().post('/api/auth/login').send({ usuario: usuarios.secretaria, password: PASSWORD });
+    expect(login.status).toBe(200);
+    auth = `Bearer ${login.body.accessToken}`;
 
     // R: el edificio en rojo, de ana. B1 y B2: pendientes de beto. C1: inspeccionado, de carla (no pesa).
     await edificio('R', usuarios.ana);
@@ -52,9 +57,6 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
     await edificio('C1', usuarios.carla);
     await inspeccionar('C1', '2026-11-05T10:00:00-03:00');
 
-    const login = await http().post('/api/auth/login').send({ usuario: usuarios.secretaria, password: PASSWORD });
-    expect(login.status).toBe(200);
-    auth = `Bearer ${login.body.accessToken}`;
   });
 
   afterAll(async () => {
@@ -71,12 +73,18 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   });
 
   const http = () => request(app.getHttpServer());
+  const api = {
+    get: (u: string) => http().get(u).set('Authorization', auth),
+    post: (u: string) => http().post(u).set('Authorization', auth),
+    put: (u: string) => http().put(u).set('Authorization', auth),
+    delete: (u: string) => http().delete(u).set('Authorization', auth),
+  };
 
   async function edificio(clave: string, rt: string) {
-    const alta = await http().post('/api/consorcios').send({ nombre: `${P} ${clave}`, direccion: `Calle ${clave}`, maquinas: [{ referenciaAgc: 'M1' }] });
+    const alta = await api.post('/api/consorcios').send({ nombre: `${P} ${clave}`, direccion: `Calle ${clave}`, maquinas: [{ referenciaAgc: 'M1' }] });
     expect(alta.status).toBe(201);
     ids[clave] = { consorcio: alta.body.id, maquina: alta.body.maquinas[0].id };
-    const roles = await http().put(`/api/consorcios/${alta.body.id}/roles`).send({
+    const roles = await api.put(`/api/consorcios/${alta.body.id}/roles`).send({
       rtCalle: { nombre: rt, telefono: '11 5555-0000', email: `${rt}@rt.com` },
       firmante: { nombre: 'Firmante', email: 'f@f.com' },
       eca: { nombre: 'ECA', email: 'e@e.com' },
@@ -85,7 +93,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   }
 
   async function inspeccionar(clave: string, instanteIso: string) {
-    const res = await http().post('/api/checklist/inspecciones').send({
+    const res = await api.post('/api/checklist/inspecciones').send({
       consorcioId: ids[clave].consorcio, maquinaId: ids[clave].maquina, referenciaAgc: 'M1', tipoMaquina: 'traccion', estadoEquipo: 'en_uso', datos: {},
     });
     expect(res.status).toBe(201);
@@ -93,16 +101,16 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   }
 
   const sugerir = (clave = 'R', cabeceras: Record<string, string> = {}) =>
-    http().get(`/api/semaforo/${ids[clave].consorcio}/reasignacion/sugerencia`).query({ fecha: FECHA_ROJO }).set('Authorization', auth).set(cabeceras);
+    api.get(`/api/semaforo/${ids[clave].consorcio}/reasignacion/sugerencia`).query({ fecha: FECHA_ROJO }).set('Authorization', auth).set(cabeceras);
   const reasignar = (clave: string, cuerpo: Record<string, unknown>) =>
-    http().post(`/api/semaforo/${ids[clave].consorcio}/reasignacion`).send({ fecha: FECHA_ROJO, ...cuerpo }).set('Authorization', auth);
+    api.post(`/api/semaforo/${ids[clave].consorcio}/reasignacion`).send({ fecha: FECHA_ROJO, ...cuerpo }).set('Authorization', auth);
   const rtEnBase = async (clave: string) =>
     (await admin.query('SELECT rt_calle_nombre, rt_calle_telefono, rt_calle_email FROM roles_edificio WHERE consorcio_id = $1', [ids[clave].consorcio])).rows[0];
   const registros = async (clave: string) =>
     (await admin.query('SELECT * FROM reasignaciones_rt WHERE consorcio_id = $1 ORDER BY fecha', [ids[clave].consorcio])).rows;
   /** ¿El RT (por usuario) puede leer el edificio? Lo decide el RLS de verdad. */
   const rtVe = async (usuario: string, clave: string) =>
-    (await http().get(`/api/consorcios/${ids[clave].consorcio}`).set({ 'x-rol-actual': 'rt_calle', 'x-usuario-actual': usuario })).status === 200;
+    (await http().get(`/api/consorcios/${ids[clave].consorcio}`).set('Authorization', `Bearer ${tokensRt[usuario]}`)).status === 200;
 
   it('criterio 3: sugiere al RT con menos pendientes entre los RT de Calle activos, sin el actual ni los inactivos', async () => {
     const res = await sugerir();
@@ -127,7 +135,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   });
 
   it('un edificio que no está en rojo no se puede reasignar: 409 y nada cambia', async () => {
-    const res = await http().post(`/api/semaforo/${ids.R.consorcio}/reasignacion`).send({ fecha: '2026-11-15', rtAnterior: usuarios.ana, rtNuevo: usuarios.carla }).set('Authorization', auth);
+    const res = await api.post(`/api/semaforo/${ids.R.consorcio}/reasignacion`).send({ fecha: '2026-11-15', rtAnterior: usuarios.ana, rtNuevo: usuarios.carla }).set('Authorization', auth);
 
     expect(res.status).toBe(409);
     expect((await rtEnBase('R')).rt_calle_nombre).toBe(usuarios.ana);
@@ -161,7 +169,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
     });
 
     it('el semáforo ya muestra al RT nuevo, y la carga de los RT cambió', async () => {
-      const semaforo = await http().get('/api/semaforo').query({ fecha: FECHA_ROJO });
+      const semaforo = await api.get('/api/semaforo').query({ fecha: FECHA_ROJO });
       const r = semaforo.body.edificios.find((e: { id: string }) => e.id === ids.R.consorcio);
       expect(r.rtCalle.nombre).toBe(usuarios.carla);
 
@@ -179,7 +187,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
     });
 
     it('el historial por la API devuelve el registro', async () => {
-      const res = await http().get(`/api/semaforo/${ids.R.consorcio}/reasignaciones`).set('Authorization', auth);
+      const res = await api.get(`/api/semaforo/${ids.R.consorcio}/reasignaciones`).set('Authorization', auth);
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
@@ -217,12 +225,12 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   });
 
   describe('el registro es de sólo lectura para la aplicación (RLS sin política de UPDATE ni DELETE)', () => {
-    /** Ejecuta `consulta` con el rol de la aplicación y el contexto de la ECA de los edificios de la prueba. */
+    /** Ejecuta `consulta` con el rol de la aplicación y el contexto de una sesión de Secretaría (rol_actual), como lo arma la API. */
     async function comoApp(consulta: string, params: unknown[] = []) {
       const client = await appPool.connect();
       try {
         await client.query('BEGIN');
-        await client.query("SELECT set_config('app.eca_actual', $1, true)", [ECA_DEV]);
+        await client.query("SELECT set_config('app.rol_actual', 'secretaria', true)");
         const res = await client.query(consulta, params);
         await client.query('ROLLBACK'); // nada de esto debe quedar
         return res;
@@ -265,12 +273,22 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
     });
   });
 
-  it('RLS: otra ECA no ve el edificio, ni la sugerencia ni el historial (404)', async () => {
-    const otra = { 'x-eca-actual': 'OTRA_ECA_QUE_NO_EXISTE' };
+  it('sin sesión 401; un usuario de una ECA o un RT de Calle 403; y los encabezados de ECA o de rol que mande el cliente se ignoran', async () => {
+    const urls = [`/api/semaforo/${ids.R.consorcio}/reasignacion/sugerencia?fecha=${FECHA_ROJO}`, `/api/semaforo/${ids.R.consorcio}/reasignaciones`];
+    const eca = await asegurarUsuarioPrueba(admin, loadConfig(), { usuario: `${P}-eca`, rol: 'eca', eca: 'ECA_OTRA_QUE_NO_EXISTE' });
 
-    expect((await sugerir('R', otra)).status).toBe(404);
-    expect((await http().get(`/api/semaforo/${ids.R.consorcio}/reasignaciones`).set('Authorization', auth).set(otra)).status).toBe(404);
-    expect((await http().post(`/api/semaforo/${ids.R.consorcio}/reasignacion`).send({ fecha: FECHA_ROJO, rtAnterior: usuarios.carla, rtNuevo: usuarios.beto }).set('Authorization', auth).set(otra)).status).toBe(404);
+    for (const url of urls) {
+      expect((await http().get(url)).status).toBe(401);
+      expect((await http().get(url).set('Authorization', `Bearer ${eca.token}`)).status).toBe(403);
+      expect((await http().get(url).set('Authorization', `Bearer ${tokensRt[usuarios.carla]}`)).status).toBe(403);
+    }
+    const sinSesion = await http().post(`/api/semaforo/${ids.R.consorcio}/reasignacion`).send({ fecha: FECHA_ROJO, rtAnterior: usuarios.carla, rtNuevo: usuarios.beto });
+    expect(sinSesion.status).toBe(401);
+
+    // La Secretaría con encabezados de otra ECA y de otro rol sigue operando: el contexto sale de la sesión.
+    const conEncabezados = await sugerir('R', { 'x-eca-actual': 'ECA_OTRA_QUE_NO_EXISTE', 'x-rol-actual': 'rt_calle' });
+    expect(conEncabezados.status).toBe(200);
+    expect(conEncabezados.body.nombre).toBe(`${P} R`);
   });
 
   it('borrar el edificio borra también su registro de reasignaciones', async () => {
@@ -278,7 +296,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
     await reasignar('X', { rtAnterior: usuarios.ana, rtNuevo: usuarios.carla });
     expect(await registros('X')).toHaveLength(1);
 
-    expect((await http().delete(`/api/consorcios/${ids.X.consorcio}`)).status).toBe(204);
+    expect((await api.delete(`/api/consorcios/${ids.X.consorcio}`)).status).toBe(204);
 
     expect(await registros('X')).toHaveLength(0);
   });

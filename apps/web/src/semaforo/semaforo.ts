@@ -138,7 +138,7 @@ async function pedir<T>(url: string, porDefecto: string, init?: RequestInit, con
 }
 
 export function fetchSemaforo(fecha?: string): Promise<FetchResult<SemaforoRespuesta>> {
-  return pedir(`/api/semaforo${conFecha(fecha)}`, 'No se pudo cargar el semáforo');
+  return pedir(`/api/semaforo${conFecha(fecha)}`, 'No se pudo cargar el semáforo', undefined, true);
 }
 
 export function fetchSugerencia(consorcioId: string, fecha?: string): Promise<FetchResult<SugerenciaReasignacion>> {

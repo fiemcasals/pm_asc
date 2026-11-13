@@ -6,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real: requiere la base levantada con `npm run db:up` y el .env de la raíz.
 loadEnvFileInto(process.env);
@@ -19,6 +20,7 @@ const terna = {
 describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
   let app: INestApplication;
   let pool: Pool;
+  let authToken = '';
   const creados: string[] = [];
 
   beforeAll(async () => {
@@ -27,16 +29,27 @@ describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
     app = await NestFactory.create(AppModule.register(config), { logger: false });
     configureApp(app, config);
     await app.init();
+    const u = await asegurarUsuarioPrueba(pool, config, { usuario: 'roles_int_admin', rol: 'secretaria' });
+    authToken = u.token;
   });
 
   afterAll(async () => {
     // Borra sólo lo que creó esta corrida.
     if (creados.length > 0) await pool.query('DELETE FROM consorcios WHERE id = ANY($1)', [creados]);
+    await pool.query('DELETE FROM usuarios WHERE usuario = $1', ['roles_int_admin']);
     await app.close();
     await pool.end();
   });
 
-  const http = () => request(app.getHttpServer());
+  const http = () => {
+    const req = request(app.getHttpServer());
+    return {
+      post: (url: string) => req.post(url).set('Authorization', `Bearer ${authToken}`),
+      get: (url: string) => req.get(url).set('Authorization', `Bearer ${authToken}`),
+      put: (url: string) => req.put(url).set('Authorization', `Bearer ${authToken}`),
+      delete: (url: string) => req.delete(url).set('Authorization', `Bearer ${authToken}`),
+    };
+  };
 
   async function crearConsorcio(sufijo: string): Promise<string> {
     const res = await http()

@@ -7,6 +7,7 @@ import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { DatabaseService } from '../src/database/database.service';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 loadEnvFileInto(process.env);
 
@@ -19,10 +20,13 @@ const TABLAS_ECA = [
   'visitas_fallidas',
 ];
 
-describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
+describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01 / RNF-03)', () => {
   let app: INestApplication;
   let adminPool: Pool;
   let dbService: DatabaseService;
+  let adminToken = '';
+  let alphaToken = '';
+  let betaToken = '';
   const consorciosCreados: string[] = [];
   const prefijoAcuse = 'RNF01-RLS-INT';
 
@@ -33,6 +37,13 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
     configureApp(app, config);
     await app.init();
     dbService = app.get(DatabaseService);
+
+    const uAdmin = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_int_admin', rol: 'secretaria' });
+    const uAlpha = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_user_alpha', rol: 'eca', eca: 'ECA-ALPHA' });
+    const uBeta = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_user_beta', rol: 'eca', eca: 'ECA-BETA' });
+    adminToken = uAdmin.token;
+    alphaToken = uAlpha.token;
+    betaToken = uBeta.token;
   });
 
   afterAll(async () => {
@@ -41,6 +52,7 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
       await adminPool.query('DELETE FROM consorcios WHERE id = ANY($1)', [consorciosCreados]);
     }
     await adminPool.query('DELETE FROM acuses_recibo_legal WHERE usuario LIKE $1', [`${prefijoAcuse}%`]);
+    await adminPool.query('DELETE FROM usuarios WHERE usuario IN ($1, $2, $3)', ['rls_int_admin', 'rls_user_alpha', 'rls_user_beta']);
     await app.close();
     await adminPool.end();
   });
@@ -74,10 +86,10 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
   });
 
   it('criterio 3 y 4: consulta sin contexto devuelve 0 filas y dos ECAs no pueden leer ni modificar filas de la otra', async () => {
-    // 1. Crear consorcio + máquina + roles + visita fallida para ECA-ALPHA
+    // 1. Crear consorcio + máquina + roles + visita fallida para ECA-ALPHA usando token de secretaría
     const cAlpha = await http()
       .post('/api/consorcios')
-      .set('x-eca-actual', 'ECA-ALPHA')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         nombre: 'Edificio Alpha RLS',
         direccion: 'Calle Alpha 100',
@@ -88,7 +100,7 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
 
     await http()
       .put(`/api/consorcios/${cAlpha.body.id}/roles`)
-      .set('x-eca-actual', 'ECA-ALPHA')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         rtCalle: { nombre: 'RT Alpha', email: 'rt@alpha.test' },
         firmante: { nombre: 'Firmante Alpha', email: 'firmante@alpha.test' },
@@ -98,7 +110,7 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
 
     await http()
       .post('/api/visitas-fallidas')
-      .set('x-eca-actual', 'ECA-ALPHA')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         consorcioId: cAlpha.body.id,
         motivo: 'Ausente Alpha',
@@ -107,10 +119,10 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
       })
       .expect(201);
 
-    // 2. Crear consorcio + máquina para ECA-BETA
+    // 2. Crear consorcio + máquina + roles para ECA-BETA
     const cBeta = await http()
       .post('/api/consorcios')
-      .set('x-eca-actual', 'ECA-BETA')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         nombre: 'Edificio Beta RLS',
         direccion: 'Calle Beta 200',
@@ -118,6 +130,16 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
       })
       .expect(201);
     consorciosCreados.push(cBeta.body.id);
+
+    await http()
+      .put(`/api/consorcios/${cBeta.body.id}/roles`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        rtCalle: { nombre: 'RT Beta', email: 'rt@beta.test' },
+        firmante: { nombre: 'Firmante Beta', email: 'firmante@beta.test' },
+        eca: { nombre: 'ECA-BETA', email: 'eca@beta.test' },
+      })
+      .expect(200);
 
     // Insertar acuses de dos ECAs usando el contexto de cada ECA
     await dbService.conContextoEca('ECA-ALPHA', () =>
@@ -135,28 +157,44 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01)', () => {
       ),
     );
 
-    // 3. Criterio 3: consulta SIN contexto de ECA devuelve 0 filas en todas las tablas
+    // 3. Criterio 3 (RNF-03): petición sin sesión a ruta de datos responde 401
+    const sinSesion = await http().get('/api/consorcios');
+    expect(sinSesion.status).toBe(401);
+
+    // Consulta SQL directa SIN contexto de ECA devuelve 0 filas en todas las tablas
     for (const tabla of TABLAS_ECA) {
       const filasSinContexto = await dbService.query(`SELECT count(*) AS n FROM ${tabla}`);
       expect(Number(filasSinContexto[0].n)).toBe(0);
     }
 
-    const httpSinContexto = await http().get('/api/consorcios').set('x-eca-actual', '').expect(200);
-    expect(httpSinContexto.body).toEqual([]);
+    // 4. Criterio 2 (RNF-03): ECA-ALPHA mandando x-eca-actual: ECA-BETA sigue viendo SOLO ECA-ALPHA
+    const listaAlphaConHeaderBeta = await http()
+      .get('/api/consorcios')
+      .set('Authorization', `Bearer ${alphaToken}`)
+      .set('x-eca-actual', 'ECA-BETA')
+      .expect(200);
+    expect(listaAlphaConHeaderBeta.body.some((c: { id: string }) => c.id === cAlpha.body.id)).toBe(true);
+    expect(listaAlphaConHeaderBeta.body.some((c: { id: string }) => c.id === cBeta.body.id)).toBe(false);
 
-    // 4. Criterio 4: ECA-ALPHA sólo ve sus propios datos y no puede leer ni modificar datos de ECA-BETA
-    const listaAlpha = await http().get('/api/consorcios').set('x-eca-actual', 'ECA-ALPHA').expect(200);
-    expect(listaAlpha.body.some((c: { id: string }) => c.id === cAlpha.body.id)).toBe(true);
-    expect(listaAlpha.body.some((c: { id: string }) => c.id === cBeta.body.id)).toBe(false);
+    // Lectura/escritura cruzada contra consorcio de ECA-BETA rechazada por RLS (404)
+    await http()
+      .get(`/api/consorcios/${cBeta.body.id}`)
+      .set('Authorization', `Bearer ${alphaToken}`)
+      .set('x-eca-actual', 'ECA-BETA')
+      .expect(404);
 
-    // Lectura/escritura cruzada contra consorcio de ECA-BETA rechazada por RLS
-    await http().get(`/api/consorcios/${cBeta.body.id}`).set('x-eca-actual', 'ECA-ALPHA').expect(404);
     await http()
       .put(`/api/consorcios/${cBeta.body.id}`)
-      .set('x-eca-actual', 'ECA-ALPHA')
+      .set('Authorization', `Bearer ${alphaToken}`)
+      .set('x-eca-actual', 'ECA-BETA')
       .send({ nombre: 'Secuestro', direccion: 'X', maquinas: [] })
       .expect(404);
-    await http().delete(`/api/consorcios/${cBeta.body.id}`).set('x-eca-actual', 'ECA-ALPHA').expect(404);
+
+    await http()
+      .delete(`/api/consorcios/${cBeta.body.id}`)
+      .set('Authorization', `Bearer ${alphaToken}`)
+      .set('x-eca-actual', 'ECA-BETA')
+      .expect(404);
 
     // Consulta SQL directa con contexto ECA-BETA no ve filas de Alpha
     const acusesBeta = await dbService.conContextoEca('ECA-BETA', () =>

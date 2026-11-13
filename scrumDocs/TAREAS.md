@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-13T14:55:08.029Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-13T15:10:41.706Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -120,6 +120,17 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 3. Un porcentaje menor que 0, mayor que 100, o una suma de porcentajes mayor que 100 se rechaza con 400 y el motivo.
 4. Cada cambio de abono o porcentaje queda registrado con usuario, fecha, valor anterior y valor nuevo.
 
+### RF-05: Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar (Funcional)
+
+Hoy, al reasignar un edificio en rojo, la terna del RT nuevo queda sin teléfono ni email (se vacían los del anterior para no dejarle datos ajenos) porque el usuario del RT no tiene datos de contacto. Un edificio con un RT sin contacto es algo que PUT /roles no permite crear a mano. Origen: hallazgo de HU-04 RF-02.
+
+**Condiciones de aprobación**
+
+1. El Administrador puede cargar y editar el teléfono y el email de un usuario con rol rt_calle; los datos se guardan y se devuelven al consultarlo.
+2. Al reasignar un edificio, la terna queda con el teléfono y el email del RT nuevo y no con los del anterior.
+3. Si el RT nuevo no tiene teléfono ni email cargados, la reasignación responde 409 con un mensaje que lo dice y no cambia nada.
+4. Un edificio nunca queda con un RT de Calle sin ningún dato de contacto después de reasignarlo.
+
 ### RNF-01: Leer todas las ternas en una sola consulta (No funcional)
 
 La pestaña Asignación de Roles de Trabajo hace un GET de roles por edificio al abrirse, cada uno con su transacción, sobre un pool de 5 conexiones con 2 s de espera. Con muchos edificios pueden fallar lecturas y la lista tarda lo que tarda la respuesta más lenta. Salió de la revisión del PR #18.
@@ -154,6 +165,28 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 2. El mapa no muestra la ubicación de ningún técnico.
 3. En un edificio en rojo, la acción "Reasignar" sugiere al RT de Calle con menos edificios pendientes del mes.
 4. La reasignación se aplica recién cuando la Secretaría la confirma, y queda registrada con usuario, fecha, RT anterior y RT nuevo.
+
+### RF-03: Refrescar el panel de reasignación cuando el RT del edificio cambió (Funcional)
+
+Si la Secretaría confirma con una vista vieja (otra persona ya reasignó el edificio), la API responde 409 y la pantalla muestra el aviso, pero el panel sigue mostrando el RT y la sugerencia viejos hasta que se lo vuelve a abrir. Origen: observación de QA de HU-04 RF-02.
+
+**Condiciones de aprobación**
+
+1. Cuando la confirmación responde 409 porque el RT cambió, el panel muestra el mensaje y se vuelve a cargar solo: "RT actual" pasa a ser el RT vigente.
+2. Después de recargarse, la sugerencia y la lista de candidatos corresponden al RT vigente y el RT vigente no figura entre los candidatos.
+3. El botón "Confirmar reasignación" vuelve a quedar disponible sin cerrar el panel.
+4. No se agrega ningún registro a "Reasignaciones registradas" por la confirmación rechazada.
+
+### RNF-01: Índice por fecha para el semáforo y medición con volumen (No funcional)
+
+La consulta del semáforo filtra inspecciones_checklist por created_at, que no tiene índice (sólo consorcio_id, maquina_id), y devuelve todos los edificios sin paginar. Se midió con 30 edificios (p95 12 ms) pero no con cientos. Origen: hallazgo de HU-04 RF-01.
+
+**Condiciones de aprobación**
+
+1. Una migración agrega un índice en inspecciones_checklist que cubre la consulta del semáforo por edificio y fecha.
+2. Con 500 edificios y 20.000 inspecciones cargados, GET /api/semaforo responde con p95 menor a 500 ms en 100 consultas (se informa el valor medido).
+3. El plan de ejecución de la consulta usa el índice nuevo (se adjunta el EXPLAIN).
+4. El resultado del semáforo con el índice es idéntico al de antes: las pruebas de integración existentes siguen en verde.
 
 ## HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice
 
@@ -404,6 +437,17 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 2. Una alerta sin acuse a las 48 h genera un aviso en la Secretaría con el edificio y la ECA.
 3. Si la ECA acusa recibo antes, no se envía el recordatorio ni el aviso.
 4. Cada recordatorio y aviso se envía una sola vez por alerta.
+
+### RF-05: Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta (Funcional)
+
+El acuse de recibo legal de ECA se guarda en acuses_recibo_legal pero nadie lo vuelve a leer: GET /api/eca/alertas lo informa desde memoria, así que al reiniciar la API la alerta vuelve a figurar sin acuse aunque la fila exista. Además cada POST inserta una fila nueva, sin unicidad por alerta. Origen: hallazgo de QA de HU-10 RF-03.
+
+**Condiciones de aprobación**
+
+1. Después de reiniciar la API, GET /api/eca/alertas muestra el acuseRecibo de las alertas que ya tienen una fila en acuses_recibo_legal, con su usuario y su fecha.
+2. Un segundo POST del acuse de la misma alerta no crea una segunda fila y responde con el acuse ya registrado.
+3. La base impide por sí misma dos acuses de la misma alerta (restricción de unicidad).
+4. Un acuse registrado por otra ECA o en otra alerta no aparece en la alerta consultada.
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 
@@ -785,3 +829,23 @@ Inicializar el monorepo (web React+Vite PWA, API NestJS, PostgreSQL+PostGIS en D
 3. Con la configuración de producción, la API no devuelve encabezados CORS.
 4. docker compose up levanta PostgreSQL con PostGIS, y /api/health informa la versión de PostGIS.
 5. https://localhost:8050 carga la app web y registra el service worker.
+
+## RO-02: Documentar las variables de entorno obligatorias y avisar claro si faltan
+
+### RF-01: Documentar las variables de entorno obligatorias y avisar claro si faltan (Funcional)
+
+Desde HU-15 la API se conecta con un rol sin privilegios y necesita DATABASE_APP_PASSWORD, y AUTH_JWT_SECRET para las sesiones. El README no las menciona y, sin ellas, toda consulta responde 500 sin explicar por qué (costó un rato detectarlo). Origen: hallazgo de HU-04 RF-01.
+
+**Condiciones de aprobación**
+
+_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._
+
+## RO-03: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto
+
+### RF-01: Actualizar los scripts de entrega de las tarjetas anteriores al RLS estricto (Funcional)
+
+Con HU-15 RNF-03 todas las rutas con datos piden sesión. Los scripts de entrega de las tarjetas anteriores (HU-01, HU-07, HU-08, HU-10, HU-11, etc.) crean edificios y leen datos sin sesión y dejan de funcionar. Los de HU-04 ya se actualizaron. Origen: integración de HU-15 RNF-03.
+
+**Condiciones de aprobación**
+
+_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._

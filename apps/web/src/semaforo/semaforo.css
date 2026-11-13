@@ -1,0 +1,50 @@
+/* Pestaña "Semáforo" de la Secretaría (HU-04 RF-02). Usa las variables de tema, así que sirve en claro y en oscuro. */
+.semaforo-view { display: flex; flex-direction: column; gap: 16px; }
+.semaforo-cabecera { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.semaforo-cabecera h2 { margin: 0 0 4px; }
+.semaforo-sub { margin: 0; color: var(--muted); max-width: 62ch; }
+
+.semaforo-campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.semaforo-campo select, .semaforo-campo input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--card-subtle); color: var(--text); font: inherit; }
+.semaforo-fecha-fila { display: flex; gap: 8px; align-items: center; }
+
+.semaforo-resumen { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
+.semaforo-total { display: inline-flex; align-items: center; gap: 6px; }
+
+.semaforo-punto { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border-strong); flex: none; }
+
+.semaforo-leyenda { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-subtle); }
+.semaforo-leyenda-item { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.semaforo-leyenda-nota { margin: 0; flex-basis: 100%; font-size: 12px; color: var(--muted); }
+
+.semaforo-mapa { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--card); }
+
+.semaforo-tabla-wrap { overflow-x: auto; }
+.semaforo-tabla { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; }
+.semaforo-tabla th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border-strong); }
+.semaforo-tabla td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.semaforo-tabla small { color: var(--muted); }
+.semaforo-panel .semaforo-tabla { min-width: 0; }
+.semaforo-fila-activa { background: var(--accent-soft); }
+
+.semaforo-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 2px solid var(--border-strong); border-radius: 999px; font-weight: 600; font-size: 13px; }
+.semaforo-link { background: none; border: none; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.semaforo-link:hover { text-decoration: underline; }
+
+.semaforo-btn-pri, .semaforo-btn-sec { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-strong); }
+.semaforo-btn-pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+.semaforo-btn-pri:hover:not(:disabled) { background: var(--accent-hover); }
+.semaforo-btn-sec { background: var(--card-subtle); color: var(--text); }
+.semaforo-btn-pri:disabled, .semaforo-btn-sec:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.semaforo-panel { border: 2px solid var(--danger-border); border-radius: 12px; padding: 16px 18px; background: var(--card); display: flex; flex-direction: column; gap: 10px; }
+.semaforo-panel-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.semaforo-panel-cabecera h3 { margin: 0; }
+.semaforo-panel h4 { margin: 8px 0 4px; }
+.semaforo-panel p { margin: 0; }
+.semaforo-acciones { display: flex; gap: 10px; }
+
+.semaforo-aviso { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--info-bg); border: 1px solid var(--info-border); font-size: 13px; }
+.semaforo-error { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--danger-bg); border: 1px solid var(--danger-border); font-size: 13px; }
+.semaforo-exito { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--success-bg); border: 1px solid var(--success-border); font-size: 13px; }
+.semaforo-vacio { color: var(--muted); }

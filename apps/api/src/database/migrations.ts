@@ -364,4 +364,48 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE usuarios ADD CONSTRAINT usuarios_eca_no_vacia CHECK (eca IS NULL OR btrim(eca) <> '');
     `,
   },
+  {
+    id: '012_reasignaciones_rt',
+    sql: `
+      -- Registro de las reasignaciones del RT de Calle de un edificio en rojo (HU-04 RF-02): quién la confirmó,
+      -- cuándo, y quién era y quién pasó a ser el RT. Es un registro de auditoría: sólo se agrega, no se edita.
+      CREATE TABLE reasignaciones_rt (
+        id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id uuid NOT NULL REFERENCES consorcios (id) ON DELETE CASCADE,
+        rt_anterior  text NOT NULL,
+        rt_nuevo     text NOT NULL,
+        usuario      text NOT NULL,
+        fecha        timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT reasignaciones_rt_cambia CHECK (rt_anterior <> rt_nuevo)
+      );
+
+      CREATE INDEX reasignaciones_rt_consorcio_idx ON reasignaciones_rt (consorcio_id, fecha DESC);
+
+      -- RLS por ECA, igual que el edificio al que pertenece. Sólo hay políticas de lectura y de alta: sin política
+      -- de UPDATE ni de DELETE, el rol de la aplicación no puede modificar ni borrar un registro ya escrito.
+      ALTER TABLE reasignaciones_rt ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_reasignaciones_rt_select ON reasignaciones_rt;
+      CREATE POLICY rls_reasignaciones_rt_select ON reasignaciones_rt
+        FOR SELECT
+        USING (
+          EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = reasignaciones_rt.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_reasignaciones_rt_insert ON reasignaciones_rt;
+      CREATE POLICY rls_reasignaciones_rt_insert ON reasignaciones_rt
+        FOR INSERT
+        WITH CHECK (
+          EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = reasignaciones_rt.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+    `,
+  },
 ];

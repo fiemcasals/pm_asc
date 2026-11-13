@@ -6,6 +6,17 @@ import { getRlsContext, RolRls, runWithEcaContext, runWithRlsContext } from './r
 
 export const APP_RLS_ROLE = 'ascensores_app';
 
+/** Las tablas con datos de una ECA, que tienen que tener RLS activo: las que revisa el diagnóstico de seguridad. */
+export const TABLAS_CON_RLS = [
+  'consorcios',
+  'maquinas',
+  'roles_edificio',
+  'acuses_recibo_legal',
+  'visitas_fallidas',
+  'reasignaciones_rt',
+] as const;
+const TABLAS_CON_RLS_SQL = TABLAS_CON_RLS.map((t) => `'${t}'`).join(', ');
+
 function extraerPasswordDeUrl(rawUrl?: string): string | undefined {
   if (!rawUrl) return undefined;
   try {
@@ -169,7 +180,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       `SELECT count(*) AS cant
          FROM pg_tables
         WHERE schemaname = 'public'
-          AND tablename IN ('consorcios', 'maquinas', 'roles_edificio', 'acuses_recibo_legal', 'visitas_fallidas')
+          AND tablename IN (${TABLAS_CON_RLS_SQL})
           AND tableowner = current_user`,
     );
 
@@ -180,7 +191,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
          FROM pg_class c
          JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public'
-          AND c.relname IN ('consorcios', 'maquinas', 'roles_edificio', 'acuses_recibo_legal', 'visitas_fallidas')
+          AND c.relname IN (${TABLAS_CON_RLS_SQL})
         ORDER BY c.relname`,
     );
 

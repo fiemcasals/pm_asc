@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import {
+  ReasignacionPedida,
+  RegistroReasignacion,
+  ResultadoReasignacion,
+  RtDisponible,
+} from './reasignacion.types';
 import { SemaforoRepository } from './semaforo.repository';
 import { ZONA_HORARIA } from './semaforo.logic';
 import { EdificioBase, FechaCalendario } from './semaforo.types';
@@ -14,6 +20,15 @@ interface FilaSemaforo {
   rt_calle_nombre: string | null;
   rt_calle_telefono: string | null;
   rt_calle_email: string | null;
+}
+
+interface FilaReasignacion {
+  id: string;
+  consorcio_id: string;
+  rt_anterior: string;
+  rt_nuevo: string;
+  usuario: string;
+  fecha: Date;
 }
 
 /**
@@ -44,6 +59,15 @@ const SQL_SEMAFORO = `
    ORDER BY c.nombre, c.id
 `;
 
+const aRegistro = (f: FilaReasignacion): RegistroReasignacion => ({
+  id: f.id,
+  consorcioId: f.consorcio_id,
+  rtAnterior: f.rt_anterior,
+  rtNuevo: f.rt_nuevo,
+  usuario: f.usuario,
+  fecha: f.fecha.toISOString(),
+});
+
 @Injectable()
 export class PgSemaforoRepository extends SemaforoRepository {
   constructor(private readonly db: DatabaseService) {
@@ -63,5 +87,51 @@ export class PgSemaforoRepository extends SemaforoRepository {
         ? { nombre: f.rt_calle_nombre, telefono: f.rt_calle_telefono, email: f.rt_calle_email }
         : null,
     }));
+  }
+
+  async listarRtDisponibles(): Promise<RtDisponible[]> {
+    return this.db.query<RtDisponible>(
+      `SELECT usuario, nombre FROM usuarios WHERE rol = 'rt_calle' AND activo ORDER BY usuario`,
+    );
+  }
+
+  /**
+   * Cambia el RT y escribe el registro en la misma transacción. El RT nuevo queda identificado por su nombre de
+   * usuario, que es lo que el RLS compara: el anterior pierde el acceso al edificio y el nuevo lo gana en el acto.
+   * El teléfono y el email de la terna eran del RT anterior, así que se vacían en vez de dejárselos al nuevo.
+   */
+  async reasignarRt(pedida: ReasignacionPedida): Promise<ResultadoReasignacion> {
+    return this.db.transaction(async (client) => {
+      // FOR UPDATE: dos reasignaciones simultáneas del mismo edificio se ordenan, y la segunda ve el RT ya cambiado.
+      const actual = await client.query<{ rt_calle_nombre: string }>(
+        'SELECT rt_calle_nombre FROM roles_edificio WHERE consorcio_id = $1 FOR UPDATE',
+        [pedida.consorcioId],
+      );
+      if (actual.rowCount === 0) return { ok: false, motivo: 'sin_terna' } as const;
+      if (actual.rows[0].rt_calle_nombre !== pedida.rtAnterior) return { ok: false, motivo: 'rt_cambio' } as const;
+
+      await client.query(
+        `UPDATE roles_edificio
+            SET rt_calle_nombre = $2, rt_calle_telefono = NULL, rt_calle_email = NULL, updated_at = now()
+          WHERE consorcio_id = $1`,
+        [pedida.consorcioId, pedida.rtNuevo],
+      );
+      const registro = await client.query<FilaReasignacion>(
+        `INSERT INTO reasignaciones_rt (consorcio_id, rt_anterior, rt_nuevo, usuario)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, consorcio_id::text AS consorcio_id, rt_anterior, rt_nuevo, usuario, fecha`,
+        [pedida.consorcioId, pedida.rtAnterior, pedida.rtNuevo, pedida.usuario],
+      );
+      return { ok: true, registro: aRegistro(registro.rows[0]) } as const;
+    });
+  }
+
+  async listarReasignaciones(consorcioId: string): Promise<RegistroReasignacion[]> {
+    const filas = await this.db.query<FilaReasignacion>(
+      `SELECT id, consorcio_id::text AS consorcio_id, rt_anterior, rt_nuevo, usuario, fecha
+         FROM reasignaciones_rt WHERE consorcio_id = $1 ORDER BY fecha DESC, id`,
+      [consorcioId],
+    );
+    return filas.map(aRegistro);
   }
 }

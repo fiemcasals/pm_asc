@@ -233,4 +233,28 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('Datos inválidos');
   });
+
+  // HU-04 RNF-01: el índice por fecha que la migración 015 crea para la consulta del semáforo.
+  it('RNF-01: existe el índice por fecha (created_at, con consorcio_id y maquina_id incluidos) y el plan de la consulta puede usarlo', async () => {
+    const def = await pool.query<{ indexdef: string }>(
+      `SELECT indexdef FROM pg_indexes WHERE tablename = 'inspecciones_checklist' AND indexname = 'inspecciones_checklist_created_at_idx'`,
+    );
+    expect(def.rowCount).toBe(1);
+    expect(def.rows[0].indexdef).toMatch(/\(created_at\) INCLUDE \(consorcio_id, maquina_id\)/);
+
+    // Con tan pocas filas el planificador prefiere recorrer la tabla; se le prohíbe para comprobar que el índice sirve a la consulta.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SET LOCAL enable_seqscan = off');
+      const plan = await client.query<{ 'QUERY PLAN': string }>(
+        `EXPLAIN SELECT consorcio_id, maquina_id FROM inspecciones_checklist
+          WHERE created_at >= '2026-11-01T00:00:00-03:00' AND created_at < '2026-11-26T00:00:00-03:00'`,
+      );
+      expect(plan.rows.map((r) => r['QUERY PLAN']).join('\n')).toContain('inspecciones_checklist_created_at_idx');
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  });
 });

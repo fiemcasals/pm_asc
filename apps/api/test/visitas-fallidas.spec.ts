@@ -1,11 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
+import { AppConfig } from '../src/config';
 import { VisitasFallidasService } from '../src/visitas-fallidas/visitas-fallidas.service';
 
 describe('VisitasFallidasService (HU-07 / RF-01)', () => {
   let service: VisitasFallidasService;
 
   beforeEach(() => {
-    service = new VisitasFallidasService();
+    service = new VisitasFallidasService(undefined, { visitasFallidasMinDias: 0 } as AppConfig);
   });
 
   describe('Criterio 1: Validación de Reporte de Visita Fallida', () => {

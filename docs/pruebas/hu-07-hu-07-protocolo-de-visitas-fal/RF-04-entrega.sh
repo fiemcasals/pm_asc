@@ -34,8 +34,10 @@ api "$ADMIN" GET "/api/consorcios/$ID"; M1="$(json "$TMP/r.json" 'b.maquinas[0].
 MES="$(date +%Y-%m)"; SIG="$(node -e 'const d=new Date();d.setMonth(d.getMonth()+1);console.log(d.toISOString().slice(0,7))')"
 liq() { api "$ADMIN" POST /api/visitas-fallidas/liquidar-maquina "{\"consorcioId\":\"$ID\",\"maquinaId\":\"$1\",\"referenciaAgc\":\"$2\",\"periodo\":\"$3\",\"montoBase\":100000}"; }
 
-echo "1. Tres visitas fallidas: el recargo del 45 % se suma en la liquidación de ese mes, por cada máquina"
-for n in 1 2 3; do api "$SEC" POST /api/visitas-fallidas "{\"consorcioId\":\"$ID\",\"fotoFrenteUrl\":\"https://f/$n.jpg\",\"gps\":{\"latitud\":-34.6,\"longitud\":-58.4}}"; done
+echo "1. Tres visitas fallidas (en tres días distintos): el recargo del 45 % se suma en la liquidación de ese mes, por cada máquina"
+# Desde HU-07 RF-05 entre dos visitas fallidas pasa al menos 1 día: las 2 primeras se cargan con fecha de hace 2 y 1 días; la 3.ª, hoy, por la API.
+for d in 2 1; do sql "insert into visitas_fallidas (id, consorcio_id, consorcio_nombre, direccion, numero_advertencia, motivo, foto_frente_url, gps_latitud, gps_longitud, gps_precision, gps_timestamp, inspector, fecha_hora) values ('VF-RF04-$d', '$ID', 'DEMO Corrientes 100', 'Av. Corrientes 100', $((3-d)), 'demo', 'https://f/$d.jpg', -34.6, -58.4, 5, now() - interval '$d days', 'demo', now() - interval '$d days')" >/dev/null; done
+api "$SEC" POST /api/visitas-fallidas "{\"consorcioId\":\"$ID\",\"fotoFrenteUrl\":\"https://f/3.jpg\",\"gps\":{\"latitud\":-34.6,\"longitud\":-58.4}}"
 [ "$CODE" = "201" ] && pass "la 3.ª visita fallida se registra → 201" || fail "3.ª visita → $CODE"
 liq "$M1" M1 "$MES"; [ "$(json "$TMP/r.json" 'b.recargoAplicado+"|"+b.montoRecargo')" = "true|45000" ] && pass "máquina M1, $MES: recargo de \$45.000 sobre \$100.000" || fail "M1 $MES: $(cat "$TMP/r.json" | head -c 200)"
 liq "$M2" M2 "$MES"; [ "$(json "$TMP/r.json" 'b.recargoAplicado')" = "true" ] && pass "máquina M2, $MES: también lleva recargo" || fail "M2 $MES"

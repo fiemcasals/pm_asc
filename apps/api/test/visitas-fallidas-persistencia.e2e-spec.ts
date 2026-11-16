@@ -4,6 +4,7 @@ import request from 'supertest';
 import { DatabaseService } from '../src/database/database.service';
 import { PgVisitasFallidasRepository } from '../src/visitas-fallidas/pg-visitas-fallidas.repository';
 import { InMemoryVisitasFallidasRepository } from '../src/visitas-fallidas/visitas-fallidas.repository';
+import { AppConfig } from '../src/config';
 import { VisitasFallidasService } from '../src/visitas-fallidas/visitas-fallidas.service';
 import { createTestApp, fakeDatabase } from './create-test-app';
 
@@ -61,9 +62,12 @@ function crearDbTransaccionalSimulada() {
       });
       return { rows: [], rowCount: 1 };
     }
-    if (sql.includes('SELECT count(*) AS total FROM visitas_fallidas')) {
-      const total = filas.filter((f) => f.consorcio_id === params[0]).length;
-      return { rows: [{ total: String(total) }], rowCount: 1 };
+    // Cuenta las advertencias vigentes del edificio y trae la fecha de su última visita fallida (HU-07 RF-05); en estas pruebas
+    // el edificio no tiene inspecciones, así que todas son vigentes.
+    if (sql.includes('count(*) FILTER') && sql.includes('FROM visitas_fallidas')) {
+      const propias = filas.filter((f) => f.consorcio_id === params[0]);
+      const ultima = propias.length > 0 ? propias[propias.length - 1].fecha_hora : null;
+      return { rows: [{ total: String(propias.length), ultima }], rowCount: 1 };
     }
     if (sql.includes('FROM visitas_fallidas') && sql.includes('WHERE consorcio_id = $1')) {
       const matches = filas.filter((f) => f.consorcio_id === params[0]).sort((a, b) => a.orden - b.orden);
@@ -122,7 +126,7 @@ describe('Persistencia de Visitas Fallidas en PostgreSQL (HU-07 / RF-03 — aisl
     it('inserta todos los campos en visitas_fallidas con lock por consorcio y sobrevive al reinicio del servicio', async () => {
       const db = crearDbTransaccionalSimulada();
       const repo1 = new PgVisitasFallidasRepository(db as unknown as DatabaseService);
-      const serviceAntesDelReinicio = new VisitasFallidasService(repo1);
+      const serviceAntesDelReinicio = new VisitasFallidasService(repo1, { visitasFallidasMinDias: 0 } as AppConfig);
 
       // Instancia 1 registra Advertencia 1 y Advertencia 2
       const v1 = await serviceAntesDelReinicio.registrarVisitaFallida(payloadValido());
@@ -148,7 +152,7 @@ describe('Persistencia de Visitas Fallidas en PostgreSQL (HU-07 / RF-03 — aisl
 
       // Reinicio simulado: nueva instancia del repositorio y del servicio sin estado previo en memoria
       const repo2 = new PgVisitasFallidasRepository(db as unknown as DatabaseService);
-      const serviceDespuesDelReinicio = new VisitasFallidasService(repo2);
+      const serviceDespuesDelReinicio = new VisitasFallidasService(repo2, { visitasFallidasMinDias: 0 } as AppConfig);
 
       const historial = await serviceDespuesDelReinicio.getHistorialConsorcio('consorcio-persist-1');
       expect(historial.totalAdvertencias).toBe(2);

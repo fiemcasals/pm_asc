@@ -579,4 +579,42 @@ export const MIGRATIONS: Migration[] = [
         WITH CHECK (eca = NULLIF(current_setting('app.eca_actual', true), ''));
     `,
   },
+  {
+    id: '020_desbloqueos_edificio',
+    sql: `
+      -- HU-07 RF-05: la Secretaría puede desbloquear un edificio bloqueado por la 3.ª visita fallida, con motivo obligatorio; vuelve al
+      -- recorrido del RT. El desbloqueo cubre las visitas fallidas hasta la indicada (la última al desbloquear): si el edificio
+      -- vuelve a fallar después, se bloquea de nuevo. Es un registro de auditoría: sólo se agrega.
+      -- consorcio_id es text, igual que en visitas_fallidas (admite ids simbólicos).
+      CREATE TABLE desbloqueos_edificio (
+        id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id     text NOT NULL,
+        hasta_visita_id  text NOT NULL,
+        usuario          text NOT NULL,
+        motivo           text NOT NULL,
+        fecha            timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT desbloqueos_edificio_motivo_no_vacio CHECK (btrim(motivo) <> ''),
+        CONSTRAINT desbloqueos_edificio_unico UNIQUE (hasta_visita_id)
+      );
+
+      CREATE INDEX desbloqueos_edificio_consorcio_idx ON desbloqueos_edificio (consorcio_id);
+
+      -- RLS: lo ve quien ve el edificio (la política de consorcios ya filtra por ECA, por rol y por RT/Firmante asignado) y sólo la
+      -- Secretaría y el Administrador lo escriben. Sin política de UPDATE ni de DELETE, la aplicación no puede modificarlo ni borrarlo.
+      ALTER TABLE desbloqueos_edificio ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_desbloqueos_edificio_select ON desbloqueos_edificio;
+      CREATE POLICY rls_desbloqueos_edificio_select ON desbloqueos_edificio
+        FOR SELECT
+        USING (
+          NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+          OR EXISTS (SELECT 1 FROM consorcios c WHERE c.id::text = desbloqueos_edificio.consorcio_id)
+        );
+
+      DROP POLICY IF EXISTS rls_desbloqueos_edificio_insert ON desbloqueos_edificio;
+      CREATE POLICY rls_desbloqueos_edificio_insert ON desbloqueos_edificio
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+    `,
+  },
 ];

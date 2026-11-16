@@ -68,6 +68,29 @@ export interface LiquidacionMaquinaDto {
   montoBase?: number;
 }
 
+/** Un desbloqueo de un edificio bloqueado por la 3.ª visita fallida, con quién, cuándo y por qué (HU-07 RF-05). */
+export interface DesbloqueoEdificio {
+  id: string;
+  consorcioId: string;
+  /** La última visita fallida que existía al desbloquear: el desbloqueo cubre hasta ella. */
+  hastaVisitaId: string;
+  usuario: string;
+  motivo: string;
+  fecha: string;
+}
+
+export interface DesbloquearEdificioDto {
+  motivo: string;
+}
+
+/** Un edificio de la lista de recorrido, con su estado de bloqueo. */
+export interface EdificioRecorrido {
+  id: string;
+  nombre: string;
+  direccion: string;
+  bloqueado: boolean;
+}
+
 /** Una anulación del recargo del 45 % de una máquina: quién, cuándo y por qué (HU-07 RF-04). */
 export interface AnulacionRecargo {
   id: string;

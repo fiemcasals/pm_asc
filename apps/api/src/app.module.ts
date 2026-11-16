@@ -31,7 +31,7 @@ import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service'
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
-import { VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
+import { RecorridoController, VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
 import { VisitasFallidasRepository } from './visitas-fallidas/visitas-fallidas.repository';
 import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-fallidas.repository';
 import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
@@ -44,6 +44,7 @@ export class AppModule implements NestModule {
       .forRoutes(
         ConsorciosController,
         VisitasFallidasController,
+        RecorridoController,
         EcaController,
         FirmanteController,
         FallasCriticasController,
@@ -67,6 +68,7 @@ export class AppModule implements NestModule {
         EcaController,
         WhatsAppController,
         VisitasFallidasController,
+        RecorridoController,
         FallasCriticasController,
         SeguridadRlsController,
         SemaforoController,

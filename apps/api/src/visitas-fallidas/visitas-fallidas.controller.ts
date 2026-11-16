@@ -13,6 +13,9 @@ import {
   AnulacionRecargo,
   AnularRecargoDto,
   BloqueoConsorcioInfo,
+  DesbloqueoEdificio,
+  DesbloquearEdificioDto,
+  EdificioRecorrido,
   LiquidacionConsorcioResultado,
   LiquidacionMaquinaDto,
   LiquidacionMaquinaResultado,
@@ -61,6 +64,19 @@ export class VisitasFallidasController {
   }
 
   /**
+   * HU-07 RF-05: la Secretaría (o el Administrador) desbloquea el edificio, con motivo obligatorio; vuelve al recorrido del RT.
+   */
+  @Post('consorcio/:consorcioId/desbloquear')
+  @Roles('secretaria', 'administrador')
+  async desbloquear(
+    @Param('consorcioId') consorcioId: string,
+    @Body() dto: DesbloquearEdificioDto,
+    @UsuarioActual() usuario: UsuarioAutenticado,
+  ): Promise<DesbloqueoEdificio> {
+    return this.service.desbloquearEdificio(consorcioId, dto, usuario.usuario);
+  }
+
+  /**
    * HU-07 RF-04: anula el recargo del 45 % de una máquina. Sólo el Administrador (otro rol recibe 403); el motivo es
    * obligatorio y queda registrado con el usuario de la sesión y la fecha.
    */
@@ -103,5 +119,17 @@ export class VisitasFallidasController {
   @Get()
   async getTodas(): Promise<VisitaFallidaRegistro[]> {
     return this.service.getTodas();
+  }
+}
+
+/** HU-07 RF-05: la lista de edificios a visitar. Los edificios bloqueados no aparecen en la del RT de Calle. */
+@Controller('recorrido')
+export class RecorridoController {
+  constructor(private readonly service: VisitasFallidasService) {}
+
+  @Get()
+  @Roles('rt_calle', 'secretaria', 'administrador')
+  async recorrido(@UsuarioActual() usuario: UsuarioAutenticado): Promise<EdificioRecorrido[]> {
+    return this.service.getRecorrido(usuario.rol);
   }
 }

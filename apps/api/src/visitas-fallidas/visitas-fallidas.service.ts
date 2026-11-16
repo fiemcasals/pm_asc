@@ -1,4 +1,6 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { APP_CONFIG, AppConfig } from '../config';
+import { cicloDeAdvertencias, diasCalendarioEntre, estaBloqueado } from './bloqueo.logic';
 import { randomUUID } from 'node:crypto';
 import {
   InMemoryVisitasFallidasRepository,
@@ -9,6 +11,9 @@ import {
   AnulacionRecargo,
   AnularRecargoDto,
   BloqueoConsorcioInfo,
+  DesbloqueoEdificio,
+  DesbloquearEdificioDto,
+  EdificioRecorrido,
   DetalleConceptoLiquidacion,
   EmailNotificacionConsorcio,
   LiquidacionConsorcioResultado,
@@ -24,9 +29,12 @@ import {
 export class VisitasFallidasService {
   private readonly logger = new Logger(VisitasFallidasService.name);
   private readonly repo: VisitasFallidasRepository;
+  /** Días de calendario que tienen que pasar entre dos visitas fallidas del mismo edificio (0 = sin mínimo). */
+  private readonly minDiasEntreVisitas: number;
 
-  constructor(@Optional() repo?: VisitasFallidasRepository) {
+  constructor(@Optional() repo?: VisitasFallidasRepository, @Optional() @Inject(APP_CONFIG) config?: AppConfig) {
     this.repo = repo ?? new InMemoryVisitasFallidasRepository();
+    this.minDiasEntreVisitas = config?.visitasFallidasMinDias ?? 1;
   }
 
   /**
@@ -75,7 +83,19 @@ export class VisitasFallidasService {
     const motivo = dto.motivo?.trim() || 'No se pudo realizar la inspección: encargado ausente';
     const inspector = dto.inspector?.trim() || 'Inspector Técnico de Guardia (RT Calle)';
 
-    const guardado = await this.repo.registrar(dto.consorcioId, (previasCount) => {
+    const guardado = await this.repo.registrar(dto.consorcioId, (previasCount, ultimaVisitaFallidaIso) => {
+      // HU-07 RF-05: entre dos visitas fallidas del mismo edificio tiene que pasar al menos un día (de calendario, hora de Buenos
+      // Aires). Se controla dentro del bloqueo del registro, así dos pedidos simultáneos no suman dos advertencias el mismo día.
+      if (
+        this.minDiasEntreVisitas > 0 &&
+        ultimaVisitaFallidaIso &&
+        diasCalendarioEntre(Date.parse(ultimaVisitaFallidaIso), Date.parse(fechaHora)) < this.minDiasEntreVisitas
+      ) {
+        throw new ConflictException(
+          'Este edificio ya tiene una visita fallida de hoy: entre dos visitas fallidas tiene que pasar al menos 1 día. No se sumó ninguna advertencia.',
+        );
+      }
+      // Las advertencias vigentes (previasCount) son las posteriores a la última inspección del edificio: sólo una visita exitosa las reinicia.
       const numeroAdvertencia: 1 | 2 | 3 =
         previasCount === 0 ? 1 : previasCount === 1 ? 2 : 3;
 
@@ -130,17 +150,22 @@ export class VisitasFallidasService {
   }
 
   async getHistorialConsorcio(consorcioId: string): Promise<ResumenAdvertenciasConsorcio> {
-    const historial = await this.repo.listarPorConsorcio(consorcioId);
+    // Sólo cuentan las advertencias vigentes: las posteriores a la última visita exitosa (inspección) del edificio.
+    const historial = cicloDeAdvertencias(
+      await this.repo.listarPorConsorcio(consorcioId),
+      await this.repo.ultimaInspeccion(consorcioId),
+    );
     const totalAdvertencias = historial.length;
     const ultima = historial.length > 0 ? historial[historial.length - 1].numeroAdvertencia : null;
-    const bloqueado = totalAdvertencias >= 3;
+    // Bloqueado: 3 advertencias vigentes y sin desbloqueo posterior. El recargo se genera con la 3.ª advertencia aunque se desbloquee.
+    const bloqueado = estaBloqueado(historial, await this.repo.listarDesbloqueos(consorcioId));
 
     return {
       consorcioId,
       totalAdvertencias,
       ultimaAdvertencia: ultima,
       bloqueadoPorTerceraVisita: bloqueado,
-      recargoAplicable: bloqueado,
+      recargoAplicable: totalAdvertencias >= 3,
       avisoCobro: bloqueado ? 'Cobro de Tercer Visita Habilitado' : null,
       historial,
     };
@@ -162,8 +187,8 @@ export class VisitasFallidasService {
       bloqueado,
       avisoCobro: bloqueado ? 'Cobro de Tercer Visita Habilitado' : null,
       totalAdvertencias: resumen.totalAdvertencias,
-      recargoAplicable: bloqueado,
-      porcentajeRecargo: bloqueado ? 45 : 0,
+      recargoAplicable: resumen.recargoAplicable,
+      porcentajeRecargo: resumen.recargoAplicable ? 45 : 0,
       motivoBloqueo: bloqueado
         ? 'El edificio acumula 3 visitas fallidas consecutivas. Queda bloqueado en el tablero y habilitado para cobro con recargo del 45%.'
         : null,
@@ -256,7 +281,7 @@ export class VisitasFallidasService {
     resumen: ResumenAdvertenciasConsorcio,
   ): Promise<{ tieneRecargo: boolean; noAplicadoPor: MotivoSinRecargo | null; anulacion: AnulacionRecargo | null }> {
     const tercera = resumen.historial[2];
-    if (!resumen.bloqueadoPorTerceraVisita || !tercera) return { tieneRecargo: false, noAplicadoPor: null, anulacion: null };
+    if (resumen.totalAdvertencias < 3 || !tercera) return { tieneRecargo: false, noAplicadoPor: null, anulacion: null };
 
     const mesDelRecargo = formatearMes(fechaEnZona(Date.parse(tercera.fechaHora)));
     if (periodo !== mesDelRecargo) return { tieneRecargo: false, noAplicadoPor: 'otro_periodo', anulacion: null };
@@ -289,7 +314,7 @@ export class VisitasFallidasService {
     await this.resolverConsorcioInfo(consorcioId);
     const resumen = await this.getHistorialConsorcio(consorcioId);
     const tercera = resumen.historial[2];
-    if (!resumen.bloqueadoPorTerceraVisita || !tercera) {
+    if (resumen.totalAdvertencias < 3 || !tercera) {
       throw new ConflictException('Este edificio no tiene un recargo del 45 % para anular: no llegó a la 3.ª advertencia.');
     }
     const maquinas = await this.repo.listarMaquinasConsorcio(consorcioId);
@@ -442,5 +467,46 @@ export class VisitasFallidasService {
       direccion: `Av. Corrientes ${consorcioId.slice(0, 4) || '1234'}, CABA`,
       email: `administracion@${consorcioId}.com.ar`,
     };
+  }
+
+  /**
+   * HU-07 RF-05: la Secretaría desbloquea un edificio bloqueado por la 3.ª visita fallida, con motivo obligatorio. Vuelve al recorrido
+   * del RT y el desbloqueo queda registrado (usuario de la sesión, fecha del servidor y motivo). No reinicia el contador: eso sólo lo
+   * hace una visita exitosa; si el edificio falla otra vez después, se bloquea de nuevo.
+   */
+  async desbloquearEdificio(consorcioId: string, dto: DesbloquearEdificioDto, usuario: string): Promise<DesbloqueoEdificio> {
+    const motivo = typeof dto?.motivo === 'string' ? dto.motivo.trim() : '';
+    if (!motivo) throw new BadRequestException({ message: 'Datos inválidos', errores: ['motivo es obligatorio: dejá constancia de por qué se desbloquea el edificio'] });
+    if (motivo.length > 500) throw new BadRequestException({ message: 'Datos inválidos', errores: ['motivo no puede superar los 500 caracteres'] });
+
+    await this.resolverConsorcioInfo(consorcioId);
+    const resumen = await this.getHistorialConsorcio(consorcioId);
+    const ultima = resumen.historial[resumen.historial.length - 1];
+    if (!resumen.bloqueadoPorTerceraVisita || !ultima) {
+      throw new ConflictException('Este edificio no está bloqueado: no hay nada para desbloquear.');
+    }
+    const desbloqueo = await this.repo.desbloquear({ consorcioId, hastaVisitaId: ultima.id, usuario, motivo });
+    if (!desbloqueo) throw new ConflictException('Este edificio ya fue desbloqueado.');
+    this.logger.log(`Edificio ${consorcioId} desbloqueado por ${usuario}: ${motivo}`);
+    return desbloqueo;
+  }
+
+  /**
+   * La lista de edificios a visitar. El RT de Calle no ve los edificios bloqueados (salen de su recorrido hasta que la Secretaría los
+   * desbloquea); la Secretaría y el Administrador ven todos, con el estado de bloqueo. Los edificios que cada usuario ve los decide el RLS.
+   */
+  async getRecorrido(rol: string): Promise<EdificioRecorrido[]> {
+    const [edificios, todas, inspecciones, desbloqueos] = await Promise.all([
+      this.repo.listarEdificiosVisibles(),
+      this.repo.listarTodas(),
+      this.repo.ultimasInspecciones(),
+      this.repo.listarDesbloqueos(),
+    ]);
+    const lista = edificios.map((e) => {
+      const propias = todas.filter((v) => v.consorcioId === e.id);
+      const ciclo = cicloDeAdvertencias(propias, inspecciones[e.id] ?? null);
+      return { ...e, bloqueado: estaBloqueado(ciclo, desbloqueos.filter((d) => d.consorcioId === e.id)) };
+    });
+    return rol === 'rt_calle' ? lista.filter((e) => !e.bloqueado) : lista;
   }
 }

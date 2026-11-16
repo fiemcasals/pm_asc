@@ -5,7 +5,7 @@ import {
   MaquinaBasica,
   VisitasFallidasRepository,
 } from './visitas-fallidas.repository';
-import { AnulacionRecargo, EmailNotificacionConsorcio, VisitaFallidaRegistro } from './visitas-fallidas.types';
+import { AnulacionRecargo, DesbloqueoEdificio, EmailNotificacionConsorcio, VisitaFallidaRegistro } from './visitas-fallidas.types';
 import { ZONA_HORARIA } from '../semaforo/semaforo.logic';
 
 const UNIQUE_VIOLATION = '23505';
@@ -54,6 +54,24 @@ const aAnulacion = (r: AnulacionRow): AnulacionRecargo => ({
   fecha: aIso(r.fecha),
 });
 
+interface DesbloqueoRow {
+  id: string;
+  consorcio_id: string;
+  hasta_visita_id: string;
+  usuario: string;
+  motivo: string;
+  fecha: Date | string;
+}
+
+const aDesbloqueo = (r: DesbloqueoRow): DesbloqueoEdificio => ({
+  id: r.id,
+  consorcioId: r.consorcio_id,
+  hastaVisitaId: r.hasta_visita_id,
+  usuario: r.usuario,
+  motivo: r.motivo,
+  fecha: aIso(r.fecha),
+});
+
 function aIso(valor: Date | string): string {
   return valor instanceof Date ? valor.toISOString() : new Date(valor).toISOString();
 }
@@ -93,18 +111,24 @@ export class PgVisitasFallidasRepository extends VisitasFallidasRepository {
 
   async registrar(
     consorcioId: string,
-    construirRegistro: (previasCount: number) => VisitaFallidaRegistro,
+    construirRegistro: (previasCount: number, ultimaVisitaFallidaIso: string | null) => VisitaFallidaRegistro,
   ): Promise<VisitaFallidaRegistro> {
     return this.db.transaction(async (client) => {
       // Serializa los registros concurrentes del mismo consorcio para no repetir numero_advertencia.
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [consorcioId]);
 
-      const countRes = await client.query<{ total: string }>(
-        'SELECT count(*) AS total FROM visitas_fallidas WHERE consorcio_id = $1',
+      // Las advertencias vigentes son las posteriores a la última inspección del edificio (su última visita exitosa).
+      const countRes = await client.query<{ total: string; ultima: Date | null }>(
+        `SELECT count(*) FILTER (
+                  WHERE v.fecha_hora > COALESCE((SELECT max(i.created_at) FROM inspecciones_checklist i WHERE i.consorcio_id = $1), '-infinity')
+                ) AS total,
+                max(v.fecha_hora) AS ultima
+           FROM visitas_fallidas v WHERE v.consorcio_id = $1`,
         [consorcioId],
       );
       const previasCount = Number(countRes.rows[0].total);
-      const registro = construirRegistro(previasCount);
+      const ultima = countRes.rows[0].ultima;
+      const registro = construirRegistro(previasCount, ultima ? new Date(ultima).toISOString() : null);
 
       await client.query(
         `INSERT INTO visitas_fallidas (
@@ -216,5 +240,42 @@ export class PgVisitasFallidasRepository extends VisitasFallidasRepository {
       if ((err as { code?: string })?.code === UNIQUE_VIOLATION) return null; // ya estaba anulado
       throw err;
     }
+  }
+
+  async ultimaInspeccion(consorcioId: string): Promise<string | null> {
+    const filas = await this.db.query<{ t: Date | null }>('SELECT max(created_at) AS t FROM inspecciones_checklist WHERE consorcio_id = $1', [consorcioId]);
+    return filas[0]?.t ? new Date(filas[0].t).toISOString() : null;
+  }
+
+  async ultimasInspecciones(): Promise<Record<string, string>> {
+    const filas = await this.db.query<{ consorcio_id: string; t: Date }>('SELECT consorcio_id, max(created_at) AS t FROM inspecciones_checklist GROUP BY consorcio_id');
+    return Object.fromEntries(filas.map((f) => [f.consorcio_id, new Date(f.t).toISOString()]));
+  }
+
+  async listarDesbloqueos(consorcioId?: string): Promise<DesbloqueoEdificio[]> {
+    const filas = await this.db.query<DesbloqueoRow>(
+      `SELECT id, consorcio_id, hasta_visita_id, usuario, motivo, fecha FROM desbloqueos_edificio
+        WHERE ($1::text IS NULL OR consorcio_id = $1) ORDER BY fecha, id`,
+      [consorcioId ?? null],
+    );
+    return filas.map(aDesbloqueo);
+  }
+
+  async desbloquear(datos: Omit<DesbloqueoEdificio, 'id' | 'fecha'>): Promise<DesbloqueoEdificio | null> {
+    try {
+      const filas = await this.db.query<DesbloqueoRow>(
+        `INSERT INTO desbloqueos_edificio (consorcio_id, hasta_visita_id, usuario, motivo) VALUES ($1, $2, $3, $4)
+         RETURNING id, consorcio_id, hasta_visita_id, usuario, motivo, fecha`,
+        [datos.consorcioId, datos.hastaVisitaId, datos.usuario, datos.motivo],
+      );
+      return aDesbloqueo(filas[0]);
+    } catch (err) {
+      if ((err as { code?: string })?.code === UNIQUE_VIOLATION) return null; // esa serie ya estaba desbloqueada
+      throw err;
+    }
+  }
+
+  async listarEdificiosVisibles(): Promise<{ id: string; nombre: string; direccion: string }[]> {
+    return this.db.query<{ id: string; nombre: string; direccion: string }>('SELECT id::text AS id, nombre, direccion FROM consorcios ORDER BY nombre, id');
   }
 }

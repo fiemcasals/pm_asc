@@ -12,6 +12,8 @@ import { asegurarUsuarioPrueba } from './test-auth-helper';
 // Integración real (HU-07 RF-04): el recargo del 45 % una sola vez y su anulación, contra PostgreSQL de verdad. Requiere la
 // base levantada con `npm run db:up`, DATABASE_URL, DATABASE_APP_PASSWORD y AUTH_JWT_SECRET (en el .env de la raíz o en el entorno).
 loadEnvFileInto(process.env);
+// Estas pruebas registran varias visitas fallidas seguidas: no exigen el día de separación (HU-07 RF-05), que prueba su propio archivo.
+process.env.VISITAS_FALLIDAS_MIN_DIAS = '0';
 
 const P = 'RF04-int';
 const TZ = 'America/Argentina/Buenos_Aires';

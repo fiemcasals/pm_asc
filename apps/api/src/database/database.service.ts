@@ -9,6 +9,7 @@ export const APP_RLS_ROLE = 'ascensores_app';
 /** Las tablas con datos de una ECA, que tienen que tener RLS activo: las que revisa el diagnóstico de seguridad. */
 export const TABLAS_CON_RLS = [
   'consorcios',
+  'desbloqueos_edificio',
   'maquinas',
   'roles_edificio',
   'acuses_recibo_legal',

@@ -18,7 +18,7 @@ import { ChecklistSolapaView } from './ChecklistSolapaView';
 import {
   COMPONENTES_ACCESOS_POR_PISO,
   GRUPOS_COMPONENTES_ACCESOS,
-  PISOS_EDIFICIO_DEFAULT,
+  pisosDelEdificio,
   agregarFallaPiso,
   claveFotoFallaPiso,
   crearFallaPiso,
@@ -28,6 +28,7 @@ import {
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
 import {
   EQUIPOS_EDIFICIO_DEMO,
+  type EdificioInspeccion,
   aplicarRespuestaConSalaCompartida,
   obtenerSiguienteSolapa,
   obtenerSolapaAnterior,
@@ -47,8 +48,13 @@ import {
 
 const EQUIPOS_DEMO = EQUIPOS_EDIFICIO_DEMO;
 
-export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspectorNombre?: string } = {}) {
-  const [equipoId, setEquipoId] = useState<string>(EQUIPOS_DEMO[0].maquinaId);
+export function InspeccionCampoView({
+  inspectorNombre = 'RT de Calle',
+  edificio,
+}: { inspectorNombre?: string; edificio?: EdificioInspeccion } = {}) {
+  // Los equipos y los pisos son los del edificio que se está inspeccionando; sin edificio (demostración) se usan los de ejemplo.
+  const EQUIPOS = edificio && edificio.equipos.length > 0 ? edificio.equipos : EQUIPOS_DEMO;
+  const [equipoId, setEquipoId] = useState<string>(EQUIPOS[0].maquinaId);
   const [tipoOverride, setTipoOverride] = useState<Record<string, TipoMaquinaChecklist>>({});
   const [estadoPorEquipo, setEstadoPorEquipo] = useState<Record<string, EstadoEquipoUso>>({});
   const [solapaActiva, setSolapaActiva] = useState<SolapaId>('sala_maquinas');
@@ -213,7 +219,7 @@ export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspe
   };
 
   const handleReiniciarBorrador = () => {
-    setEquipoId(EQUIPOS_DEMO[0].maquinaId);
+    setEquipoId(EQUIPOS[0].maquinaId);
     setSolapaActiva('sala_maquinas');
     setTipoOverride({});
     setEstadoPorEquipo({});
@@ -227,11 +233,11 @@ export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspe
     void limpiarVisitaEnCurso().catch(() => {});
   };
 
-  const pisosEdificio = PISOS_EDIFICIO_DEFAULT;
+  const pisosEdificio = pisosDelEdificio(edificio?.pisos);
   const fallasPisoActuales = fallasPisoPorEquipo[equipoId] ?? [];
 
   const equipo = useMemo(
-    () => EQUIPOS_DEMO.find((e) => e.maquinaId === equipoId) ?? EQUIPOS_DEMO[0],
+    () => EQUIPOS.find((e) => e.maquinaId === equipoId) ?? EQUIPOS[0],
     [equipoId],
   );
   const tipoActual = tipoOverride[equipo.maquinaId] ?? equipo.tipo;
@@ -268,7 +274,7 @@ export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspe
       const { respuestasPorEquipo: siguiente, propagadoAEquipos } =
         aplicarRespuestaConSalaCompartida({
           prevRespuestasPorEquipo: prev,
-          equipos: EQUIPOS_DEMO,
+          equipos: EQUIPOS,
           equipoActivoId: equipo.maquinaId,
           config,
           solapaId,
@@ -276,7 +282,7 @@ export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspe
           opcionId,
         });
       if (propagadoAEquipos.length > 0 && equipo.salaCompartidaNombre) {
-        const refs = EQUIPOS_DEMO.filter((e) => propagadoAEquipos.includes(e.maquinaId))
+        const refs = EQUIPOS.filter((e) => propagadoAEquipos.includes(e.maquinaId))
           .map((e) => e.referenciaAgc)
           .join(', ');
         setAvisoSala(
@@ -669,7 +675,7 @@ export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspe
               onChange={(e) => setEquipoId(e.target.value)}
               data-testid="select-equipo-inspeccion"
             >
-              {EQUIPOS_DEMO.map((eq) => (
+              {EQUIPOS.map((eq) => (
                 <option key={eq.maquinaId} value={eq.maquinaId}>
                   {eq.referenciaAgc} · {eq.descripcion}
                 </option>
@@ -727,7 +733,7 @@ export function InspeccionCampoView({ inspectorNombre = 'RT de Calle' }: { inspe
         headerSolapa={(solapa) => (
           <div className="checklist-equipos-estacion" data-testid="selector-equipos-estacion">
             <div className="checklist-equipos-bar" role="group" aria-label={`Equipos en ${solapa.nombre}`}>
-              {EQUIPOS_DEMO.map((eq) => {
+              {EQUIPOS.map((eq) => {
                 const activo = eq.maquinaId === equipo.maquinaId;
                 return (
                   <button

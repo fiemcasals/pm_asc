@@ -16,6 +16,38 @@ export interface EquipoInspeccion {
   salaCompartidaNombre?: string;
 }
 
+/** Lo que la pantalla de inspección necesita saber del edificio: sus equipos y sus pisos. Sin esto usa los datos de demostración. */
+export interface EdificioInspeccion {
+  consorcioId?: string;
+  nombre?: string;
+  equipos: readonly EquipoInspeccion[];
+  pisos?: readonly string[] | null;
+}
+
+interface MaquinaDeFicha {
+  id: string;
+  referenciaAgc: string;
+  descripcion?: string | null;
+  tipo?: TipoMaquinaChecklist;
+  salaCompartidaId?: string | null;
+}
+
+/**
+ * Los equipos del edificio a partir de las máquinas de su ficha (HU-17 RF-02): cada uno con su referencia AGC y su tipo (por defecto,
+ * tracción). Los que comparten sala de máquinas se agrupan por su `salaCompartidaId`; los demás tienen sala propia.
+ */
+export function equiposDeFicha(maquinas: readonly MaquinaDeFicha[]): EquipoInspeccion[] {
+  return maquinas.map((m) => ({
+    maquinaId: m.id,
+    firmanteMaquinaId: m.id,
+    referenciaAgc: m.referenciaAgc,
+    descripcion: m.descripcion?.trim() || '',
+    tipo: m.tipo ?? 'traccion',
+    salaCompartidaId: m.salaCompartidaId || null,
+    salaCompartidaNombre: m.salaCompartidaId ? `Sala ${m.salaCompartidaId}` : undefined,
+  }));
+}
+
 export const EQUIPOS_EDIFICIO_DEMO: readonly EquipoInspeccion[] = [
   {
     maquinaId: 'demo-m1',

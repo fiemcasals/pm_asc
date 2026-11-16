@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Observable, Subject } from 'rxjs';
 import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
 import { FirmanteService } from '../firmante/firmante.service';
 import {
+  EventoAperturaFalla,
   EventoFallaCritica,
   FallaCritica,
   FallaCriticaDetalle,
@@ -59,6 +60,7 @@ export class FallasCriticasService {
   private readonly informes = new Map<string, InformeFalla>();
   private readonly informesPorClientId = new Map<string, InformeFalla>();
   private readonly eventos = new Subject<EventoFallaCritica>();
+  private readonly aperturas = new Subject<EventoAperturaFalla>();
 
   constructor(private readonly firmanteService: FirmanteService) {}
 
@@ -67,15 +69,40 @@ export class FallasCriticasService {
     return this.eventos.asObservable();
   }
 
-  /** Lista eventos críticos ya emitidos (en orden cronológico) para Secretaría y Firmante al abrir su panel. */
-  listarEventosCriticos(): EventoFallaCritica[] {
+  /** Avisos de apertura de alertas: cuando alguien abre una, la alarma se detiene en todas las pantallas. */
+  aperturas$(): Observable<EventoAperturaFalla> {
+    return this.aperturas.asObservable();
+  }
+
+  /**
+   * Lista eventos críticos ya emitidos (en orden cronológico) para Secretaría y Firmante al abrir su panel. Un Firmante sólo ve las
+   * alertas de los edificios que tiene asignados (HU-06 RF-04); la Secretaría y el Administrador ven todas.
+   */
+  listarEventosCriticos(para?: { usuario: string; rol: string }): EventoFallaCritica[] {
     const lista: EventoFallaCritica[] = [];
     for (const informe of this.informes.values()) {
-      if (informe.fallasCriticas.length > 0) {
-        lista.push(aEventoFalla(informe));
-      }
+      if (informe.fallasCriticas.length === 0) continue;
+      if (para?.rol === 'firmante' && informe.firmanteUsername.toLowerCase() !== para.usuario.toLowerCase()) continue;
+      lista.push(aEventoFalla(informe));
     }
     return lista;
+  }
+
+  /**
+   * HU-06 RF-04: registra quién abrió la alerta primero y cuándo, y avisa por el canal para que deje de sonar en todas las pantallas.
+   * Idempotente: una segunda apertura no cambia nada y devuelve la primera. Un Firmante sólo abre las de sus edificios.
+   */
+  abrir(id: string, usuario: { usuario: string; rol: string }): { abiertaPor: string; abiertaEn: string; primera: boolean } {
+    const informe = this.informes.get(id);
+    if (!informe || informe.fallasCriticas.length === 0) throw new NotFoundException(`No existe la alerta ${id}`);
+    if (usuario.rol === 'firmante' && informe.firmanteUsername.toLowerCase() !== usuario.usuario.toLowerCase()) {
+      throw new ForbiddenException('Esta alerta es de un edificio que no tenés asignado.');
+    }
+    if (informe.abiertaPor) return { abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn!, primera: false };
+    informe.abiertaPor = usuario.usuario;
+    informe.abiertaEn = new Date().toISOString();
+    this.aperturas.next({ tipo: 'falla-abierta', informeId: id, abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn });
+    return { abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn, primera: true };
   }
 
   registrarInforme(body: unknown): RegistrarInformeResponse {
@@ -140,6 +167,9 @@ export class FallasCriticasService {
       fallasComunes,
       registradoEn: new Date().toISOString(),
       enlaceInforme: `/api/fallas-criticas/informes/${id}`,
+      firmanteUsername: maquina.firmanteUsername,
+      abiertaPor: null,
+      abiertaEn: null,
     };
     this.informes.set(id, informe);
     if (input.clientReportId) {
@@ -178,6 +208,9 @@ function aEventoFalla(informe: InformeFalla): EventoFallaCritica {
     fallasDetalle: informe.fallasCriticasDetalle.map((d) => ({ ...d })),
     registradoEn: informe.registradoEn,
     enlaceInforme: informe.enlaceInforme,
+    firmanteUsername: informe.firmanteUsername,
+    abiertaPor: informe.abiertaPor,
+    abiertaEn: informe.abiertaEn,
   };
 }
 

@@ -15,6 +15,18 @@ export interface EventoFallaCritica {
   fallas: FallaCritica[];
   registradoEn: string;
   enlaceInforme: string;
+  /** El Firmante asignado al edificio (HU-06 RF-04). */
+  firmanteUsername?: string;
+  /** Quién abrió la alerta primero; null/ausente mientras nadie la abrió. */
+  abiertaPor?: string | null;
+  abiertaEn?: string | null;
+}
+
+export interface EventoAperturaFalla {
+  tipo: 'falla-abierta';
+  informeId: string;
+  abiertaPor: string;
+  abiertaEn: string;
 }
 
 /** Las fallas críticas de un evento agrupadas por zona, con su nombre legible, en el orden de las zonas del checklist. */
@@ -87,12 +99,19 @@ export interface FuenteEventos {
 export function suscribirFallasCriticas(
   onEvento: (e: EventoFallaCritica) => void,
   crearFuente: (url: string) => FuenteEventos = (url) => new EventSource(url),
+  onApertura?: (e: EventoAperturaFalla) => void,
 ): () => void {
   const fuente = crearFuente(URL_EVENTOS_FALLAS);
   fuente.addEventListener('falla-critica', (msg) => {
     const evento = parsearEventoFalla(msg.data);
     if (evento) onEvento(evento);
   });
+  if (onApertura) {
+    fuente.addEventListener('falla-abierta', (msg) => {
+      const apertura = parsearEventoApertura(msg.data);
+      if (apertura) onApertura(apertura);
+    });
+  }
   return () => fuente.close();
 }
 
@@ -148,4 +167,46 @@ export function agruparFallasPorZona(fallas: readonly string[]): GrupoFallasPorZ
     .map(([zona, lista]) => ({ zona, orden: Math.min(...lista.map((f) => f.orden)), fallas: lista.sort((a, b) => a.orden - b.orden) }))
     .sort((a, b) => a.orden - b.orden)
     .map(({ zona, fallas: lista }) => ({ zona, fallas: lista.map(({ codigo, nombre }) => ({ codigo, nombre })) }));
+}
+
+/** Interpreta el `data` de un aviso de apertura. Devuelve null si no está bien formado. */
+export function parsearEventoApertura(raw: string): EventoAperturaFalla | null {
+  try {
+    const d = JSON.parse(raw) as Record<string, unknown>;
+    if (d.tipo !== 'falla-abierta') return null;
+    if (typeof d.informeId !== 'string' || typeof d.abiertaPor !== 'string' || typeof d.abiertaEn !== 'string') return null;
+    return d as unknown as EventoAperturaFalla;
+  } catch {
+    return null;
+  }
+}
+
+/** Cada cuánto se repite la alarma mientras haya una alerta sin abrir (HU-06 RF-04). */
+export const REPETICION_ALARMA_MS = 6000;
+
+/**
+ * La alarma de la Secretaría suena mientras haya una alerta que nadie abrió: ni en esta pantalla ni en otra (`abiertaPor` del servidor).
+ * En cuanto un usuario la abre, deja de sonar.
+ */
+export function debeSonarAlarma(pendientes: readonly EventoFallaCritica[], abiertasAhora: ReadonlySet<string>): boolean {
+  return pendientes.some((e) => !e.abiertaPor && !abiertasAhora.has(e.informeId));
+}
+
+/** Un Firmante ve sólo las alertas de los edificios que tiene asignados; sin dato de asignación no se muestra ninguna. */
+export function alertasDelFirmante(eventos: readonly EventoFallaCritica[], usuario: string | undefined): EventoFallaCritica[] {
+  if (!usuario) return [...eventos];
+  return eventos.filter((e) => e.firmanteUsername?.toLowerCase() === usuario.toLowerCase());
+}
+
+/** Le avisa a la API que el usuario abrió la alerta. */
+export async function abrirAlerta(
+  informeId: string,
+  enviar: (url: string, init: RequestInit) => Promise<Response>,
+): Promise<boolean> {
+  try {
+    const res = await enviar(`/api/fallas-criticas/informes/${encodeURIComponent(informeId)}/abrir`, { method: 'POST' });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

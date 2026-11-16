@@ -41,6 +41,7 @@ describe('Recupero de contraseña por correo (HU-14)', () => {
       undefined,
       { usuarios, reloj },
       undefined,
+      undefined,
       mailer,
     ));
     await usuarios.crear({

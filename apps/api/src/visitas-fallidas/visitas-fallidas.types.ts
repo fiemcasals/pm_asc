@@ -125,6 +125,13 @@ export interface LiquidacionMaquinaResultado {
   referenciaAgc: string;
   periodo: string;
   montoBase: number;
+  /** De dónde salió el abono: el guardado en la máquina (HU-02 RF-04), el que mandó quien liquida, o el valor por defecto. */
+  origenAbono: 'maquina' | 'parametro' | 'por_defecto';
+  /** Lo que le corresponde al RT de Calle y al Firmante de este abono, según los porcentajes guardados de la máquina. */
+  porcentajeRt: number;
+  porcentajeFirmante: number;
+  montoRt: number;
+  montoFirmante: number;
   totalAdvertencias: number;
   bloqueadoPorTerceraVisita: boolean;
   recargoAplicado: boolean;

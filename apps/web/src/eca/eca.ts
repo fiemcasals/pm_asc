@@ -52,6 +52,8 @@ export interface MaquinaEca {
   mes: string;
   estado: 'Recorrida' | 'Pendiente de Visita' | 'Advertencia';
   estadoOperativo?: EstadoOperativo;
+  /** Si el Firmante todavía no confirmó el estado que marcó el RT (HU-06 RF-05). */
+  confirmacionEstado?: 'Pendiente de confirmación' | 'Confirmado' | 'Rechazado';
   alertaCritica?: AlertaCritica | null;
   visita: {
     id: string;

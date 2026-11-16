@@ -380,6 +380,35 @@ describe('eca module', () => {
       expect(res.data?.acuseLegal.registrado).toBe(true);
       expect(res.data?.acuseLegal.usuario).toBe('operador.legal@maicon.com.ar');
     });
+
+    it('descarga el remito en formato PDF y extrae los metadatos de acuse de los encabezados', async () => {
+      const mockBlob = new Blob(['%PDF-1.4 mock content'], { type: 'application/pdf' });
+      const headers = new Headers({
+        'content-type': 'application/pdf',
+        'content-disposition': 'attachment; filename="remito-tecnico-M1-ALT-1.pdf"',
+        'x-acuse-fecha-hora': '2026-11-16T12:00:00.000Z',
+        'x-acuse-usuario': encodeURIComponent('operador.legal@maicon.com.ar'),
+        'x-codigo-agc': 'M1',
+        'x-alerta-id': 'ALT-1',
+      });
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        headers,
+        blob: async () => mockBlob,
+      } as unknown as Response);
+
+      const res = await descargarRemitoTecnico('ALT-1', 'operador.legal@maicon.com.ar');
+
+      expect(res.ok).toBe(true);
+      expect(res.data?.id).toBe('REM-ALT-1');
+      expect(res.data?.codigoAGC).toBe('M1');
+      expect(res.data?.filename).toBe('remito-tecnico-M1-ALT-1.pdf');
+      expect(res.data?.blob).toBeDefined();
+      expect(res.data?.acuseLegal.registrado).toBe(true);
+      expect(res.data?.acuseLegal.usuario).toBe('operador.legal@maicon.com.ar');
+      expect(res.data?.acuseLegal.fechaHora).toBe('2026-11-16T12:00:00.000Z');
+    });
   });
 
   describe('enviarAlertaWhatsApp API client (HU-11 / RF-01)', () => {

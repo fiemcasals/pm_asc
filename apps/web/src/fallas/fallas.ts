@@ -17,6 +17,12 @@ export interface EventoFallaCritica {
   enlaceInforme: string;
 }
 
+/** Las fallas críticas de un evento agrupadas por zona, con su nombre legible, en el orden de las zonas del checklist. */
+export interface GrupoFallasPorZona {
+  zona: string;
+  fallas: { codigo: string; nombre: string }[];
+}
+
 export const URL_EVENTOS_FALLAS = '/api/fallas-criticas/eventos';
 
 const ETIQUETAS_CHECKLIST: Record<string, string> = Object.fromEntries(
@@ -119,4 +125,27 @@ export function reproducirAvisoSonoro(
   }
   setTimeout(() => void ctx.close?.(), 2500);
   return true;
+}
+
+const ZONA_Y_ORDEN = new Map(
+  obtenerFallasCriticasDefinidas().map((f, orden) => [f.codigoFallaCritica, { zona: f.solapaNombre, orden }]),
+);
+
+/**
+ * Agrupa las fallas críticas de un evento por zona de la máquina (Sala de Máquinas, Cabina, Accesos, Caja, Fosa), cada una con su
+ * nombre legible. Las zonas y las fallas salen en el orden del checklist. Los códigos que no están en la lista del cliente (los dos
+ * históricos siguen estándolo) se agrupan aparte, en "Otras", para no ocultar nada.
+ */
+export function agruparFallasPorZona(fallas: readonly string[]): GrupoFallasPorZona[] {
+  const grupos = new Map<string, { codigo: string; nombre: string; orden: number }[]>();
+  for (const codigo of new Set(fallas)) {
+    const zona = ZONA_Y_ORDEN.get(codigo);
+    const nombre = ETIQUETA_FALLA[codigo] ?? codigo;
+    const clave = zona?.zona ?? 'Otras';
+    grupos.set(clave, [...(grupos.get(clave) ?? []), { codigo, nombre, orden: zona?.orden ?? Number.MAX_SAFE_INTEGER }]);
+  }
+  return [...grupos.entries()]
+    .map(([zona, lista]) => ({ zona, orden: Math.min(...lista.map((f) => f.orden)), fallas: lista.sort((a, b) => a.orden - b.orden) }))
+    .sort((a, b) => a.orden - b.orden)
+    .map(({ zona, fallas: lista }) => ({ zona, fallas: lista.map(({ codigo, nombre }) => ({ codigo, nombre })) }));
 }

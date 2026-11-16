@@ -61,6 +61,7 @@ export class FirmanteService {
       {
         id: 'MAQ-CORRIENTES-M2',
         codigoAGC: 'M2',
+        tipo: 'hidraulico',
         nombre: 'M2: Ascensor Servicio (Izquierda)',
         edificio: {
           id: 'EDIF-01',

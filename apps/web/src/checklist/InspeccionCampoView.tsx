@@ -26,6 +26,8 @@ import {
   type FallaPisoRegistro,
 } from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
+import { fetchConSesion } from '../auth/sesion';
+import { enviarReporteParada, puedeGuardarParada, usoRespondido, type BorradorParada } from './usoEquipo';
 import {
   EQUIPOS_EDIFICIO_DEMO,
   type EdificioInspeccion,
@@ -68,6 +70,11 @@ export function InspeccionCampoView({
   const [detallePiso, setDetallePiso] = useState<string>('');
   const [avisoSala, setAvisoSala] = useState<string | null>(null);
   const [fotoError, setFotoError] = useState<string | null>(null);
+  // Reporte de parada (HU-17 RF-03): el borrador y el reporte ya guardado de cada equipo fuera de servicio.
+  const [paradaPorEquipo, setParadaPorEquipo] = useState<Record<string, BorradorParada>>({});
+  const [paradaGuardada, setParadaGuardada] = useState<Record<string, { id: string; estado: string; avisadoA: string[] }>>({});
+  const [paradaError, setParadaError] = useState<string | null>(null);
+  const [guardandoParada, setGuardandoParada] = useState(false);
   const [configs, setConfigs] = useState<Record<string, ReturnType<typeof obtenerChecklistParaTipo>>>({});
   const [enLinea, setEnLinea] = useState<boolean>(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -242,6 +249,39 @@ export function InspeccionCampoView({
   );
   const tipoActual = tipoOverride[equipo.maquinaId] ?? equipo.tipo;
   const estadoActual = estadoPorEquipo[equipo.maquinaId] ?? 'en_uso';
+  const respondido = usoRespondido(estadoPorEquipo, equipo.maquinaId);
+  const borradorParada = paradaPorEquipo[equipo.maquinaId] ?? { causa: '', fotos: [] };
+  const reporteGuardado = paradaGuardada[equipo.maquinaId];
+
+  const responderUso = (estado: EstadoEquipoUso) => setEstadoPorEquipo((prev) => ({ ...prev, [equipo.maquinaId]: estado }));
+  const cambiarRespuestaUso = () =>
+    setEstadoPorEquipo((prev) => {
+      const { [equipo.maquinaId]: _quitado, ...resto } = prev;
+      return resto;
+    });
+  const agregarFotoParada = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setParadaError(null);
+    try {
+      const { dataUrl } = await comprimirFotoAnomalia(file);
+      setParadaPorEquipo((prev) => {
+        const actual = prev[equipo.maquinaId] ?? { causa: '', fotos: [] };
+        return { ...prev, [equipo.maquinaId]: { ...actual, fotos: [...actual.fotos, dataUrl] } };
+      });
+    } catch (err) {
+      setParadaError(err instanceof Error ? err.message : 'No se pudo procesar la foto');
+    }
+  };
+  const guardarParada = async () => {
+    setParadaError(null);
+    setGuardandoParada(true);
+    const res = await enviarReporteParada(equipo.firmanteMaquinaId ?? equipo.maquinaId, borradorParada, fetchConSesion);
+    setGuardandoParada(false);
+    if (res.ok) setParadaGuardada((prev) => ({ ...prev, [equipo.maquinaId]: res.reporte }));
+    else setParadaError(res.error);
+  };
 
   useEffect(() => {
     let cancelado = false;
@@ -701,25 +741,81 @@ export function InspeccionCampoView({
             </select>
           </label>
 
-          <label className="inspeccion-field">
-            <span>Estado operativo</span>
-            <select
-              value={estadoActual}
-              onChange={(e) =>
-                setEstadoPorEquipo((prev) => ({
-                  ...prev,
-                  [equipo.maquinaId]: e.target.value as EstadoEquipoUso,
-                }))
-              }
-              data-testid="select-estado-inspeccion"
-            >
-              <option value="en_uso">En uso</option>
-              <option value="fuera_de_servicio">Fuera de servicio</option>
-            </select>
-          </label>
+          {respondido && (
+            <div className="inspeccion-field">
+              <span>Estado operativo</span>
+              <p data-testid="estado-uso-respondido">
+                <strong>{estadoActual === 'en_uso' ? 'En uso' : 'Fuera de servicio'}</strong>{' '}
+                <button type="button" className="btn btn-secondary btn-sm" onClick={cambiarRespuestaUso} data-testid="btn-cambiar-uso">
+                  Cambiar respuesta
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
+      {!respondido && (
+        <div className="card checklist-pregunta-uso" data-testid="pregunta-uso-equipo">
+          <h3>
+            {equipo.referenciaAgc} · {equipo.descripcion || 'Equipo'} ({{ traccion: 'Tracción', hidraulico: 'Hidráulico', montavehiculos: 'Montavehículos' }[tipoActual]})
+          </h3>
+          <p>¿El equipo está en uso? Tenés que responder para empezar a completar las solapas.</p>
+          <div className="checklist-pregunta-uso-botones">
+            <button type="button" className="btn btn-primary" onClick={() => responderUso('en_uso')} data-testid="btn-uso-si">
+              SÍ, EN USO
+            </button>
+            <button type="button" className="btn btn-danger" onClick={() => responderUso('fuera_de_servicio')} data-testid="btn-uso-no">
+              NO, FUERA DE SERVICIO
+            </button>
+          </div>
+        </div>
+      )}
+
+      {respondido && estadoActual === 'fuera_de_servicio' && (
+        <div className="card checklist-reporte-parada" data-testid="reporte-parada">
+          <h3>Reporte de parada — {equipo.referenciaAgc}</h3>
+          {reporteGuardado ? (
+            <p role="status" data-testid="parada-guardada">
+              <strong>{reporteGuardado.estado}</strong>. Se avisó a la Secretaría y al Firmante.
+            </p>
+          ) : (
+            <>
+              <label className="inspeccion-field">
+                <span>Causa de la parada</span>
+                <textarea
+                  value={borradorParada.causa}
+                  onChange={(e) =>
+                    setParadaPorEquipo((prev) => ({ ...prev, [equipo.maquinaId]: { ...borradorParada, causa: e.target.value } }))
+                  }
+                  rows={3}
+                  data-testid="parada-causa"
+                />
+              </label>
+              <label className="inspeccion-field">
+                <span>Fotos del equipo ({borradorParada.fotos.length})</span>
+                <input type="file" accept="image/*" capture="environment" onChange={(e) => void agregarFotoParada(e)} data-testid="parada-foto" />
+              </label>
+              {paradaError && (
+                <p role="alert" data-testid="parada-error">
+                  {paradaError}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={!puedeGuardarParada(borradorParada) || guardandoParada}
+                onClick={() => void guardarParada()}
+                data-testid="btn-guardar-parada"
+              >
+                {guardandoParada ? 'Guardando…' : 'Guardar Reporte de Parada'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {respondido && (
       <ChecklistSolapaView
         config={config}
         solapaActivaId={solapaActiva}
@@ -801,6 +897,7 @@ export function InspeccionCampoView({
           );
         }}
       />
+      )}
     </section>
   );
 }

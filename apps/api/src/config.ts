@@ -29,6 +29,8 @@ export interface AppConfig {
    * (HU-07 RF-05); 0 lo desactiva. Se configura con VISITAS_FALLIDAS_MIN_DIAS.
    */
   visitasFallidasMinDias: number;
+  /** Causas que el RT puede elegir al registrar una visita fallida (HU-07 RF-06); la primera es la de por defecto. */
+  visitasFallidasCausas: string[];
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -53,6 +55,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error(`AUTH_JWT_SECRET tiene que tener al menos ${MIN_AUTH_SECRET} caracteres.`);
   }
 
+  const causas = (env.VISITAS_FALLIDAS_CAUSAS ?? '').split(';').map((x) => x.trim()).filter(Boolean);
   const minDiasVisitas = env.VISITAS_FALLIDAS_MIN_DIAS === undefined || env.VISITAS_FALLIDAS_MIN_DIAS.trim() === '' ? 1 : Number(env.VISITAS_FALLIDAS_MIN_DIAS);
   if (!Number.isInteger(minDiasVisitas) || minDiasVisitas < 0) {
     throw new Error('VISITAS_FALLIDAS_MIN_DIAS tiene que ser un entero de 0 en adelante.');
@@ -72,5 +75,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     authSecretGenerado: !secretoCargado,
     adminInicial: adminUsuario && adminPassword ? { usuario: adminUsuario, password: adminPassword } : null,
     visitasFallidasMinDias: minDiasVisitas,
+    visitasFallidasCausas: causas.length > 0 ? [...new Set(causas)] : ['Encargado o responsable ausente'],
   };
 }

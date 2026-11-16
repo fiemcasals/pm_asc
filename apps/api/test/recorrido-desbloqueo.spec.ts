@@ -131,12 +131,13 @@ describe('Recorrido del RT, desbloqueo y días entre visitas fallidas (HU-07 RF-
       const rt = await service.getRecorrido('rt_calle');
 
       expect(rt.map((e) => e.id)).toEqual([OTRO]);
-      expect(rt[0]).toEqual({ id: OTRO, nombre: 'Edificio B', direccion: 'Calle B 2', bloqueado: false });
+      expect(rt[0]).toEqual({ id: OTRO, nombre: 'Edificio B', direccion: 'Calle B 2', bloqueado: false, visitaFallidaHoy: false });
     });
 
     it('con 2 advertencias todavía está en el recorrido', async () => {
       await fallar(2);
       await fallar(3);
+      ir(4); // al día siguiente de la última visita fallida el pin vuelve (HU-07 RF-06)
 
       expect((await service.getRecorrido('rt_calle')).map((e) => e.id)).toEqual([EDIFICIO, OTRO]);
     });

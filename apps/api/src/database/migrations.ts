@@ -660,4 +660,43 @@ export const MIGRATIONS: Migration[] = [
         WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
     `,
   },
+  {
+    id: '022_constancia_visita_fallida',
+    sql: `
+      -- HU-07 RF-06: la constancia guarda también la hora que marcaba el celular del RT (la del servidor es fecha_hora).
+      ALTER TABLE visitas_fallidas ADD COLUMN IF NOT EXISTS hora_dispositivo timestamptz;
+
+      -- El RT de Calle registra la constancia de los edificios que tiene asignados (antes sólo la podían cargar Secretaría y Administrador).
+      DROP POLICY IF EXISTS rls_visitas_fallidas_rt_insert ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_rt_insert ON visitas_fallidas
+        FOR INSERT
+        WITH CHECK (
+          NULLIF(current_setting('app.rol_actual', true), '') = 'rt_calle'
+          AND consorcio_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          AND usuario_asignado_en_edificio(consorcio_id::uuid)
+        );
+
+      -- La constancia no se edita: ni el GPS, ni la hora, ni la foto, ni la causa, ni quién la cargó, por ninguna vía.
+      CREATE OR REPLACE FUNCTION visitas_fallidas_inmutable() RETURNS trigger AS $f$
+      BEGIN
+        -- Lo hace cumplir para la aplicación (cualquier usuario de la API); el dueño de la base puede corregir datos de prueba o de soporte.
+        IF current_user = 'ascensores_app' AND (NEW.gps_latitud IS DISTINCT FROM OLD.gps_latitud
+           OR NEW.gps_longitud IS DISTINCT FROM OLD.gps_longitud
+           OR NEW.gps_precision IS DISTINCT FROM OLD.gps_precision
+           OR NEW.gps_timestamp IS DISTINCT FROM OLD.gps_timestamp
+           OR NEW.hora_dispositivo IS DISTINCT FROM OLD.hora_dispositivo
+           OR NEW.fecha_hora IS DISTINCT FROM OLD.fecha_hora
+           OR NEW.foto_frente_url IS DISTINCT FROM OLD.foto_frente_url
+           OR NEW.motivo IS DISTINCT FROM OLD.motivo
+           OR NEW.inspector IS DISTINCT FROM OLD.inspector) THEN
+          RAISE EXCEPTION 'La constancia de visita fallida no se puede modificar (GPS, hora, foto, causa e inspector quedan fijos)';
+        END IF;
+        RETURN NEW;
+      END;
+      $f$ LANGUAGE plpgsql;
+      DROP TRIGGER IF EXISTS visitas_fallidas_inmutable_trg ON visitas_fallidas;
+      CREATE TRIGGER visitas_fallidas_inmutable_trg BEFORE UPDATE ON visitas_fallidas
+        FOR EACH ROW EXECUTE FUNCTION visitas_fallidas_inmutable();
+    `,
+  },
 ];

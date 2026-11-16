@@ -11,6 +11,7 @@ import {
   type Usuario,
 } from './auth/sesion';
 import { InspeccionCampoView } from './checklist/InspeccionCampoView';
+import { RecorridoRt } from './visitasFallidas/RecorridoRt';
 import { cargarVisitaEnCurso, tieneProgresoVisita } from './checklist/offlineStore';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
@@ -420,9 +421,10 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
                 Hola {usuario.nombre}
               </h2>
               <p className="portal-desc">
-                Acá vas a ver el mapa con tus edificios pendientes. Llega con la tarea "Mapa del RT con
-                pines por horario" (HU-16).
+                El mapa con pines por horario llega con la tarea "Mapa del RT con pines por horario" (HU-16). Mientras tanto,
+                acá tenés la lista de tus edificios pendientes de hoy.
               </p>
+              <RecorridoRt />
             </section>
           )}
           {vista === 'firmante' && (

@@ -9,6 +9,7 @@ import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usua
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '../src/consorcios/consorcio.types';
+import { InMemoryPagosRepository, PagosRepository } from '../src/pagos/pagos.repository';
 import { ConsorciosRepository, TernaCambioError } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
@@ -267,6 +268,7 @@ export async function createTestApp(
   visitasFallidas: VisitasFallidasRepository = new InMemoryVisitasFallidasRepository(),
   auth: { usuarios?: UsuariosRepository; reloj?: Reloj } = {},
   semaforo: SemaforoRepository = new InMemorySemaforoRepository(),
+  pagos: PagosRepository = new InMemoryPagosRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   // Por defecto las pruebas no exigen el día de separación entre visitas fallidas (HU-07 RF-05): lo piden explícitamente las que lo prueban.
   const config = loadConfig({ VISITAS_FALLIDAS_MIN_DIAS: '0', ...env });
@@ -283,6 +285,8 @@ export async function createTestApp(
     .useValue(auth.reloj ?? relojDelSistema)
     .overrideProvider(SemaforoRepository)
     .useValue(semaforo)
+    .overrideProvider(PagosRepository)
+    .useValue(pagos)
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });

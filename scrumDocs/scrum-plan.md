@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T15:40:29.683Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T15:41:54.353Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -11,7 +11,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 3 | RF-01 | Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | — | — |
 | 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
 | 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
-| 6 | RF-06 | FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA | HU-10 | — | — | Hecho | dev-ma-2 | — | — |
+| 6 | RF-06 | FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA | HU-10 | — | — | Hecho ✓ dev | dev-ma-2 | — | — |
 | 7 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 8 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 9 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -103,7 +103,7 @@ PR #25 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/25). Commit
 - Estimado: 2h
 
 ### RF-06 — FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA
-Iniciando desarrollo de descarga de remito t�cnico en formato PDF oficial para Portal ECA
+Desarrollo completado y verificado. Remito técnico oficial generado en PDF con pdfkit (Content-Type application/pdf) y acuse legal registrado en PostgreSQL. PR #60 abierto contra dev. 4 tests de desarrollo aprobados. Script RF-06-entrega.sh pasando 9/9 y carga 50 corridas (promedio 78 ms).
 - Estimado: 2h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

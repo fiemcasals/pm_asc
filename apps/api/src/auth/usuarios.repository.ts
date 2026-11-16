@@ -29,6 +29,8 @@ export abstract class UsuariosRepository {
   abstract contarPorRol(rol: Rol): Promise<number>;
   /** Todos los usuarios, ordenados por nombre de usuario. Para la pantalla del Administrador. */
   abstract listar(): Promise<UsuarioGuardado[]>;
+  /** Guarda el teléfono y el email del usuario (null los borra). Devuelve null si el usuario no existe. */
+  abstract guardarContacto(id: string, telefono: string | null, email: string | null): Promise<UsuarioGuardado | null>;
 
   abstract crearSesion(sesion: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion>;
   abstract buscarSesion(refreshHash: string): Promise<Sesion | null>;
@@ -83,10 +85,19 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
       activo: true,
       sesionesRevocadasEn: null,
       ...datos,
+      telefono: null,
       eca: datos.eca ?? null,
       email: datos.email ?? null,
     };
     this.usuarios.set(u.id, u);
+    return { ...u };
+  }
+
+  async guardarContacto(id: string, telefono: string | null, email: string | null): Promise<UsuarioGuardado | null> {
+    const u = this.usuarios.get(id);
+    if (!u) return null;
+    u.telefono = telefono;
+    u.email = email;
     return { ...u };
   }
 

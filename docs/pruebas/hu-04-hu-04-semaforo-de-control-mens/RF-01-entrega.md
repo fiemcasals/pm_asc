@@ -88,7 +88,7 @@ Ninguno previo. El script crea 3 edificios (`RF01-entrega-<pid> S1..S3`), un RT 
 
 ## 4. Endpoints y pantallas
 
-Un endpoint nuevo: `GET /api/semaforo`. Ninguna pantalla. Pasa por el mismo contexto de ECA que `/api/consorcios`, así que **cada ECA ve sólo sus edificios** (se probó: otra ECA recibe la lista sin ninguno de los de la prueba).
+Un endpoint nuevo: `GET /api/semaforo`. Ninguna pantalla. Pasa por el mismo contexto de RLS que `/api/consorcios`. (Versión original de esta entrega: *cada ECA ve sólo sus edificios*, probado con el encabezado `x-eca-actual`; con HU-15 RNF-03 ese encabezado se ignora y el semáforo es de la Secretaría y el Administrador.)
 
 ## 4.5. Cómo se corre integrado
 
@@ -106,7 +106,7 @@ Con la web levantada la URL por defecto es `https://localhost:8050`; sin ella, `
 - **«Inspeccionado con éxito» se asumió como: todas las máquinas del edificio con al menos una inspección registrada en el mes** (tabla `inspecciones_checklist`, de HU-17). Es lo único que el sistema guarda hoy: todavía **no existe el concepto de inspección cumplida, firmada o aprobada** (lo cierra HU-18, «Cierre, firma y envío del informe»). Cuando exista, hay que cambiar la fuente en `pg-semaforo.repository.ts`; la lógica de colores no se toca. Las **visitas fallidas** no cuentan como inspección. Si el cliente prefiere que alcance con **una** máquina inspeccionada por edificio, es un cambio de una línea en `estadoDelEdificio`, pero cambiaría los colores: conviene confirmarlo.
 - **Un edificio sin máquinas queda pendiente**, y por lo tanto se pone rojo a partir del 21: no hay nada que inspeccionar, pero tampoco puede «cumplirse». Es la forma de que la Secretaría vea que le falta cargar las máquinas. Si el cliente prefiere ocultarlos, se filtra en la consulta.
 - **El 1.º de cada mes el color de todos es verde** (el tramo 1-10), pero su `estado` es `pendiente`, que es lo que pide la condición 3. El campo `estado` existe para que la pantalla pueda distinguirlos de los inspeccionados.
-- **Sin autenticación por rol todavía.** Igual que `/api/consorcios`, la ruta no exige sesión: la protege el RLS por ECA, no `@Roles`. Restringirla a la Secretaría es una decisión para cuando la pantalla use el login de HU-14.
+- **Actualización (HU-15 RNF-03):** `GET /api/semaforo` ahora **pide sesión de Secretaría o Administrador** (sin sesión 401, otro rol 403): con el RLS estricto una petición sin sesión no vería ningún edificio. Lo que dice esta entrega sobre una ruta pública y sobre el contexto de ECA por encabezado quedó superado; ver el detalle en [RF-02-entrega.md](RF-02-entrega.md) §6.
 - **No hay paginación**: devuelve todos los edificios de la ECA. Con 30 edificios el p95 fue de 12 ms; **no se midió con cientos**. La consulta filtra por `created_at`, que `inspecciones_checklist` no tiene indexado (sólo `consorcio_id, maquina_id`): con muchas inspecciones puede hacer falta un índice.
 - **El parámetro `fecha` acepta cualquier fecha**, incluso futuras: calcula como si fuera ese día.
 - **No incluye** el mapa, «Enviar recordatorio de ruteo» ni «Reasignar» (criterios 2 y 3 de la Historia): son de HU-04 RF-02.

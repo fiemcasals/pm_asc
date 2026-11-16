@@ -1,19 +1,28 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { diasHabilesTranscurridos, PLAZO_DIAS_HABILES } from './plazo-habil';
 import {
   AutorizarFirmaDto,
   AutorizarFirmaResponse,
+  AvisoPlazoVencido,
+  BandejaSecretaria,
+  InformeRechazado,
   MaquinaAsignada,
+  RechazarInformeDto,
+  RechazarInformeResponse,
 } from './firmante.types';
 
 @Injectable()
 export class FirmanteService {
   private maquinas: MaquinaAsignada[] = [];
+  /** Avisos de plazo vencido ya generados, en el orden en que se generaron. */
+  private avisos: AvisoPlazoVencido[] = [];
 
   constructor() {
     this.resetSeed();
   }
 
   resetSeed(): void {
+    this.avisos = [];
     this.maquinas = [
       {
         id: 'MAQ-CORRIENTES-M1',
@@ -52,6 +61,7 @@ export class FirmanteService {
       {
         id: 'MAQ-CORRIENTES-M2',
         codigoAGC: 'M2',
+        tipo: 'hidraulico',
         nombre: 'M2: Ascensor Servicio (Izquierda)',
         edificio: {
           id: 'EDIF-01',
@@ -266,6 +276,11 @@ export class FirmanteService {
 
     const visita = maquina.visita;
 
+    // Un informe rechazado volvió a la Secretaría: no se autoriza, aunque además le falten datos.
+    if (visita.rechazada) {
+      throw new ConflictException('No se puede autorizar: el informe fue rechazado y volvió a la Secretaría.');
+    }
+
     // Validación 2: Fotos obligatorias (cables y frente)
     if (
       !visita.fotosObligatorias ||
@@ -308,5 +323,90 @@ export class FirmanteService {
         protocoloAGC: visita.protocoloAGC,
       },
     };
+  }
+
+  /**
+   * HU-08 RF-03: el Firmante rechaza un informe con motivo obligatorio. El informe vuelve a la Secretaría (no al RT de
+   * Calle) y se ve en su bandeja. Sólo se rechaza un informe recorrido que todavía no se autorizó ni se rechazó.
+   */
+  async rechazarInforme(
+    dto: RechazarInformeDto,
+    firmanteUsername: string = 'gonza',
+    ahora: Date = new Date(),
+  ): Promise<RechazarInformeResponse> {
+    if (!dto || (!dto.maquinaId && !dto.visitaId)) {
+      throw new BadRequestException('maquinaId o visitaId es requerido');
+    }
+    const motivo = typeof dto.motivo === 'string' ? dto.motivo.trim() : '';
+    if (!motivo) throw new BadRequestException('El motivo del rechazo es obligatorio.');
+    if (motivo.length > 500) throw new BadRequestException('El motivo del rechazo no puede superar los 500 caracteres.');
+
+    const maquina = this.maquinas.find(
+      (m) => (dto.maquinaId && m.id === dto.maquinaId) || (dto.visitaId && m.visita?.id === dto.visitaId),
+    );
+    if (!maquina) throw new NotFoundException('Máquina o visita no encontrada');
+    const visita = maquina.visita;
+    if (maquina.estado !== 'Recorrida' || !visita) {
+      throw new BadRequestException(
+        `No se puede rechazar: la visita debe estar en estado Recorrida (estado actual: ${maquina.estado})`,
+      );
+    }
+    if (visita.autorizada) throw new ConflictException('No se puede rechazar: el informe ya fue autorizado.');
+    if (visita.rechazada) throw new ConflictException('El informe ya fue rechazado.');
+
+    visita.rechazada = true;
+    visita.motivoRechazo = motivo;
+    visita.fechaRechazo = ahora.toISOString();
+    visita.rechazadoPor = firmanteUsername;
+
+    return {
+      ok: true,
+      mensaje: 'Informe rechazado: vuelve a la Secretaría.',
+      maquinaId: maquina.id,
+      visitaId: visita.id,
+      rechazo: { motivo, rechazadoPor: firmanteUsername, fecha: visita.fechaRechazo },
+    };
+  }
+
+  /**
+   * Genera los avisos de plazo vencido que falten: un informe recorrido con más de 5 días hábiles (lunes a viernes) sin
+   * autorizar ni rechazar avisa a la Secretaría, una sola vez. Un informe autorizado o rechazado dentro del plazo no avisa.
+   * No hay un reloj que lo dispare solo: se genera cuando la Secretaría abre su bandeja (y es idempotente).
+   */
+  generarAvisosDePlazo(ahora: Date = new Date()): AvisoPlazoVencido[] {
+    for (const m of this.maquinas) {
+      const v = m.visita;
+      if (!v || m.estado !== 'Recorrida' || v.autorizada || v.rechazada || v.avisoPlazoEn) continue;
+      const dias = diasHabilesTranscurridos(new Date(v.fecha), ahora);
+      if (dias <= PLAZO_DIAS_HABILES) continue;
+      v.avisoPlazoEn = ahora.toISOString();
+      this.avisos.push({
+        maquinaId: m.id,
+        codigoAGC: m.codigoAGC,
+        edificio: m.edificio.consorcio,
+        visitaId: v.id,
+        fechaInforme: v.fecha,
+        diasHabiles: dias,
+        fecha: v.avisoPlazoEn,
+      });
+    }
+    return this.avisos.map((a) => ({ ...a }));
+  }
+
+  /** La bandeja de la Secretaría: los informes que el Firmante rechazó (con el motivo) y los avisos de plazo vencido. */
+  getBandejaSecretaria(ahora: Date = new Date()): BandejaSecretaria {
+    const avisosPlazo = this.generarAvisosDePlazo(ahora);
+    const rechazados: InformeRechazado[] = this.maquinas
+      .filter((m) => m.visita?.rechazada)
+      .map((m) => ({
+        maquinaId: m.id,
+        codigoAGC: m.codigoAGC,
+        edificio: m.edificio.consorcio,
+        visitaId: m.visita!.id,
+        motivo: m.visita!.motivoRechazo ?? '',
+        rechazadoPor: m.visita!.rechazadoPor ?? '',
+        fecha: m.visita!.fechaRechazo ?? '',
+      }));
+    return { rechazados, avisosPlazo };
   }
 }

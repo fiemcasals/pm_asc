@@ -49,4 +49,4 @@ export interface ReasignacionPedida {
 
 export type ResultadoReasignacion =
   | { ok: true; registro: RegistroReasignacion }
-  | { ok: false; motivo: 'sin_terna' | 'rt_cambio' };
+  | { ok: false; motivo: 'sin_terna' | 'rt_cambio' | 'sin_contacto' };

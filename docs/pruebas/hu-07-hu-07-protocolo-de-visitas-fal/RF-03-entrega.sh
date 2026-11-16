@@ -107,9 +107,12 @@ if [ "$HAY_DB" -eq 1 ] && [ -n "$id1" ]; then
 fi
 
 echo "2. Acumular Advertencia 2 y 3, verificando consulta de historial y bloqueo con recargo 45%"
+# Desde HU-07 RF-05 entre dos visitas fallidas del mismo edificio tiene que pasar al menos 1 día: se manda la ya registrada al pasado.
+[ "$HAY_DB" -eq 1 ] && sql "update visitas_fallidas set fecha_hora = fecha_hora - interval '2 days' where consorcio_id='$CID'" >/dev/null
 code2="$("${CURL[@]}" -o "$TMP/v2.json" -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
   -d "{\"consorcioId\":\"$CID\",\"motivo\":\"Segunda ausencia\",\"fotoFrenteUrl\":\"https://storage.maicon.com.ar/f2.jpg\",\"gps\":{\"latitud\":-34.6038,\"longitud\":-58.3817}}" \
   "$BASE_URL/api/visitas-fallidas")"
+[ "$HAY_DB" -eq 1 ] && sql "update visitas_fallidas set fecha_hora = fecha_hora - interval '1 day' where id='$(json "$TMP/v2.json" 'b.id')'" >/dev/null
 code3="$("${CURL[@]}" -o "$TMP/v3.json" -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
   -d "{\"consorcioId\":\"$CID\",\"motivo\":\"Tercera ausencia\",\"fotoFrenteUrl\":\"https://storage.maicon.com.ar/f3.jpg\",\"gps\":{\"latitud\":-34.6039,\"longitud\":-58.3818}}" \
   "$BASE_URL/api/visitas-fallidas")"

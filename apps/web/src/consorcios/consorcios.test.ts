@@ -1,4 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
+
+// Las llamadas a la API llevan la sesión (fetchConSesion): acá delega en el fetch simulado de cada prueba.
+vi.mock('../auth/sesion', () => ({
+  fetchConSesion: (url: string, init?: RequestInit) =>
+    init === undefined ? (globalThis.fetch as typeof fetch)(url) : (globalThis.fetch as typeof fetch)(url, init),
+}));
 import {
   actualizarConsorcio,
   agruparSalasCompartidas,

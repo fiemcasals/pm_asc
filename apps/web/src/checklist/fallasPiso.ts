@@ -179,3 +179,12 @@ export function eliminarFallaPiso(
 ): FallaPisoRegistro[] {
   return actuales.filter((f) => f.id !== fallaId);
 }
+
+/**
+ * La lista de pisos del edificio para cargar fallas en Accesos (HU-17 RF-06): los de su ficha, sin repetidos ni vacíos y en el
+ * orden en que están cargados. Si el edificio no tiene pisos cargados se usa la lista por defecto.
+ */
+export function pisosDelEdificio(pisos?: readonly string[] | null): readonly string[] {
+  const limpios = [...new Set((pisos ?? []).map((p) => String(p).trim()).filter((p) => p !== ''))];
+  return limpios.length > 0 ? limpios : PISOS_EDIFICIO_DEFAULT;
+}

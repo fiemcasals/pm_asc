@@ -80,7 +80,7 @@ export class SemaforoService {
     }
     if (edificio.rtCalle.nombre !== pedido.rtAnterior) {
       throw new ConflictException(
-        `El RT del edificio cambió: ahora es "${edificio.rtCalle.nombre}". Volvé a abrir la reasignación para verlo.`,
+        `El RT del edificio cambió: ahora es "${edificio.rtCalle.nombre}". Se actualizó el panel con el RT vigente.`,
       );
     }
     if (esElRt(edificio.rtCalle, pedido.rtNuevo)) {
@@ -98,9 +98,14 @@ export class SemaforoService {
       usuario,
     });
     if (!resultado.ok) {
+      if (resultado.motivo === 'sin_contacto') {
+        throw new ConflictException(
+          `El RT "${pedido.rtNuevo}" no tiene teléfono ni email cargados: pedile al Administrador que los cargue antes de asignarle el edificio.`,
+        );
+      }
       throw new ConflictException(
         resultado.motivo === 'rt_cambio'
-          ? 'El RT del edificio cambió mientras confirmabas. Volvé a abrir la reasignación para verlo.'
+          ? 'El RT del edificio cambió mientras confirmabas. Se actualizó el panel con el RT vigente.'
           : 'El edificio no tiene RT de Calle asignado: asignale la terna antes de reasignarlo.',
       );
     }

@@ -140,4 +140,97 @@ describe('/api/consorcios/:id/roles', () => {
       expect((await http().get(`/api/consorcios/${INEXISTENTE}/roles`)).status).toBe(404);
     });
   });
+  describe('PUT — HU-02 RF-03: no pisa una terna más nueva', () => {
+    const otraTerna = { ...terna, rtCalle: { nombre: 'Otro RT', telefono: '11 4000-3000' } };
+
+    it('criterio 1: si la terna cambió después de leerla, responde 409 con la versión vigente y no modifica nada', async () => {
+      const inicial = (await http().put(`/api/consorcios/${id}/roles`).send(terna)).body;
+      await new Promise((r) => setTimeout(r, 5)); // otro instante
+      const deOtraPersona = (await http().put(`/api/consorcios/${id}/roles`).send({ ...otraTerna, actualizadoEn: inicial.actualizadoEn })).body;
+      expect(deOtraPersona.rtCalle.nombre).toBe('Otro RT');
+
+      // La primera persona sigue con la versión que leyó (inicial) y guarda lo suyo.
+      const res = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'Pisaría al otro', telefono: '1' }, actualizadoEn: inicial.actualizadoEn });
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toContain('cambió');
+      expect(res.body.vigente.rtCalle.nombre).toBe('Otro RT');
+      expect(res.body.vigente.actualizadoEn).toBe(deOtraPersona.actualizadoEn);
+      expect((await http().get(`/api/consorcios/${id}/roles`)).body.rtCalle.nombre).toBe('Otro RT'); // no se tocó
+    });
+
+    it('criterio 3: si la terna no cambió, guardar funciona igual que antes (con la versión leída, o sin ella)', async () => {
+      const leida = (await http().get(`/api/consorcios/${id}/roles`)).body;
+      expect(leida.actualizadoEn).toBeNull();
+
+      const primera = await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: null }); // leyó "sin terna"
+      expect(primera.status).toBe(200);
+      const segunda = await http().put(`/api/consorcios/${id}/roles`).send({ ...otraTerna, actualizadoEn: primera.body.actualizadoEn });
+      expect(segunda.status).toBe(200);
+      expect(segunda.body.rtCalle.nombre).toBe('Otro RT');
+      const sinVersion = await http().put(`/api/consorcios/${id}/roles`).send(terna); // un cliente que no manda la versión
+      expect(sinVersion.status).toBe(200);
+    });
+
+    it('leyó "sin terna" pero otra persona ya la asignó → 409 con la vigente', async () => {
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      const res = await http().put(`/api/consorcios/${id}/roles`).send({ ...otraTerna, actualizadoEn: null });
+
+      expect(res.status).toBe(409);
+      expect(res.body.vigente.rtCalle.nombre).toBe('Laura Gómez');
+    });
+
+    it('un actualizadoEn que no es un instante ni null → 400 y no guarda', async () => {
+      const res = await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: 'ayer' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errores[0]).toContain('actualizadoEn');
+      expect(repo.roles.size).toBe(0);
+    });
+  });
+
+  describe('GET /api/consorcios/roles — HU-02 RNF-01: todas las ternas en una sola llamada', () => {
+    const nuevo = (nombre: string) =>
+      repo.crear({
+        nombre,
+        direccion: 'Calle 2',
+        administracion: { nombre: null, telefono: null, email: null },
+        encargado: { nombre: null, telefono: null },
+        pisos: [],
+        ubicacion: null,
+        maquinas: [],
+      });
+
+    it('criterio 1: devuelve la terna de cada edificio (con la terna o con los roles en null) y no se confunde con un id', async () => {
+      const b = await nuevo('Edificio B');
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      const res = await http().get('/api/consorcios/roles');
+
+      expect(res.status).toBe(200);
+      expect(res.body.map((r: { consorcioId: string }) => r.consorcioId)).toEqual([id, b.id]); // por nombre: "Consorcio Roles" antes que "Edificio B"
+      const conTerna = res.body.find((r: { consorcioId: string }) => r.consorcioId === id);
+      const sinTerna = res.body.find((r: { consorcioId: string }) => r.consorcioId === b.id);
+      expect(conTerna.rtCalle.nombre).toBe('Laura Gómez');
+      expect(sinTerna).toEqual({ consorcioId: b.id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null });
+    });
+
+    it('cada elemento es igual a lo que devuelve el GET de roles de ese edificio', async () => {
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      const todas = (await http().get('/api/consorcios/roles')).body;
+      const una = (await http().get(`/api/consorcios/${id}/roles`)).body;
+
+      expect(todas.find((r: { consorcioId: string }) => r.consorcioId === id)).toEqual(una);
+    });
+
+    it('sin edificios devuelve una lista vacía', async () => {
+      repo.filas.clear();
+      expect((await http().get('/api/consorcios/roles')).body).toEqual([]);
+    });
+  });
+
 });

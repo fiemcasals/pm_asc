@@ -1,10 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
+
+// Las llamadas a la API llevan la sesión (fetchConSesion): acá delega en el fetch simulado de cada prueba.
+vi.mock('../auth/sesion', () => ({
+  fetchConSesion: (url: string, init?: RequestInit) =>
+    init === undefined ? (globalThis.fetch as typeof fetch)(url) : (globalThis.fetch as typeof fetch)(url, init),
+}));
 import {
   FormularioRoles,
   ROLES_DE_TRABAJO,
   RolesEdificio,
   directorioPorRol,
   fetchRoles,
+  fetchTodasLasTernas,
   formularioDesdeRoles,
   guardarRoles,
   marcarCambiosSinGuardar,
@@ -140,10 +147,31 @@ describe('roles de trabajo', () => {
     });
   });
 
+  describe('fetchTodasLasTernas (HU-02 RNF-01)', () => {
+    it('pide las ternas de todos los edificios con UNA sola llamada', async () => {
+      const otra = { ...conTerna, consorcioId: 'otro' };
+      global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [conTerna, otra] } as Response);
+
+      const res = await fetchTodasLasTernas();
+
+      expect(res.data).toEqual([conTerna, otra]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('/api/consorcios/roles');
+    });
+
+    it('si falla informa el error sin inventar ternas', async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 } as Response);
+      expect(await fetchTodasLasTernas()).toEqual({ ok: false, error: 'Error 500: no se pudieron obtener los roles' });
+
+      global.fetch = vi.fn().mockRejectedValue(new Error('Sin red'));
+      expect(await fetchTodasLasTernas()).toEqual({ ok: false, error: 'Sin red' });
+    });
+  });
+
   describe('guardarRoles', () => {
     it('manda la terna completa, recortada y con los contactos vacíos en null', async () => {
       global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => conTerna } as Response);
-      const res = await guardarRoles(ID, formulario);
+      const res = await guardarRoles(ID, formulario, conTerna.actualizadoEn);
       expect(res.data).toEqual(conTerna);
 
       const [url, opciones] = vi.mocked(global.fetch).mock.calls[0] as [string, RequestInit];
@@ -156,19 +184,50 @@ describe('roles de trabajo', () => {
       });
     });
 
+    it('manda la versión de la terna que leyó (actualizadoEn), o null si no había terna', async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => conTerna } as Response);
+
+      await guardarRoles(ID, formulario, '2026-11-10T12:00:00.000Z');
+      await guardarRoles(ID, formulario, null);
+
+      const cuerpos = vi.mocked(global.fetch).mock.calls.map((c) => JSON.parse((c[1] as RequestInit).body as string));
+      expect(cuerpos[0].actualizadoEn).toBe('2026-11-10T12:00:00.000Z');
+      expect(cuerpos[1].actualizadoEn).toBeNull(); // null cuenta: "leí que no había terna"
+    });
+
+    it('un 409 (la terna cambió) devuelve el aviso y la versión vigente, sin pasar por errores de validación', async () => {
+      const vigente = { ...conTerna, actualizadoEn: '2026-11-10T13:00:00.000Z' };
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ message: 'La terna de este edificio cambió desde que la abriste.', vigente }),
+      } as Response);
+
+      const res = await guardarRoles(ID, formulario, conTerna.actualizadoEn);
+
+      expect(res.ok).toBe(false);
+      expect(res.error).toBe('La terna de este edificio cambió desde que la abriste.');
+      expect(res.vigente).toEqual(vigente);
+    });
+
+    it('un error que no es 409 no trae versión vigente aunque la respuesta tenga ese campo', async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 400, json: async () => ({ message: 'Datos inválidos', vigente: conTerna }) } as Response);
+      expect((await guardarRoles(ID, formulario, null)).vigente).toBeUndefined();
+    });
+
     it('devuelve los errores de validación de la API', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         json: async () => ({ message: 'Datos inválidos', errores: ['rtCalle.nombre es obligatorio'] }),
       } as Response);
-      const res = await guardarRoles(ID, formulario);
+      const res = await guardarRoles(ID, formulario, null);
       expect(res.ok).toBe(false);
       expect(res.errores).toEqual(['rtCalle.nombre es obligatorio']);
     });
 
     it('informa la falta de conexión', async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error('Sin red'));
-      const res = await guardarRoles(ID, formulario);
+      const res = await guardarRoles(ID, formulario, null);
       expect(res).toEqual({ ok: false, error: 'Sin red' });
     });
   });

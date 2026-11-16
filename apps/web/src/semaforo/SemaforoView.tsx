@@ -54,9 +54,9 @@ function PanelReasignacion({ edificio, fecha, onCerrar, onAplicada }: PanelReasi
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
 
-  const cargar = useCallback(async () => {
+  const cargar = useCallback(async (conservarError = false) => {
     setCargando(true);
-    setError(null);
+    if (!conservarError) setError(null);
     const [sug, hist] = await Promise.all([
       fetchSugerencia(edificio.id, fecha || undefined),
       fetchHistorialReasignaciones(edificio.id),
@@ -66,7 +66,7 @@ function PanelReasignacion({ edificio, fecha, onCerrar, onAplicada }: PanelReasi
       setElegido(sug.data.sugerido?.usuario ?? '');
     } else {
       setSugerencia(null);
-      setError(sug.error ?? 'No se pudo obtener la sugerencia');
+      setError(sug.error ?? 'No se pudo obtener la sugerencia'); // si la sugerencia falla, este error reemplaza al de la confirmación
     }
     if (hist.ok && hist.data) setHistorial(hist.data);
     setCargando(false);
@@ -93,6 +93,8 @@ function PanelReasignacion({ edificio, fecha, onCerrar, onAplicada }: PanelReasi
       void cargar(); // refresca la sugerencia y el historial con el RT nuevo
     } else {
       setError(res.error ?? 'No se pudo aplicar la reasignación');
+      // 409: la vista quedó vieja (el RT cambió o el edificio ya no está en rojo). Se recarga sola, sin cerrar el panel y sin borrar el aviso.
+      if (res.status === 409) void cargar(true);
     }
   };
 

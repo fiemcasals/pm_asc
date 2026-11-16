@@ -124,6 +124,52 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
     });
   });
 
+  describe('HU-10 RF-05 — el acuse guardado vale tras un reinicio y es único por alerta', () => {
+    it('un segundo POST no inserta otra fila: devuelve el acuse ya registrado, con su usuario y su fecha', async () => {
+      const http = await arrancar();
+
+      const primero = await http.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.primero' });
+      const segundo = await http.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.segundo' });
+
+      expect(primero.body.yaRegistrado).toBe(false);
+      expect(segundo.status).toBe(201);
+      expect(segundo.body.yaRegistrado).toBe(true);
+      expect(segundo.body.acuse).toMatchObject({ usuario: 'qa.primero', fechaHora: primero.body.acuse.fechaHora });
+      expect(db.acuses).toHaveLength(1);
+      expect(db.acuses[0].usuario).toBe('qa.primero');
+    });
+
+    it('tras reiniciar la API (memoria nueva, misma base) la alerta sigue figurando con su acuse', async () => {
+      const antes = await arrancar();
+      const registrado = await antes.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.persistido' });
+      const base = db;
+      await app.close();
+
+      const http = await arrancar(base); // otra instancia: el servicio arranca sin acuses en memoria
+
+      expect(await acuseDe(http)).toEqual({ usuario: 'qa.persistido', fechaHora: registrado.body.acuse.fechaHora });
+    });
+
+    it('un acuse de otra alerta o de otra ECA no aparece en la alerta consultada', async () => {
+      const base = fakeDatabase();
+      base.acuses.push(
+        { id: 'a1', alerta_id: 'ALT-MAICON-002', eca: 'MAICON Mantenimiento', usuario: 'de.la.otra.alerta', fecha_hora: new Date('2026-11-10T12:00:00Z') },
+        { id: 'a2', alerta_id: ALERTA, eca: 'Otra ECA', usuario: 'de.otra.eca', fecha_hora: new Date('2026-11-10T12:00:00Z') },
+      );
+      const http = await arrancar(base);
+
+      expect(await acuseDe(http, ALERTA)).toBeNull(); // la fila de su alerta es de otra ECA
+      expect((await acuseDe(http, 'ALT-MAICON-002'))?.usuario).toBe('de.la.otra.alerta'); // y la otra alerta no se la queda
+    });
+
+    it('con la base caída la lista de alertas igual se muestra (con lo que hay en memoria) y queda el aviso en el log', async () => {
+      const http = await arrancar(fakeDatabase({ errorDeQuery: new Error('connect ECONNREFUSED') }));
+
+      expect(await acuseDe(http)).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('No se pudieron releer los acuses'));
+    });
+  });
+
   it('una alerta que no existe sigue dando 404 y no toca la base', async () => {
     const http = await arrancar();
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen, Maquina, TipoMaquina } from './consorcio.types';
-import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
+import { ConsorciosRepository, ReferenciaAgcDuplicadaError, TernaCambioError } from './consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, Responsable, RolesEdificio, RolesInput } from './roles.types';
 
 interface ConsorcioRow {
@@ -123,15 +123,9 @@ function aResponsable(
   return { nombre, telefono, email, porcentaje };
 }
 
-async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio | null> {
-  const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1', [id]);
-  if (consorcio.rowCount === 0) return null;
-
-  const roles = await client.query<RolesRow>('SELECT * FROM roles_edificio WHERE consorcio_id = $1', [id]);
-  if (roles.rowCount === 0) {
-    return { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
-  }
-  const f = roles.rows[0];
+/** La terna de un edificio a partir de su fila de `roles_edificio`; sin fila, los roles vienen en `null`. */
+function aRolesEdificio(id: string, f: RolesRow | undefined): RolesEdificio {
+  if (!f) return { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
   return {
     consorcioId: id,
     rtCalle: aResponsable(f.rt_calle_nombre, f.rt_calle_telefono, f.rt_calle_email, PORCENTAJES_OPERATIVOS.rtCalle),
@@ -139,6 +133,14 @@ async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio 
     eca: aResponsable(f.eca_nombre, f.eca_telefono, f.eca_email, PORCENTAJES_OPERATIVOS.eca),
     actualizadoEn: f.updated_at.toISOString(),
   };
+}
+
+async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio | null> {
+  const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1', [id]);
+  if (consorcio.rowCount === 0) return null;
+
+  const roles = await client.query<RolesRow>('SELECT * FROM roles_edificio WHERE consorcio_id = $1', [id]);
+  return aRolesEdificio(id, roles.rows[0]);
 }
 
 function traducirError(err: unknown): never {
@@ -275,15 +277,39 @@ export class PgConsorciosRepository extends ConsorciosRepository {
     return filas.length > 0;
   }
 
+  /** Las ternas de todos los edificios en una sola consulta, en el orden de la lista de consorcios (nombre, id). */
+  async listarRoles(): Promise<RolesEdificio[]> {
+    const filas = await this.db.query<RolesRow & { consorcio_id: string }>(
+      `SELECT c.id::text AS consorcio_id, r.rt_calle_nombre, r.rt_calle_telefono, r.rt_calle_email,
+              r.firmante_nombre, r.firmante_telefono, r.firmante_email,
+              r.eca_nombre, r.eca_telefono, r.eca_email, r.updated_at
+         FROM consorcios c
+         LEFT JOIN roles_edificio r ON r.consorcio_id = c.id
+        ORDER BY c.nombre, c.id`,
+    );
+    return filas.map((f) => aRolesEdificio(f.consorcio_id, f.updated_at ? f : undefined));
+  }
+
   async obtenerRoles(id: string): Promise<RolesEdificio | null> {
     return this.db.transaction((client) => leerRoles(client, id));
   }
 
-  async asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null> {
+  async asignarRoles(id: string, datos: RolesInput, esperado?: string | null): Promise<RolesEdificio | null> {
     return this.db.transaction(async (client) => {
       // El bloqueo evita que el consorcio se borre entre esta comprobación y el INSERT.
       const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1 FOR UPDATE', [id]);
       if (consorcio.rowCount === 0) return null;
+
+      // Con el consorcio bloqueado, nadie más puede cambiar la terna entre esta comprobación y el guardado. La versión se
+      // compara en la base y a la milésima, que es la precisión con la que se informa (`actualizadoEn`).
+      if (esperado !== undefined) {
+        const actual = await client.query<{ coincide: boolean }>(
+          `SELECT date_trunc('milliseconds', updated_at) = $2::timestamptz AS coincide FROM roles_edificio WHERE consorcio_id = $1`,
+          [id, esperado],
+        );
+        const coincide = esperado === null ? actual.rowCount === 0 : actual.rowCount === 1 && actual.rows[0].coincide;
+        if (!coincide) throw new TernaCambioError((await leerRoles(client, id))!);
+      }
 
       const { rtCalle, firmante, eca } = datos;
       await client.query(
@@ -310,6 +336,9 @@ export class PgConsorciosRepository extends ConsorciosRepository {
           eca.nombre, eca.telefono, eca.email,
         ],
       );
+      if (eca?.nombre) {
+        await client.query('UPDATE consorcios SET eca_nombre = $1 WHERE id = $2', [eca.nombre, id]);
+      }
       return leerRoles(client, id);
     });
   }

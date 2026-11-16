@@ -511,3 +511,38 @@ describe('Fallas críticas del checklist y cola offline (HU-17 RF-08)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+import { pisosDelEdificio, PISOS_EDIFICIO_DEFAULT } from './fallasPiso';
+import { equiposDeFicha } from './navegacion';
+
+describe('Pisos y equipos reales del edificio (HU-17 RF-06 y RF-02)', () => {
+  it('pisosDelEdificio usa los pisos de la ficha, sin repetidos ni vacíos y en su orden', () => {
+    expect(pisosDelEdificio(['PB', ' 1 ', '2', '', '1', 'Terraza'])).toEqual(['PB', '1', '2', 'Terraza']);
+  });
+
+  it('sin pisos cargados (o sin edificio) usa la lista por defecto', () => {
+    expect(pisosDelEdificio([])).toBe(PISOS_EDIFICIO_DEFAULT);
+    expect(pisosDelEdificio(undefined)).toBe(PISOS_EDIFICIO_DEFAULT);
+    expect(pisosDelEdificio(['', '  '])).toBe(PISOS_EDIFICIO_DEFAULT);
+  });
+
+  it('equiposDeFicha arma los equipos con su referencia AGC y su tipo (por defecto tracción) y agrupa las salas compartidas', () => {
+    const equipos = equiposDeFicha([
+      { id: 'a', referenciaAgc: 'M1', descripcion: ' Principal ', tipo: 'hidraulico', salaCompartidaId: 'S1' },
+      { id: 'b', referenciaAgc: 'M2', salaCompartidaId: 'S1' },
+      { id: 'c', referenciaAgc: 'M3', descripcion: null },
+    ]);
+
+    expect(equipos.map((e) => [e.maquinaId, e.referenciaAgc, e.tipo, e.salaCompartidaId])).toEqual([
+      ['a', 'M1', 'hidraulico', 'S1'],
+      ['b', 'M2', 'traccion', 'S1'],
+      ['c', 'M3', 'traccion', null],
+    ]);
+    expect(equipos[0].descripcion).toBe('Principal');
+    expect(equipos[2].descripcion).toBe('');
+  });
+
+  it('sin máquinas devuelve una lista vacía (la pantalla usa entonces los equipos de demostración)', () => {
+    expect(equiposDeFicha([])).toEqual([]);
+  });
+});

@@ -1,5 +1,5 @@
 import { DynamicModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthController, ConsentimientoController, UsuariosController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { RELOJ, relojDelSistema } from './auth/auth.types';
@@ -15,6 +15,7 @@ import { ConsorciosRepository } from './consorcios/consorcios.repository';
 import { PgConsorciosRepository } from './consorcios/pg-consorcios.repository';
 import { DatabaseService } from './database/database.service';
 import { EcaContextMiddleware } from './database/eca-context.middleware';
+import { RlsContextInterceptor } from './database/rls-context.interceptor';
 import { SeguridadRlsController } from './database/seguridad-rls.controller';
 import { EcaController } from './eca/eca.controller';
 import { EcaService } from './eca/eca.service';
@@ -31,7 +32,7 @@ import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service'
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
-import { VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
+import { RecorridoController, VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
 import { VisitasFallidasRepository } from './visitas-fallidas/visitas-fallidas.repository';
 import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-fallidas.repository';
 import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
@@ -44,6 +45,7 @@ export class AppModule implements NestModule {
       .forRoutes(
         ConsorciosController,
         VisitasFallidasController,
+        RecorridoController,
         EcaController,
         FirmanteController,
         FallasCriticasController,
@@ -67,6 +69,7 @@ export class AppModule implements NestModule {
         EcaController,
         WhatsAppController,
         VisitasFallidasController,
+        RecorridoController,
         FallasCriticasController,
         SeguridadRlsController,
         SemaforoController,
@@ -79,6 +82,7 @@ export class AppModule implements NestModule {
         Mailer,
         AuthService,
         { provide: APP_GUARD, useClass: RolesGuard },
+        { provide: APP_INTERCEPTOR, useClass: RlsContextInterceptor },
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,

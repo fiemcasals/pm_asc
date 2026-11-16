@@ -8,7 +8,7 @@ import {
   ROLES_DE_TRABAJO,
   RolesEdificio,
   directorioPorRol,
-  fetchRoles,
+  fetchTodasLasTernas,
   formularioDesdeRoles,
   guardarRoles,
   marcarCambiosSinGuardar,
@@ -63,13 +63,19 @@ function FormularioTerna({
     setErrores([]);
     setConfirmacion(null);
     cambiarGuardando(true);
-    const res = await guardarRoles(consorcio.id, formulario);
+    const res = await guardarRoles(consorcio.id, formulario, roles.actualizadoEn);
     cambiarGuardando(false);
 
     if (res.ok && res.data) {
       setFormulario(formularioDesdeRoles(res.data));
       setConfirmacion(`✓ Responsables guardados para ${consorcio.nombre}.`);
       onGuardado(res.data);
+    } else if (res.vigente) {
+      // Alguien cambió la terna mientras estaba abierta: no se guardó nada. Se informa y se muestra la versión vigente
+      // (el formulario y la lista pasan a ser la vigente) para que la revise y vuelva a guardar si corresponde.
+      setFormulario(formularioDesdeRoles(res.vigente));
+      onGuardado(res.vigente);
+      setErrores([res.error ?? 'La terna cambió desde que la abriste: se muestra la versión vigente.']);
     } else {
       setErrores(res.errores ?? [res.error ?? 'Error al guardar los roles']);
     }
@@ -206,12 +212,11 @@ export function AsignacionRoles() {
       return;
     }
 
-    const respuestas = await Promise.all(lista.data.map((c) => fetchRoles(c.id)));
+    // Una sola llamada trae las ternas de todos los edificios (antes eran N lecturas, una por edificio).
+    const ternas = await fetchTodasLasTernas();
     const porConsorcio: Record<string, RolesEdificio> = {};
-    lista.data.forEach((c, i) => {
-      const data = respuestas[i]?.data;
-      if (data) porConsorcio[c.id] = data;
-    });
+    for (const t of ternas.data ?? []) porConsorcio[t.consorcioId] = t;
+    if (!ternas.ok) setError(ternas.error ?? 'No se pudieron obtener los roles de los edificios');
 
     setConsorcios(lista.data);
     setRoles(porConsorcio);

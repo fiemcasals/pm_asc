@@ -6,6 +6,7 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real: requiere la base levantada con `npm run db:up` y el .env de la raíz.
 loadEnvFileInto(process.env);
@@ -19,6 +20,7 @@ const terna = {
 describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
   let app: INestApplication;
   let pool: Pool;
+  let authToken = '';
   const creados: string[] = [];
 
   beforeAll(async () => {
@@ -27,16 +29,27 @@ describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
     app = await NestFactory.create(AppModule.register(config), { logger: false });
     configureApp(app, config);
     await app.init();
+    const u = await asegurarUsuarioPrueba(pool, config, { usuario: 'roles_int_admin', rol: 'secretaria' });
+    authToken = u.token;
   });
 
   afterAll(async () => {
     // Borra sólo lo que creó esta corrida.
     if (creados.length > 0) await pool.query('DELETE FROM consorcios WHERE id = ANY($1)', [creados]);
+    await pool.query('DELETE FROM usuarios WHERE usuario = $1', ['roles_int_admin']);
     await app.close();
     await pool.end();
   });
 
-  const http = () => request(app.getHttpServer());
+  const http = () => {
+    const req = request(app.getHttpServer());
+    return {
+      post: (url: string) => req.post(url).set('Authorization', `Bearer ${authToken}`),
+      get: (url: string) => req.get(url).set('Authorization', `Bearer ${authToken}`),
+      put: (url: string) => req.put(url).set('Authorization', `Bearer ${authToken}`),
+      delete: (url: string) => req.delete(url).set('Authorization', `Bearer ${authToken}`),
+    };
+  };
 
   async function crearConsorcio(sufijo: string): Promise<string> {
     const res = await http()
@@ -114,4 +127,90 @@ describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
     expect(res.status).toBe(400);
     expect(await filasDeRoles(id)).toBe(0);
   });
+  describe('HU-02 RF-03: no pisa una terna más nueva (PostgreSQL real)', () => {
+    it('criterio 1: con la versión vieja responde 409 con la vigente y la terna no cambia; con la vigente guarda', async () => {
+      const id = await crearConsorcio('version');
+      const leida = (await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: null })).body; // leyó "sin terna"
+      const deOtraPersona = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'RT de la otra persona', telefono: '11 1' }, actualizadoEn: leida.actualizadoEn });
+      expect(deOtraPersona.status).toBe(200);
+
+      const pisada = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'Pisaría', telefono: '11 2' }, actualizadoEn: leida.actualizadoEn });
+
+      expect(pisada.status).toBe(409);
+      expect(pisada.body.vigente.rtCalle.nombre).toBe('RT de la otra persona');
+      expect((await http().get(`/api/consorcios/${id}/roles`)).body.rtCalle.nombre).toBe('RT de la otra persona');
+
+      const alDia = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'Con la vigente', telefono: '11 3' }, actualizadoEn: pisada.body.vigente.actualizadoEn });
+      expect(alDia.status).toBe(200);
+    });
+
+    it('una reasignación del semáforo también cuenta como cambio: quien tenía abierta la terna vieja recibe 409', async () => {
+      const id = await crearConsorcio('reasignacion');
+      const leida = (await http().put(`/api/consorcios/${id}/roles`).send(terna)).body;
+      await new Promise((r) => setTimeout(r, 5));
+      await pool.query('UPDATE roles_edificio SET rt_calle_nombre = $2, updated_at = now() WHERE consorcio_id = $1', [id, 'RT reasignado']);
+
+      const res = await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: leida.actualizadoEn });
+
+      expect(res.status).toBe(409);
+      expect(res.body.vigente.rtCalle.nombre).toBe('RT reasignado');
+    });
+
+    it('leyó "sin terna" y otra persona ya la asignó → 409; y sin la versión guarda como siempre', async () => {
+      const id = await crearConsorcio('sinterna');
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      expect((await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: null })).status).toBe(409);
+      expect((await http().put(`/api/consorcios/${id}/roles`).send(terna)).status).toBe(200);
+    });
+
+    it('dos guardados simultáneos con la misma versión: uno gana y el otro recibe 409, nunca se pisan', async () => {
+      const id = await crearConsorcio('carrera');
+      const leida = (await http().put(`/api/consorcios/${id}/roles`).send(terna)).body;
+      await new Promise((r) => setTimeout(r, 5));
+
+      const [a, b] = await Promise.all(
+        ['A', 'B'].map((n) =>
+          http().put(`/api/consorcios/${id}/roles`).send({ ...terna, rtCalle: { nombre: `RT ${n}`, telefono: '11 9' }, actualizadoEn: leida.actualizadoEn }),
+        ),
+      );
+
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      const ganador = a.status === 200 ? 'RT A' : 'RT B';
+      expect((await http().get(`/api/consorcios/${id}/roles`)).body.rtCalle.nombre).toBe(ganador);
+    });
+  });
+
+  describe('HU-02 RNF-01: todas las ternas en una sola llamada (PostgreSQL real)', () => {
+    it('devuelve una terna por edificio, igual a la del GET individual, con y sin terna asignada', async () => {
+      const conTerna = await crearConsorcio('todas-con');
+      const sinTerna = await crearConsorcio('todas-sin');
+      await http().put(`/api/consorcios/${conTerna}/roles`).send(terna);
+
+      const res = await http().get('/api/consorcios/roles');
+
+      expect(res.status).toBe(200);
+      const propias = res.body.filter((r: { consorcioId: string }) => [conTerna, sinTerna].includes(r.consorcioId));
+      expect(propias).toHaveLength(2);
+      const individual = (await http().get(`/api/consorcios/${conTerna}/roles`)).body;
+      expect(propias.find((r: { consorcioId: string }) => r.consorcioId === conTerna)).toEqual(individual);
+      expect(propias.find((r: { consorcioId: string }) => r.consorcioId === sinTerna)).toEqual({
+        consorcioId: sinTerna, rtCalle: null, firmante: null, eca: null, actualizadoEn: null,
+      });
+      // Un edificio por fila: ningún id repetido, aunque la unión con roles_edificio sea externa.
+      const ids = res.body.map((r: { consorcioId: string }) => r.consorcioId);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('sin sesión responde 401', async () => {
+      expect((await request(app.getHttpServer()).get('/api/consorcios/roles')).status).toBe(401);
+    });
+  });
+
 });

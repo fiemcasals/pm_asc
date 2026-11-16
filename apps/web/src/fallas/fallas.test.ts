@@ -3,6 +3,7 @@ import {
   EventoFallaCritica,
   FuenteEventos,
   URL_EVENTOS_FALLAS,
+  agruparFallasPorZona,
   parsearEventoFalla,
   reproducirAvisoSonoro,
   suscribirFallasCriticas,
@@ -124,5 +125,27 @@ describe('reproducirAvisoSonoro', () => {
     vi.runAllTimers();
     expect(ctx.close).toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+
+describe('agruparFallasPorZona (HU-06 RF-03, criterio 4)', () => {
+  it('agrupa por zona con el nombre legible, en el orden de las zonas del checklist', () => {
+    const grupos = agruparFallasPorZona(['STOP_FOSA_DEFICIENTE_INEXISTENTE', 'PARACAIDAS_ANOMALIA', 'CABLES_DESGASTADOS', 'BOTON_PARE_FALLA']);
+
+    expect(grupos.map((g) => g.zona)).toEqual(['Sala de Máquinas', 'Cabina', 'Fosa']);
+    expect(grupos[1].fallas.map((f) => f.nombre)).toEqual(['Botón de PARE: Falla', 'Paracaídas: Anomalía']);
+    expect(grupos[0].fallas[0]).toEqual({ codigo: 'CABLES_DESGASTADOS', nombre: 'Cables de tracción desgastados' });
+  });
+
+  it('un código que no está en la lista va a «Otras», al final, y no se oculta; los repetidos se muestran una vez', () => {
+    const grupos = agruparFallasPorZona(['OTRA_COSA', 'CERRADURA_NO_TRABA', 'CERRADURA_NO_TRABA']);
+
+    expect(grupos.map((g) => g.zona)).toEqual(['Accesos', 'Otras']);
+    expect(grupos[0].fallas).toHaveLength(1);
+    expect(grupos[1].fallas).toEqual([{ codigo: 'OTRA_COSA', nombre: 'OTRA_COSA' }]);
+  });
+
+  it('sin fallas devuelve una lista vacía', () => {
+    expect(agruparFallasPorZona([])).toEqual([]);
   });
 });

@@ -1,14 +1,16 @@
 import { INestApplication } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { Reloj, RELOJ, relojDelSistema } from '../src/auth/auth.types';
 import { Mailer } from '../src/auth/mailer';
+import { RolesGuard } from '../src/auth/roles.guard';
 import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usuarios.repository';
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '../src/consorcios/consorcio.types';
-import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
+import { ConsorciosRepository, TernaCambioError } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
 import {
@@ -37,6 +39,10 @@ export class MailerDePrueba {
 export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'query'> {
   /** Consultas recibidas por query(), en orden. */
   consultas: { texto: string; params: unknown[] }[];
+  /** Acuses de recibo que la base falsa "guardó" (HU-10 RF-05). */
+  acuses: FilaAcuseFalsa[];
+  /** Avisos de alertas que la base falsa "guardó" (HU-10 RF-04). */
+  avisos: FilaAvisoFalsa[];
   /** Si tiene valor, cada query() falla con este error. Se puede cambiar o quitar en medio de una prueba. */
   errorDeQuery: Error | null;
 }
@@ -46,9 +52,59 @@ export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'que
  * - `fail`: checkHealth() falla (la base "no responde").
  * - `errorDeQuery`: query() falla con ese error. Sin él, query() registra la consulta y devuelve [].
  */
+/** Un aviso de alerta guardado en la base falsa (HU-10 RF-04). */
+export interface FilaAvisoFalsa {
+  alerta_id: string;
+  tipo: string;
+  eca: string;
+  edificio: string;
+  mensaje: string;
+  fecha: Date;
+}
+
+/** Un acuse guardado en la base falsa. */
+export interface FilaAcuseFalsa {
+  id: string;
+  alerta_id: string;
+  eca: string;
+  usuario: string;
+  fecha_hora: Date;
+}
+
+/**
+ * Lo que PostgreSQL contestaría a las consultas de acuses de recibo (HU-10 RF-05): un acuse por alerta
+ * (INSERT … ON CONFLICT DO NOTHING RETURNING devuelve la fila sólo si se insertó) y la relectura por alerta.
+ * Devuelve undefined para cualquier otra consulta.
+ */
+function respuestaDeAcuses(acuses: FilaAcuseFalsa[], texto: string, params: unknown[], avisos: FilaAvisoFalsa[] = []): unknown[] | undefined {
+  if (texto.includes('INSERT INTO alertas_avisos')) {
+    const [alertaId, tipo, eca, edificio, mensaje, fecha] = params as [string, string, string, string, string, string];
+    if (!avisos.some((a) => a.alerta_id === alertaId && a.tipo === tipo)) avisos.push({ alerta_id: alertaId, tipo, eca, edificio, mensaje, fecha: new Date(fecha) });
+    return [];
+  }
+  if (texto.includes('FROM alertas_avisos WHERE eca = $1')) {
+    return avisos.filter((a) => a.eca === params[0] && (params[1] as string[]).includes(a.alerta_id));
+  }
+  if (texto.includes("FROM alertas_avisos WHERE tipo = 'aviso_secretaria_48h'")) return avisos.filter((a) => a.tipo === 'aviso_secretaria_48h');
+  if (texto.includes('INSERT INTO acuses_recibo_legal')) {
+    const [alertaId, , eca, usuario, fechaHora] = params as [string, string, string, string, string];
+    if (acuses.some((a) => a.alerta_id === alertaId)) return [];
+    const fila = { id: `acuse-${acuses.length + 1}`, alerta_id: alertaId, eca, usuario, fecha_hora: new Date(fechaHora) };
+    acuses.push(fila);
+    return [fila];
+  }
+  if (texto.includes('FROM acuses_recibo_legal WHERE alerta_id = $1')) return acuses.filter((a) => a.alerta_id === params[0]);
+  if (texto.includes('FROM acuses_recibo_legal WHERE eca = $1')) {
+    return acuses.filter((a) => a.eca === params[0] && (params[1] as string[]).includes(a.alerta_id));
+  }
+  return undefined;
+}
+
 export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}): FakeDatabase {
   const fake: FakeDatabase = {
     consultas: [],
+    acuses: [],
+    avisos: [],
     errorDeQuery: opts.errorDeQuery ?? null,
     checkHealth: async () => {
       if (opts.fail) throw new Error('connection refused');
@@ -57,7 +113,7 @@ export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}
     query: (async (texto: string, params: unknown[] = []) => {
       fake.consultas.push({ texto, params });
       if (fake.errorDeQuery) throw fake.errorDeQuery;
-      return [];
+      return respuestaDeAcuses(fake.acuses, texto, params, fake.avisos) ?? [];
     }) as FakeDatabase['query'],
   };
   return fake;
@@ -110,6 +166,12 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
       }));
   }
 
+  async listarRoles(): Promise<RolesEdificio[]> {
+    return [...this.filas.values()]
+      .sort((a, b) => a.nombre.localeCompare(b.nombre) || a.id.localeCompare(b.id))
+      .map((c) => structuredClone(this.roles.get(c.id) ?? { consorcioId: c.id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null }));
+  }
+
   async obtener(id: string): Promise<Consorcio | null> {
     const ficha = this.filas.get(id);
     return ficha ? structuredClone(ficha) : null;
@@ -136,8 +198,14 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
       : { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
   }
 
-  async asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null> {
+  async asignarRoles(id: string, datos: RolesInput, esperado?: string | null): Promise<RolesEdificio | null> {
     if (!this.filas.has(id)) return null;
+    if (esperado !== undefined) {
+      const vigente = this.roles.get(id);
+      if ((vigente?.actualizadoEn ?? null) !== esperado) {
+        throw new TernaCambioError(structuredClone(vigente ?? { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null }));
+      }
+    }
     const roles: RolesEdificio = {
       consorcioId: id,
       rtCalle: { ...datos.rtCalle, porcentaje: PORCENTAJES_OPERATIVOS.rtCalle },
@@ -157,11 +225,13 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
 /**
  * Semáforo en memoria: devuelve los edificios que se le carguen y anota las fechas que le consultaron.
  * La reasignación se comporta como la real: sin terna o con el RT cambiado no se aplica; si se aplica, cambia
- * el RT del edificio (vaciando sus contactos) y escribe el registro.
+ * el RT del edificio (con el contacto del RT nuevo) y escribe el registro.
  */
 export class InMemorySemaforoRepository extends SemaforoRepository {
   edificios: EdificioBase[] = [];
   rtDisponibles: RtDisponible[] = [];
+  /** Contacto de cada RT por nombre de usuario; el que no figura tiene un teléfono de prueba. */
+  contactos: Record<string, { telefono: string | null; email: string | null }> = {};
   readonly registros: RegistroReasignacion[] = [];
   readonly fechasConsultadas: FechaCalendario[] = [];
   /** Cuántas veces se pidió aplicar una reasignación (aunque no se haya aplicado). */
@@ -181,7 +251,9 @@ export class InMemorySemaforoRepository extends SemaforoRepository {
     const edificio = this.edificios.find((e) => e.id === pedida.consorcioId);
     if (!edificio?.rtCalle) return { ok: false, motivo: 'sin_terna' };
     if (edificio.rtCalle.nombre !== pedida.rtAnterior) return { ok: false, motivo: 'rt_cambio' };
-    edificio.rtCalle = { nombre: pedida.rtNuevo, telefono: null, email: null };
+    const contacto = this.contactos[pedida.rtNuevo] ?? { telefono: '+54 11 5555-0000', email: null };
+    if (!contacto.telefono && !contacto.email) return { ok: false, motivo: 'sin_contacto' };
+    edificio.rtCalle = { nombre: pedida.rtNuevo, telefono: contacto.telefono, email: contacto.email };
     const registro: RegistroReasignacion = {
       id: randomUUID(),
       consorcioId: pedida.consorcioId,
@@ -208,7 +280,8 @@ export async function createTestApp(
   semaforo: SemaforoRepository = new InMemorySemaforoRepository(),
   mailer: Pick<Mailer, 'enviar'> = new MailerDePrueba(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
-  const config = loadConfig(env);
+  // Por defecto las pruebas no exigen el día de separación entre visitas fallidas (HU-07 RF-05): lo piden explícitamente las que lo prueban.
+  const config = loadConfig({ VISITAS_FALLIDAS_MIN_DIAS: '0', ...env });
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(config)] })
     .overrideProvider(DatabaseService)
     .useValue(database)
@@ -227,6 +300,14 @@ export async function createTestApp(
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });
+  if (!auth.usuarios) {
+    app.use((req: any, _res: any, next: any) => {
+      if (!req.headers['x-forzar-sin-sesion']) {
+        req.usuario = { id: 'test-user', usuario: 'test-dev', rol: 'secretaria', eca: null };
+      }
+      next();
+    });
+  }
   configureApp(app, config);
   await app.init();
   return { app, config };

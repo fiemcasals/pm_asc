@@ -1,3 +1,4 @@
+import { fetchConSesion } from '../auth/sesion';
 import type { FetchResult } from './consorcios';
 
 export interface Responsable {
@@ -104,7 +105,7 @@ function cuerpoResponsable(datos: DatosResponsable) {
 
 export async function fetchRoles(consorcioId: string): Promise<FetchResult<RolesEdificio>> {
   try {
-    const res = await fetch(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`);
+    const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`);
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudieron obtener los roles` };
     }
@@ -114,18 +115,38 @@ export async function fetchRoles(consorcioId: string): Promise<FetchResult<Roles
   }
 }
 
+/** Las ternas de TODOS los edificios en una sola llamada (HU-02 RNF-01): una lectura en vez de una por edificio. */
+export async function fetchTodasLasTernas(): Promise<FetchResult<RolesEdificio[]>> {
+  try {
+    const res = await fetchConSesion('/api/consorcios/roles');
+    if (!res.ok) return { ok: false, error: `Error ${res.status}: no se pudieron obtener los roles` };
+    return { ok: true, data: (await res.json()) as RolesEdificio[] };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+/** El resultado de guardar: si la terna cambió desde que se leyó (409), trae la versión vigente (HU-02 RF-03). */
+export type ResultadoGuardarRoles = FetchResult<RolesEdificio> & { vigente?: RolesEdificio };
+
+/**
+ * Guarda la terna. `actualizadoEn` es la versión que la pantalla leyó (`null` si no había terna): la API sólo guarda si
+ * sigue siendo la vigente, y si no responde 409 con la que está guardada.
+ */
 export async function guardarRoles(
   consorcioId: string,
   formulario: FormularioRoles,
-): Promise<FetchResult<RolesEdificio>> {
+  actualizadoEn: string | null,
+): Promise<ResultadoGuardarRoles> {
   try {
-    const res = await fetch(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`, {
+    const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rtCalle: cuerpoResponsable(formulario.rtCalle),
         firmante: cuerpoResponsable(formulario.firmante),
         eca: cuerpoResponsable(formulario.eca),
+        actualizadoEn,
       }),
     });
 
@@ -135,6 +156,7 @@ export async function guardarRoles(
         ok: false,
         error: json.message || 'Error al guardar los roles',
         errores: Array.isArray(json.errores) ? json.errores : undefined,
+        vigente: res.status === 409 && json.vigente ? (json.vigente as RolesEdificio) : undefined,
       };
     }
     return { ok: true, data: json as RolesEdificio };

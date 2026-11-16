@@ -12,6 +12,7 @@ interface UsuarioRow {
   activo: boolean;
   sesiones_revocadas_en: Date | null;
   eca: string | null;
+  telefono: string | null;
   email: string | null;
 }
 
@@ -35,11 +36,11 @@ const aUsuario = (r: UsuarioRow): UsuarioGuardado => ({
   activo: r.activo,
   sesionesRevocadasEn: r.sesiones_revocadas_en ? new Date(r.sesiones_revocadas_en) : null,
   eca: r.eca,
+  telefono: r.telefono,
   email: r.email,
 });
 
-const COLUMNAS_USUARIO =
-  'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca, email';
+const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca, telefono, email';
 const COLUMNAS_SESION = 'id, usuario_id, refresh_hash, expira_en, revocada_en';
 
 const aSesion = (r: SesionRow): Sesion => ({
@@ -104,6 +105,15 @@ export class PgUsuariosRepository extends UsuariosRepository {
         datos.eca ?? null,
         datos.email?.trim() || null,
       ],
+    );
+    return rows[0] ? aUsuario(rows[0]) : null;
+  }
+
+  async guardarContacto(id: string, telefono: string | null, email: string | null): Promise<UsuarioGuardado | null> {
+    if (!ES_UUID.test(id)) return null;
+    const rows = await this.db.query<UsuarioRow>(
+      `UPDATE usuarios SET telefono = $2, email = $3 WHERE id = $1 RETURNING ${COLUMNAS_USUARIO}`,
+      [id, telefono, email],
     );
     return rows[0] ? aUsuario(rows[0]) : null;
   }

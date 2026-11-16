@@ -1,3 +1,4 @@
+import { fetchConSesion } from '../auth/sesion';
 export const TIPOS_MAQUINA = ['traccion', 'hidraulico', 'montavehiculos'] as const;
 
 export type TipoMaquina = (typeof TIPOS_MAQUINA)[number];
@@ -116,7 +117,7 @@ export interface FetchResult<T> {
 
 export async function fetchConsorcios(): Promise<FetchResult<ConsorcioResumen[]>> {
   try {
-    const res = await fetch('/api/consorcios');
+    const res = await fetchConSesion('/api/consorcios');
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudo listar consorcios` };
     }
@@ -129,7 +130,7 @@ export async function fetchConsorcios(): Promise<FetchResult<ConsorcioResumen[]>
 
 export async function fetchConsorcioById(id: string): Promise<FetchResult<Consorcio>> {
   try {
-    const res = await fetch(`/api/consorcios/${id}`);
+    const res = await fetchConSesion(`/api/consorcios/${id}`);
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: consorcio no encontrado` };
     }
@@ -142,7 +143,7 @@ export async function fetchConsorcioById(id: string): Promise<FetchResult<Consor
 
 export async function crearConsorcio(input: ConsorcioInput): Promise<FetchResult<Consorcio>> {
   try {
-    const res = await fetch('/api/consorcios', {
+    const res = await fetchConSesion('/api/consorcios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -165,7 +166,7 @@ export async function crearConsorcio(input: ConsorcioInput): Promise<FetchResult
 
 export async function actualizarConsorcio(id: string, input: ConsorcioInput): Promise<FetchResult<Consorcio>> {
   try {
-    const res = await fetch(`/api/consorcios/${encodeURIComponent(id)}`, {
+    const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -188,7 +189,7 @@ export async function actualizarConsorcio(id: string, input: ConsorcioInput): Pr
 
 export async function fetchConsorciosMapa(): Promise<FetchResult<ConsorcioMapaItem[]>> {
   try {
-    const res = await fetch('/api/consorcios/mapa');
+    const res = await fetchConSesion('/api/consorcios/mapa');
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudo cargar el mapa de consorcios` };
     }
@@ -312,7 +313,7 @@ export async function registrarVisitaFallida(
   input: ReporteVisitaFallidaInput,
 ): Promise<FetchResult<VisitaFallidaRegistro>> {
   try {
-    const res = await fetch('/api/visitas-fallidas', {
+    const res = await fetchConSesion('/api/visitas-fallidas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -336,7 +337,7 @@ export async function fetchAdvertenciasConsorcio(
   consorcioId: string,
 ): Promise<FetchResult<ResumenAdvertenciasConsorcio>> {
   try {
-    const res = await fetch(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}`);
+    const res = await fetchConSesion(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}`);
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudo obtener advertencias` };
     }
@@ -351,7 +352,7 @@ export async function fetchBloqueoConsorcio(
   consorcioId: string,
 ): Promise<FetchResult<BloqueoConsorcioInfo>> {
   try {
-    const res = await fetch(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}/bloqueo`);
+    const res = await fetchConSesion(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}/bloqueo`);
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudo consultar bloqueo` };
     }
@@ -366,7 +367,7 @@ export async function liquidarMaquina(
   input: LiquidacionMaquinaInput,
 ): Promise<FetchResult<LiquidacionMaquinaResultado>> {
   try {
-    const res = await fetch('/api/visitas-fallidas/liquidar-maquina', {
+    const res = await fetchConSesion('/api/visitas-fallidas/liquidar-maquina', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -392,7 +393,7 @@ export async function fetchLiquidacionConsorcio(
     if (montoBase) params.set('montoBase', montoBase.toString());
     const qs = params.toString() ? `?${params.toString()}` : '';
 
-    const res = await fetch(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}/liquidacion${qs}`);
+    const res = await fetchConSesion(`/api/visitas-fallidas/consorcio/${encodeURIComponent(consorcioId)}/liquidacion${qs}`);
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudo obtener liquidación` };
     }

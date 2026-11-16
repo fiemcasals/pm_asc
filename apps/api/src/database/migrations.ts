@@ -409,14 +409,228 @@ export const MIGRATIONS: Migration[] = [
     `,
   },
   {
-    id: '013_email_para_recupero',
+    id: '013_rls_admin_secretaria',
     sql: `
-      -- Email del usuario, para restablecer la contraseña por correo (HU-14). Es opcional: una
-      -- cuenta sin email se usa igual, pero no puede pedir el restablecimiento.
-      ALTER TABLE usuarios ADD COLUMN email text;
+      -- Políticas RLS para administrador y secretaría en todas las tablas protegidas por ECA (HU-15 RNF-03)
+      DROP POLICY IF EXISTS rls_consorcios_admin_secretaria ON consorcios;
+      CREATE POLICY rls_consorcios_admin_secretaria ON consorcios
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_maquinas_admin_secretaria ON maquinas;
+      CREATE POLICY rls_maquinas_admin_secretaria ON maquinas
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_roles_edificio_admin_secretaria ON roles_edificio;
+      CREATE POLICY rls_roles_edificio_admin_secretaria ON roles_edificio
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_acuses_recibo_admin_secretaria ON acuses_recibo_legal;
+      CREATE POLICY rls_acuses_recibo_admin_secretaria ON acuses_recibo_legal
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_visitas_fallidas_admin_secretaria ON visitas_fallidas;
+      CREATE POLICY rls_visitas_fallidas_admin_secretaria ON visitas_fallidas
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      -- Eliminar valor por defecto ECA_SISTEMA_DEV en consorcios y visitas_fallidas
+      ALTER TABLE consorcios
+        ALTER COLUMN eca_nombre SET DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'SIN_ASIGNAR');
+
+      ALTER TABLE visitas_fallidas
+        ALTER COLUMN eca_nombre SET DEFAULT COALESCE(NULLIF(current_setting('app.eca_actual', true), ''), 'SIN_ASIGNAR');
+    `,
+  },
+  {
+    id: '014_rls_admin_secretaria_reasignaciones',
+    sql: `
+      -- La Secretaría y el Administrador leen y registran las reasignaciones del RT (HU-04 RF-02) bajo el RLS estricto
+      -- de HU-15 RNF-03, donde no tienen ECA propia. Siguen sin poder modificar ni borrar un registro: sólo SELECT e INSERT.
+      DROP POLICY IF EXISTS rls_reasignaciones_rt_admin_secretaria_select ON reasignaciones_rt;
+      CREATE POLICY rls_reasignaciones_rt_admin_secretaria_select ON reasignaciones_rt
+        FOR SELECT
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_reasignaciones_rt_admin_secretaria_insert ON reasignaciones_rt;
+      CREATE POLICY rls_reasignaciones_rt_admin_secretaria_insert ON reasignaciones_rt
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+    `,
+  },
+  {
+    id: '015_indice_inspecciones_por_fecha',
+    sql: `
+      -- HU-04 RNF-01: el semáforo filtra las inspecciones por rango de created_at (el mes consultado) y sólo necesita
+      -- consorcio_id y maquina_id para cruzarlas con las máquinas. Con INCLUDE la consulta se resuelve con el índice,
+      -- sin leer la tabla, y deja de recorrer todas las inspecciones históricas.
+      CREATE INDEX IF NOT EXISTS inspecciones_checklist_created_at_idx
+        ON inspecciones_checklist (created_at) INCLUDE (consorcio_id, maquina_id);
+    `,
+  },
+  {
+    id: '016_usuarios_contacto',
+    sql: `
+      -- HU-02 RF-05: el teléfono y el email del RT de Calle viven en su usuario, así al reasignar un edificio la terna
+      -- se completa con los datos del RT nuevo en vez de quedar sin contacto. Opcionales: sólo se cargan a los rt_calle.
+      ALTER TABLE usuarios
+        ADD COLUMN IF NOT EXISTS telefono text,
+        ADD COLUMN IF NOT EXISTS email text;
+    `,
+  },
+  {
+    id: '017_acuses_recibo_unicos_por_alerta',
+    sql: `
+      -- HU-10 RF-05: un acuse de recibo legal por alerta. Si ya hubiera repetidos (cada POST insertaba una fila nueva) se
+      -- conserva el primero, que es el que vale legalmente, y se borran los posteriores; después la base lo impide sola.
+      DELETE FROM acuses_recibo_legal a
+       USING (
+         SELECT id, row_number() OVER (PARTITION BY alerta_id ORDER BY fecha_hora, created_at, id) AS orden
+           FROM acuses_recibo_legal
+       ) repetidos
+       WHERE a.id = repetidos.id AND repetidos.orden > 1;
+
+      ALTER TABLE acuses_recibo_legal
+        ADD CONSTRAINT acuses_recibo_alerta_unica UNIQUE (alerta_id);
+    `,
+  },
+  {
+    id: '018_recargos_anulados',
+    sql: `
+      -- HU-07 RF-04: un Administrador puede anular el recargo del 45 % de una máquina. Es un registro de auditoría: quién,
+      -- cuándo y por qué; sólo se agrega. El recargo se identifica por la 3.ª visita fallida que lo originó y la máquina,
+      -- así que no se puede anular dos veces y un ciclo nuevo de advertencias (otra 3.ª visita) vuelve a poder anularse.
+      CREATE TABLE recargos_anulados (
+        id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id       uuid NOT NULL REFERENCES consorcios (id) ON DELETE CASCADE,
+        maquina_id         text NOT NULL,
+        visita_fallida_id  text NOT NULL,
+        usuario            text NOT NULL,
+        motivo             text NOT NULL,
+        fecha              timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT recargos_anulados_motivo_no_vacio CHECK (btrim(motivo) <> ''),
+        CONSTRAINT recargos_anulados_unico UNIQUE (visita_fallida_id, maquina_id)
+      );
+
+      CREATE INDEX recargos_anulados_consorcio_idx ON recargos_anulados (consorcio_id);
+
+      -- RLS: sin política de UPDATE ni de DELETE, la aplicación no puede modificar ni borrar una anulación ya escrita.
+      -- Leen las del edificio su ECA, la Secretaría y el Administrador, y el RT y el Firmante asignados. Sólo el
+      -- Administrador la escribe (el controlador también lo exige).
+      ALTER TABLE recargos_anulados ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_recargos_anulados_select ON recargos_anulados;
+      CREATE POLICY rls_recargos_anulados_select ON recargos_anulados
+        FOR SELECT
+        USING (
+          NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+          OR usuario_asignado_en_edificio(consorcio_id)
+          OR EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = recargos_anulados.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_recargos_anulados_insert ON recargos_anulados;
+      CREATE POLICY rls_recargos_anulados_insert ON recargos_anulados
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') = 'administrador');
+    `,
+  },
+  {
+    id: '019_alertas_avisos',
+    sql: `
+      -- HU-10 RF-04: los recordatorios a la ECA (24 h) y los avisos a la Secretaría (48 h) de una alerta sin acuse de recibo.
+      -- Cada uno se registra una sola vez por alerta (UNIQUE), así que no se repite aunque se reinicie la API o se procese varias
+      -- veces. Es el historial de la alerta: sólo se agrega.
+      CREATE TABLE alertas_avisos (
+        id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        alerta_id  text NOT NULL,
+        tipo       text NOT NULL,
+        eca        text NOT NULL,
+        edificio   text NOT NULL,
+        mensaje    text NOT NULL,
+        fecha      timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT alertas_avisos_tipo CHECK (tipo IN ('recordatorio_eca_24h', 'aviso_secretaria_48h')),
+        CONSTRAINT alertas_avisos_unico UNIQUE (alerta_id, tipo)
+      );
+
+      CREATE INDEX alertas_avisos_eca_idx ON alertas_avisos (eca);
+
+      -- RLS: la ECA ve y registra los de sus alertas; la Secretaría y el Administrador leen los de todas. Sin política de
+      -- UPDATE ni de DELETE, la aplicación no puede modificar ni borrar un aviso ya registrado.
+      ALTER TABLE alertas_avisos ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_alertas_avisos_select ON alertas_avisos;
+      CREATE POLICY rls_alertas_avisos_select ON alertas_avisos
+        FOR SELECT
+        USING (
+          eca = NULLIF(current_setting('app.eca_actual', true), '')
+          OR NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+        );
+
+      DROP POLICY IF EXISTS rls_alertas_avisos_insert ON alertas_avisos;
+      CREATE POLICY rls_alertas_avisos_insert ON alertas_avisos
+        FOR INSERT
+        WITH CHECK (eca = NULLIF(current_setting('app.eca_actual', true), ''));
+    `,
+  },
+  {
+    id: '020_desbloqueos_edificio',
+    sql: `
+      -- HU-07 RF-05: la Secretaría puede desbloquear un edificio bloqueado por la 3.ª visita fallida, con motivo obligatorio; vuelve al
+      -- recorrido del RT. El desbloqueo cubre las visitas fallidas hasta la indicada (la última al desbloquear): si el edificio
+      -- vuelve a fallar después, se bloquea de nuevo. Es un registro de auditoría: sólo se agrega.
+      -- consorcio_id es text, igual que en visitas_fallidas (admite ids simbólicos).
+      CREATE TABLE desbloqueos_edificio (
+        id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id     text NOT NULL,
+        hasta_visita_id  text NOT NULL,
+        usuario          text NOT NULL,
+        motivo           text NOT NULL,
+        fecha            timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT desbloqueos_edificio_motivo_no_vacio CHECK (btrim(motivo) <> ''),
+        CONSTRAINT desbloqueos_edificio_unico UNIQUE (hasta_visita_id)
+      );
+
+      CREATE INDEX desbloqueos_edificio_consorcio_idx ON desbloqueos_edificio (consorcio_id);
+
+      -- RLS: lo ve quien ve el edificio (la política de consorcios ya filtra por ECA, por rol y por RT/Firmante asignado) y sólo la
+      -- Secretaría y el Administrador lo escriben. Sin política de UPDATE ni de DELETE, la aplicación no puede modificarlo ni borrarlo.
+      ALTER TABLE desbloqueos_edificio ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_desbloqueos_edificio_select ON desbloqueos_edificio;
+      CREATE POLICY rls_desbloqueos_edificio_select ON desbloqueos_edificio
+        FOR SELECT
+        USING (
+          NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+          OR EXISTS (SELECT 1 FROM consorcios c WHERE c.id::text = desbloqueos_edificio.consorcio_id)
+        );
+
+      DROP POLICY IF EXISTS rls_desbloqueos_edificio_insert ON desbloqueos_edificio;
+      CREATE POLICY rls_desbloqueos_edificio_insert ON desbloqueos_edificio
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+    `,
+  },
+  {
+    id: '021_email_para_recupero',
+    sql: `
+      -- HU-14: restricciones del email de usuario, que usa el recupero de contraseña por correo. La columna la crea
+      -- 016_usuarios_contacto; acá sólo van el formato y la unicidad, que el recupero necesita para no mandar el enlace
+      -- a dos cuentas. Todo con IF NOT EXISTS / DROP IF EXISTS: la beta ya tenía estos objetos (los creó una migración
+      -- 013 propia del VPS, anterior a la 013 de testing), así que esta corre igual sobre esa base y sobre una nueva.
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email text;
+
+      ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_email_formato;
       ALTER TABLE usuarios ADD CONSTRAINT usuarios_email_formato
         CHECK (email IS NULL OR email ~ '^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+$');
-      CREATE UNIQUE INDEX usuarios_email_unico ON usuarios (lower(email)) WHERE email IS NOT NULL;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_unico ON usuarios (lower(email)) WHERE email IS NOT NULL;
     `,
   },
 ];

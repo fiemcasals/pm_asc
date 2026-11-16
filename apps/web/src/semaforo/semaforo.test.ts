@@ -169,7 +169,16 @@ describe('las llamadas a la API', () => {
 
     const res = await confirmarReasignacion('abc', { rtAnterior: 'ana', rtNuevo: 'carla' });
 
-    expect(res).toEqual({ ok: false, error: 'El RT del edificio cambió: ahora es "diego".' });
+    // El código 409 viaja con el error: la pantalla lo usa para recargar el panel (HU-04 RF-03).
+    expect(res).toEqual({ ok: false, error: 'El RT del edificio cambió: ahora es "diego".', status: 409 });
+  });
+
+  it('un error que no es 409 también trae su código, y un error de red no trae ninguno', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta({ message: 'Datos inválidos' }, 400)));
+    expect(await confirmarReasignacion('abc', { rtAnterior: 'a', rtNuevo: 'b' })).toMatchObject({ ok: false, status: 400 });
+
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Failed to fetch')));
+    expect(await confirmarReasignacion('abc', { rtAnterior: 'a', rtNuevo: 'b' })).toEqual({ ok: false, error: 'Failed to fetch' });
   });
 
   it('sin conexión devuelve el error en vez de lanzar', async () => {

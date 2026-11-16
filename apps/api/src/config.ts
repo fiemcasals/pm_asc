@@ -43,6 +43,11 @@ export interface AppConfig {
   authSecretGenerado: boolean;
   /** Primer Administrador: se crea al arrancar sólo si todavía no hay ninguno. */
   adminInicial: { usuario: string; password: string; email: string | null } | null;
+  /**
+   * Días de calendario (Buenos Aires) que tienen que pasar entre dos visitas fallidas del mismo edificio. El cliente definió 1
+   * (HU-07 RF-05); 0 lo desactiva. Se configura con VISITAS_FALLIDAS_MIN_DIAS.
+   */
+  visitasFallidasMinDias: number;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -65,6 +70,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const secretoCargado = env.AUTH_JWT_SECRET?.trim() ?? '';
   if (secretoCargado && secretoCargado.length < MIN_AUTH_SECRET) {
     throw new Error(`AUTH_JWT_SECRET tiene que tener al menos ${MIN_AUTH_SECRET} caracteres.`);
+  }
+
+  const minDiasVisitas = env.VISITAS_FALLIDAS_MIN_DIAS === undefined || env.VISITAS_FALLIDAS_MIN_DIAS.trim() === '' ? 1 : Number(env.VISITAS_FALLIDAS_MIN_DIAS);
+  if (!Number.isInteger(minDiasVisitas) || minDiasVisitas < 0) {
+    throw new Error('VISITAS_FALLIDAS_MIN_DIAS tiene que ser un entero de 0 en adelante.');
   }
 
   const adminUsuario = env.ADMIN_INICIAL_USUARIO?.trim() ?? '';
@@ -100,5 +110,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       adminUsuario && adminPassword
         ? { usuario: adminUsuario, password: adminPassword, email: env.ADMIN_INICIAL_EMAIL?.trim() || null }
         : null,
+    visitasFallidasMinDias: minDiasVisitas,
   };
 }

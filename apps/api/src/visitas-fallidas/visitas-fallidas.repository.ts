@@ -44,6 +44,9 @@ export abstract class VisitasFallidasRepository {
 
   abstract listarAnulaciones(consorcioId: string): Promise<AnulacionRecargo[]>;
 
+  /** El abono y los porcentajes guardados de una máquina (HU-02 RF-04); null si no se conocen. */
+  abstract pagoDeMaquina(maquinaId: string): Promise<{ abonoMensual: number | null; porcentajeRt: number; porcentajeFirmante: number } | null>;
+
   /** El instante de la última inspección registrada en el edificio (su última visita exitosa), o null si no tiene. */
   abstract ultimaInspeccion(consorcioId: string): Promise<string | null>;
 
@@ -69,6 +72,8 @@ export class InMemoryVisitasFallidasRepository extends VisitasFallidasRepository
   /** Máquinas inspeccionadas por edificio y mes, para las pruebas: la clave es `consorcioId|AAAA-MM`. */
   readonly inspeccionadas = new Map<string, string[]>();
   readonly anulaciones: AnulacionRecargo[] = [];
+  /** El pago de cada máquina, para las pruebas (HU-02 RF-04). */
+  readonly pagos = new Map<string, { abonoMensual: number | null; porcentajeRt: number; porcentajeFirmante: number }>();
   /** Última inspección por edificio, para las pruebas (su última visita exitosa). */
   readonly inspecciones = new Map<string, string>();
   readonly desbloqueos: DesbloqueoEdificio[] = [];
@@ -107,6 +112,10 @@ export class InMemoryVisitasFallidasRepository extends VisitasFallidasRepository
 
   async maquinasInspeccionadasEnMes(consorcioId: string, periodo: string): Promise<string[]> {
     return [...(this.inspeccionadas.get(`${consorcioId}|${periodo}`) ?? [])];
+  }
+
+  async pagoDeMaquina(maquinaId: string) {
+    return this.pagos.get(maquinaId) ?? null;
   }
 
   async listarAnulaciones(consorcioId: string): Promise<AnulacionRecargo[]> {

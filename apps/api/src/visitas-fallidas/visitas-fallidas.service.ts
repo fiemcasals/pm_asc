@@ -207,8 +207,14 @@ export class VisitasFallidasService {
     const consorcioInfo = await this.resolverConsorcioInfo(dto.consorcioId);
     const resumen = await this.getHistorialConsorcio(dto.consorcioId);
 
-    const montoBase = typeof dto.montoBase === 'number' && dto.montoBase > 0 ? dto.montoBase : 150000;
     const maquinaId = dto.maquinaId || `maq-${dto.referenciaAgc || 'M1'}`;
+    // HU-02 RF-04: el abono y los porcentajes salen de la máquina; sólo si no tiene abono cargado se usa el que mandó quien liquida o el valor por defecto.
+    const pago = await this.repo.pagoDeMaquina(maquinaId);
+    const porParametro = typeof dto.montoBase === 'number' && dto.montoBase > 0;
+    const origenAbono: 'maquina' | 'parametro' | 'por_defecto' = pago?.abonoMensual != null ? 'maquina' : porParametro ? 'parametro' : 'por_defecto';
+    const montoBase = pago?.abonoMensual != null ? pago.abonoMensual : porParametro ? (dto.montoBase as number) : 150000;
+    const porcentajeRt = pago?.porcentajeRt ?? 60;
+    const porcentajeFirmante = pago?.porcentajeFirmante ?? 25;
     const referenciaAgc = dto.referenciaAgc || 'M1';
     const periodo = dto.periodo || new Date().toISOString().slice(0, 7);
 
@@ -254,6 +260,11 @@ export class VisitasFallidasService {
       referenciaAgc,
       periodo,
       montoBase,
+      origenAbono,
+      porcentajeRt,
+      porcentajeFirmante,
+      montoRt: Math.round(montoBase * porcentajeRt) / 100,
+      montoFirmante: Math.round(montoBase * porcentajeFirmante) / 100,
       totalAdvertencias: resumen.totalAdvertencias,
       bloqueadoPorTerceraVisita: resumen.bloqueadoPorTerceraVisita,
       recargoAplicado: tieneRecargo,
@@ -334,7 +345,7 @@ export class VisitasFallidasService {
   async liquidarConsorcio(
     consorcioId: string,
     periodo?: string,
-    montoBasePorMaquina = 150000,
+    montoBasePorMaquina?: number,
   ): Promise<LiquidacionConsorcioResultado> {
     const consorcioInfo = await this.resolverConsorcioInfo(consorcioId);
     const resumen = await this.getHistorialConsorcio(consorcioId);

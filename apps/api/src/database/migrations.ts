@@ -617,4 +617,47 @@ export const MIGRATIONS: Migration[] = [
         WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
     `,
   },
+  {
+    id: '021_pago_por_maquina',
+    sql: `
+      -- HU-02 RF-04: el abono mensual y los porcentajes de pago del RT de Calle y del Firmante son de cada máquina (antes eran constantes del código).
+      -- Una máquina nueva arranca con 60 % y 25 %; el abono queda sin definir hasta que se carga (la liquidación usa entonces el valor por defecto).
+      ALTER TABLE maquinas
+        ADD COLUMN IF NOT EXISTS abono_mensual numeric(12, 2),
+        ADD COLUMN IF NOT EXISTS porcentaje_rt numeric(5, 2) NOT NULL DEFAULT 60,
+        ADD COLUMN IF NOT EXISTS porcentaje_firmante numeric(5, 2) NOT NULL DEFAULT 25;
+
+      ALTER TABLE maquinas
+        ADD CONSTRAINT maquinas_abono_no_negativo CHECK (abono_mensual IS NULL OR abono_mensual >= 0),
+        ADD CONSTRAINT maquinas_porcentajes_validos CHECK (
+          porcentaje_rt BETWEEN 0 AND 100 AND porcentaje_firmante BETWEEN 0 AND 100 AND porcentaje_rt + porcentaje_firmante <= 100
+        );
+
+      -- Cada cambio de abono o de porcentaje queda registrado: quién, cuándo, qué valor había y cuál quedó. Sólo se agrega.
+      CREATE TABLE maquinas_pago_historial (
+        id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        maquina_id      uuid NOT NULL REFERENCES maquinas (id) ON DELETE CASCADE,
+        consorcio_id    uuid NOT NULL,
+        campo           text NOT NULL CHECK (campo IN ('abono_mensual', 'porcentaje_rt', 'porcentaje_firmante')),
+        valor_anterior  text,
+        valor_nuevo     text,
+        usuario         text NOT NULL,
+        fecha           timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX maquinas_pago_historial_maquina_idx ON maquinas_pago_historial (maquina_id, fecha);
+
+      ALTER TABLE maquinas_pago_historial ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_maquinas_pago_historial_select ON maquinas_pago_historial;
+      CREATE POLICY rls_maquinas_pago_historial_select ON maquinas_pago_historial
+        FOR SELECT
+        USING (
+          NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+          OR EXISTS (SELECT 1 FROM maquinas mq WHERE mq.id = maquinas_pago_historial.maquina_id)
+        );
+      DROP POLICY IF EXISTS rls_maquinas_pago_historial_insert ON maquinas_pago_historial;
+      CREATE POLICY rls_maquinas_pago_historial_insert ON maquinas_pago_historial
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+    `,
+  },
 ];

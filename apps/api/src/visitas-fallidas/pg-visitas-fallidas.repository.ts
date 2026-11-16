@@ -217,6 +217,17 @@ export class PgVisitasFallidasRepository extends VisitasFallidasRepository {
     return filas.map((f) => f.maquina_id);
   }
 
+  async pagoDeMaquina(maquinaId: string) {
+    if (!ES_UUID.test(maquinaId)) return null;
+    const filas = await this.db.query<{ abono_mensual: string | null; porcentaje_rt: string; porcentaje_firmante: string }>(
+      'SELECT abono_mensual::text AS abono_mensual, porcentaje_rt::text AS porcentaje_rt, porcentaje_firmante::text AS porcentaje_firmante FROM maquinas WHERE id = $1',
+      [maquinaId],
+    );
+    return filas[0]
+      ? { abonoMensual: filas[0].abono_mensual === null ? null : Number(filas[0].abono_mensual), porcentajeRt: Number(filas[0].porcentaje_rt), porcentajeFirmante: Number(filas[0].porcentaje_firmante) }
+      : null;
+  }
+
   async listarAnulaciones(consorcioId: string): Promise<AnulacionRecargo[]> {
     if (!ES_UUID.test(consorcioId)) return [];
     const filas = await this.db.query<AnulacionRow>(

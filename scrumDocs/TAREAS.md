@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-16T15:29:10.955Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-16T15:39:01.221Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -455,10 +455,10 @@ Reemplazar la descarga del remito t�cnico en formato JSON por un documento PDF
 
 **Condiciones de aprobación**
 
-1. Al presionar 'Descargar Remito de Notificaci�n' en el Portal ECA, el archivo se descarga en formato PDF (.pdf) con Content-Type application/pdf.
-2. El documento PDF contiene el membrete formal de MAICON S.R.L., datos del consorcio, m�quina, detalles de la falla cr�tica detectada y sello de notificaci�n legal.
+1. Al presionar Descargar Remito de Notificacion en el Portal ECA, el archivo se descarga en formato PDF (.pdf) con Content-Type application/pdf.
+2. El documento PDF contiene el membrete formal de MAICON S.R.L., datos del consorcio, maquina, detalles de la falla critica detectada y sello de notificacion legal.
 3. La descarga del PDF registra el acuse de recibo legal en la base de datos (con usuario, fecha y hora exacta).
-4. Las pruebas automatizadas verifican que el endpoint responde con un buffer PDF v�lido (%PDF-) y cabecera Content-Disposition con extensi�n .pdf.
+4. Las pruebas automatizadas verifican que el endpoint responde con un buffer PDF valido (%PDF-) y cabecera Content-Disposition con extension .pdf.
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 

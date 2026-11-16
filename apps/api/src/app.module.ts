@@ -19,6 +19,7 @@ import { RlsContextInterceptor } from './database/rls-context.interceptor';
 import { SeguridadRlsController } from './database/seguridad-rls.controller';
 import { EcaController } from './eca/eca.controller';
 import { EcaService } from './eca/eca.service';
+import { RemitoPdfService } from './eca/remito-pdf.service';
 import { FallasCriticasController } from './fallas-criticas/fallas-criticas.controller';
 import { FallasCriticasService } from './fallas-criticas/fallas-criticas.service';
 import { FirmanteController } from './firmante/firmante.controller';
@@ -91,6 +92,7 @@ export class AppModule implements NestModule {
         FirmanteService,
         ChecklistService,
         EcaService,
+        RemitoPdfService,
         WhatsAppFormatterService,
         WhatsAppConnectorService,
         WhatsAppTriggerService,

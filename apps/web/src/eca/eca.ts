@@ -95,26 +95,28 @@ export interface AlertasEcaResponse {
 export interface RemitoTecnico {
   id: string;
   alertaId: string;
-  maquinaId: string;
-  codigoAGC: string;
-  nombreMaquina: string;
-  edificio: {
+  maquinaId?: string;
+  codigoAGC?: string;
+  nombreMaquina?: string;
+  edificio?: {
     direccion: string;
     consorcio: string;
     administracion: string;
   };
-  eca: string;
-  tipoAlerta: TipoAlertaCritica;
-  titulo: string;
-  motivo: string;
+  eca?: string;
+  tipoAlerta?: TipoAlertaCritica;
+  titulo?: string;
+  motivo?: string;
   fotografiaCabinaTrabada?: string | null;
   checklist?: ChecklistItemCritico[];
-  fechaDeteccion: string;
+  fechaDeteccion?: string;
   acuseLegal: {
     registrado: boolean;
     fechaHora: string;
     usuario: string;
   };
+  blob?: Blob;
+  filename?: string;
 }
 
 export async function descargarRemitoTecnico(
@@ -124,16 +126,59 @@ export async function descargarRemitoTecnico(
   try {
     const params = new URLSearchParams();
     if (usuario) params.set('usuario', usuario);
+    params.set('formato', 'pdf');
 
     const query = params.toString() ? `?${params.toString()}` : '';
-    const res = await fetch(`/api/eca/remito/${alertaId}${query}`);
+    const res = await fetch(`/api/eca/remito/${alertaId}${query}`, {
+      headers: {
+        Accept: 'application/pdf, application/json',
+      },
+    });
 
     if (!res.ok) {
       return { ok: false, error: `Error ${res.status}: no se pudo descargar el remito técnico` };
     }
 
+    const contentType = res.headers?.get?.('content-type') || '';
+
+    if (contentType.includes('application/pdf')) {
+      const blob = typeof res.blob === 'function' ? await res.blob() : new Blob([], { type: 'application/pdf' });
+      const fechaHora = res.headers?.get?.('x-acuse-fecha-hora') || new Date().toISOString();
+      const acuseUsuario = decodeURIComponent(res.headers?.get?.('x-acuse-usuario') || usuario || '');
+      const codigoAGC = res.headers?.get?.('x-codigo-agc') || 'M1';
+
+      const dispo = res.headers?.get?.('content-disposition');
+      let filename = `remito-tecnico-${codigoAGC}-${alertaId}.pdf`;
+      if (dispo) {
+        const match = dispo.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      return {
+        ok: true,
+        data: {
+          id: `REM-${alertaId}`,
+          alertaId,
+          codigoAGC,
+          acuseLegal: {
+            registrado: true,
+            fechaHora,
+            usuario: acuseUsuario,
+          },
+          blob,
+          filename,
+        },
+      };
+    }
+
     const data = (await res.json()) as RemitoTecnico;
-    return { ok: true, data };
+    return {
+      ok: true,
+      data: {
+        ...data,
+        filename: data.filename || `remito-tecnico-${data.codigoAGC || alertaId}-${alertaId}.pdf`,
+      },
+    };
   } catch (err) {
     return {
       ok: false,

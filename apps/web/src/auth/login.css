@@ -190,3 +190,22 @@
   border: 1px solid var(--warning-border);
   border-radius: 8px;
 }
+
+/* Acción secundaria de la tarjeta de ingreso: "Olvidé mi contraseña", "Volver al ingreso". */
+.login-enlace {
+  margin: 0;
+  padding: 6px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.login-enlace:hover,
+.login-enlace:focus-visible {
+  color: var(--text);
+}

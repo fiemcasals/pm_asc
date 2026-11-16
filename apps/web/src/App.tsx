@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { AdminUsuarios } from './admin/AdminUsuarios';
 import { ConsentimientoUbicacion } from './auth/ConsentimientoUbicacion';
 import { Login } from './auth/Login';
 import {
@@ -30,6 +31,7 @@ import {
   IconSecretaria,
   IconSistema,
   IconSun,
+  IconUsuarios,
 } from './ui/Icons';
 
 type SwState = 'verificando' | 'registrado' | 'no-soportado' | 'no-registrado';
@@ -116,7 +118,17 @@ const NAV_ITEMS: Array<{
     testId: 'tab-sistema',
     icon: IconSistema,
   },
+  {
+    id: 'usuarios',
+    label: 'Usuarios y permisos',
+    shortLabel: 'Usuarios',
+    testId: 'tab-usuarios',
+    icon: IconUsuarios,
+  },
 ];
+
+/** La ruta /admin abre directo la pantalla de usuarios (sólo si quien entra es Administrador). */
+const RUTA_ADMIN = '/admin';
 
 function getInitialTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'dark';
@@ -201,15 +213,31 @@ interface EscritorioProps {
 
 function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const esRt = usuario.rol === 'rt_calle';
+  const esAdmin = usuario.rol === 'administrador';
   // El RT de Calle ve su mapa y la inspección técnica; el resto, los portales del sistema.
-  const navItems = esRt ? [NAV_RT, NAV_ITEMS[1]] : NAV_ITEMS;
-  const [vista, setVista] = useState<Vista>(() => pantallaInicial(usuario.rol));
+  // Usuarios y permisos es sólo del Administrador (la API además lo exige).
+  const navItems = esRt
+    ? [NAV_RT, NAV_ITEMS[1]]
+    : esAdmin
+      ? NAV_ITEMS
+      : NAV_ITEMS.filter((item) => item.id !== 'usuarios');
+  const [vista, setVista] = useState<Vista>(() =>
+    esAdmin && typeof window !== 'undefined' && window.location.pathname.startsWith(RUTA_ADMIN)
+      ? 'usuarios'
+      : pantallaInicial(usuario.rol),
+  );
   const [health, setHealth] = useState<HealthState | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [consorcioBuscadoId, setConsorcioBuscadoId] = useState<string | null>(null);
   const [maquinaBuscadaId, setMaquinaBuscadaId] = useState<string | null>(null);
   const swState = useServiceWorkerState();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const destino = vista === 'usuarios' ? RUTA_ADMIN : '/';
+    if (window.location.pathname !== destino) window.history.replaceState(null, '', destino);
+  }, [vista]);
 
   const irA = useCallback(
     (destino: Vista) => {
@@ -436,6 +464,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />
           )}
+          {vista === 'usuarios' && <AdminUsuarios />}
           {vista === 'sistema' && (
             <section className="neo-bento-section" aria-labelledby="estado-titulo">
               <div className="portal-header">

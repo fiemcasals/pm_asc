@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { Reloj, RELOJ, relojDelSistema } from '../src/auth/auth.types';
+import { Mailer } from '../src/auth/mailer';
 import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usuarios.repository';
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
@@ -22,6 +23,16 @@ import {
   InMemoryVisitasFallidasRepository,
   VisitasFallidasRepository,
 } from '../src/visitas-fallidas/visitas-fallidas.repository';
+
+/** Correo en memoria: guarda lo que se habría enviado. Ninguna prueba manda un mail de verdad. */
+export class MailerDePrueba {
+  readonly enviados: { a: string; asunto: string; texto: string }[] = [];
+  readonly habilitado = true;
+
+  async enviar(a: string, asunto: string, texto: string): Promise<void> {
+    this.enviados.push({ a, asunto, texto });
+  }
+}
 
 export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'query'> {
   /** Consultas recibidas por query(), en orden. */
@@ -195,6 +206,7 @@ export async function createTestApp(
   visitasFallidas: VisitasFallidasRepository = new InMemoryVisitasFallidasRepository(),
   auth: { usuarios?: UsuariosRepository; reloj?: Reloj } = {},
   semaforo: SemaforoRepository = new InMemorySemaforoRepository(),
+  mailer: Pick<Mailer, 'enviar'> = new MailerDePrueba(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   const config = loadConfig(env);
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(config)] })
@@ -210,6 +222,8 @@ export async function createTestApp(
     .useValue(auth.reloj ?? relojDelSistema)
     .overrideProvider(SemaforoRepository)
     .useValue(semaforo)
+    .overrideProvider(Mailer)
+    .useValue(mailer)
     .compile();
 
   const app = moduleRef.createNestApplication({ logger: false });

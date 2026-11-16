@@ -5,9 +5,28 @@ export const APP_CONFIG = Symbol('APP_CONFIG');
 /** Largo mínimo del secreto de firma de tokens (HS256): 32 bytes. */
 const MIN_AUTH_SECRET = 32;
 
+/** Servidor de correo saliente. Sin él, el restablecimiento de contraseña no manda nada. */
+export interface SmtpConfig {
+  host: string;
+  puerto: number;
+  usuario: string;
+  clave: string;
+  /** Remitente del mail ("Nombre <casilla>" o sólo la casilla). */
+  desde: string;
+}
+
 export interface AppConfig {
   nodeEnv: string;
   port: number;
+  /**
+   * Dirección en la que escucha la API. Por defecto sólo loopback (en desarrollo la web
+   * corre en la misma máquina); en Docker hace falta 0.0.0.0 para que la alcance nginx.
+   */
+  host: string;
+  /** URL pública de la app, para armar el enlace del mail de recupero. */
+  appUrl: string;
+  /** null si no hay SMTP configurado: el recupero avisa por log y no manda mail. */
+  smtp: SmtpConfig | null;
   databaseUrl: string;
   /** URL opcional del usuario de aplicación sin BYPASSRLS ni propiedad de tablas. */
   databaseAppUrl?: string;
@@ -23,7 +42,7 @@ export interface AppConfig {
    */
   authSecretGenerado: boolean;
   /** Primer Administrador: se crea al arrancar sólo si todavía no hay ninguno. */
-  adminInicial: { usuario: string; password: string } | null;
+  adminInicial: { usuario: string; password: string; email: string | null } | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -51,15 +70,35 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const adminUsuario = env.ADMIN_INICIAL_USUARIO?.trim() ?? '';
   const adminPassword = env.ADMIN_INICIAL_PASSWORD ?? '';
 
+  const smtpHost = env.SMTP_HOST?.trim() ?? '';
+  const smtpUsuario = env.SMTP_USUARIO?.trim() ?? '';
+  const smtpClave = env.SMTP_CLAVE ?? '';
+  const smtp: SmtpConfig | null =
+    smtpHost && smtpUsuario && smtpClave
+      ? {
+          host: smtpHost,
+          puerto: Number(env.SMTP_PUERTO ?? 587),
+          usuario: smtpUsuario,
+          clave: smtpClave,
+          desde: env.SMTP_DESDE?.trim() || smtpUsuario,
+        }
+      : null;
+
   return {
     nodeEnv,
     port: Number(env.API_PORT ?? 3050),
+    host: env.API_HOST?.trim() || '127.0.0.1',
+    appUrl: (env.APP_URL?.trim() || 'http://localhost:8050').replace(/\/+$/, ''),
+    smtp,
     databaseUrl: env.DATABASE_URL ?? '',
     databaseAppUrl: env.DATABASE_APP_URL || undefined,
     databaseAppPassword: env.DATABASE_APP_PASSWORD?.trim() || undefined,
     corsOrigins,
     authSecret: secretoCargado || randomBytes(48).toString('base64url'),
     authSecretGenerado: !secretoCargado,
-    adminInicial: adminUsuario && adminPassword ? { usuario: adminUsuario, password: adminPassword } : null,
+    adminInicial:
+      adminUsuario && adminPassword
+        ? { usuario: adminUsuario, password: adminPassword, email: env.ADMIN_INICIAL_EMAIL?.trim() || null }
+        : null,
   };
 }

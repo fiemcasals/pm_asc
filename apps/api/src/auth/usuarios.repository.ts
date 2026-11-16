@@ -8,6 +8,8 @@ export interface NuevoUsuario {
   passwordHash: string;
   /** ECA del usuario; sólo para el rol "eca". */
   eca?: string | null;
+  /** Email para recuperar la contraseña. */
+  email?: string | null;
 }
 
 /**
@@ -18,9 +20,15 @@ export interface NuevoUsuario {
 export abstract class UsuariosRepository {
   abstract buscarPorUsuario(usuario: string): Promise<UsuarioGuardado | null>;
   abstract buscarPorId(id: string): Promise<UsuarioGuardado | null>;
+  /** Busca por email, sin distinguir mayúsculas. Null si no hay ninguno con ese email. */
+  abstract buscarPorEmail(email: string): Promise<UsuarioGuardado | null>;
+  /** Cambia el hash de la contraseña. Devuelve false si el usuario no existe. */
+  abstract cambiarPassword(id: string, passwordHash: string): Promise<boolean>;
   /** Devuelve null si el nombre de usuario ya existe. */
   abstract crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null>;
   abstract contarPorRol(rol: Rol): Promise<number>;
+  /** Todos los usuarios, ordenados por nombre de usuario. Para la pantalla del Administrador. */
+  abstract listar(): Promise<UsuarioGuardado[]>;
 
   abstract crearSesion(sesion: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion>;
   abstract buscarSesion(refreshHash: string): Promise<Sesion | null>;
@@ -56,6 +64,18 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
     return u ? { ...u } : null;
   }
 
+  async buscarPorEmail(email: string): Promise<UsuarioGuardado | null> {
+    const u = [...this.usuarios.values()].find((x) => x.email && clave(x.email) === clave(email));
+    return u ? { ...u } : null;
+  }
+
+  async cambiarPassword(id: string, passwordHash: string): Promise<boolean> {
+    const u = this.usuarios.get(id);
+    if (!u) return false;
+    u.passwordHash = passwordHash;
+    return true;
+  }
+
   async crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null> {
     if (await this.buscarPorUsuario(datos.usuario)) return null;
     const u: UsuarioGuardado = {
@@ -64,6 +84,7 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
       sesionesRevocadasEn: null,
       ...datos,
       eca: datos.eca ?? null,
+      email: datos.email ?? null,
     };
     this.usuarios.set(u.id, u);
     return { ...u };
@@ -71,6 +92,12 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
 
   async contarPorRol(rol: Rol): Promise<number> {
     return [...this.usuarios.values()].filter((u) => u.rol === rol).length;
+  }
+
+  async listar(): Promise<UsuarioGuardado[]> {
+    return [...this.usuarios.values()]
+      .map((u) => ({ ...u }))
+      .sort((a, b) => clave(a.usuario).localeCompare(clave(b.usuario)));
   }
 
   async crearSesion(datos: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion> {

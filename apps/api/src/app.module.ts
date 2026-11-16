@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthController, ConsentimientoController, UsuariosController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { RELOJ, relojDelSistema } from './auth/auth.types';
+import { Mailer } from './auth/mailer';
 import { PgUsuariosRepository } from './auth/pg-usuarios.repository';
 import { RolesGuard } from './auth/roles.guard';
 import { UsuariosRepository } from './auth/usuarios.repository';
@@ -75,6 +76,7 @@ export class AppModule implements NestModule {
         DatabaseService,
         { provide: RELOJ, useValue: relojDelSistema },
         { provide: UsuariosRepository, useClass: PgUsuariosRepository },
+        Mailer,
         AuthService,
         { provide: APP_GUARD, useClass: RolesGuard },
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },

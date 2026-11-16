@@ -12,6 +12,7 @@ interface UsuarioRow {
   activo: boolean;
   sesiones_revocadas_en: Date | null;
   eca: string | null;
+  email: string | null;
 }
 
 interface SesionRow {
@@ -34,9 +35,11 @@ const aUsuario = (r: UsuarioRow): UsuarioGuardado => ({
   activo: r.activo,
   sesionesRevocadasEn: r.sesiones_revocadas_en ? new Date(r.sesiones_revocadas_en) : null,
   eca: r.eca,
+  email: r.email,
 });
 
-const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca';
+const COLUMNAS_USUARIO =
+  'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca, email';
 const COLUMNAS_SESION = 'id, usuario_id, refresh_hash, expira_en, revocada_en';
 
 const aSesion = (r: SesionRow): Sesion => ({
@@ -70,13 +73,37 @@ export class PgUsuariosRepository extends UsuariosRepository {
     return rows[0] ? aUsuario(rows[0]) : null;
   }
 
+  async buscarPorEmail(email: string): Promise<UsuarioGuardado | null> {
+    const rows = await this.db.query<UsuarioRow>(
+      `SELECT ${COLUMNAS_USUARIO} FROM usuarios WHERE lower(email) = $1`,
+      [clave(email)],
+    );
+    return rows[0] ? aUsuario(rows[0]) : null;
+  }
+
+  async cambiarPassword(id: string, passwordHash: string): Promise<boolean> {
+    if (!ES_UUID.test(id)) return false;
+    const rows = await this.db.query<{ id: string }>(
+      'UPDATE usuarios SET password_hash = $2 WHERE id = $1 RETURNING id',
+      [id, passwordHash],
+    );
+    return rows.length > 0;
+  }
+
   async crear(datos: NuevoUsuario): Promise<UsuarioGuardado | null> {
     const rows = await this.db.query<UsuarioRow>(
-      `INSERT INTO usuarios (usuario, nombre, rol, password_hash, eca)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO usuarios (usuario, nombre, rol, password_hash, eca, email)
+       VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (lower(usuario)) DO NOTHING
        RETURNING ${COLUMNAS_USUARIO}`,
-      [datos.usuario.trim(), datos.nombre, datos.rol, datos.passwordHash, datos.eca ?? null],
+      [
+        datos.usuario.trim(),
+        datos.nombre,
+        datos.rol,
+        datos.passwordHash,
+        datos.eca ?? null,
+        datos.email?.trim() || null,
+      ],
     );
     return rows[0] ? aUsuario(rows[0]) : null;
   }
@@ -87,6 +114,13 @@ export class PgUsuariosRepository extends UsuariosRepository {
       [rol],
     );
     return Number(rows[0]?.total ?? 0);
+  }
+
+  async listar(): Promise<UsuarioGuardado[]> {
+    const rows = await this.db.query<UsuarioRow>(
+      `SELECT ${COLUMNAS_USUARIO} FROM usuarios ORDER BY lower(usuario)`,
+    );
+    return rows.map(aUsuario);
   }
 
   async crearSesion(datos: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion> {

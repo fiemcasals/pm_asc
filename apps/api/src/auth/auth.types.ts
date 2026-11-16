@@ -14,6 +14,8 @@ export interface UsuarioGuardado {
   rol: Rol;
   passwordHash: string;
   activo: boolean;
+  /** Email para recuperar la contraseña. Opcional: sin email, la cuenta no puede restablecerla. */
+  email: string | null;
   /** Momento en que un Administrador revocó sus sesiones: invalida los tokens emitidos antes. */
   sesionesRevocadasEn: Date | null;
   /** ECA a la que pertenece (sólo los usuarios con rol "eca"); null para el resto. */
@@ -28,10 +30,11 @@ export interface UsuarioPublico {
   rol: Rol;
   /** ECA del usuario (sólo rol "eca"); null para el resto. */
   eca: string | null;
+  email: string | null;
 }
 
 export function aPublico(u: UsuarioGuardado): UsuarioPublico {
-  return { id: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol, eca: u.eca };
+  return { id: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol, eca: u.eca, email: u.email };
 }
 
 /** Lo que la API devuelve del usuario logueado: sus datos y lo que le falta aceptar. */

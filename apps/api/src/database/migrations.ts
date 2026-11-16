@@ -408,4 +408,15 @@ export const MIGRATIONS: Migration[] = [
         );
     `,
   },
+  {
+    id: '013_email_para_recupero',
+    sql: `
+      -- Email del usuario, para restablecer la contraseña por correo (HU-14). Es opcional: una
+      -- cuenta sin email se usa igual, pero no puede pedir el restablecimiento.
+      ALTER TABLE usuarios ADD COLUMN email text;
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_email_formato
+        CHECK (email IS NULL OR email ~ '^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+$');
+      CREATE UNIQUE INDEX usuarios_email_unico ON usuarios (lower(email)) WHERE email IS NOT NULL;
+    `,
+  },
 ];

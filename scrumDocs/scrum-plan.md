@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T10:43:30.634Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T10:43:44.000Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -28,8 +28,8 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 20 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
-| 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Hacer | germanG | RF-02 | — |
-| 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | Sin asignar | RF-02 | — |
+| 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | Haciendo | germanG | RF-02 | — |
+| 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hacer | germanG | RF-02 | — |
 | 25 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | germanG | RF-02 | — |
 | 26 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 27 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
@@ -49,13 +49,13 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 41 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 42 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 43 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
-| 44 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | Sin asignar | RF-01 | — |
+| 44 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | germanG | RF-01 | — |
 | 45 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Hacer | germanG | RF-03 | — |
 | 46 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | Hacer | germanG | RF-03 | — |
 | 47 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 48 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | germanG | RF-03 | — |
 | 49 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | germanG | RF-03 | — |
-| 50 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Haciendo | gonza | RF-01, RF-03 | — |
+| 50 | RF-01 | Motor del checklist configurable | HU-17 | — | — | Haciendo | germanG | RF-01, RF-03 | — |
 | 51 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 52 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 53 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hacer | germanG | RF-02, RF-01, RF-05 | — |
@@ -70,7 +70,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 62 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 63 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
 | 64 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 65 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | gonza | RF-04, RF-05 | — |
+| 65 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | Haciendo | germanG | RF-04, RF-05 | — |
 | 66 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 67 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | Hacer | germanG | RF-07, RF-03 | — |
 | 68 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | germanG | RF-03, RF-01, RF-01 | — |

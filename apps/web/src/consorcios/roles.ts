@@ -115,6 +115,17 @@ export async function fetchRoles(consorcioId: string): Promise<FetchResult<Roles
   }
 }
 
+/** Las ternas de TODOS los edificios en una sola llamada (HU-02 RNF-01): una lectura en vez de una por edificio. */
+export async function fetchTodasLasTernas(): Promise<FetchResult<RolesEdificio[]>> {
+  try {
+    const res = await fetchConSesion('/api/consorcios/roles');
+    if (!res.ok) return { ok: false, error: `Error ${res.status}: no se pudieron obtener los roles` };
+    return { ok: true, data: (await res.json()) as RolesEdificio[] };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
 /** El resultado de guardar: si la terna cambió desde que se leyó (409), trae la versión vigente (HU-02 RF-03). */
 export type ResultadoGuardarRoles = FetchResult<RolesEdificio> & { vigente?: RolesEdificio };
 

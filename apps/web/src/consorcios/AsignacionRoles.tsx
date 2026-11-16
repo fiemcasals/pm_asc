@@ -8,7 +8,7 @@ import {
   ROLES_DE_TRABAJO,
   RolesEdificio,
   directorioPorRol,
-  fetchRoles,
+  fetchTodasLasTernas,
   formularioDesdeRoles,
   guardarRoles,
   marcarCambiosSinGuardar,
@@ -212,12 +212,11 @@ export function AsignacionRoles() {
       return;
     }
 
-    const respuestas = await Promise.all(lista.data.map((c) => fetchRoles(c.id)));
+    // Una sola llamada trae las ternas de todos los edificios (antes eran N lecturas, una por edificio).
+    const ternas = await fetchTodasLasTernas();
     const porConsorcio: Record<string, RolesEdificio> = {};
-    lista.data.forEach((c, i) => {
-      const data = respuestas[i]?.data;
-      if (data) porConsorcio[c.id] = data;
-    });
+    for (const t of ternas.data ?? []) porConsorcio[t.consorcioId] = t;
+    if (!ternas.ok) setError(ternas.error ?? 'No se pudieron obtener los roles de los edificios');
 
     setConsorcios(lista.data);
     setRoles(porConsorcio);

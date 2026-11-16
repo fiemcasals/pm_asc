@@ -11,6 +11,7 @@ import {
   RolesEdificio,
   directorioPorRol,
   fetchRoles,
+  fetchTodasLasTernas,
   formularioDesdeRoles,
   guardarRoles,
   marcarCambiosSinGuardar,
@@ -143,6 +144,27 @@ describe('roles de trabajo', () => {
       const res = await fetchRoles(ID);
       expect(res.ok).toBe(false);
       expect(res.data).toBeUndefined();
+    });
+  });
+
+  describe('fetchTodasLasTernas (HU-02 RNF-01)', () => {
+    it('pide las ternas de todos los edificios con UNA sola llamada', async () => {
+      const otra = { ...conTerna, consorcioId: 'otro' };
+      global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [conTerna, otra] } as Response);
+
+      const res = await fetchTodasLasTernas();
+
+      expect(res.data).toEqual([conTerna, otra]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('/api/consorcios/roles');
+    });
+
+    it('si falla informa el error sin inventar ternas', async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 } as Response);
+      expect(await fetchTodasLasTernas()).toEqual({ ok: false, error: 'Error 500: no se pudieron obtener los roles' });
+
+      global.fetch = vi.fn().mockRejectedValue(new Error('Sin red'));
+      expect(await fetchTodasLasTernas()).toEqual({ ok: false, error: 'Sin red' });
     });
   });
 

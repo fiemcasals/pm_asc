@@ -87,6 +87,8 @@ export interface MaquinaAsignada {
   mes: string;
   estado: EstadoVisita;
   estadoOperativo?: EstadoOperativo;
+  /** HU-06 RF-05: el RT marca el estado y el Firmante lo confirma. Sin dato, el estado no tiene nada pendiente. */
+  confirmacionEstado?: 'Pendiente de confirmación' | 'Confirmado' | 'Rechazado';
   alertaCritica?: AlertaCritica | null;
   visita: VisitaInspeccion | null;
 }

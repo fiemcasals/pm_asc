@@ -9,9 +9,11 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { Roles } from '../auth/roles.guard';
 import { EcaService } from './eca.service';
 import {
   AcuseReciboDto,
+  AvisoSecretaria,
   AcuseReciboResponse,
   AlertasEcaResponse,
   CoberturaEcaResponse,
@@ -61,6 +63,13 @@ export class EcaController {
       totalAlertas: alertas.length,
       alertas,
     };
+  }
+
+  /** HU-10 RF-04: las alertas que la ECA no acusó en 48 horas (aviso a la Secretaría), con el edificio y la ECA. */
+  @Get('avisos-secretaria')
+  @Roles('secretaria', 'administrador')
+  async getAvisosSecretaria(): Promise<AvisoSecretaria[]> {
+    return this.ecaService.getAvisosSecretaria();
   }
 
   @Get('remito/:alertaId')

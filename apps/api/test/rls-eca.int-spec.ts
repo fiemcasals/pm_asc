@@ -13,6 +13,7 @@ loadEnvFileInto(process.env);
 
 const TABLAS_ECA = [
   'acuses_recibo_legal',
+  'alertas_avisos',
   'consorcios',
   'maquinas',
   'reasignaciones_rt',

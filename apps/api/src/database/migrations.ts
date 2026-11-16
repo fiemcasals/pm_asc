@@ -541,4 +541,42 @@ export const MIGRATIONS: Migration[] = [
         WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') = 'administrador');
     `,
   },
+  {
+    id: '019_alertas_avisos',
+    sql: `
+      -- HU-10 RF-04: los recordatorios a la ECA (24 h) y los avisos a la Secretaría (48 h) de una alerta sin acuse de recibo.
+      -- Cada uno se registra una sola vez por alerta (UNIQUE), así que no se repite aunque se reinicie la API o se procese varias
+      -- veces. Es el historial de la alerta: sólo se agrega.
+      CREATE TABLE alertas_avisos (
+        id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        alerta_id  text NOT NULL,
+        tipo       text NOT NULL,
+        eca        text NOT NULL,
+        edificio   text NOT NULL,
+        mensaje    text NOT NULL,
+        fecha      timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT alertas_avisos_tipo CHECK (tipo IN ('recordatorio_eca_24h', 'aviso_secretaria_48h')),
+        CONSTRAINT alertas_avisos_unico UNIQUE (alerta_id, tipo)
+      );
+
+      CREATE INDEX alertas_avisos_eca_idx ON alertas_avisos (eca);
+
+      -- RLS: la ECA ve y registra los de sus alertas; la Secretaría y el Administrador leen los de todas. Sin política de
+      -- UPDATE ni de DELETE, la aplicación no puede modificar ni borrar un aviso ya registrado.
+      ALTER TABLE alertas_avisos ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_alertas_avisos_select ON alertas_avisos;
+      CREATE POLICY rls_alertas_avisos_select ON alertas_avisos
+        FOR SELECT
+        USING (
+          eca = NULLIF(current_setting('app.eca_actual', true), '')
+          OR NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+        );
+
+      DROP POLICY IF EXISTS rls_alertas_avisos_insert ON alertas_avisos;
+      CREATE POLICY rls_alertas_avisos_insert ON alertas_avisos
+        FOR INSERT
+        WITH CHECK (eca = NULLIF(current_setting('app.eca_actual', true), ''));
+    `,
+  },
 ];

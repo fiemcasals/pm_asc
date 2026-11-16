@@ -12,6 +12,7 @@ export const TABLAS_CON_RLS = [
   'maquinas',
   'roles_edificio',
   'acuses_recibo_legal',
+  'alertas_avisos',
   'visitas_fallidas',
   'reasignaciones_rt',
   'recargos_anulados',

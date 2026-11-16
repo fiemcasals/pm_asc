@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-16T15:15:14.319Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-16T15:17:04.849Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -448,6 +448,17 @@ El acuse de recibo legal de ECA se guarda en acuses_recibo_legal pero nadie lo v
 2. Un segundo POST del acuse de la misma alerta no crea una segunda fila y responde con el acuse ya registrado.
 3. La base impide por sí misma dos acuses de la misma alerta (restricción de unicidad).
 4. Un acuse registrado por otra ECA o en otra alerta no aparece en la alerta consultada.
+
+### RF-06: FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA (Funcional)
+
+Reemplazar la descarga del remito t�cnico en formato JSON por un documento PDF formal de MAICON S.R.L. Todo contenido descargable en el portal debe ser en formato PDF (.pdf con Content-Type application/pdf), incluyendo membrete formal, datos del consorcio, m�quina, detalle de la falla cr�tica y registro fehaciente del acuse de recibo legal.
+
+**Condiciones de aprobación**
+
+1. Al presionar 'Descargar Remito de Notificaci�n' en el Portal ECA, el archivo se descarga en formato PDF (.pdf) con Content-Type application/pdf.
+2. El documento PDF contiene el membrete formal de MAICON S.R.L., datos del consorcio, m�quina, detalles de la falla cr�tica detectada y sello de notificaci�n legal.
+3. La descarga del PDF registra el acuse de recibo legal en la base de datos (con usuario, fecha y hora exacta).
+4. Las pruebas automatizadas verifican que el endpoint responde con un buffer PDF v�lido (%PDF-) y cabecera Content-Disposition con extensi�n .pdf.
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 

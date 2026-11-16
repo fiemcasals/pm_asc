@@ -187,4 +187,30 @@ describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
     });
   });
 
+  describe('HU-02 RNF-01: todas las ternas en una sola llamada (PostgreSQL real)', () => {
+    it('devuelve una terna por edificio, igual a la del GET individual, con y sin terna asignada', async () => {
+      const conTerna = await crearConsorcio('todas-con');
+      const sinTerna = await crearConsorcio('todas-sin');
+      await http().put(`/api/consorcios/${conTerna}/roles`).send(terna);
+
+      const res = await http().get('/api/consorcios/roles');
+
+      expect(res.status).toBe(200);
+      const propias = res.body.filter((r: { consorcioId: string }) => [conTerna, sinTerna].includes(r.consorcioId));
+      expect(propias).toHaveLength(2);
+      const individual = (await http().get(`/api/consorcios/${conTerna}/roles`)).body;
+      expect(propias.find((r: { consorcioId: string }) => r.consorcioId === conTerna)).toEqual(individual);
+      expect(propias.find((r: { consorcioId: string }) => r.consorcioId === sinTerna)).toEqual({
+        consorcioId: sinTerna, rtCalle: null, firmante: null, eca: null, actualizadoEn: null,
+      });
+      // Un edificio por fila: ningún id repetido, aunque la unión con roles_edificio sea externa.
+      const ids = res.body.map((r: { consorcioId: string }) => r.consorcioId);
+      expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('sin sesión responde 401', async () => {
+      expect((await request(app.getHttpServer()).get('/api/consorcios/roles')).status).toBe(401);
+    });
+  });
+
 });

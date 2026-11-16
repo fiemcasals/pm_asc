@@ -133,6 +133,12 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
       }));
   }
 
+  async listarRoles(): Promise<RolesEdificio[]> {
+    return [...this.filas.values()]
+      .sort((a, b) => a.nombre.localeCompare(b.nombre) || a.id.localeCompare(b.id))
+      .map((c) => structuredClone(this.roles.get(c.id) ?? { consorcioId: c.id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null }));
+  }
+
   async obtener(id: string): Promise<Consorcio | null> {
     const ficha = this.filas.get(id);
     return ficha ? structuredClone(ficha) : null;

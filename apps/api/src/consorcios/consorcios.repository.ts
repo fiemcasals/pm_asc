@@ -33,6 +33,8 @@ export abstract class ConsorciosRepository {
   abstract reemplazar(id: string, datos: ConsorcioInput): Promise<Consorcio | null>;
   /** `false` si no existía. Borra también sus máquinas. */
   abstract eliminar(id: string): Promise<boolean>;
+  /** Las ternas de todos los edificios (los que no tienen, con los roles en `null`), en una sola lectura. */
+  abstract listarRoles(): Promise<RolesEdificio[]>;
   /** Roles del edificio; sin terna asignada, los roles vienen en `null`. `null` si el consorcio no existe. */
   abstract obtenerRoles(id: string): Promise<RolesEdificio | null>;
   /**

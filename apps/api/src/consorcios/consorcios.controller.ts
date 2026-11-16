@@ -60,6 +60,15 @@ export class ConsorciosController {
     return this.consorcios.listarParaMapa();
   }
 
+  /**
+   * Las ternas de TODOS los edificios en una sola llamada (la pestaña de asignación de roles la usa al abrirse, en vez de
+   * pedir una por edificio). Va antes de `:id` para que "roles" no se tome por un id.
+   */
+  @Get('roles')
+  listarRoles(): Promise<RolesEdificio[]> {
+    return this.consorcios.listarRoles();
+  }
+
   /** Ficha completa del edificio: dirección, datos de administración y máquinas. */
   @Get(':id')
   async obtener(@Param('id') id: string): Promise<Consorcio> {

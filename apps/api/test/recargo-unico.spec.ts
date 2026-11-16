@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { InMemoryVisitasFallidasRepository, MaquinaBasica } from '../src/visitas-fallidas/visitas-fallidas.repository';
+import { AppConfig } from '../src/config';
 import { VisitasFallidasService } from '../src/visitas-fallidas/visitas-fallidas.service';
 
 // HU-07 RF-04: el recargo del 45 % se suma una sola vez por máquina no inspeccionada y un Administrador puede anularlo.
@@ -12,7 +13,7 @@ describe('Recargo del 45 % una sola vez por máquina (HU-07 RF-04)', () => {
   beforeEach(() => {
     jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'setTimeout'] }).setSystemTime(new Date('2026-11-10T15:00:00Z'));
     repo = new InMemoryVisitasFallidasRepository();
-    service = new VisitasFallidasService(repo);
+    service = new VisitasFallidasService(repo, { visitasFallidasMinDias: 0 } as AppConfig);
   });
   afterEach(() => jest.useRealTimers());
 

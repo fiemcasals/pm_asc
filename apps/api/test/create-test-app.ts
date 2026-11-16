@@ -268,7 +268,8 @@ export async function createTestApp(
   auth: { usuarios?: UsuariosRepository; reloj?: Reloj } = {},
   semaforo: SemaforoRepository = new InMemorySemaforoRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
-  const config = loadConfig(env);
+  // Por defecto las pruebas no exigen el día de separación entre visitas fallidas (HU-07 RF-05): lo piden explícitamente las que lo prueban.
+  const config = loadConfig({ VISITAS_FALLIDAS_MIN_DIAS: '0', ...env });
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.register(config)] })
     .overrideProvider(DatabaseService)
     .useValue(database)

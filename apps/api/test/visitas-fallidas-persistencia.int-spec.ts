@@ -11,6 +11,8 @@ import { asegurarUsuarioPrueba } from './test-auth-helper';
 // Integración real (HU-07 RF-03): persistencia de visitas fallidas contra PostgreSQL + PostGIS de verdad.
 // Requiere la base levantada con `npm run db:up` y DATABASE_URL configurado.
 loadEnvFileInto(process.env);
+// Estas pruebas registran varias visitas fallidas seguidas: no exigen el día de separación (HU-07 RF-05), que prueba su propio archivo.
+process.env.VISITAS_FALLIDAS_MIN_DIAS = '0';
 
 const PREFIJO = 'RF03-VF-INT';
 

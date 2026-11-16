@@ -40,6 +40,13 @@ export interface VisitaInspeccion {
   firmaEncargado?: string | null;
   nombreEncargado?: string | null;
   autorizada: boolean;
+  /** HU-08 RF-03: el Firmante rechazó el informe; vuelve a la Secretaría, no al RT de Calle. */
+  rechazada?: boolean;
+  motivoRechazo?: string | null;
+  fechaRechazo?: string | null;
+  rechazadoPor?: string | null;
+  /** Cuándo se avisó a la Secretaría que el plazo de 5 días hábiles venció; una sola vez. */
+  avisoPlazoEn?: string | null;
   fechaAutorizacion?: string | null;
   autorizadoPor?: string | null;
   protocoloAGC?: string | null;
@@ -84,4 +91,46 @@ export interface AutorizarFirmaResponse {
     autorizadoPor: string;
     protocoloAGC: string;
   };
+}
+
+export interface RechazarInformeDto {
+  maquinaId?: string;
+  visitaId?: string;
+  motivo?: string;
+}
+
+export interface RechazarInformeResponse {
+  ok: boolean;
+  mensaje: string;
+  maquinaId: string;
+  visitaId: string;
+  rechazo: { motivo: string; rechazadoPor: string; fecha: string };
+}
+
+/** Un informe rechazado por el Firmante, tal como lo ve la Secretaría. */
+export interface InformeRechazado {
+  maquinaId: string;
+  codigoAGC: string;
+  edificio: string;
+  visitaId: string;
+  motivo: string;
+  rechazadoPor: string;
+  fecha: string;
+}
+
+/** El aviso a la Secretaría de un informe que superó el plazo de 5 días hábiles sin autorizarse ni rechazarse. */
+export interface AvisoPlazoVencido {
+  maquinaId: string;
+  codigoAGC: string;
+  edificio: string;
+  visitaId: string;
+  fechaInforme: string;
+  diasHabiles: number;
+  /** Cuándo se generó el aviso. */
+  fecha: string;
+}
+
+export interface BandejaSecretaria {
+  rechazados: InformeRechazado[];
+  avisosPlazo: AvisoPlazoVencido[];
 }

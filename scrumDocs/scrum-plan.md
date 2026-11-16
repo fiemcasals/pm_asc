@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T16:20:13.611Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T16:21:12.996Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -31,7 +31,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 23 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
 | 24 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 25 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 26 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hecho | germanG | RF-02 | — |
+| 26 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | testing | germanG | RF-02 | — |
 | 27 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 28 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
 | 29 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |

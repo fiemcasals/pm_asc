@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T11:40:58.038Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T11:41:24.963Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -42,7 +42,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 34 | RF-03 | Refrescar el panel de reasignación cuando el RT del edificio cambió | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
 | 35 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | Hacer | germanG | RF-01, RF-02 | — |
 | 36 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 37 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | testing | germanG | RF-02 | — |
+| 37 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | tested ✓ | germanG | RF-02 | — |
 | 38 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 39 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
 | 40 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | Hacer | germanG | RF-01 | — |
@@ -65,7 +65,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 57 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 58 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 59 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 60 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Hacer | germanG | RF-03 | — |
+| 60 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | Haciendo | germanG | RF-03 | — |
 | 61 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
 | 62 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 63 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |

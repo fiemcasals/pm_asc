@@ -169,13 +169,13 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
           onAcuseRegistrado(alertaId, fechaHora, acuseUser);
         }
 
-        const blob = new Blob([JSON.stringify(remito, null, 2)], {
-          type: 'application/json',
+        const blob = remito.blob || new Blob([JSON.stringify(remito, null, 2)], {
+          type: 'application/pdf',
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Remito-Tecnico-${m.codigoAGC}-${alertaId}.json`;
+        a.download = remito.filename || `remito-tecnico-${m.codigoAGC}-${alertaId}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -183,7 +183,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
 
         setNotificacion({
           tipo: 'ok',
-          texto: `Remito de notificación descargado. Acuse legal registrado para ${m.eca} a las ${new Date(fechaHora).toLocaleTimeString('es-AR')}.`,
+          texto: `Remito técnico oficial (PDF) descargado. Acuse legal registrado para ${m.eca} a las ${new Date(fechaHora).toLocaleTimeString('es-AR')}.`,
         });
       } else {
         setNotificacion({

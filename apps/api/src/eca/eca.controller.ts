@@ -6,11 +6,13 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { Roles } from '../auth/roles.guard';
 import { EcaService } from './eca.service';
+import { RemitoPdfService } from './remito-pdf.service';
 import {
   AcuseReciboDto,
   AvisoSecretaria,
@@ -23,7 +25,10 @@ import {
 
 @Controller('eca')
 export class EcaController {
-  constructor(private readonly ecaService: EcaService) {}
+  constructor(
+    private readonly ecaService: EcaService,
+    private readonly remitoPdfService: RemitoPdfService,
+  ) {}
 
   @Get('cobertura')
   async getCobertura(
@@ -76,18 +81,50 @@ export class EcaController {
   async descargarRemito(
     @Param('alertaId') alertaId: string,
     @Query('usuario') queryUsuario?: string,
+    @Query('formato') queryFormato?: string,
     @Headers('x-user-id') headerUserId?: string,
     @Headers('x-eca-user') headerEcaUser?: string,
-    @Res({ passthrough: true }) res?: Response,
-  ): Promise<RemitoTecnicoResponse> {
+    @Req() req?: Request,
+    @Res() res?: Response,
+  ): Promise<RemitoTecnicoResponse | void> {
     const usuario = queryUsuario || headerEcaUser || headerUserId;
     const remito = await this.ecaService.getRemitoTecnico(alertaId, usuario);
 
+    const accept = req?.headers['accept'];
+    const esPdf =
+      queryFormato === 'pdf' ||
+      (typeof accept === 'string' && accept.includes('application/pdf'));
+
+    if (esPdf) {
+      const pdfBuffer = await this.remitoPdfService.generarPdf(remito);
+      const filename = `remito-tecnico-${remito.codigoAGC || alertaId}-${alertaId}.pdf`;
+
+      if (res) {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${filename}"`,
+        );
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('x-acuse-fecha-hora', remito.acuseLegal.fechaHora);
+        res.setHeader('x-acuse-usuario', encodeURIComponent(remito.acuseLegal.usuario));
+        res.setHeader('x-codigo-agc', remito.codigoAGC);
+        res.setHeader('x-alerta-id', remito.alertaId);
+        res.end(pdfBuffer);
+        return;
+      }
+      return;
+    }
+
+    // Por compatibilidad (APIs y pruebas existentes en formato JSON)
     if (res) {
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="remito-tecnico-${alertaId}.json"`,
       );
+      res.setHeader('Content-Type', 'application/json');
+      res.json(remito);
+      return;
     }
 
     return remito;

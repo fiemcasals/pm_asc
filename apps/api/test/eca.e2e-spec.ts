@@ -103,8 +103,8 @@ describe('EcaController (e2e)', () => {
     });
   });
 
-  describe('RF-02: Descarga de Remito y Acuse Legal', () => {
-    it('GET /api/eca/remito/:alertaId descarga el remito técnico y registra el acuse legal automáticamente', async () => {
+  describe('RF-02 y RF-06: Descarga de Remito y Acuse Legal', () => {
+    it('GET /api/eca/remito/:alertaId descarga el remito técnico en JSON si no se especifica formato', async () => {
       const res = await request(app.getHttpServer())
         .get('/api/eca/remito/ALT-MAICON-001?usuario=operador.legal@maicon.com.ar')
         .expect(200);
@@ -124,6 +124,39 @@ describe('EcaController (e2e)', () => {
         'operador.legal@maicon.com.ar',
       );
       expect(res.body.acuseLegal.fechaHora).toBeTruthy();
+    });
+
+    it('RF-06: GET /api/eca/remito/:alertaId?formato=pdf genera y descarga el remito oficial en formato PDF', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/eca/remito/ALT-MAICON-001?formato=pdf&usuario=operador.legal@maicon.com.ar')
+        .responseType('blob')
+        .expect(200);
+
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.headers['content-disposition']).toContain(
+        'attachment; filename="remito-tecnico-M1-ALT-MAICON-001.pdf"',
+      );
+      expect(res.headers['x-codigo-agc']).toBe('M1');
+      expect(res.headers['x-alerta-id']).toBe('ALT-MAICON-001');
+      expect(res.headers['x-acuse-usuario']).toBe(encodeURIComponent('operador.legal@maicon.com.ar'));
+      expect(res.headers['x-acuse-fecha-hora']).toBeTruthy();
+
+      const buffer = Buffer.from(res.body);
+      expect(buffer.toString('utf-8', 0, 5)).toBe('%PDF-');
+      expect(buffer.length).toBeGreaterThan(1000);
+    });
+
+    it('RF-06: GET /api/eca/remito/:alertaId con Accept: application/pdf genera remito en formato PDF', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/eca/remito/ALT-MAICON-001?usuario=operador.legal@maicon.com.ar')
+        .set('Accept', 'application/pdf')
+        .responseType('blob')
+        .expect(200);
+
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.headers['content-disposition']).toContain('.pdf');
+      const buffer = Buffer.from(res.body);
+      expect(buffer.toString('utf-8', 0, 5)).toBe('%PDF-');
     });
 
     it('POST /api/eca/alertas/:alertaId/acuse registra explícitamente el acuse legal', async () => {

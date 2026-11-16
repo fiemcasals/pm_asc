@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T12:48:30.817Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T13:04:22.997Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -55,10 +55,10 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 47 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 48 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | germanG | RF-03 | — |
 | 49 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | Hacer | germanG | RF-03 | — |
-| 50 | RF-01 | Motor del checklist configurable | HU-17 | — | — | testing | germanG | RF-01, RF-03 | — |
+| 50 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
 | 51 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 52 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 53 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Haciendo | germanG | RF-02, RF-01, RF-05 | — |
+| 53 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hecho | germanG | RF-02, RF-01, RF-05 | — |
 | 54 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 55 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 56 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T15:28:01.683Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T15:28:10.839Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -59,7 +59,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 51 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
 | 52 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | Hacer | germanG | RF-02, RF-05 | — |
 | 53 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 54 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hecho | germanG | RF-02, RF-01, RF-05 | — |
+| 54 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | Hecho ✓ dev | germanG | RF-02, RF-01, RF-05 | — |
 | 55 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
 | 56 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 57 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |

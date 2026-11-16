@@ -5,8 +5,10 @@ import {
   MaquinaBasica,
   VisitasFallidasRepository,
 } from './visitas-fallidas.repository';
-import { EmailNotificacionConsorcio, VisitaFallidaRegistro } from './visitas-fallidas.types';
+import { AnulacionRecargo, EmailNotificacionConsorcio, VisitaFallidaRegistro } from './visitas-fallidas.types';
+import { ZONA_HORARIA } from '../semaforo/semaforo.logic';
 
+const UNIQUE_VIOLATION = '23505';
 const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface VisitaFallidaRow {
@@ -31,6 +33,26 @@ const COLUMNAS_VISITA = `
   motivo, foto_frente_url, gps_latitud, gps_longitud, gps_precision,
   gps_timestamp, inspector, fecha_hora, email_notificacion
 `;
+
+interface AnulacionRow {
+  id: string;
+  consorcio_id: string;
+  maquina_id: string;
+  visita_fallida_id: string;
+  usuario: string;
+  motivo: string;
+  fecha: Date | string;
+}
+
+const aAnulacion = (r: AnulacionRow): AnulacionRecargo => ({
+  id: r.id,
+  consorcioId: r.consorcio_id,
+  maquinaId: r.maquina_id,
+  visitaFallidaId: r.visita_fallida_id,
+  usuario: r.usuario,
+  motivo: r.motivo,
+  fecha: aIso(r.fecha),
+});
 
 function aIso(valor: Date | string): string {
   return valor instanceof Date ? valor.toISOString() : new Date(valor).toISOString();
@@ -154,5 +176,45 @@ export class PgVisitasFallidasRepository extends VisitasFallidasRepository {
       [consorcioId],
     );
     return rows.map((r) => ({ id: r.id, referenciaAgc: r.referencia_agc }));
+  }
+
+  async maquinasInspeccionadasEnMes(consorcioId: string, periodo: string): Promise<string[]> {
+    const m = /^(\d{4})-(\d{2})$/.exec(periodo);
+    if (!ES_UUID.test(consorcioId) || !m) return [];
+    // El mes en hora de Buenos Aires: [día 1 00:00, día 1 del mes siguiente 00:00), igual que el semáforo.
+    const filas = await this.db.query<{ maquina_id: string }>(
+      `SELECT DISTINCT i.maquina_id
+         FROM inspecciones_checklist i
+        WHERE i.consorcio_id = $1
+          AND i.created_at >= make_timestamp($2::int, $3::int, 1, 0, 0, 0) AT TIME ZONE $4::text
+          AND i.created_at <  (make_timestamp($2::int, $3::int, 1, 0, 0, 0) + interval '1 month') AT TIME ZONE $4::text`,
+      [consorcioId, Number(m[1]), Number(m[2]), ZONA_HORARIA],
+    );
+    return filas.map((f) => f.maquina_id);
+  }
+
+  async listarAnulaciones(consorcioId: string): Promise<AnulacionRecargo[]> {
+    if (!ES_UUID.test(consorcioId)) return [];
+    const filas = await this.db.query<AnulacionRow>(
+      `SELECT id, consorcio_id::text AS consorcio_id, maquina_id, visita_fallida_id, usuario, motivo, fecha
+         FROM recargos_anulados WHERE consorcio_id = $1 ORDER BY fecha, id`,
+      [consorcioId],
+    );
+    return filas.map(aAnulacion);
+  }
+
+  async anularRecargo(datos: Omit<AnulacionRecargo, 'id' | 'fecha'>): Promise<AnulacionRecargo | null> {
+    try {
+      const filas = await this.db.query<AnulacionRow>(
+        `INSERT INTO recargos_anulados (consorcio_id, maquina_id, visita_fallida_id, usuario, motivo)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id, consorcio_id::text AS consorcio_id, maquina_id, visita_fallida_id, usuario, motivo, fecha`,
+        [datos.consorcioId, datos.maquinaId, datos.visitaFallidaId, datos.usuario, datos.motivo],
+      );
+      return aAnulacion(filas[0]);
+    } catch (err) {
+      if ((err as { code?: string })?.code === UNIQUE_VIOLATION) return null; // ya estaba anulado
+      throw err;
+    }
   }
 }

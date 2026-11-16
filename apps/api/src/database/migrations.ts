@@ -497,4 +497,48 @@ export const MIGRATIONS: Migration[] = [
         ADD CONSTRAINT acuses_recibo_alerta_unica UNIQUE (alerta_id);
     `,
   },
+  {
+    id: '018_recargos_anulados',
+    sql: `
+      -- HU-07 RF-04: un Administrador puede anular el recargo del 45 % de una máquina. Es un registro de auditoría: quién,
+      -- cuándo y por qué; sólo se agrega. El recargo se identifica por la 3.ª visita fallida que lo originó y la máquina,
+      -- así que no se puede anular dos veces y un ciclo nuevo de advertencias (otra 3.ª visita) vuelve a poder anularse.
+      CREATE TABLE recargos_anulados (
+        id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id       uuid NOT NULL REFERENCES consorcios (id) ON DELETE CASCADE,
+        maquina_id         text NOT NULL,
+        visita_fallida_id  text NOT NULL,
+        usuario            text NOT NULL,
+        motivo             text NOT NULL,
+        fecha              timestamptz NOT NULL DEFAULT now(),
+        CONSTRAINT recargos_anulados_motivo_no_vacio CHECK (btrim(motivo) <> ''),
+        CONSTRAINT recargos_anulados_unico UNIQUE (visita_fallida_id, maquina_id)
+      );
+
+      CREATE INDEX recargos_anulados_consorcio_idx ON recargos_anulados (consorcio_id);
+
+      -- RLS: sin política de UPDATE ni de DELETE, la aplicación no puede modificar ni borrar una anulación ya escrita.
+      -- Leen las del edificio su ECA, la Secretaría y el Administrador, y el RT y el Firmante asignados. Sólo el
+      -- Administrador la escribe (el controlador también lo exige).
+      ALTER TABLE recargos_anulados ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_recargos_anulados_select ON recargos_anulados;
+      CREATE POLICY rls_recargos_anulados_select ON recargos_anulados
+        FOR SELECT
+        USING (
+          NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador')
+          OR usuario_asignado_en_edificio(consorcio_id)
+          OR EXISTS (
+            SELECT 1 FROM consorcios c
+             WHERE c.id = recargos_anulados.consorcio_id
+               AND c.eca_nombre = NULLIF(current_setting('app.eca_actual', true), '')
+          )
+        );
+
+      DROP POLICY IF EXISTS rls_recargos_anulados_insert ON recargos_anulados;
+      CREATE POLICY rls_recargos_anulados_insert ON recargos_anulados
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') = 'administrador');
+    `,
+  },
 ];

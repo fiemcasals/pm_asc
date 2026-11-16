@@ -16,6 +16,7 @@ const TABLAS_ECA = [
   'consorcios',
   'maquinas',
   'reasignaciones_rt',
+  'recargos_anulados',
   'roles_edificio',
   'visitas_fallidas',
 ];

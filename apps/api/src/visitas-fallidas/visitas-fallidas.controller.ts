@@ -6,9 +6,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Roles } from '../auth/roles.guard';
+import { UsuarioAutenticado } from '../auth/auth.types';
+import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { VisitasFallidasService } from './visitas-fallidas.service';
 import {
+  AnulacionRecargo,
+  AnularRecargoDto,
   BloqueoConsorcioInfo,
   LiquidacionConsorcioResultado,
   LiquidacionMaquinaDto,
@@ -55,6 +58,19 @@ export class VisitasFallidasController {
     @Body() dto: LiquidacionMaquinaDto,
   ): Promise<LiquidacionMaquinaResultado> {
     return this.service.liquidarMaquina(dto);
+  }
+
+  /**
+   * HU-07 RF-04: anula el recargo del 45 % de una máquina. Sólo el Administrador (otro rol recibe 403); el motivo es
+   * obligatorio y queda registrado con el usuario de la sesión y la fecha.
+   */
+  @Post('recargos/anular')
+  @Roles('administrador')
+  async anularRecargo(
+    @Body() dto: AnularRecargoDto,
+    @UsuarioActual() usuario: UsuarioAutenticado,
+  ): Promise<AnulacionRecargo> {
+    return this.service.anularRecargo(dto, usuario.usuario);
   }
 
   /**

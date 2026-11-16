@@ -49,6 +49,19 @@ export interface InformeFalla {
   registradoEn: string;
   /** Ruta de sólo lectura del informe (no registra acuses legales). */
   enlaceInforme: string;
+  /** El Firmante asignado al edificio (HU-06 RF-04): es quien recibe la alerta en su portal. */
+  firmanteUsername: string;
+  /** Quién abrió la alerta primero y cuándo (HU-06 RF-04); null mientras nadie la abrió. */
+  abiertaPor: string | null;
+  abiertaEn: string | null;
+}
+
+/** Lo que se avisa por el canal cuando alguien abre una alerta: detiene la alarma en todas las pantallas. */
+export interface EventoAperturaFalla {
+  tipo: 'falla-abierta';
+  informeId: string;
+  abiertaPor: string;
+  abiertaEn: string;
 }
 
 /** Lo que viaja por el canal en tiempo real hacia el panel de Secretaría. */
@@ -67,6 +80,9 @@ export interface EventoFallaCritica {
   fallasDetalle: FallaCriticaDetalle[];
   registradoEn: string;
   enlaceInforme: string;
+  firmanteUsername: string;
+  abiertaPor: string | null;
+  abiertaEn: string | null;
 }
 
 export interface RegistrarInformeResponse {

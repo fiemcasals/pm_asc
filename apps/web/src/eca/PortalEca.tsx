@@ -172,6 +172,11 @@ export function PortalEca() {
                               🚨 Fuera de Servicio
                             </span>
                           )}
+                          {m.confirmacionEstado === 'Pendiente de confirmación' && (
+                            <span className="badge" data-testid={`badge-confirmacion-${m.id}`} style={{ display: 'inline-block', marginLeft: '6px' }}>
+                              Pendiente de confirmación
+                            </span>
+                          )}
                           {m.estadoOperativo === 'Reparación Urgente' && (
                             <span
                               className="badge badge-alerta-naranja"

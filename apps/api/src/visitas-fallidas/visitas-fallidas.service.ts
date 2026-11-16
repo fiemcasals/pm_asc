@@ -1,16 +1,20 @@
-import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
   InMemoryVisitasFallidasRepository,
   VisitasFallidasRepository,
 } from './visitas-fallidas.repository';
+import { fechaEnZona, formatearMes } from '../semaforo/semaforo.logic';
 import {
+  AnulacionRecargo,
+  AnularRecargoDto,
   BloqueoConsorcioInfo,
   DetalleConceptoLiquidacion,
   EmailNotificacionConsorcio,
   LiquidacionConsorcioResultado,
   LiquidacionMaquinaDto,
   LiquidacionMaquinaResultado,
+  MotivoSinRecargo,
   ReporteVisitaFallidaDto,
   ResumenAdvertenciasConsorcio,
   VisitaFallidaRegistro,
@@ -177,17 +181,20 @@ export class VisitasFallidasService {
 
     const consorcioInfo = await this.resolverConsorcioInfo(dto.consorcioId);
     const resumen = await this.getHistorialConsorcio(dto.consorcioId);
-    const tieneRecargo = resumen.totalAdvertencias >= 3;
 
     const montoBase = typeof dto.montoBase === 'number' && dto.montoBase > 0 ? dto.montoBase : 150000;
-    const porcentajeRecargo = tieneRecargo ? 45 : 0;
-    const montoRecargo = tieneRecargo ? Math.round(montoBase * 0.45 * 100) / 100 : 0;
-    const montoTotal = Math.round((montoBase + montoRecargo) * 100) / 100;
-
     const maquinaId = dto.maquinaId || `maq-${dto.referenciaAgc || 'M1'}`;
     const referenciaAgc = dto.referenciaAgc || 'M1';
     const periodo = dto.periodo || new Date().toISOString().slice(0, 7);
-    const avisoCobro = tieneRecargo ? 'Cobro de Tercer Visita Habilitado' : null;
+
+    // HU-07 RF-04: el recargo se suma una sola vez por máquina no inspeccionada, en la liquidación siguiente a la 3.ª
+    // advertencia, y un Administrador puede anularlo. Después, aunque el edificio siga bloqueado, no vuelve a sumarse.
+    const { tieneRecargo, noAplicadoPor, anulacion } = await this.decidirRecargo(dto.consorcioId, maquinaId, periodo, resumen);
+
+    const porcentajeRecargo = tieneRecargo ? 45 : 0;
+    const montoRecargo = tieneRecargo ? Math.round(montoBase * 0.45 * 100) / 100 : 0;
+    const montoTotal = Math.round((montoBase + montoRecargo) * 100) / 100;
+    const avisoCobro = resumen.bloqueadoPorTerceraVisita ? 'Cobro de Tercer Visita Habilitado' : null;
 
     const detalleConceptos: DetalleConceptoLiquidacion[] = [
       {
@@ -195,6 +202,13 @@ export class VisitasFallidasService {
         monto: montoBase,
       },
     ];
+
+    if (anulacion) {
+      detalleConceptos.push({
+        concepto: `Recargo 45% anulado por ${anulacion.usuario}: ${anulacion.motivo}`,
+        monto: 0,
+      });
+    }
 
     if (tieneRecargo) {
       detalleConceptos.push({
@@ -216,15 +230,77 @@ export class VisitasFallidasService {
       periodo,
       montoBase,
       totalAdvertencias: resumen.totalAdvertencias,
-      bloqueadoPorTerceraVisita: tieneRecargo,
+      bloqueadoPorTerceraVisita: resumen.bloqueadoPorTerceraVisita,
       recargoAplicado: tieneRecargo,
       porcentajeRecargo,
       montoRecargo,
       montoTotal,
       avisoCobro,
+      recargoNoAplicadoPor: noAplicadoPor,
+      recargoAnulado: anulacion ? { usuario: anulacion.usuario, motivo: anulacion.motivo, fecha: anulacion.fecha } : null,
       detalleConceptos,
       fechaLiquidacion: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Si esta máquina lleva el recargo del 45 % en la liquidación de `periodo` (HU-07 RF-04). El recargo nace con la 3.ª
+   * advertencia del edificio y se suma una sola vez, en la liquidación del mes de esa advertencia (hora de Buenos
+   * Aires): la del período siguiente y las posteriores no lo repiten, aunque el edificio siga bloqueado. No lo lleva una
+   * máquina inspeccionada ese mes, ni una cuyo recargo anuló un Administrador.
+   */
+  private async decidirRecargo(
+    consorcioId: string,
+    maquinaId: string,
+    periodo: string,
+    resumen: ResumenAdvertenciasConsorcio,
+  ): Promise<{ tieneRecargo: boolean; noAplicadoPor: MotivoSinRecargo | null; anulacion: AnulacionRecargo | null }> {
+    const tercera = resumen.historial[2];
+    if (!resumen.bloqueadoPorTerceraVisita || !tercera) return { tieneRecargo: false, noAplicadoPor: null, anulacion: null };
+
+    const mesDelRecargo = formatearMes(fechaEnZona(Date.parse(tercera.fechaHora)));
+    if (periodo !== mesDelRecargo) return { tieneRecargo: false, noAplicadoPor: 'otro_periodo', anulacion: null };
+
+    const inspeccionadas = await this.repo.maquinasInspeccionadasEnMes(consorcioId, mesDelRecargo);
+    if (inspeccionadas.includes(maquinaId)) return { tieneRecargo: false, noAplicadoPor: 'maquina_inspeccionada', anulacion: null };
+
+    const anulacion = (await this.repo.listarAnulaciones(consorcioId)).find(
+      (a) => a.visitaFallidaId === tercera.id && a.maquinaId === maquinaId,
+    );
+    if (anulacion) return { tieneRecargo: false, noAplicadoPor: 'anulado', anulacion };
+    return { tieneRecargo: true, noAplicadoPor: null, anulacion: null };
+  }
+
+  /**
+   * Anula el recargo del 45 % de una máquina (sólo un Administrador: lo exige el controlador). El motivo es obligatorio y
+   * la anulación queda registrada con el usuario de la sesión, la fecha del servidor y el motivo.
+   */
+  async anularRecargo(dto: AnularRecargoDto, usuario: string): Promise<AnulacionRecargo> {
+    const errores: string[] = [];
+    const consorcioId = typeof dto?.consorcioId === 'string' ? dto.consorcioId.trim() : '';
+    const maquinaId = typeof dto?.maquinaId === 'string' ? dto.maquinaId.trim() : '';
+    const motivo = typeof dto?.motivo === 'string' ? dto.motivo.trim() : '';
+    if (!consorcioId) errores.push('consorcioId es obligatorio');
+    if (!maquinaId) errores.push('maquinaId es obligatorio');
+    if (!motivo) errores.push('motivo es obligatorio: dejá constancia de por qué se anula el recargo');
+    if (motivo.length > 500) errores.push('motivo no puede superar los 500 caracteres');
+    if (errores.length > 0) throw new BadRequestException({ message: 'Datos inválidos', errores });
+
+    await this.resolverConsorcioInfo(consorcioId);
+    const resumen = await this.getHistorialConsorcio(consorcioId);
+    const tercera = resumen.historial[2];
+    if (!resumen.bloqueadoPorTerceraVisita || !tercera) {
+      throw new ConflictException('Este edificio no tiene un recargo del 45 % para anular: no llegó a la 3.ª advertencia.');
+    }
+    const maquinas = await this.repo.listarMaquinasConsorcio(consorcioId);
+    if (maquinas.length > 0 && !maquinas.some((m) => m.id === maquinaId)) {
+      throw new NotFoundException('Esa máquina no pertenece al edificio.');
+    }
+
+    const anulacion = await this.repo.anularRecargo({ consorcioId, maquinaId, visitaFallidaId: tercera.id, usuario, motivo });
+    if (!anulacion) throw new ConflictException('El recargo de esta máquina ya estaba anulado.');
+    this.logger.log(`Recargo 45% anulado por ${usuario} — consorcio ${consorcioId}, máquina ${maquinaId}: ${motivo}`);
+    return anulacion;
   }
 
   /**

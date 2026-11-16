@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T10:55:54.684Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T11:00:54.983Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
 | 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Haciendo | germanG | RF-02 | — |
+| 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | Hecho | germanG | RF-02 | — |
 | 25 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | germanG | RF-02 | — |
 | 26 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 27 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |

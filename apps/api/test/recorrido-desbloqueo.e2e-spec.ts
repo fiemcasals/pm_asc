@@ -56,6 +56,10 @@ describe('Recorrido del RT y desbloqueo por la Secretaría (HU-07 RF-05)', () =>
   const bloquearA = async () => {
     for (let i = 0; i < 3; i++) expect((await como('secretaria').fallar()).status).toBe(201);
   };
+  /** Pasan dos días: un edificio con visita fallida de hoy no está en el recorrido del RT (HU-07 RF-06), así que estas pruebas miran al día siguiente. */
+  const pasaronDosDias = () => {
+    for (const r of repo.registros) r.fechaHora = new Date(Date.parse(r.fechaHora) - 2 * 86_400_000).toISOString();
+  };
 
   it('criterio 1: el edificio bloqueado no aparece en el recorrido del RT; sí en el de la Secretaría y el Administrador, con el estado', async () => {
     await bloquearA();
@@ -76,6 +80,7 @@ describe('Recorrido del RT y desbloqueo por la Secretaría (HU-07 RF-05)', () =>
 
   it.each(['secretaria', 'administrador'])('criterio 2: %s desbloquea con motivo → 201, a su nombre; el edificio vuelve al recorrido del RT', async (rol) => {
     await bloquearA();
+    pasaronDosDias();
 
     const res = await como(rol).desbloquear({ motivo: 'Se coordinó con el encargado' });
 
@@ -121,6 +126,7 @@ describe('Recorrido del RT y desbloqueo por la Secretaría (HU-07 RF-05)', () =>
 
   it('criterio 4: una visita exitosa (inspección) reinicia el contador: el edificio deja de estar bloqueado y la próxima falla es Advertencia 1', async () => {
     await bloquearA();
+    pasaronDosDias();
     repo.inspecciones.set(A, new Date().toISOString());
     await new Promise((r) => setTimeout(r, 5));
 

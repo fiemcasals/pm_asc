@@ -36,8 +36,15 @@ export class VisitasFallidasController {
   @Post()
   async registrar(
     @Body() dto: ReporteVisitaFallidaDto,
+    @UsuarioActual() usuario: UsuarioAutenticado,
   ): Promise<VisitaFallidaRegistro> {
-    return this.service.registrarVisitaFallida(dto);
+    return this.service.registrarVisitaFallida(dto, { usuario: usuario.usuario, rol: usuario.rol });
+  }
+
+  /** HU-07 RF-06: las causas que se pueden elegir (de la configuración) y la de por defecto. */
+  @Get('causas')
+  causas(): { causas: string[]; porDefecto: string } {
+    return this.service.getCausas();
   }
 
   /**

@@ -25,13 +25,14 @@ interface VisitaFallidaRow {
   gps_timestamp: Date | string;
   inspector: string;
   fecha_hora: Date | string;
+  hora_dispositivo: Date | string | null;
   email_notificacion: EmailNotificacionConsorcio | string | null;
 }
 
 const COLUMNAS_VISITA = `
   id, consorcio_id, consorcio_nombre, direccion, numero_advertencia,
   motivo, foto_frente_url, gps_latitud, gps_longitud, gps_precision,
-  gps_timestamp, inspector, fecha_hora, email_notificacion
+  gps_timestamp, inspector, fecha_hora, hora_dispositivo, email_notificacion
 `;
 
 interface AnulacionRow {
@@ -99,6 +100,7 @@ function aVisitaFallida(row: VisitaFallidaRow): VisitaFallidaRegistro {
     },
     inspector: row.inspector,
     fechaHora: aIso(row.fecha_hora),
+    horaDispositivo: row.hora_dispositivo ? aIso(row.hora_dispositivo) : null,
     emailNotificacion: aEmail(row.email_notificacion),
   };
 }
@@ -134,8 +136,8 @@ export class PgVisitasFallidasRepository extends VisitasFallidasRepository {
         `INSERT INTO visitas_fallidas (
            id, consorcio_id, consorcio_nombre, direccion, numero_advertencia,
            motivo, foto_frente_url, gps_latitud, gps_longitud, gps_precision,
-           gps_timestamp, inspector, fecha_hora, email_notificacion
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+           gps_timestamp, inspector, fecha_hora, email_notificacion, hora_dispositivo
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
         [
           registro.id,
           registro.consorcioId,
@@ -151,6 +153,7 @@ export class PgVisitasFallidasRepository extends VisitasFallidasRepository {
           registro.inspector,
           registro.fechaHora,
           registro.emailNotificacion ? JSON.stringify(registro.emailNotificacion) : null,
+          registro.horaDispositivo ?? null,
         ],
       );
 

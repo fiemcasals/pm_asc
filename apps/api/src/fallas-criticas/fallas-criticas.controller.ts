@@ -74,9 +74,15 @@ function esc(texto: string): string {
 }
 
 export function renderInforme(informe: InformeFalla): string {
+  // Las fallas críticas, con su nombre legible y agrupadas por zona (Sala de Máquinas, Cabina, Accesos, Caja, Fosa).
+  const zonas = new Map<string, string[]>();
+  for (const d of informe.fallasCriticasDetalle) zonas.set(d.zona, [...(zonas.get(d.zona) ?? []), d.nombre]);
   const fallas = informe.fallasCriticas.length
-    ? `<ul>${informe.fallasCriticas.map((f) => `<li>${esc(ETIQUETA_FALLA[f] ?? f)}</li>`).join('')}</ul>`
+    ? [...zonas.entries()].map(([zona, nombres]) => `<h3>${esc(zona)}</h3><ul>${nombres.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`).join('')
     : '<p>Sin fallas críticas.</p>';
+  const comunes = informe.fallasComunes.length
+    ? `<h2>Otras fallas (no críticas)</h2><ul>${informe.fallasComunes.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>`
+    : '';
   const fotos = informe.fotografias.length
     ? informe.fotografias
         .map((url) => `<img src="${esc(url)}" alt="Fotografía del informe" />`)
@@ -111,6 +117,7 @@ export function renderInforme(informe: InformeFalla): string {
   </dl>
   <h2>Fallas detectadas</h2>
   ${fallas}
+  ${comunes}
   <h2>Observaciones</h2>
   <p>${informe.observaciones ? esc(informe.observaciones) : 'Sin observaciones.'}</p>
   <h2>Fotografías</h2>

@@ -1,16 +1,48 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Observable, Subject } from 'rxjs';
+import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
 import { FirmanteService } from '../firmante/firmante.service';
 import {
   EventoFallaCritica,
   FallaCritica,
+  FallaCriticaDetalle,
   InformeFalla,
   InformeFallaInput,
   RegistrarInformeResponse,
 } from './fallas-criticas.types';
 
 const MAX_OBSERVACIONES = 2000;
+
+/**
+ * Las fallas críticas que definió el cliente (HU-06 RF-03), tal como las tiene el checklist: por código, con su nombre legible, su zona
+ * y los tipos de máquina en los que existen. Es la única fuente: cualquier otro código es una falla común y no genera alerta.
+ */
+/** Los dos códigos históricos conservan el nombre con el que ya se mostraban. */
+const NOMBRES_HISTORICOS: Record<string, string> = {
+  CABLES_DESGASTADOS: 'Cables de tracción desgastados',
+  LIMITADOR_ANULADO: 'Limitador de velocidad anulado',
+};
+
+const CATALOGO = new Map(
+  obtenerFallasCriticasDefinidas().map((f, orden) => [
+    f.codigoFallaCritica,
+    {
+      detalle: { codigo: f.codigoFallaCritica, nombre: NOMBRES_HISTORICOS[f.codigoFallaCritica] ?? `${f.itemEtiqueta}: ${f.opcionEtiqueta}`, zonaId: f.solapaId, zona: f.solapaNombre } as FallaCriticaDetalle,
+      tipos: f.tiposAplicables as readonly string[],
+      orden,
+    },
+  ]),
+);
+
+/** El detalle de las fallas críticas, en el orden de las zonas y de los ítems del checklist. */
+function detalleOrdenado(codigos: FallaCritica[]): FallaCriticaDetalle[] {
+  return codigos
+    .map((c) => CATALOGO.get(c))
+    .filter((e): e is NonNullable<typeof e> => e !== undefined)
+    .sort((a, b) => a.orden - b.orden)
+    .map((e) => ({ ...e.detalle }));
+}
 const MAX_FOTOGRAFIAS = 10;
 
 /**
@@ -60,12 +92,30 @@ export class FallasCriticasService {
     }
 
     const fallasCriticas: FallaCritica[] = [];
-    if (input.cablesDesgastados) fallasCriticas.push('CABLES_DESGASTADOS');
-    if (input.limitadorAnulado) fallasCriticas.push('LIMITADOR_ANULADO');
+    const fallasComunes: string[] = [];
+    const agregarCritica = (codigo: FallaCritica) => {
+      if (!fallasCriticas.includes(codigo)) fallasCriticas.push(codigo);
+    };
+    if (input.cablesDesgastados) agregarCritica('CABLES_DESGASTADOS');
+    if (input.limitadorAnulado) agregarCritica('LIMITADOR_ANULADO');
     for (const codigo of input.fallasCriticas ?? []) {
-      if (!fallasCriticas.includes(codigo)) {
-        fallasCriticas.push(codigo);
-      }
+      // Sólo las fallas de la lista del cliente son críticas; las que sacó (pérdida de aceite, tablero, puerta tijera...) se registran
+      // como falla común y no generan alerta.
+      if (CATALOGO.has(codigo)) agregarCritica(codigo);
+      else if (!fallasComunes.includes(codigo)) fallasComunes.push(codigo);
+    }
+
+    // Hay fallas críticas que sólo existen en un tipo de máquina: el aceite de batea, en las hidráulicas.
+    const tipoMaquina = maquina.tipo ?? 'traccion';
+    const noAplican = fallasCriticas.filter((c) => !CATALOGO.get(c)!.tipos.includes(tipoMaquina));
+    if (noAplican.length > 0) {
+      throw new BadRequestException({
+        message: 'Datos inválidos',
+        errores: noAplican.map((c) => {
+          const solo = CATALOGO.get(c)!.tipos.join(' o ');
+          return `${CATALOGO.get(c)!.detalle.nombre} no se puede informar en la máquina ${maquina.codigoAGC} (${tipoMaquina}): sólo aplica a máquinas ${solo}`;
+        }),
+      });
     }
 
     const id = `INF-${randomUUID()}`;
@@ -86,6 +136,8 @@ export class FallasCriticasService {
       observaciones: input.observaciones ?? '',
       fotografias: input.fotografias ?? [],
       fallasCriticas,
+      fallasCriticasDetalle: detalleOrdenado(fallasCriticas),
+      fallasComunes,
       registradoEn: new Date().toISOString(),
       enlaceInforme: `/api/fallas-criticas/informes/${id}`,
     };
@@ -123,6 +175,7 @@ function aEventoFalla(informe: InformeFalla): EventoFallaCritica {
     eca: informe.eca,
     inspector: informe.inspector,
     fallas: [...informe.fallasCriticas],
+    fallasDetalle: informe.fallasCriticasDetalle.map((d) => ({ ...d })),
     registradoEn: informe.registradoEn,
     enlaceInforme: informe.enlaceInforme,
   };

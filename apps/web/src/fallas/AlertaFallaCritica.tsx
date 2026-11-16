@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ETIQUETA_FALLA,
+  agruparFallasPorZona,
   EventoFallaCritica,
   reproducirAvisoSonoro,
   suscribirFallasCriticas,
@@ -79,11 +79,16 @@ export function AlertaFallaCritica({ rol = 'secretaria' }: { rol?: 'secretaria' 
         <br />
         {actual.direccion} ({actual.consorcio})
       </p>
-      <ul className="falla-toast-fallas">
-        {actual.fallas.map((f) => (
-          <li key={f}>{ETIQUETA_FALLA[f] ?? f}</li>
-        ))}
-      </ul>
+      {agruparFallasPorZona(actual.fallas).map((grupo) => (
+        <div key={grupo.zona} className="falla-toast-zona" data-testid="alerta-falla-zona">
+          <strong>{grupo.zona}</strong>
+          <ul className="falla-toast-fallas">
+            {grupo.fallas.map((f) => (
+              <li key={f.codigo}>{f.nombre}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
       <p className="falla-toast-meta">
         Informó: {actual.inspector} · ECA: {actual.eca} ·{' '}
         {new Date(actual.registradoEn).toLocaleString('es-AR')}

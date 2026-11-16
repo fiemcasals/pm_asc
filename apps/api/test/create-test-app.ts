@@ -30,6 +30,8 @@ export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'que
   consultas: { texto: string; params: unknown[] }[];
   /** Acuses de recibo que la base falsa "guardó" (HU-10 RF-05). */
   acuses: FilaAcuseFalsa[];
+  /** Avisos de alertas que la base falsa "guardó" (HU-10 RF-04). */
+  avisos: FilaAvisoFalsa[];
   /** Si tiene valor, cada query() falla con este error. Se puede cambiar o quitar en medio de una prueba. */
   errorDeQuery: Error | null;
 }
@@ -39,6 +41,16 @@ export interface FakeDatabase extends Pick<DatabaseService, 'checkHealth' | 'que
  * - `fail`: checkHealth() falla (la base "no responde").
  * - `errorDeQuery`: query() falla con ese error. Sin él, query() registra la consulta y devuelve [].
  */
+/** Un aviso de alerta guardado en la base falsa (HU-10 RF-04). */
+export interface FilaAvisoFalsa {
+  alerta_id: string;
+  tipo: string;
+  eca: string;
+  edificio: string;
+  mensaje: string;
+  fecha: Date;
+}
+
 /** Un acuse guardado en la base falsa. */
 export interface FilaAcuseFalsa {
   id: string;
@@ -53,7 +65,16 @@ export interface FilaAcuseFalsa {
  * (INSERT … ON CONFLICT DO NOTHING RETURNING devuelve la fila sólo si se insertó) y la relectura por alerta.
  * Devuelve undefined para cualquier otra consulta.
  */
-function respuestaDeAcuses(acuses: FilaAcuseFalsa[], texto: string, params: unknown[]): unknown[] | undefined {
+function respuestaDeAcuses(acuses: FilaAcuseFalsa[], texto: string, params: unknown[], avisos: FilaAvisoFalsa[] = []): unknown[] | undefined {
+  if (texto.includes('INSERT INTO alertas_avisos')) {
+    const [alertaId, tipo, eca, edificio, mensaje, fecha] = params as [string, string, string, string, string, string];
+    if (!avisos.some((a) => a.alerta_id === alertaId && a.tipo === tipo)) avisos.push({ alerta_id: alertaId, tipo, eca, edificio, mensaje, fecha: new Date(fecha) });
+    return [];
+  }
+  if (texto.includes('FROM alertas_avisos WHERE eca = $1')) {
+    return avisos.filter((a) => a.eca === params[0] && (params[1] as string[]).includes(a.alerta_id));
+  }
+  if (texto.includes("FROM alertas_avisos WHERE tipo = 'aviso_secretaria_48h'")) return avisos.filter((a) => a.tipo === 'aviso_secretaria_48h');
   if (texto.includes('INSERT INTO acuses_recibo_legal')) {
     const [alertaId, , eca, usuario, fechaHora] = params as [string, string, string, string, string];
     if (acuses.some((a) => a.alerta_id === alertaId)) return [];
@@ -72,6 +93,7 @@ export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}
   const fake: FakeDatabase = {
     consultas: [],
     acuses: [],
+    avisos: [],
     errorDeQuery: opts.errorDeQuery ?? null,
     checkHealth: async () => {
       if (opts.fail) throw new Error('connection refused');
@@ -80,7 +102,7 @@ export function fakeDatabase(opts: { fail?: boolean; errorDeQuery?: Error } = {}
     query: (async (texto: string, params: unknown[] = []) => {
       fake.consultas.push({ texto, params });
       if (fake.errorDeQuery) throw fake.errorDeQuery;
-      return respuestaDeAcuses(fake.acuses, texto, params) ?? [];
+      return respuestaDeAcuses(fake.acuses, texto, params, fake.avisos) ?? [];
     }) as FakeDatabase['query'],
   };
   return fake;

@@ -70,9 +70,14 @@ export interface EdificioConsorcio {
   consorcio: string;
 }
 
+/** Tipo de equipo (HU-06 RF-03): hay fallas críticas que sólo existen en las máquinas hidráulicas. Sin dato, se toma como de tracción. */
+export type TipoMaquina = 'traccion' | 'hidraulico' | 'montavehiculos';
+
 export interface MaquinaAsignada {
   id: string;
   codigoAGC: string;
+  /** Por defecto de tracción. */
+  tipo?: TipoMaquina;
   nombre: string;
   edificio: EdificioConsorcio;
   eca: string;

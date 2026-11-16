@@ -10,6 +10,15 @@ export interface ChecklistItemCritico {
   observaciones: string;
 }
 
+/** Un recordatorio o aviso que el sistema registró en una alerta sin acuse de recibo (HU-10 RF-04). */
+export interface EventoAlerta {
+  tipo: 'recordatorio_eca_24h' | 'aviso_secretaria_48h';
+  fecha: string;
+  eca: string;
+  edificio: string;
+  mensaje: string;
+}
+
 export interface AlertaCritica {
   id: string;
   tipo: TipoAlertaCritica;
@@ -23,6 +32,8 @@ export interface AlertaCritica {
     fechaHora: string;
     usuario: string;
   } | null;
+  /** Recordatorios y avisos registrados para esta alerta, en orden. */
+  historial?: EventoAlerta[];
 }
 
 export interface FotosObligatorias {

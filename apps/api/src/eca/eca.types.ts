@@ -2,11 +2,12 @@ import {
   AlertaCritica,
   ChecklistItemCritico,
   EstadoOperativo,
+  EventoAlerta,
   MaquinaAsignada,
   TipoAlertaCritica,
 } from '../firmante/firmante.types';
 
-export { AlertaCritica, ChecklistItemCritico, EstadoOperativo, TipoAlertaCritica };
+export { AlertaCritica, ChecklistItemCritico, EstadoOperativo, EventoAlerta, TipoAlertaCritica };
 
 export interface CoberturaEcaResponse {
   eca: string;
@@ -89,4 +90,13 @@ export interface RemitoTecnicoResponse {
     fechaHora: string;
     usuario: string;
   };
+}
+
+/** El aviso a la Secretaría de una alerta que la ECA no acusó en 48 horas. */
+export interface AvisoSecretaria {
+  alertaId: string;
+  eca: string;
+  edificio: string;
+  mensaje: string;
+  fecha: string;
 }

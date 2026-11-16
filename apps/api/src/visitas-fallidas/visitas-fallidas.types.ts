@@ -68,6 +68,27 @@ export interface LiquidacionMaquinaDto {
   montoBase?: number;
 }
 
+/** Una anulación del recargo del 45 % de una máquina: quién, cuándo y por qué (HU-07 RF-04). */
+export interface AnulacionRecargo {
+  id: string;
+  consorcioId: string;
+  maquinaId: string;
+  /** La 3.ª visita fallida que originó el recargo. */
+  visitaFallidaId: string;
+  usuario: string;
+  motivo: string;
+  fecha: string;
+}
+
+export interface AnularRecargoDto {
+  consorcioId: string;
+  maquinaId: string;
+  motivo: string;
+}
+
+/** Por qué una máquina de un edificio con 3 advertencias no lleva recargo en una liquidación. */
+export type MotivoSinRecargo = 'otro_periodo' | 'maquina_inspeccionada' | 'anulado';
+
 export interface DetalleConceptoLiquidacion {
   concepto: string;
   monto: number;
@@ -88,6 +109,10 @@ export interface LiquidacionMaquinaResultado {
   montoRecargo: number;
   montoTotal: number;
   avisoCobro: string | null;
+  /** Si el edificio está bloqueado pero esta máquina no lleva recargo en este período, el motivo; si no, null. */
+  recargoNoAplicadoPor: MotivoSinRecargo | null;
+  /** La anulación del recargo de esta máquina, si un Administrador la registró. */
+  recargoAnulado: { usuario: string; motivo: string; fecha: string } | null;
   detalleConceptos: DetalleConceptoLiquidacion[];
   fechaLiquidacion: string;
 }

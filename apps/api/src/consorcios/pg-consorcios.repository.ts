@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen, Maquina, TipoMaquina } from './consorcio.types';
-import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
+import { ConsorciosRepository, ReferenciaAgcDuplicadaError, TernaCambioError } from './consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, Responsable, RolesEdificio, RolesInput } from './roles.types';
 
 interface ConsorcioRow {
@@ -279,11 +279,22 @@ export class PgConsorciosRepository extends ConsorciosRepository {
     return this.db.transaction((client) => leerRoles(client, id));
   }
 
-  async asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null> {
+  async asignarRoles(id: string, datos: RolesInput, esperado?: string | null): Promise<RolesEdificio | null> {
     return this.db.transaction(async (client) => {
       // El bloqueo evita que el consorcio se borre entre esta comprobación y el INSERT.
       const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1 FOR UPDATE', [id]);
       if (consorcio.rowCount === 0) return null;
+
+      // Con el consorcio bloqueado, nadie más puede cambiar la terna entre esta comprobación y el guardado. La versión se
+      // compara en la base y a la milésima, que es la precisión con la que se informa (`actualizadoEn`).
+      if (esperado !== undefined) {
+        const actual = await client.query<{ coincide: boolean }>(
+          `SELECT date_trunc('milliseconds', updated_at) = $2::timestamptz AS coincide FROM roles_edificio WHERE consorcio_id = $1`,
+          [id, esperado],
+        );
+        const coincide = esperado === null ? actual.rowCount === 0 : actual.rowCount === 1 && actual.rows[0].coincide;
+        if (!coincide) throw new TernaCambioError((await leerRoles(client, id))!);
+      }
 
       const { rtCalle, firmante, eca } = datos;
       await client.query(

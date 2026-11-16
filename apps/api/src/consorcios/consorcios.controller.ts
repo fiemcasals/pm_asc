@@ -14,13 +14,24 @@ import {
 import { Roles } from '../auth/roles.guard';
 import { validarConsorcio } from './consorcio.validation';
 import { Consorcio, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
-import { ConsorciosRepository, ReferenciaAgcDuplicadaError } from './consorcios.repository';
+import { ConsorciosRepository, ReferenciaAgcDuplicadaError, TernaCambioError } from './consorcios.repository';
 import { RolesEdificio } from './roles.types';
 import { validarRoles } from './roles.validation';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Un id mal formado no puede existir: es 404 y nunca llega a la base (que lanzaría un 500). */
+/**
+ * La versión de la terna que quien guarda leyó, si la manda: `undefined` (no vino: sin control), `null` (leyó que no había
+ * terna) o un instante ISO (`actualizadoEn` del GET). Cualquier otra cosa es un error de datos.
+ */
+function leerVersionEsperada(cuerpo: unknown): string | null | undefined {
+  const valor = (cuerpo as { actualizadoEn?: unknown }).actualizadoEn;
+  if (valor === undefined || valor === null) return valor;
+  if (typeof valor === 'string' && !Number.isNaN(Date.parse(valor))) return valor;
+  throw new BadRequestException({ message: 'Datos inválidos', errores: ['actualizadoEn tiene que ser el instante que devolvió el GET de roles, o null'] });
+}
+
 function exigirId(id: string): void {
   if (!UUID.test(id)) throw new NotFoundException('Consorcio no encontrado');
 }
@@ -84,7 +95,11 @@ export class ConsorciosController {
     return roles;
   }
 
-  /** Asigna o reemplaza la terna completa: RT de Calle, Firmante AGC y ECA Responsable. */
+  /**
+   * Asigna o reemplaza la terna completa: RT de Calle, Firmante AGC y ECA Responsable.
+   * Si el cuerpo trae `actualizadoEn` (la versión que se leyó con GET), sólo se guarda si la terna sigue siendo esa:
+   * si cambió, responde 409 con la versión vigente y no modifica nada. Sin `actualizadoEn` guarda como siempre.
+   */
   @Put(':id/roles')
   async asignarRoles(@Param('id') id: string, @Body() cuerpo: unknown): Promise<RolesEdificio> {
     exigirId(id);
@@ -92,9 +107,20 @@ export class ConsorciosController {
     if (!resultado.ok) {
       throw new BadRequestException({ message: 'Datos inválidos', errores: resultado.errores });
     }
-    const roles = await this.consorcios.asignarRoles(id, resultado.valor);
-    if (!roles) throw new NotFoundException('Consorcio no encontrado');
-    return roles;
+    const esperado = leerVersionEsperada(cuerpo);
+    try {
+      const roles = await this.consorcios.asignarRoles(id, resultado.valor, esperado);
+      if (!roles) throw new NotFoundException('Consorcio no encontrado');
+      return roles;
+    } catch (err) {
+      if (err instanceof TernaCambioError) {
+        throw new ConflictException({
+          message: 'La terna de este edificio cambió desde que la abriste: se muestra la versión vigente. Revisala y volvé a guardar.',
+          vigente: err.vigente,
+        });
+      }
+      throw err;
+    }
   }
 
   /** Quita la asignación vigente de roles en el edificio (revoca acceso de RT/Firmante de inmediato). */

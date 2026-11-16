@@ -9,7 +9,7 @@ import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usua
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '../src/consorcios/consorcio.types';
-import { ConsorciosRepository } from '../src/consorcios/consorcios.repository';
+import { ConsorciosRepository, TernaCambioError } from '../src/consorcios/consorcios.repository';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
 import {
@@ -159,8 +159,14 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
       : { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
   }
 
-  async asignarRoles(id: string, datos: RolesInput): Promise<RolesEdificio | null> {
+  async asignarRoles(id: string, datos: RolesInput, esperado?: string | null): Promise<RolesEdificio | null> {
     if (!this.filas.has(id)) return null;
+    if (esperado !== undefined) {
+      const vigente = this.roles.get(id);
+      if ((vigente?.actualizadoEn ?? null) !== esperado) {
+        throw new TernaCambioError(structuredClone(vigente ?? { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null }));
+      }
+    }
     const roles: RolesEdificio = {
       consorcioId: id,
       rtCalle: { ...datos.rtCalle, porcentaje: PORCENTAJES_OPERATIVOS.rtCalle },

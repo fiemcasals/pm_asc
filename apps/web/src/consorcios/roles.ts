@@ -115,10 +115,18 @@ export async function fetchRoles(consorcioId: string): Promise<FetchResult<Roles
   }
 }
 
+/** El resultado de guardar: si la terna cambió desde que se leyó (409), trae la versión vigente (HU-02 RF-03). */
+export type ResultadoGuardarRoles = FetchResult<RolesEdificio> & { vigente?: RolesEdificio };
+
+/**
+ * Guarda la terna. `actualizadoEn` es la versión que la pantalla leyó (`null` si no había terna): la API sólo guarda si
+ * sigue siendo la vigente, y si no responde 409 con la que está guardada.
+ */
 export async function guardarRoles(
   consorcioId: string,
   formulario: FormularioRoles,
-): Promise<FetchResult<RolesEdificio>> {
+  actualizadoEn: string | null,
+): Promise<ResultadoGuardarRoles> {
   try {
     const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(consorcioId)}/roles`, {
       method: 'PUT',
@@ -127,6 +135,7 @@ export async function guardarRoles(
         rtCalle: cuerpoResponsable(formulario.rtCalle),
         firmante: cuerpoResponsable(formulario.firmante),
         eca: cuerpoResponsable(formulario.eca),
+        actualizadoEn,
       }),
     });
 
@@ -136,6 +145,7 @@ export async function guardarRoles(
         ok: false,
         error: json.message || 'Error al guardar los roles',
         errores: Array.isArray(json.errores) ? json.errores : undefined,
+        vigente: res.status === 409 && json.vigente ? (json.vigente as RolesEdificio) : undefined,
       };
     }
     return { ok: true, data: json as RolesEdificio };

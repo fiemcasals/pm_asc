@@ -127,4 +127,64 @@ describe('Roles por edificio contra PostgreSQL + PostGIS real', () => {
     expect(res.status).toBe(400);
     expect(await filasDeRoles(id)).toBe(0);
   });
+  describe('HU-02 RF-03: no pisa una terna más nueva (PostgreSQL real)', () => {
+    it('criterio 1: con la versión vieja responde 409 con la vigente y la terna no cambia; con la vigente guarda', async () => {
+      const id = await crearConsorcio('version');
+      const leida = (await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: null })).body; // leyó "sin terna"
+      const deOtraPersona = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'RT de la otra persona', telefono: '11 1' }, actualizadoEn: leida.actualizadoEn });
+      expect(deOtraPersona.status).toBe(200);
+
+      const pisada = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'Pisaría', telefono: '11 2' }, actualizadoEn: leida.actualizadoEn });
+
+      expect(pisada.status).toBe(409);
+      expect(pisada.body.vigente.rtCalle.nombre).toBe('RT de la otra persona');
+      expect((await http().get(`/api/consorcios/${id}/roles`)).body.rtCalle.nombre).toBe('RT de la otra persona');
+
+      const alDia = await http()
+        .put(`/api/consorcios/${id}/roles`)
+        .send({ ...terna, rtCalle: { nombre: 'Con la vigente', telefono: '11 3' }, actualizadoEn: pisada.body.vigente.actualizadoEn });
+      expect(alDia.status).toBe(200);
+    });
+
+    it('una reasignación del semáforo también cuenta como cambio: quien tenía abierta la terna vieja recibe 409', async () => {
+      const id = await crearConsorcio('reasignacion');
+      const leida = (await http().put(`/api/consorcios/${id}/roles`).send(terna)).body;
+      await new Promise((r) => setTimeout(r, 5));
+      await pool.query('UPDATE roles_edificio SET rt_calle_nombre = $2, updated_at = now() WHERE consorcio_id = $1', [id, 'RT reasignado']);
+
+      const res = await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: leida.actualizadoEn });
+
+      expect(res.status).toBe(409);
+      expect(res.body.vigente.rtCalle.nombre).toBe('RT reasignado');
+    });
+
+    it('leyó "sin terna" y otra persona ya la asignó → 409; y sin la versión guarda como siempre', async () => {
+      const id = await crearConsorcio('sinterna');
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      expect((await http().put(`/api/consorcios/${id}/roles`).send({ ...terna, actualizadoEn: null })).status).toBe(409);
+      expect((await http().put(`/api/consorcios/${id}/roles`).send(terna)).status).toBe(200);
+    });
+
+    it('dos guardados simultáneos con la misma versión: uno gana y el otro recibe 409, nunca se pisan', async () => {
+      const id = await crearConsorcio('carrera');
+      const leida = (await http().put(`/api/consorcios/${id}/roles`).send(terna)).body;
+      await new Promise((r) => setTimeout(r, 5));
+
+      const [a, b] = await Promise.all(
+        ['A', 'B'].map((n) =>
+          http().put(`/api/consorcios/${id}/roles`).send({ ...terna, rtCalle: { nombre: `RT ${n}`, telefono: '11 9' }, actualizadoEn: leida.actualizadoEn }),
+        ),
+      );
+
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      const ganador = a.status === 200 ? 'RT A' : 'RT B';
+      expect((await http().get(`/api/consorcios/${id}/roles`)).body.rtCalle.nombre).toBe(ganador);
+    });
+  });
+
 });

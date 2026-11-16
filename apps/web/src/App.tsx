@@ -457,6 +457,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
             <PortalFirmante
               maquinaInicialId={maquinaBuscadaId}
               onConsumirMaquinaInicial={() => setMaquinaBuscadaId(null)}
+              usuario={usuario.usuario}
             />
           )}
           {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} />}

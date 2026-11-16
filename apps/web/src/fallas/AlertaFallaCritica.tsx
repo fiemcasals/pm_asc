@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { fetchConSesion } from '../auth/sesion';
 import {
+  REPETICION_ALARMA_MS,
+  abrirAlerta,
   agruparFallasPorZona,
+  alertasDelFirmante,
+  debeSonarAlarma,
   EventoFallaCritica,
   reproducirAvisoSonoro,
   suscribirFallasCriticas,
@@ -12,22 +17,28 @@ const vistasPorRol: Record<string, Set<string>> = {
 };
 
 /**
- * Notificación emergente para Secretaría y Firmante: carga los informes críticos recientes y
- * escucha en tiempo real (SSE) nuevos reportes con aviso sonoro y enlace directo al informe.
+ * Notificación emergente para Secretaría y Firmante: carga los informes críticos recientes y escucha en tiempo real (SSE) nuevos
+ * reportes con enlace directo al informe. El Firmante ve sólo las alertas de los edificios que tiene asignados (HU-06 RF-04).
+ *
+ * En la Secretaría la alarma sonora se repite hasta que un usuario abre la alerta; al abrirla (en esta pantalla o en otra) deja de
+ * sonar en todas las de la Secretaría, y la API registra quién la abrió primero y cuándo.
  */
-export function AlertaFallaCritica({ rol = 'secretaria' }: { rol?: 'secretaria' | 'firmante' }) {
+export function AlertaFallaCritica({ rol = 'secretaria', usuario }: { rol?: 'secretaria' | 'firmante'; usuario?: string }) {
   const [pendientes, setPendientes] = useState<EventoFallaCritica[]>([]);
+  // Alertas que se abrieron (acá o en otra pantalla) desde que se cargó esta.
+  const [abiertas, setAbiertas] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     let activo = true;
-    void fetch('/api/fallas-criticas/informes')
+    void fetchConSesion('/api/fallas-criticas/informes')
       .then((res) => (res.ok ? (res.json() as Promise<EventoFallaCritica[]>) : []))
       .then((lista) => {
         if (!activo || !Array.isArray(lista)) return;
         const yaVistas = vistasPorRol[rol] ?? new Set<string>();
+        const propias = rol === 'firmante' ? alertasDelFirmante(lista, usuario) : lista;
         setPendientes((actuales) => {
           const ids = new Set(actuales.map((e) => e.informeId));
-          const nuevos = lista.filter((ev) => !yaVistas.has(ev.informeId) && !ids.has(ev.informeId));
+          const nuevos = propias.filter((ev) => !yaVistas.has(ev.informeId) && !ids.has(ev.informeId));
           return nuevos.length > 0 ? [...actuales, ...nuevos] : actuales;
         });
       })
@@ -35,25 +46,45 @@ export function AlertaFallaCritica({ rol = 'secretaria' }: { rol?: 'secretaria' 
         // Sin conexión o endpoint no disponible aún
       });
 
-    const unsub = suscribirFallasCriticas((evento) => {
-      const yaVistas = vistasPorRol[rol] ?? new Set<string>();
-      if (yaVistas.has(evento.informeId)) return;
-      setPendientes((actuales) =>
-        actuales.some((e) => e.informeId === evento.informeId) ? actuales : [...actuales, evento],
-      );
-      reproducirAvisoSonoro();
-    });
+    const unsub = suscribirFallasCriticas(
+      (evento) => {
+        if (rol === 'firmante' && alertasDelFirmante([evento], usuario).length === 0) return;
+        const yaVistas = vistasPorRol[rol] ?? new Set<string>();
+        if (yaVistas.has(evento.informeId)) return;
+        setPendientes((actuales) =>
+          actuales.some((e) => e.informeId === evento.informeId) ? actuales : [...actuales, evento],
+        );
+        reproducirAvisoSonoro();
+      },
+      undefined,
+      // Alguien abrió la alerta (en esta pantalla o en otra): la alarma deja de sonar.
+      (apertura) => setAbiertas((previas) => new Set(previas).add(apertura.informeId)),
+    );
 
     return () => {
       activo = false;
       unsub();
     };
-  }, [rol]);
+  }, [rol, usuario]);
+
+  // La alarma se repite mientras haya una alerta sin abrir (sólo en la Secretaría).
+  const suena = rol === 'secretaria' && debeSonarAlarma(pendientes, abiertas);
+  useEffect(() => {
+    if (!suena) return undefined;
+    const t = setInterval(() => reproducirAvisoSonoro(), REPETICION_ALARMA_MS);
+    return () => clearInterval(t);
+  }, [suena]);
 
   const actual = pendientes[0];
   if (!actual) return null;
 
+  /** El usuario abrió la alerta: se lo informa a la API (queda registrado el primero) y la alarma se detiene. */
+  const abrir = () => {
+    setAbiertas((previas) => new Set(previas).add(actual.informeId));
+    void abrirAlerta(actual.informeId, fetchConSesion);
+  };
   const marcarVista = () => {
+    abrir();
     (vistasPorRol[rol] ??= new Set()).add(actual.informeId);
     setPendientes((p) => p.slice(1));
   };
@@ -93,12 +124,19 @@ export function AlertaFallaCritica({ rol = 'secretaria' }: { rol?: 'secretaria' 
         Informó: {actual.inspector} · ECA: {actual.eca} ·{' '}
         {new Date(actual.registradoEn).toLocaleString('es-AR')}
       </p>
+      {(actual.abiertaPor || abiertas.has(actual.informeId)) && (
+        <p className="falla-toast-meta" data-testid="alerta-falla-abierta-por">
+          {actual.abiertaPor ? `Abierta por ${actual.abiertaPor}` : 'Alerta abierta'}
+          {actual.abiertaEn ? ` el ${new Date(actual.abiertaEn).toLocaleString('es-AR')}` : ''}
+        </p>
+      )}
       <div className="falla-toast-acciones">
         <a
           className="btn btn-danger"
           href={actual.enlaceInforme}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={abrir}
           data-testid="alerta-falla-ver-informe"
         >
           Ver informe técnico

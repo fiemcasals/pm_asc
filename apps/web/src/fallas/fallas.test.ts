@@ -149,3 +149,66 @@ describe('agruparFallasPorZona (HU-06 RF-03, criterio 4)', () => {
     expect(agruparFallasPorZona([])).toEqual([]);
   });
 });
+
+import { abrirAlerta, alertasDelFirmante, debeSonarAlarma, parsearEventoApertura } from './fallas';
+
+describe('Alarma que se repite hasta abrir la alerta (HU-06 RF-04, criterio 2)', () => {
+  const alerta = (id: string, extra: Partial<EventoFallaCritica> = {}): EventoFallaCritica => ({ ...EVENTO, informeId: id, ...extra });
+
+  it('suena mientras haya una alerta que nadie abrió', () => {
+    expect(debeSonarAlarma([alerta('a')], new Set())).toBe(true);
+    expect(debeSonarAlarma([alerta('a'), alerta('b')], new Set(['a']))).toBe(true); // la b sigue sin abrir
+  });
+
+  it('deja de sonar cuando se abrió acá o ya la había abierto otro usuario (abiertaPor del servidor)', () => {
+    expect(debeSonarAlarma([alerta('a')], new Set(['a']))).toBe(false);
+    expect(debeSonarAlarma([alerta('a', { abiertaPor: 'secretaria1', abiertaEn: '2026-11-16T10:00:00Z' })], new Set())).toBe(false);
+  });
+
+  it('sin alertas no suena', () => {
+    expect(debeSonarAlarma([], new Set())).toBe(false);
+  });
+});
+
+describe('alertasDelFirmante (HU-06 RF-04, criterio 1)', () => {
+  const eventos = [
+    { ...EVENTO, informeId: '1', firmanteUsername: 'gonza' },
+    { ...EVENTO, informeId: '2', firmanteUsername: 'otro' },
+    { ...EVENTO, informeId: '3' },
+  ];
+
+  it('un Firmante ve sólo las de sus edificios (sin distinguir mayúsculas)', () => {
+    expect(alertasDelFirmante(eventos, 'GONZA').map((e) => e.informeId)).toEqual(['1']);
+    expect(alertasDelFirmante(eventos, 'nadie')).toEqual([]);
+  });
+});
+
+describe('aviso de apertura y abrirAlerta (HU-06 RF-04, criterio 3)', () => {
+  it('parsearEventoApertura acepta el aviso bien formado y descarta lo demás', () => {
+    const ok = JSON.stringify({ tipo: 'falla-abierta', informeId: 'INF-1', abiertaPor: 'sec1', abiertaEn: '2026-11-16T10:00:00Z' });
+    expect(parsearEventoApertura(ok)?.abiertaPor).toBe('sec1');
+    expect(parsearEventoApertura('no es json')).toBeNull();
+    expect(parsearEventoApertura(JSON.stringify({ tipo: 'otra', informeId: 'x' }))).toBeNull();
+    expect(parsearEventoApertura(JSON.stringify({ tipo: 'falla-abierta', informeId: 'x' }))).toBeNull();
+  });
+
+  it('suscribirFallasCriticas avisa las aperturas por el canal', () => {
+    const escuchas: Record<string, (e: { data: string }) => void> = {};
+    const fuente = { addEventListener: (t: string, fn: (e: { data: string }) => void) => void (escuchas[t] = fn), close: vi.fn() };
+    const aperturas: string[] = [];
+
+    suscribirFallasCriticas(() => undefined, () => fuente, (a) => aperturas.push(a.informeId));
+    escuchas['falla-abierta']({ data: JSON.stringify({ tipo: 'falla-abierta', informeId: 'INF-9', abiertaPor: 'sec1', abiertaEn: '2026-11-16T10:00:00Z' }) });
+    escuchas['falla-abierta']({ data: 'basura' });
+
+    expect(aperturas).toEqual(['INF-9']);
+  });
+
+  it('abrirAlerta hace un POST a la alerta y dice si salió bien; un corte de red no rompe', async () => {
+    const enviar = vi.fn().mockResolvedValue({ ok: true });
+    expect(await abrirAlerta('INF-1', enviar)).toBe(true);
+    expect(enviar).toHaveBeenCalledWith('/api/fallas-criticas/informes/INF-1/abrir', { method: 'POST' });
+    expect(await abrirAlerta('INF-1', vi.fn().mockResolvedValue({ ok: false }))).toBe(false);
+    expect(await abrirAlerta('INF-1', vi.fn().mockRejectedValue(new Error('sin red')))).toBe(false);
+  });
+});

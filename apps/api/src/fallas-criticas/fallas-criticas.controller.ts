@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Header, Param, Post, Sse } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, Post, Sse } from '@nestjs/common';
 import { Observable, interval, map, merge } from 'rxjs';
+import { UsuarioAutenticado } from '../auth/auth.types';
+import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
 import { FallasCriticasService } from './fallas-criticas.service';
 import {
@@ -34,10 +36,19 @@ export const ETIQUETA_FALLA: Record<FallaCritica, string> = {
 export class FallasCriticasController {
   constructor(private readonly service: FallasCriticasService) {}
 
-  /** Lista de informes críticos activos para Secretaría y Firmante. */
+  /** Lista de informes críticos activos para Secretaría y Firmante (el Firmante, sólo los de sus edificios). */
   @Get('informes')
-  listar(): EventoFallaCritica[] {
-    return this.service.listarEventosCriticos();
+  @Roles('secretaria', 'administrador', 'firmante')
+  listar(@UsuarioActual() usuario: UsuarioAutenticado): EventoFallaCritica[] {
+    return this.service.listarEventosCriticos(usuario);
+  }
+
+  /** HU-06 RF-04: el usuario abre la alerta; queda registrado el primero y la alarma deja de sonar en todas las pantallas. */
+  @Post('informes/:id/abrir')
+  @HttpCode(200)
+  @Roles('secretaria', 'administrador', 'firmante')
+  abrir(@Param('id') id: string, @UsuarioActual() usuario: UsuarioAutenticado) {
+    return this.service.abrir(id, usuario);
   }
 
   /** El RT de calle carga el informe de una máquina. */
@@ -52,8 +63,11 @@ export class FallasCriticasController {
     const fallas = this.service
       .eventos$()
       .pipe(map((evento) => ({ type: 'falla-critica', data: JSON.stringify(evento) })));
+    const aperturas = this.service
+      .aperturas$()
+      .pipe(map((evento) => ({ type: 'falla-abierta', data: JSON.stringify(evento) })));
     const pings = interval(PING_MS).pipe(map(() => ({ type: 'ping', data: '{}' })));
-    return merge(fallas, pings);
+    return merge(fallas, aperturas, pings);
   }
 
   /** El informe, legible en el navegador. Sólo lectura: no registra ningún acuse. */

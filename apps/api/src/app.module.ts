@@ -35,6 +35,8 @@ import { WhatsAppController } from './whatsapp/whatsapp.controller';
 import { RecorridoController, VisitasFallidasController } from './visitas-fallidas/visitas-fallidas.controller';
 import { VisitasFallidasRepository } from './visitas-fallidas/visitas-fallidas.repository';
 import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-fallidas.repository';
+import { ParadasController } from './paradas/paradas.controller';
+import { ParadasService } from './paradas/paradas.service';
 import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
 
 @Module({})
@@ -70,6 +72,7 @@ export class AppModule implements NestModule {
         WhatsAppController,
         VisitasFallidasController,
         RecorridoController,
+        ParadasController,
         FallasCriticasController,
         SeguridadRlsController,
         SemaforoController,
@@ -92,6 +95,7 @@ export class AppModule implements NestModule {
         WhatsAppConnectorService,
         WhatsAppTriggerService,
         VisitasFallidasService,
+        ParadasService,
         FallasCriticasService,
         { provide: SemaforoRepository, useClass: PgSemaforoRepository },
         SemaforoService,

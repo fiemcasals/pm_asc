@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-16T11:02:38.679Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-16T11:05:47.073Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 22 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
 | 23 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | testing | germanG | RF-02 | — |
+| 24 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 25 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | Hacer | germanG | RF-02 | — |
 | 26 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 27 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
@@ -50,7 +50,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 42 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 43 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
 | 44 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | Hacer | germanG | RF-01 | — |
-| 45 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Hacer | germanG | RF-03 | — |
+| 45 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | Haciendo | germanG | RF-03 | — |
 | 46 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | Hacer | germanG | RF-03 | — |
 | 47 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
 | 48 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | Hacer | germanG | RF-03 | — |

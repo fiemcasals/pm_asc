@@ -123,15 +123,9 @@ function aResponsable(
   return { nombre, telefono, email, porcentaje };
 }
 
-async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio | null> {
-  const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1', [id]);
-  if (consorcio.rowCount === 0) return null;
-
-  const roles = await client.query<RolesRow>('SELECT * FROM roles_edificio WHERE consorcio_id = $1', [id]);
-  if (roles.rowCount === 0) {
-    return { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
-  }
-  const f = roles.rows[0];
+/** La terna de un edificio a partir de su fila de `roles_edificio`; sin fila, los roles vienen en `null`. */
+function aRolesEdificio(id: string, f: RolesRow | undefined): RolesEdificio {
+  if (!f) return { consorcioId: id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null };
   return {
     consorcioId: id,
     rtCalle: aResponsable(f.rt_calle_nombre, f.rt_calle_telefono, f.rt_calle_email, PORCENTAJES_OPERATIVOS.rtCalle),
@@ -139,6 +133,14 @@ async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio 
     eca: aResponsable(f.eca_nombre, f.eca_telefono, f.eca_email, PORCENTAJES_OPERATIVOS.eca),
     actualizadoEn: f.updated_at.toISOString(),
   };
+}
+
+async function leerRoles(client: PoolClient, id: string): Promise<RolesEdificio | null> {
+  const consorcio = await client.query('SELECT 1 FROM consorcios WHERE id = $1', [id]);
+  if (consorcio.rowCount === 0) return null;
+
+  const roles = await client.query<RolesRow>('SELECT * FROM roles_edificio WHERE consorcio_id = $1', [id]);
+  return aRolesEdificio(id, roles.rows[0]);
 }
 
 function traducirError(err: unknown): never {
@@ -273,6 +275,19 @@ export class PgConsorciosRepository extends ConsorciosRepository {
   async eliminar(id: string): Promise<boolean> {
     const filas = await this.db.query('DELETE FROM consorcios WHERE id = $1 RETURNING id', [id]);
     return filas.length > 0;
+  }
+
+  /** Las ternas de todos los edificios en una sola consulta, en el orden de la lista de consorcios (nombre, id). */
+  async listarRoles(): Promise<RolesEdificio[]> {
+    const filas = await this.db.query<RolesRow & { consorcio_id: string }>(
+      `SELECT c.id::text AS consorcio_id, r.rt_calle_nombre, r.rt_calle_telefono, r.rt_calle_email,
+              r.firmante_nombre, r.firmante_telefono, r.firmante_email,
+              r.eca_nombre, r.eca_telefono, r.eca_email, r.updated_at
+         FROM consorcios c
+         LEFT JOIN roles_edificio r ON r.consorcio_id = c.id
+        ORDER BY c.nombre, c.id`,
+    );
+    return filas.map((f) => aRolesEdificio(f.consorcio_id, f.updated_at ? f : undefined));
   }
 
   async obtenerRoles(id: string): Promise<RolesEdificio | null> {

@@ -192,4 +192,45 @@ describe('/api/consorcios/:id/roles', () => {
     });
   });
 
+  describe('GET /api/consorcios/roles — HU-02 RNF-01: todas las ternas en una sola llamada', () => {
+    const nuevo = (nombre: string) =>
+      repo.crear({
+        nombre,
+        direccion: 'Calle 2',
+        administracion: { nombre: null, telefono: null, email: null },
+        encargado: { nombre: null, telefono: null },
+        pisos: [],
+        ubicacion: null,
+        maquinas: [],
+      });
+
+    it('criterio 1: devuelve la terna de cada edificio (con la terna o con los roles en null) y no se confunde con un id', async () => {
+      const b = await nuevo('Edificio B');
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      const res = await http().get('/api/consorcios/roles');
+
+      expect(res.status).toBe(200);
+      expect(res.body.map((r: { consorcioId: string }) => r.consorcioId)).toEqual([id, b.id]); // por nombre: "Consorcio Roles" antes que "Edificio B"
+      const conTerna = res.body.find((r: { consorcioId: string }) => r.consorcioId === id);
+      const sinTerna = res.body.find((r: { consorcioId: string }) => r.consorcioId === b.id);
+      expect(conTerna.rtCalle.nombre).toBe('Laura Gómez');
+      expect(sinTerna).toEqual({ consorcioId: b.id, rtCalle: null, firmante: null, eca: null, actualizadoEn: null });
+    });
+
+    it('cada elemento es igual a lo que devuelve el GET de roles de ese edificio', async () => {
+      await http().put(`/api/consorcios/${id}/roles`).send(terna);
+
+      const todas = (await http().get('/api/consorcios/roles')).body;
+      const una = (await http().get(`/api/consorcios/${id}/roles`)).body;
+
+      expect(todas.find((r: { consorcioId: string }) => r.consorcioId === id)).toEqual(una);
+    });
+
+    it('sin edificios devuelve una lista vacía', async () => {
+      repo.filas.clear();
+      expect((await http().get('/api/consorcios/roles')).body).toEqual([]);
+    });
+  });
+
 });

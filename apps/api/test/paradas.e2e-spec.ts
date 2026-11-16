@@ -20,8 +20,9 @@ describe('POST /api/paradas (HU-17 RF-03)', () => {
     ({ app } = await createTestApp({ NODE_ENV: 'development' }, undefined, undefined, undefined, { usuarios }));
     const hash = await bcrypt.hash(PASSWORD, 4);
     for (const rol of ['rt_calle', 'secretaria', 'firmante', 'eca'] as Rol[]) {
-      await usuarios.crear({ usuario: rol, nombre: rol, rol, passwordHash: hash, eca: rol === 'eca' ? 'ECA-E2E' : null });
-      tokens[rol] = (await request(app.getHttpServer()).post('/api/auth/login').send({ usuario: rol, password: PASSWORD })).body.accessToken;
+      const usuario = rol === 'firmante' ? 'gonza' : rol; // gonza es el Firmante de las máquinas de ejemplo
+      await usuarios.crear({ usuario, nombre: usuario, rol, passwordHash: hash, eca: rol === 'eca' ? 'ECA-E2E' : null });
+      tokens[rol] = (await request(app.getHttpServer()).post('/api/auth/login').send({ usuario, password: PASSWORD })).body.accessToken;
     }
   });
   afterAll(async () => {

@@ -12,11 +12,14 @@ import { ModalAuditoria } from './ModalAuditoria';
 interface PortalFirmanteProps {
   maquinaInicialId?: string | null;
   onConsumirMaquinaInicial?: () => void;
+  /** El usuario de la sesión: el cartel de falla crítica muestra sólo las alertas de sus edificios (HU-06 RF-04). */
+  usuario?: string;
 }
 
 export function PortalFirmante({
   maquinaInicialId,
   onConsumirMaquinaInicial,
+  usuario,
 }: PortalFirmanteProps) {
   const [maquinas, setMaquinas] = useState<MaquinaAsignada[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -89,7 +92,7 @@ export function PortalFirmante({
 
   return (
     <section className="portal-firmante" aria-labelledby="portal-firmante-titulo">
-      <AlertaFallaCritica rol="firmante" />
+      <AlertaFallaCritica rol="firmante" usuario={usuario} />
       <div className="portal-header">
         <div>
           <h2 id="portal-firmante-titulo" className="portal-title">

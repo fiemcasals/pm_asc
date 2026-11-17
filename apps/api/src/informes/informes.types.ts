@@ -49,11 +49,50 @@ export interface InformeVisita {
   sinFirma: SinFirmaInforme | null;
   /** «Sin firma»: lo tienen que ver la Secretaría y el Firmante (el Firmante decide, HU-18 RF-01). */
   requiereRevision: boolean;
+  /** Hora que marcaba el celular al cerrar. */
   horaDispositivo: string;
+  /** Hora del servidor al cerrar: la fija la API y forma parte del sello. */
   horaServidor: string;
+  /** SHA-256 (hex) del informe cerrado: contenido, firma y fotos. null en informes anteriores al sellado. */
+  hashSha256: string | null;
+  versionHash: string | null;
 }
 
-export type InformeNuevo = Omit<InformeVisita, 'id' | 'usuario' | 'horaServidor'>;
+export type InformeNuevo = Omit<InformeVisita, 'id' | 'usuario' | 'horaServidor' | 'hashSha256' | 'versionHash'>;
+
+/** Lo que se sella: todo el informe menos el propio hash. Cambiar cualquier dato (una foto, la firma, una hora) cambia el hash. */
+export type ContenidoSellado = Omit<InformeVisita, 'hashSha256' | 'versionHash'>;
+
+/** Versión de la forma de calcular el hash (JSON canónico con las claves ordenadas, SHA-256). */
+export const VERSION_HASH = 'sha256-v1';
+
+/** Un intento de modificar o borrar un informe cerrado (HU-18 RNF-01): se rechaza con 409 y queda registrado. */
+export interface IntentoModificacion {
+  id: string;
+  informeId: string;
+  usuario: string;
+  rol: string;
+  metodo: string;
+  fecha: string;
+}
+
+/** Una verificación del sello: el hash guardado contra el que se recalcula hoy del contenido guardado. */
+export interface VerificacionInforme {
+  id: string;
+  informeId: string;
+  usuario: string;
+  rol: string;
+  hashGuardado: string | null;
+  hashCalculado: string;
+  coincide: boolean;
+  verificadoEn: string;
+}
+
+export interface AuditoriaInforme {
+  informeId: string;
+  verificaciones: VerificacionInforme[];
+  intentosModificacion: IntentoModificacion[];
+}
 
 /** Lo que se lista de un informe, sin la firma ni las fotos. */
 export interface ResumenInforme {
@@ -66,6 +105,7 @@ export interface ResumenInforme {
   requiereRevision: boolean;
   horaDispositivo: string;
   horaServidor: string;
+  hashSha256: string | null;
 }
 
 export const MIN_PUNTOS_FIRMA = 8;

@@ -148,4 +148,94 @@ describe('Informe consolidado de la visita contra PostgreSQL real (HU-18 RF-01)'
 
     expect((await cerrar(tokenRt, informe('propio', { equipos: [grande] }))).status).toBe(201);
   });
+
+  describe('HU-18 RNF-01: sellado contra la base real', () => {
+    const verificar = (token: string, id: string) => http().post(`/api/informes-visita/${id}/verificar`).set('Authorization', `Bearer ${token}`);
+    const auditoria = (token: string, id: string) => http().get(`/api/informes-visita/${id}/auditoria`).set('Authorization', `Bearer ${token}`);
+
+    it('el informe queda en la base con su hash de 64 caracteres, la versión del cálculo y las dos horas', async () => {
+      const antes = Date.now();
+      const res = await cerrar(tokenRt, informe('propio'));
+
+      expect(res.status).toBe(201);
+      const [f] = (await admin.query('SELECT hash_sha256, version_hash, hora_dispositivo, hora_servidor FROM informes_visita WHERE id = $1', [res.body.id])).rows;
+      expect(f.hash_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(f.hash_sha256).toBe(res.body.hashSha256);
+      expect(f.version_hash).toBe('sha256-v1');
+      expect(new Date(f.hora_servidor).getTime()).toBeGreaterThanOrEqual(antes - 1000);
+      expect(Math.abs(new Date(f.hora_dispositivo).getTime() - antes)).toBeLessThan(10_000);
+    });
+
+    it('la verificación de un informe intacto coincide aunque haya pasado por la base (jsonb reordena las claves)', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+
+      const v = await verificar(tokenSec, res.body.id);
+
+      expect(v.status).toBe(201);
+      expect(v.body).toMatchObject({ coincide: true, hashGuardado: res.body.hashSha256, hashCalculado: res.body.hashSha256, usuario: `${P}-sec` });
+      const [fila] = (await admin.query('SELECT * FROM verificaciones_informe WHERE informe_id = $1', [res.body.id])).rows;
+      expect(fila).toMatchObject({ coincide: true, usuario: `${P}-sec`, rol: 'secretaria' });
+    });
+
+    it('si alguien con acceso directo a la base altera el contenido, la verificación lo detecta y queda asentado', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+      await admin.query("UPDATE informes_visita SET contenido = jsonb_set(contenido, '{equipos,0,observaciones}', '{\"cabina\":\"Alterado\"}') WHERE id = $1", [res.body.id]);
+
+      const v = await verificar(tokenAdmin, res.body.id);
+
+      expect(v.body).toMatchObject({ coincide: false, hashGuardado: res.body.hashSha256 });
+      expect(v.body.hashCalculado).not.toBe(res.body.hashSha256);
+      expect((await admin.query('SELECT coincide FROM verificaciones_informe WHERE informe_id = $1', [res.body.id])).rows).toEqual([{ coincide: false }]);
+    });
+
+    it('alterar la firma o una foto por fuera de la API también se detecta', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+      await admin.query("UPDATE informes_visita SET firma = jsonb_set(firma, '{nombre}', '\"Otra persona\"') WHERE id = $1", [res.body.id]);
+
+      expect((await verificar(tokenSec, res.body.id)).body.coincide).toBe(false);
+    });
+
+    it('un PUT, un PATCH y un DELETE → 409 y quedan registrados en la base, también el del RT que no puede leer la auditoría', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+
+      for (const m of ['put', 'patch', 'delete'] as const) expect((await http()[m](`/api/informes-visita/${res.body.id}`).set('Authorization', `Bearer ${tokenRt}`).send({})).status).toBe(409);
+      expect((await http().delete(`/api/informes-visita/${res.body.id}`).set('Authorization', `Bearer ${tokenAdmin}`)).status).toBe(409);
+
+      const filas = (await admin.query('SELECT usuario, rol, metodo FROM intentos_modificacion_informe WHERE informe_id = $1 ORDER BY fecha, id', [res.body.id])).rows;
+      expect(filas.map((f) => `${f.usuario}:${f.metodo}`)).toEqual([`${P}-rt:PUT`, `${P}-rt:PATCH`, `${P}-rt:DELETE`, `${P}-admin:DELETE`]);
+      expect((await admin.query('SELECT count(*)::int AS n FROM informes_visita WHERE id = $1', [res.body.id])).rows[0].n).toBe(1);
+      expect((await auditoria(tokenSec, res.body.id)).body.intentosModificacion).toHaveLength(4);
+      expect((await auditoria(tokenRt, res.body.id)).status).toBe(403);
+    });
+
+    it('las tablas de auditoría sólo se agregan: el rol de la aplicación no modifica ni borra', async () => {
+      const client = await admin.connect();
+      try {
+        for (const sql of ["UPDATE intentos_modificacion_informe SET usuario = 'x'", 'DELETE FROM intentos_modificacion_informe', "UPDATE verificaciones_informe SET coincide = true", 'DELETE FROM verificaciones_informe']) {
+          await client.query('BEGIN');
+          await client.query('SET LOCAL ROLE ascensores_app');
+          await client.query("SELECT set_config('app.rol_actual', 'administrador', true)");
+          await expect(client.query(sql)).rejects.toThrow(/permission denied/);
+          await client.query('ROLLBACK');
+        }
+      } finally {
+        client.release();
+      }
+    });
+
+    it('la base exige un hash válido (64 hexadecimales) y una verificación con hash calculado válido', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+
+      await expect(admin.query("UPDATE informes_visita SET hash_sha256 = 'corto' WHERE id = $1", [res.body.id])).rejects.toThrow(/check/i);
+      await expect(admin.query("INSERT INTO verificaciones_informe (informe_id, usuario, rol, hash_calculado, coincide) VALUES ($1, 'x', 'r', 'corto', true)", [res.body.id])).rejects.toThrow(/check/i);
+    });
+
+    it('las políticas de las tablas de auditoría son las esperadas', async () => {
+      const pol = await admin.query("SELECT tablename, policyname, cmd FROM pg_policies WHERE tablename IN ('intentos_modificacion_informe', 'verificaciones_informe') ORDER BY tablename, policyname");
+
+      expect(pol.rows.map((r) => `${r.tablename}:${r.policyname}:${r.cmd}`)).toEqual([
+        'intentos_modificacion_informe:rls_intentos_informe_insert:INSERT', 'intentos_modificacion_informe:rls_intentos_informe_select:SELECT', 'verificaciones_informe:rls_verificaciones_informe_admin_secretaria:ALL',
+      ]);
+    });
+  });
 });

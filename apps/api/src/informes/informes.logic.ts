@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
 import {
   CARACTERES_FIRMANTE,
+  ContenidoSellado,
   ESTADOS_EQUIPO,
   EquipoInforme,
   FirmaInforme,
@@ -145,10 +147,32 @@ export function validarInforme(cuerpo: unknown): InformeNuevo {
   return { consorcioId, equipos, firma, sinFirma, requiereRevision: sinFirma !== null, horaDispositivo: new Date(hora).toISOString() };
 }
 
+/**
+ * JSON canónico: las claves de los objetos van ordenadas y no hay espacios, así que el mismo contenido da siempre el mismo texto sin
+ * importar el orden en que llegó o en que lo devolvió la base. Un `undefined` se trata como ausente.
+ */
+export function canonicalizar(valor: unknown): string {
+  if (valor === null || typeof valor !== 'object') return JSON.stringify(valor) ?? 'null';
+  if (Array.isArray(valor)) return `[${valor.map((v) => canonicalizar(v === undefined ? null : v)).join(',')}]`;
+  const claves = Object.keys(valor as Record<string, unknown>).filter((k) => (valor as Record<string, unknown>)[k] !== undefined).sort();
+  return `{${claves.map((k) => `${JSON.stringify(k)}:${canonicalizar((valor as Record<string, unknown>)[k])}`).join(',')}}`;
+}
+
+/** El SHA-256 (hexadecimal) del informe cerrado: contenido, firma, fotos, usuario, id y las dos horas. */
+export function hashInforme(contenido: ContenidoSellado): string {
+  return createHash('sha256').update(canonicalizar(contenido), 'utf8').digest('hex');
+}
+
+/** Lo que se sella de un informe guardado (todo menos el hash y su versión). */
+export function contenidoSellado(i: InformeVisita): ContenidoSellado {
+  const { hashSha256: _h, versionHash: _v, ...resto } = i;
+  return resto;
+}
+
 export function aResumen(i: InformeVisita): ResumenInforme {
   return {
     id: i.id, consorcioId: i.consorcioId, usuario: i.usuario, equipos: i.equipos.length,
     firmante: i.firma ? `${i.firma.nombre} ${i.firma.apellido} (${i.firma.caracter})` : null,
-    motivoSinFirma: i.sinFirma?.motivo ?? null, requiereRevision: i.requiereRevision, horaDispositivo: i.horaDispositivo, horaServidor: i.horaServidor,
+    motivoSinFirma: i.sinFirma?.motivo ?? null, requiereRevision: i.requiereRevision, horaDispositivo: i.horaDispositivo, horaServidor: i.horaServidor, hashSha256: i.hashSha256,
   };
 }

@@ -1,18 +1,25 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { aResumen, validarInforme } from './informes.logic';
+import { randomUUID } from 'node:crypto';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { aResumen, contenidoSellado, hashInforme, validarInforme } from './informes.logic';
 import { InformesRepository } from './informes.repository';
-import { InformeVisita, ResumenInforme } from './informes.types';
+import { AuditoriaInforme, InformeVisita, IntentoModificacion, ResumenInforme, VERSION_HASH, VerificacionInforme } from './informes.types';
 
-/** Informes consolidados de la visita, con la firma del encargado o «Sin firma» (HU-18 RF-01). */
+export const MENSAJE_INFORME_CERRADO = 'El informe está cerrado: no se puede modificar ni borrar. El intento quedó registrado.';
+
+/** Informes consolidados de la visita, con la firma del encargado o «Sin firma», sellados con un hash al cerrarse (HU-18 RF-01 y RNF-01). */
 @Injectable()
 export class InformesService {
   constructor(private readonly repo: InformesRepository) {}
 
-  /** Cierra el informe de un edificio que el RT tiene asignado. Los datos de la firma se validan acá además de en la pantalla. */
+  /**
+   * Cierra el informe de un edificio que el RT tiene asignado y lo **sella**: se calcula el SHA-256 de todo el contenido (equipos con sus
+   * fotos, firma o «Sin firma», usuario, id y las dos horas) y se guarda junto con la hora del dispositivo y la del servidor.
+   */
   async crear(cuerpo: unknown, usuario: string): Promise<InformeVisita> {
     const nuevo = validarInforme(cuerpo);
     if (!(await this.repo.existeEdificio(nuevo.consorcioId))) throw new NotFoundException('Edificio no encontrado');
-    return this.repo.guardar(nuevo, usuario);
+    const base = { ...nuevo, id: randomUUID(), usuario, horaServidor: new Date().toISOString() };
+    return this.repo.guardar({ ...base, hashSha256: hashInforme(base), versionHash: VERSION_HASH });
   }
 
   /** `?sinFirma=true` trae los que la Secretaría y el Firmante tienen que ver; `false` los firmados; sin el parámetro, todos. */
@@ -25,5 +32,35 @@ export class InformesService {
     const i = await this.repo.obtener(id);
     if (!i) throw new NotFoundException('Informe no encontrado');
     return i;
+  }
+
+  /**
+   * Un informe cerrado no se modifica: cualquier intento de cambiarlo o borrarlo responde **409** y queda registrado (quién, con qué rol,
+   * qué método y cuándo). Un informe que no existe da 404.
+   */
+  async rechazarModificacion(id: string, usuario: { usuario: string; rol: string }, metodo: string): Promise<never> {
+    const i = await this.repo.obtener(id);
+    if (!i) throw new NotFoundException('Informe no encontrado');
+    await this.repo.registrarIntento({ informeId: i.id, usuario: usuario.usuario, rol: usuario.rol, metodo: metodo.toUpperCase() });
+    throw new ConflictException(MENSAJE_INFORME_CERRADO);
+  }
+
+  /**
+   * Verifica el sello: recalcula el hash del contenido guardado y lo compara con el que se calculó al cerrar. El resultado queda asentado en
+   * la auditoría (quién verificó, cuándo, los dos hashes y si coinciden). Un informe anterior al sellado (sin hash) no coincide.
+   */
+  async verificar(id: string, usuario: { usuario: string; rol: string }): Promise<VerificacionInforme> {
+    const i = await this.obtener(id);
+    const hashCalculado = hashInforme(contenidoSellado(i));
+    return this.repo.registrarVerificacion({
+      informeId: i.id, usuario: usuario.usuario, rol: usuario.rol, hashGuardado: i.hashSha256, hashCalculado, coincide: i.hashSha256 !== null && i.hashSha256 === hashCalculado,
+    });
+  }
+
+  /** Las verificaciones del sello y los intentos de modificar el informe, en orden. */
+  async auditoria(id: string): Promise<AuditoriaInforme> {
+    const i = await this.obtener(id);
+    const [verificaciones, intentosModificacion] = await Promise.all([this.repo.listarVerificaciones(i.id), this.repo.listarIntentos(i.id)]);
+    return { informeId: i.id, verificaciones, intentosModificacion: intentosModificacion as IntentoModificacion[] };
   }
 }

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-17T14:45:41.433Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-17T14:51:53.481Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -33,7 +33,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 25 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 26 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 27 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
-| 28 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
+| 28 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Haciendo | germanG | RF-01 | — |
 | 29 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 30 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 31 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | tested ✓ | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
@@ -46,7 +46,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 38 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | tested ✓ | germanG | RF-02 | — |
 | 39 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 40 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
-| 41 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | testing | germanG | RF-01 | — |
+| 41 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | tested ✓ | germanG | RF-01 | — |
 | 42 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 43 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 44 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |

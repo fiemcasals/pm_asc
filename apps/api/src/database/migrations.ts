@@ -841,4 +841,26 @@ export const MIGRATIONS: Migration[] = [
       REVOKE UPDATE, DELETE ON remitos_eca FROM ascensores_app;
     `,
   },
+  {
+    id: '028_reclamos_admin',
+    sql: `
+      -- HU-05 RF-02: el reclamo a la administración del consorcio por una visita con advertencia: quién lo hizo y cuándo. Uno por visita.
+      CREATE TABLE reclamos_admin (
+        id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        maquina_id     text NOT NULL,
+        visita_id      text NOT NULL UNIQUE,
+        administracion text NOT NULL,
+        direccion      text NOT NULL,
+        reclamado_por  text NOT NULL,
+        reclamado_en   timestamptz NOT NULL DEFAULT now()
+      );
+      ALTER TABLE reclamos_admin ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_reclamos_admin_admin_secretaria ON reclamos_admin;
+      CREATE POLICY rls_reclamos_admin_admin_secretaria ON reclamos_admin
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- El reclamo registrado no se edita ni se borra desde la aplicación: queda como constancia.
+      REVOKE UPDATE, DELETE ON reclamos_admin FROM ascensores_app;
+    `,
+  },
 ];

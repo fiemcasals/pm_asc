@@ -1,11 +1,46 @@
 import { MaquinaAsignada } from '../firmante/firmante.types';
-import { FilaMonitoreo, FiltrosMonitoreo, PaginaMonitoreo, RemitoEca } from './backoffice.types';
+import { DetalleVisita, FilaMonitoreo, FiltrosMonitoreo, PaginaMonitoreo, ReclamoAdmin, RemitoEca } from './backoffice.types';
+
+/** Las fotos del informe de una visita: las obligatorias (cables y frente) y la de la cabina trabada, sin las que están vacías. */
+export function fotosDe(m: MaquinaAsignada): { etiqueta: string; url: string }[] {
+  const f: { etiqueta: string; url: string }[] = [];
+  const o = m.visita?.fotosObligatorias;
+  if (o?.cables?.trim()) f.push({ etiqueta: 'Cables', url: o.cables.trim() });
+  if (o?.frente?.trim()) f.push({ etiqueta: 'Frente del edificio', url: o.frente.trim() });
+  if (m.alertaCritica?.fotografiaCabinaTrabada?.trim()) f.push({ etiqueta: 'Cabina trabada', url: m.alertaCritica.fotografiaCabinaTrabada.trim() });
+  return f;
+}
+
+export function aDetalle(m: MaquinaAsignada): DetalleVisita {
+  const v = m.visita;
+  return {
+    id: v ? v.id : `sin-visita:${m.id}`,
+    maquinaId: m.id,
+    direccion: m.edificio.direccion,
+    consorcio: m.edificio.consorcio,
+    administracion: m.edificio.administracion,
+    eca: m.eca,
+    inspector: v?.inspector ?? m.rtCalle,
+    estadoVisita: m.estado,
+    fecha: v?.fecha ?? null,
+    titulo: m.alertaCritica?.titulo ?? null,
+    motivo: m.alertaCritica?.motivo ?? null,
+    motivoAdvertencia: v?.motivoAdvertencia ?? null,
+    nombreEncargado: v?.nombreEncargado ?? null,
+    fotos: fotosDe(m),
+    checklist: (m.alertaCritica?.checklist ?? []).map((c) => ({ item: c.item, estado: c.estado, observaciones: c.observaciones })),
+  };
+}
 
 /** Para comparar textos sin mayúsculas ni tildes: «Corrientes» encuentra «CORRIÉNTES». */
 export const normalizar = (t: string): string => t.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 
 /** La fila del tablero de un equipo, con el remito a la ECA de su visita si ya se mandó. */
-export function aFila(m: MaquinaAsignada, remitoDe: (visitaId: string) => RemitoEca | null): FilaMonitoreo {
+export function aFila(
+  m: MaquinaAsignada,
+  remitoDe: (visitaId: string) => RemitoEca | null,
+  reclamoDe: (visitaId: string) => ReclamoAdmin | null = () => null,
+): FilaMonitoreo {
   const v = m.visita;
   const id = v ? v.id : `sin-visita:${m.id}`;
   return {
@@ -25,6 +60,10 @@ export function aFila(m: MaquinaAsignada, remitoDe: (visitaId: string) => Remito
     rechazada: v?.rechazada ?? false,
     alertaCritica: !!m.alertaCritica,
     remito: v ? remitoDe(v.id) : null,
+    administracion: m.edificio.administracion,
+    reclamo: v ? reclamoDe(v.id) : null,
+    fotos: fotosDe(m).length,
+    itemsChecklist: m.alertaCritica?.checklist?.length ?? 0,
   };
 }
 

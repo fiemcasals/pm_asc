@@ -41,6 +41,9 @@ import { VisitasFallidasRepository } from './visitas-fallidas/visitas-fallidas.r
 import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-fallidas.repository';
 import { ParadasController } from './paradas/paradas.controller';
 import { ParadasService } from './paradas/paradas.service';
+import { BackofficeController } from './backoffice/backoffice.controller';
+import { BackofficeService } from './backoffice/backoffice.service';
+import { PgRemitosRepository, RemitosRepository } from './backoffice/remitos.repository';
 import { IniciosController } from './inicios-inspeccion/inicios.controller';
 import { IniciosRepository, } from './inicios-inspeccion/inicios.repository';
 import { PgIniciosRepository } from './inicios-inspeccion/inicios.repository';
@@ -98,6 +101,7 @@ export class AppModule implements NestModule {
         HorariosController,
         RtMapaController,
         IniciosController,
+        BackofficeController,
         FallasCriticasController,
         SeguridadRlsController,
         SemaforoController,
@@ -131,6 +135,8 @@ export class AppModule implements NestModule {
         RtMapaService,
         { provide: IniciosRepository, useClass: PgIniciosRepository },
         IniciosService,
+        { provide: RemitosRepository, useClass: PgRemitosRepository },
+        BackofficeService,
         FallasCriticasService,
         { provide: SemaforoRepository, useClass: PgSemaforoRepository },
         SemaforoService,

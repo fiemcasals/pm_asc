@@ -818,4 +818,27 @@ export const MIGRATIONS: Migration[] = [
         FOR EACH ROW EXECUTE FUNCTION inicios_inspeccion_inmutable();
     `,
   },
+  {
+    id: '027_remitos_eca',
+    sql: `
+      -- HU-05 RF-01: el envío del remito digital de una visita a la empresa conservadora (ECA): quién lo mandó y cuándo.
+      -- Un remito por visita. maquina_id y visita_id son los del módulo de visitas (identificadores de texto).
+      CREATE TABLE remitos_eca (
+        id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        maquina_id   text NOT NULL,
+        visita_id    text NOT NULL UNIQUE,
+        eca          text NOT NULL,
+        direccion    text NOT NULL,
+        enviado_por  text NOT NULL,
+        enviado_en   timestamptz NOT NULL DEFAULT now()
+      );
+      ALTER TABLE remitos_eca ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_remitos_eca_admin_secretaria ON remitos_eca;
+      CREATE POLICY rls_remitos_eca_admin_secretaria ON remitos_eca
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- El remito enviado no se edita ni se borra desde la aplicación: queda como constancia.
+      REVOKE UPDATE, DELETE ON remitos_eca FROM ascensores_app;
+    `,
+  },
 ];

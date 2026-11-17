@@ -10,6 +10,7 @@ import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usua
 import { configureApp } from '../src/app.setup';
 import { AppConfig, loadConfig } from '../src/config';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from '../src/consorcios/consorcio.types';
+import { InMemoryRemitosRepository, RemitosRepository } from '../src/backoffice/remitos.repository';
 import { InMemoryIniciosRepository, IniciosRepository } from '../src/inicios-inspeccion/inicios.repository';
 import { InMemoryRtMapaRepository, RtMapaRepository } from '../src/rt-mapa/rt-mapa.repository';
 import { HorariosRepository, InMemoryHorariosRepository } from '../src/horarios/horarios.repository';
@@ -287,6 +288,7 @@ export async function createTestApp(
   horarios: HorariosRepository = new InMemoryHorariosRepository(),
   rtMapa: RtMapaRepository = new InMemoryRtMapaRepository(),
   inicios: IniciosRepository = new InMemoryIniciosRepository(),
+  remitos: RemitosRepository = new InMemoryRemitosRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   // Por defecto las pruebas no exigen el día de separación entre visitas fallidas (HU-07 RF-05): lo piden explícitamente las que lo prueban.
   const config = loadConfig({ VISITAS_FALLIDAS_MIN_DIAS: '0', ...env });
@@ -311,6 +313,8 @@ export async function createTestApp(
     .useValue(rtMapa)
     .overrideProvider(IniciosRepository)
     .useValue(inicios)
+    .overrideProvider(RemitosRepository)
+    .useValue(remitos)
     .overrideProvider(Mailer)
     .useValue(mailer)
     .compile();

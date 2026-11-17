@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-17T13:55:01.799Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-17T13:56:06.831Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -78,7 +78,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 70 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
 | 71 | RNF-01 | Sellado del informe | HU-18 | — | — | Hacer | germanG | RF-01 | — |
 | 72 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | Hacer | germanG | RF-01, RNF-01 | — |
-| 73 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | Hecho | germanG | RF-05 | — |
+| 73 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | testing | germanG | RF-05 | — |
 
 ## Detalle
 

@@ -29,6 +29,8 @@ import { PgSemaforoRepository } from './semaforo/pg-semaforo.repository';
 import { SemaforoController } from './semaforo/semaforo.controller';
 import { SemaforoRepository } from './semaforo/semaforo.repository';
 import { SemaforoService } from './semaforo/semaforo.service';
+import { AvisosController } from './avisos/avisos.controller';
+import { AvisosService } from './avisos/avisos.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
@@ -75,6 +77,7 @@ export class AppModule implements NestModule {
         FirmanteController,
         EcaController,
         WhatsAppController,
+        AvisosController,
         VisitasFallidasController,
         RecorridoController,
         ParadasController,
@@ -101,6 +104,7 @@ export class AppModule implements NestModule {
         WhatsAppFormatterService,
         WhatsAppConnectorService,
         WhatsAppTriggerService,
+        AvisosService,
         VisitasFallidasService,
         ParadasService,
         { provide: PagosRepository, useClass: PgPagosRepository },

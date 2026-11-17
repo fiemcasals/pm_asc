@@ -69,6 +69,9 @@ export interface RegistroEnvioWhatsApp {
   idMensaje: string;
   motivo?: string;
   enlaceDirecto?: string;
+  /** Quién aprobó el aviso que originó el envío y cuándo (HU-11 RF-05). */
+  aprobadoPor?: string;
+  aprobadoEn?: string;
   duracionMs: number;
   timestamp: string;
 }

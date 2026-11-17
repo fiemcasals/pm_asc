@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { AvisosService } from '../avisos/avisos.service';
 import { FirmanteService } from '../firmante/firmante.service';
 import { WhatsAppConnectorService } from './whatsapp-connector.service';
 import {
@@ -13,6 +14,7 @@ export class WhatsAppTriggerService {
   constructor(
     private readonly connector: WhatsAppConnectorService,
     private readonly firmanteService: FirmanteService,
+    private readonly avisos: AvisosService,
   ) {}
 
   /**
@@ -24,6 +26,12 @@ export class WhatsAppTriggerService {
   ): Promise<WhatsAppDisparoResult> {
     const inicioMs = Date.now();
     const idBusqueda = dto.alertaId || dto.maquinaId;
+
+    if (idBusqueda && this.avisos.estadoDe(idBusqueda) === 'Pendiente de revisión') {
+      throw new ConflictException(
+        `El aviso de ${idBusqueda} está pendiente de revisión: la Secretaría tiene que aprobarlo («Aprobar y enviar») antes de que salga ningún WhatsApp ni correo.`,
+      );
+    }
 
     const maquinas = this.firmanteService.getMaquinas();
     const maquina = maquinas.find(
@@ -41,6 +49,13 @@ export class WhatsAppTriggerService {
     }
 
     const alerta = maquina.alertaCritica;
+    // HU-11 RF-05: ningún aviso sale sin la aprobación de la Secretaría. Si el aviso todavía no existe se crea pendiente.
+    const aviso = this.avisos.paraAlertaDeMaquina(maquina);
+    if (aviso.estado === 'Pendiente de revisión') {
+      throw new ConflictException(
+        `El aviso de la alerta ${alerta.id} está pendiente de revisión: la Secretaría tiene que aprobarlo («Aprobar y enviar») antes de que salga ningún WhatsApp ni correo.`,
+      );
+    }
     const baseUrl = dto.baseUrl || 'https://localhost:8050';
     const enlaceDirecto = `${baseUrl}/api/eca/remito/${alerta.id}/informe`;
     const telefono = dto.telefonoDestino || '+5491144009988';

@@ -1,4 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
+import { AvisosService } from '../src/avisos/avisos.service';
+import { Mailer } from '../src/auth/mailer';
+import { FallasCriticasService } from '../src/fallas-criticas/fallas-criticas.service';
 import { FirmanteService } from '../src/firmante/firmante.service';
 import { WhatsAppConnectorService } from '../src/whatsapp/whatsapp-connector.service';
 import { WhatsAppFormatterService } from '../src/whatsapp/whatsapp-formatter.service';
@@ -167,9 +170,17 @@ describe('WhatsApp Module (HU-11 / RF-01, RF-02, RF-03)', () => {
     let firmanteService: FirmanteService;
     let triggerService: WhatsAppTriggerService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       firmanteService = new FirmanteService();
-      triggerService = new WhatsAppTriggerService(connector, firmanteService);
+      // HU-11 RF-05: el disparo exige un aviso aprobado por la Secretaría. Se aprueba con otro conector, así el historial de este queda limpio.
+      const conectorDeAprobacion = new WhatsAppConnectorService(formatter);
+      conectorDeAprobacion.setTransport({ postMessage: async () => ({ status: 200 }) });
+      const mailer = { habilitado: false, enviar: async () => undefined } as unknown as Mailer;
+      const avisos = new AvisosService(new FallasCriticasService(firmanteService), conectorDeAprobacion, mailer);
+      const maquina = firmanteService.getMaquinas().find((m) => m.alertaCritica?.id === 'ALT-MAICON-001')!;
+      avisos.paraAlertaDeMaquina(maquina);
+      await avisos.aprobar('ALT-MAICON-001', { usuario: 'sec1' });
+      triggerService = new WhatsAppTriggerService(connector, firmanteService, avisos);
     });
 
     it('RF-03 Criterio 3: registra el envío automático como no realizado cuando no hay proveedor configurado', async () => {

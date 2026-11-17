@@ -224,6 +224,16 @@ export class AuthService implements OnApplicationBootstrap {
     return aConContacto(guardado);
   }
 
+  /** La zona de trabajo de un RT de Calle (HU-16 RF-01): se muestra en el encabezado de su pantalla. null la borra. */
+  async guardarZona(id: string, zona: string | null): Promise<UsuarioConContacto> {
+    const usuario = await this.usuarios.buscarPorId(id);
+    if (!usuario) throw new NotFoundException('No existe ese usuario.');
+    if (usuario.rol !== 'rt_calle') throw new ConflictException('La zona sólo se carga a usuarios con rol rt_calle.');
+    const guardado = await this.usuarios.guardarZona(id, zona);
+    if (!guardado) throw new NotFoundException('No existe ese usuario.');
+    return aConContacto(guardado);
+  }
+
   /** Revoca todas las sesiones del usuario: el refresco y cualquier pedido con sus tokens dan 401. */
   async revocarSesiones(usuarioId: string): Promise<void> {
     const ok = await this.usuarios.revocarSesiones(usuarioId, new Date(this.reloj.ahora()));

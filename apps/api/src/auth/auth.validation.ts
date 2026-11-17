@@ -121,3 +121,16 @@ export function validarContacto(body: unknown): { telefono: string | null; email
   return { telefono, email };
 }
 
+
+const MAX_ZONA = 40;
+
+/** La zona de un RT de Calle: un texto de hasta 40 caracteres; vacío o null la borra. El cuerpo tiene que traer el campo. */
+export function validarZona(body: unknown): string | null {
+  const b = (body ?? {}) as Record<string, unknown>;
+  if (b.zona === undefined) throw new BadRequestException(['mandá zona (null la borra)']);
+  if (b.zona === null) return null;
+  if (typeof b.zona !== 'string') throw new BadRequestException(['zona tiene que ser un texto']);
+  const t = b.zona.trim();
+  if (t.length > MAX_ZONA) throw new BadRequestException([`zona no puede superar los ${MAX_ZONA} caracteres`]);
+  return t === '' ? null : t;
+}

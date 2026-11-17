@@ -1,5 +1,7 @@
 import { INestApplication, Logger } from '@nestjs/common';
 import request from 'supertest';
+import { AvisosService } from '../src/avisos/avisos.service';
+import { FirmanteService } from '../src/firmante/firmante.service';
 import { WhatsAppConnectorService } from '../src/whatsapp/whatsapp-connector.service';
 import { MENSAJE_WHATSAPP_NO_CONFIGURADO } from '../src/whatsapp/whatsapp.types';
 import { createTestApp } from './create-test-app';
@@ -117,6 +119,14 @@ describe('WhatsAppController (e2e - HU-11 / RF-01, RF-02, RF-03)', () => {
   });
 
   describe('POST /api/whatsapp/trigger-alerta-critica (RF-02 y RF-03 Criterio 3)', () => {
+    // HU-11 RF-05: el disparo exige un aviso aprobado; acá se aprueba antes (la aprobación por HTTP se prueba en avisos.e2e-spec).
+    beforeAll(async () => {
+      const avisos = app.get(AvisosService);
+      const maquina = app.get(FirmanteService).getMaquinas().find((m) => m.alertaCritica?.id === 'ALT-MAICON-001')!;
+      avisos.paraAlertaDeMaquina(maquina);
+      await avisos.aprobar('ALT-MAICON-001', { usuario: 'sec1' });
+    });
+
     it('sin proveedor configurado registra el disparo automático como no realizado en historial', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/whatsapp/trigger-alerta-critica')

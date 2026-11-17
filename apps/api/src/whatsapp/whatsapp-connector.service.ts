@@ -14,6 +14,9 @@ export interface ContextoEnvioWhatsApp {
   alertaId?: string;
   maquinaId?: string;
   enlaceDirecto?: string;
+  /** Quién aprobó el aviso y cuándo (HU-11 RF-05). */
+  aprobadoPor?: string | null;
+  aprobadoEn?: string | null;
 }
 
 @Injectable()
@@ -147,6 +150,7 @@ export class WhatsAppConnectorService {
       idMensaje: res.idMensaje,
       motivo: res.error,
       enlaceDirecto: ctx.enlaceDirecto,
+      ...(ctx.aprobadoPor ? { aprobadoPor: ctx.aprobadoPor, aprobadoEn: ctx.aprobadoEn ?? undefined } : {}),
       duracionMs: res.tiempoRespuestaMs,
       timestamp: res.timestampEnvio,
     });

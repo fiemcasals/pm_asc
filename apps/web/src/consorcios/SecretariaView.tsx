@@ -13,6 +13,7 @@ import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
 import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
 import { SemaforoView } from '../semaforo/SemaforoView';
+import { BandejaAvisos } from '../avisos/BandejaAvisos';
 import { puedeSalir } from './roles';
 
 interface EdificiosPanelProps {
@@ -237,7 +238,7 @@ interface SecretariaViewProps {
 }
 
 export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
-  const [pestana, setPestana] = useState<'edificios' | 'roles' | 'semaforo'>('edificios');
+  const [pestana, setPestana] = useState<'edificios' | 'roles' | 'semaforo' | 'avisos'>('edificios');
 
   useEffect(() => {
     if (consorcioInicialId) {
@@ -269,11 +270,19 @@ export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
         >
           Semáforo
         </button>
+        <button
+          className={`tab-btn ${pestana === 'avisos' ? 'active' : ''}`}
+          onClick={() => puedeSalir() && setPestana('avisos')}
+          data-testid="pestana-avisos"
+        >
+          Avisos a la ECA
+        </button>
       </nav>
 
       {pestana === 'edificios' && <EdificiosPanel consorcioInicialId={consorcioInicialId} />}
       {pestana === 'roles' && <AsignacionRoles />}
       {pestana === 'semaforo' && <SemaforoView />}
+      {pestana === 'avisos' && <BandejaAvisos />}
 
       <AlertaFallaCritica />
     </>

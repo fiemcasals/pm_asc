@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-17T14:44:26.654Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-17T14:45:41.433Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -46,7 +46,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 38 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | tested ✓ | germanG | RF-02 | — |
 | 39 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 40 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
-| 41 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | Hecho ✓ dev | germanG | RF-01 | — |
+| 41 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | testing | germanG | RF-01 | — |
 | 42 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 43 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 44 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |

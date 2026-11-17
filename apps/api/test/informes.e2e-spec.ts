@@ -222,4 +222,67 @@ describe('Informe consolidado de la visita: firma y «Sin firma» (HU-18 RF-01)'
       expect(repo.verificaciones).toHaveLength(0);
     });
   });
+
+  describe('HU-18 RNF-02: reenvío sin duplicar', () => {
+    const ID = '3f2b8a4e-5c1d-4e7a-9b60-1d2c3e4f5a6b';
+
+    it('el primer envío responde 201; reenviarlo responde 200 con el mismo informe (mismo id, hash y horas) y no lo duplica', async () => {
+      const primero = await cerrar(informe({ clientReportId: ID }));
+      const segundo = await cerrar(informe({ clientReportId: ID }));
+
+      expect(primero.status).toBe(201);
+      expect(segundo.status).toBe(200);
+      expect(segundo.body).toEqual(primero.body);
+      expect(primero.body.clientReportId).toBe(ID);
+      expect(repo.informes).toHaveLength(1);
+    });
+
+    it('reenviar muchas veces sigue siendo un solo informe', async () => {
+      for (let i = 0; i < 4; i++) await cerrar(informe({ clientReportId: ID }));
+
+      expect(repo.informes).toHaveLength(1);
+    });
+
+    it('dos envíos simultáneos (la cola y un reintento a la vez) crean un solo informe', async () => {
+      const [a, b] = await Promise.all([cerrar(informe({ clientReportId: ID })), cerrar(informe({ clientReportId: ID }))]);
+
+      expect([a.status, b.status].sort()).toEqual([200, 201]);
+      expect(a.body.id).toBe(b.body.id);
+      expect(repo.informes).toHaveLength(1);
+    });
+
+    it('un informe reenviado sigue sellado: la verificación coincide y el listado lo trae una sola vez', async () => {
+      const r = await cerrar(informe({ clientReportId: ID }));
+      await cerrar(informe({ clientReportId: ID }));
+
+      const v = await http().post(`/api/informes-visita/${r.body.id}/verificar`).set('Authorization', `Bearer ${tokens.secretaria}`);
+
+      expect(v.body.coincide).toBe(true);
+      expect((await ver('secretaria')).body).toHaveLength(1);
+    });
+
+    it('informes sin identificador o con identificadores distintos son informes distintos', async () => {
+      await cerrar(informe());
+      await cerrar(informe());
+      await cerrar(informe({ clientReportId: ID }));
+      await cerrar(informe({ clientReportId: 'otro-identificador-1' }));
+
+      expect(repo.informes).toHaveLength(4);
+    });
+
+    it('un identificador mal formado → 400; uno que usó otro usuario → 409', async () => {
+      expect((await cerrar(informe({ clientReportId: 'corto' }))).status).toBe(400);
+      expect((await cerrar(informe({ clientReportId: 'con espacios y símbolos!' }))).status).toBe(400);
+      await repo.guardar({ ...(await cerrar(informe())).body, id: '00000000-0000-4000-8000-000000000001', usuario: 'otro.rt', clientReportId: ID });
+
+      expect((await cerrar(informe({ clientReportId: ID }))).status).toBe(409);
+    });
+
+    it('el reenvío de un informe ya creado sigue respondiendo 200 sin sesión de otro rol: la Secretaría no cierra informes (403)', async () => {
+      await cerrar(informe({ clientReportId: ID }));
+
+      expect((await cerrar(informe({ clientReportId: ID }), 'secretaria')).status).toBe(403);
+      expect(repo.informes).toHaveLength(1);
+    });
+  });
 });

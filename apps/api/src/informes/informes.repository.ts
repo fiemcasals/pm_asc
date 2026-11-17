@@ -11,8 +11,12 @@ export type NuevaVerificacion = Omit<VerificacionInforme, 'id' | 'verificadoEn'>
 export abstract class InformesRepository {
   /** ¿Existe el edificio y lo ve quien consulta? (el RT sólo ve los que tiene asignados). */
   abstract existeEdificio(consorcioId: string): Promise<boolean>;
-  /** Guarda el informe ya sellado (con su id, su hora del servidor y su hash). */
-  abstract guardar(informe: InformeVisita): Promise<InformeVisita>;
+  /**
+   * Guarda el informe ya sellado (con su id, su hora del servidor y su hash). Devuelve `null` si ya había uno con el mismo identificador del
+   * celular (`clientReportId`): la unicidad la garantiza la base, así que dos envíos simultáneos no pueden crear dos informes.
+   */
+  abstract guardar(informe: InformeVisita): Promise<InformeVisita | null>;
+  abstract buscarPorClientId(clientReportId: string): Promise<InformeVisita | null>;
   abstract listar(sinFirma?: boolean): Promise<InformeVisita[]>;
   abstract obtener(id: string): Promise<InformeVisita | null>;
   abstract registrarIntento(n: NuevoIntento): Promise<IntentoModificacion>;
@@ -33,8 +37,14 @@ export class InMemoryInformesRepository extends InformesRepository {
   }
 
   async guardar(i: InformeVisita) {
+    if (i.clientReportId && this.informes.some((x) => x.clientReportId === i.clientReportId)) return null;
     this.informes.push(structuredClone(i));
     return structuredClone(i);
+  }
+
+  async buscarPorClientId(clientReportId: string) {
+    const i = this.informes.find((x) => x.clientReportId === clientReportId);
+    return i ? structuredClone(i) : null;
   }
 
   async listar(sinFirma?: boolean) {
@@ -79,12 +89,13 @@ interface Fila {
   hora_servidor: Date | string;
   hash_sha256: string | null;
   version_hash: string | null;
+  client_report_id: string | null;
 }
-const COLUMNAS = 'id::text AS id, consorcio_id::text AS consorcio_id, usuario, contenido, firma, sin_firma, requiere_revision, hora_dispositivo, hora_servidor, hash_sha256, version_hash';
+const COLUMNAS = 'id::text AS id, consorcio_id::text AS consorcio_id, usuario, contenido, firma, sin_firma, requiere_revision, hora_dispositivo, hora_servidor, hash_sha256, version_hash, client_report_id';
 const aInforme = (f: Fila): InformeVisita => ({
   id: f.id, consorcioId: f.consorcio_id, usuario: f.usuario, equipos: f.contenido.equipos, firma: f.firma, sinFirma: f.sin_firma,
   requiereRevision: f.requiere_revision, horaDispositivo: new Date(f.hora_dispositivo).toISOString(), horaServidor: new Date(f.hora_servidor).toISOString(),
-  hashSha256: f.hash_sha256, versionHash: f.version_hash,
+  hashSha256: f.hash_sha256, versionHash: f.version_hash, clientReportId: f.client_report_id,
 });
 
 interface FilaIntento {
@@ -117,13 +128,19 @@ export class PgInformesRepository extends InformesRepository {
     return (await this.db.query('SELECT 1 FROM consorcios WHERE id = $1', [consorcioId])).length > 0;
   }
 
-  async guardar(i: InformeVisita): Promise<InformeVisita> {
+  async guardar(i: InformeVisita): Promise<InformeVisita | null> {
     const filas = await this.db.query<Fila>(
-      `INSERT INTO informes_visita (id, consorcio_id, usuario, contenido, firma, sin_firma, requiere_revision, hora_dispositivo, hora_servidor, hash_sha256, version_hash)
-       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, $7, $8, $9, $10, $11) RETURNING ${COLUMNAS}`,
-      [i.id, i.consorcioId, i.usuario, JSON.stringify({ equipos: i.equipos }), i.firma ? JSON.stringify(i.firma) : null, i.sinFirma ? JSON.stringify(i.sinFirma) : null, i.requiereRevision, i.horaDispositivo, i.horaServidor, i.hashSha256, i.versionHash],
+      `INSERT INTO informes_visita (id, consorcio_id, usuario, contenido, firma, sin_firma, requiere_revision, hora_dispositivo, hora_servidor, hash_sha256, version_hash, client_report_id)
+       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, $7, $8, $9, $10, $11, $12)
+       ON CONFLICT (client_report_id) DO NOTHING RETURNING ${COLUMNAS}`,
+      [i.id, i.consorcioId, i.usuario, JSON.stringify({ equipos: i.equipos }), i.firma ? JSON.stringify(i.firma) : null, i.sinFirma ? JSON.stringify(i.sinFirma) : null, i.requiereRevision, i.horaDispositivo, i.horaServidor, i.hashSha256, i.versionHash, i.clientReportId],
     );
-    return aInforme(filas[0]);
+    return filas[0] ? aInforme(filas[0]) : null;
+  }
+
+  async buscarPorClientId(clientReportId: string) {
+    const filas = await this.db.query<Fila>(`SELECT ${COLUMNAS} FROM informes_visita WHERE client_report_id = $1`, [clientReportId]);
+    return filas[0] ? aInforme(filas[0]) : null;
   }
 
   async listar(sinFirma?: boolean) {

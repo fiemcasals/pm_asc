@@ -79,7 +79,7 @@ describe('hashInforme (criterio 1: SHA-256 del contenido, la firma y las fotos)'
     expect(hashInforme(c)).not.toBe(hashInforme(base()));
   });
   it('contenidoSellado quita el hash y su versión y deja todo lo demás', () => {
-    const i = { ...base(), hashSha256: 'x', versionHash: 'v' };
+    const i = { ...base(), hashSha256: 'x', versionHash: 'v', clientReportId: 'abcdefgh' };
 
     expect(contenidoSellado(i)).toEqual(base());
   });

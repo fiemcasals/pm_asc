@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { fetchConSesion } from '../auth/sesion';
+import React, { useEffect, useRef, useState } from 'react';
+import { leerPerfil } from '../auth/sesion';
 import { comprimirFotoAnomalia } from '../checklist/fotos';
 import { type EquipoInspeccion } from '../checklist/navegacion';
+import { alCambiarCola, cerrarInforme } from './cola';
+import { depsDeApp } from './colaApp';
 import { FirmaPad } from './FirmaPad';
 import {
   CARACTERES,
@@ -10,7 +12,7 @@ import {
   type InformeCerrado,
   type Punto,
   armarInforme,
-  enviarInforme,
+  nuevoIdInforme,
   selloCorto,
   erroresFirmante,
   erroresSinFirma,
@@ -42,6 +44,21 @@ export function CierreInforme({ consorcioId, equipos, visita, onCerrado }: Props
   const [errores, setErrores] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [cerrado, setCerrado] = useState<InformeCerrado | null>(null);
+  // Quedó guardado en el celular y se sube solo (HU-18 RNF-02).
+  const [enCola, setEnCola] = useState<{ requiereRevision: boolean } | null>(null);
+  // El identificador del informe se genera una vez por cierre y se reusa en cada reintento: así la API no lo duplica.
+  const idInforme = useRef<string | null>(null);
+
+  // Si el informe quedó en la cola y por fin se sube con esta pantalla abierta, se pasa a mostrar el cierre con su sello.
+  useEffect(() => {
+    if (!enCola) return;
+    return alCambiarCola((e) => {
+      if (e.tipo !== 'enviado' || e.clientReportId !== idInforme.current) return;
+      setEnCola(null);
+      setCerrado(e.informe);
+      onCerrado?.(e.informe);
+    });
+  }, [enCola, onCerrado]);
 
   const elegirFoto = async (archivo: File | undefined) => {
     if (!archivo) return;
@@ -56,14 +73,40 @@ export function CierreInforme({ consorcioId, equipos, visita, onCerrado }: Props
     const mal = modo === 'firma' ? [...erroresFirmante(datos), ...(firmaTrazada(firma.trazos) && firma.imagen ? [] : ['La firma está vacía: firmá con el dedo en el recuadro.'])] : erroresSinFirma({ motivo, foto });
     setErrores(mal);
     if (mal.length > 0) return;
+    const usuario = leerPerfil()?.usuario;
+    if (!usuario) return setErrores(['No hay una sesión abierta: ingresá de nuevo.']);
     setEnviando(true);
-    const cuerpo = armarInforme(consorcioId, equipos, visita, modo === 'firma' ? { firma: { datos, imagen: firma.imagen, trazos: firma.trazos } } : { sinFirma: { motivo, foto } });
-    const r = await enviarInforme(cuerpo, fetchConSesion);
+    idInforme.current ??= nuevoIdInforme();
+    const cuerpo = armarInforme(
+      consorcioId, equipos, visita,
+      modo === 'firma' ? { firma: { datos, imagen: firma.imagen, trazos: firma.trazos } } : { sinFirma: { motivo, foto } },
+      new Date(), idInforme.current,
+    );
+    // Se guarda en el celular y se intenta subir; sin señal o con el envío cortado queda en la cola y se reintenta solo.
+    const r = await cerrarInforme({ ...depsDeApp(usuario), cuerpo, enLinea: typeof navigator === 'undefined' ? true : navigator.onLine });
     setEnviando(false);
-    if (!r.ok) return setErrores([r.error]);
-    setCerrado(r.informe);
-    onCerrado?.(r.informe);
+    if (r.estado === 'enviado') {
+      setCerrado(r.informe);
+      onCerrado?.(r.informe);
+    } else if (r.estado === 'encolado') {
+      setEnCola({ requiereRevision: modo === 'sin_firma' });
+    } else {
+      setErrores([r.error]);
+    }
   };
+
+  if (enCola) {
+    return (
+      <section className="cierre-informe" data-testid="informe-encolado" role="status">
+        <h3>Informe guardado en el celular</h3>
+        <p>
+          Todavía no se subió: se envía solo en cuanto haya señal. No hace falta volver a cerrarlo.
+          {enCola.requiereRevision ? ' Cuando llegue, quedará cerrado «Sin firma» y la Secretaría y el Firmante lo van a revisar.' : ''}
+        </p>
+        <p className="portal-desc">Mientras tanto figura en «inspecciones sin subir».</p>
+      </section>
+    );
+  }
 
   if (cerrado) {
     return (

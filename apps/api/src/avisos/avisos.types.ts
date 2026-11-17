@@ -30,6 +30,10 @@ export interface AvisoFalla {
   /** Quién aprobó el envío y cuándo (HU-11 RF-05, criterio 4). */
   aprobadoPor: string | null;
   aprobadoEn: string | null;
+  /** Hasta cuándo sirve el enlace del informe que va en el aviso (7 días desde el envío); null mientras no se envió (HU-11 RF-06). */
+  enlaceVenceEn: string | null;
+  /** El enlace del informe que viaja en el aviso; sólo lo ven la Secretaría y el Administrador (si el WhatsApp falla se puede mandar a mano). */
+  enlace: string | null;
   /** Cada envío intentado al aprobar (WhatsApp a la ECA y al Firmante, y el correo a la ECA). */
   envios: EnvioAviso[];
 }
@@ -46,3 +50,6 @@ export const DESTINOS_PROVISORIOS = {
   telefonoFirmante: '+5491155000001',
   emailEca: 'avisos-eca@maicon.com.ar',
 } as const;
+
+/** El enlace del aviso vence a los 7 días del envío (HU-11 RF-06). */
+export const VENCIMIENTO_ENLACE_MS = 7 * 24 * 60 * 60 * 1000;

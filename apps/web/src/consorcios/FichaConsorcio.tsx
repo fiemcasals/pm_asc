@@ -15,6 +15,7 @@ import {
   VisitaFallidaRegistro,
 } from './consorcios';
 import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
+import { HorariosEdificioEditor } from '../horarios/HorariosEdificioEditor';
 
 interface FichaConsorcioProps {
   consorcio: Consorcio;
@@ -431,6 +432,11 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
               )}
             </div>
           )}
+        </div>
+
+        {/* Sección HU-01 RF-04: horarios de atención por edificio */}
+        <div className="ficha-section" data-testid="seccion-horarios">
+          <HorariosEdificioEditor consorcioId={consorcio.id} />
         </div>
 
         {/* Sección HU-07: Protocolo de Visitas Fallidas y Advertencias */}

@@ -11,9 +11,11 @@ import {
 import { type FallaPisoRegistro } from './fallasPiso';
 
 export const OFFLINE_DB_NAME = 'mant_asc_inspeccion_db';
-export const OFFLINE_DB_VERSION = 1;
+export const OFFLINE_DB_VERSION = 2;
 export const STORE_VISITAS = 'visitas_en_curso';
 export const STORE_COLA_FALLAS = 'cola_fallas_criticas';
+/** Informes de visita ya cerrados que todavía no se subieron (HU-18 RNF-02). */
+export const STORE_COLA_INFORMES = 'cola_informes';
 export const VISITA_ACTUAL_KEY = 'visita-actual';
 
 export interface VisitaEnCursoSnapshot {
@@ -71,6 +73,10 @@ export async function abrirInspeccionDb(customFactory?: IDBFactory): Promise<IDB
       }
       if (!db.objectStoreNames.contains(STORE_COLA_FALLAS)) {
         db.createObjectStore(STORE_COLA_FALLAS, { keyPath: 'clientReportId' });
+      }
+      // Se agrega al subir de versión: quien ya tenía la base v1 conserva su visita en curso y su cola de fallas críticas.
+      if (!db.objectStoreNames.contains(STORE_COLA_INFORMES)) {
+        db.createObjectStore(STORE_COLA_INFORMES, { keyPath: 'clientReportId' });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -184,6 +190,56 @@ export async function eliminarInformeDeCola(
   try {
     const tx = db.transaction(STORE_COLA_FALLAS, 'readwrite');
     tx.objectStore(STORE_COLA_FALLAS).delete(clientReportId);
+    await txDone(tx);
+  } finally {
+    db.close();
+  }
+}
+
+// ---- Cola de informes de visita cerrados (HU-18 RNF-02). Cada uno guarda el cuerpo completo (con fotos y firma) hasta que la API lo confirma.
+
+/**
+ * Un informe cerrado esperando para subir. `usuario` es quien lo cerró: sólo esa persona lo envía (la API le pone al informe el usuario de la
+ * sesión que lo manda). `rechazado` es el que el servidor rechazó de forma definitiva (no se reintenta solo).
+ */
+export interface InformeVisitaEncolado {
+  clientReportId: string;
+  usuario: string;
+  cuerpo: unknown;
+  creadoEn: string;
+  estado: 'pendiente' | 'rechazado';
+  ultimoError?: string;
+}
+
+export async function encolarInformeVisita(item: InformeVisitaEncolado, customFactory?: IDBFactory): Promise<void> {
+  const db = await abrirInspeccionDb(customFactory);
+  try {
+    const tx = db.transaction(STORE_COLA_INFORMES, 'readwrite');
+    tx.objectStore(STORE_COLA_INFORMES).put(item);
+    await txDone(tx);
+  } finally {
+    db.close();
+  }
+}
+
+export async function listarInformesVisitaEnCola(customFactory?: IDBFactory): Promise<InformeVisitaEncolado[]> {
+  if (!customFactory && !globalThis.indexedDB) return [];
+  const db = await abrirInspeccionDb(customFactory);
+  try {
+    const tx = db.transaction(STORE_COLA_INFORMES, 'readonly');
+    const rows = await requestToPromise<InformeVisitaEncolado[]>(tx.objectStore(STORE_COLA_INFORMES).getAll());
+    return Array.isArray(rows) ? rows : [];
+  } finally {
+    db.close();
+  }
+}
+
+export async function quitarInformeVisitaDeCola(clientReportId: string, customFactory?: IDBFactory): Promise<void> {
+  if (!customFactory && !globalThis.indexedDB) return;
+  const db = await abrirInspeccionDb(customFactory);
+  try {
+    const tx = db.transaction(STORE_COLA_INFORMES, 'readwrite');
+    tx.objectStore(STORE_COLA_INFORMES).delete(clientReportId);
     await txDone(tx);
   } finally {
     db.close();

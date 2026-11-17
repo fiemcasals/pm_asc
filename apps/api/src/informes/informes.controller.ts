@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { InformesService } from './informes.service';
@@ -9,11 +10,16 @@ import { AuditoriaInforme, InformeVisita, ResumenInforme, VerificacionInforme } 
 export class InformesController {
   constructor(private readonly service: InformesService) {}
 
-  /** Cierra el informe con la firma del encargado o «Sin firma» y lo sella con un hash. El usuario sale de la sesión, no del cuerpo. */
+  /**
+   * Cierra el informe con la firma del encargado o «Sin firma» y lo sella con un hash. El usuario sale de la sesión, no del cuerpo.
+   * **201** si se creó; **200** con el informe original si ya existía uno con el mismo `clientReportId` (reenvío desde la cola del celular).
+   */
   @Post()
   @Roles('rt_calle')
-  crear(@Body() cuerpo: unknown, @UsuarioActual() usuario: UsuarioAutenticado): Promise<InformeVisita> {
-    return this.service.crear(cuerpo, usuario.usuario);
+  async crear(@Body() cuerpo: unknown, @UsuarioActual() usuario: UsuarioAutenticado, @Res({ passthrough: true }) res: Response): Promise<InformeVisita> {
+    const r = await this.service.crearIdempotente(cuerpo, usuario.usuario);
+    res.status(r.creado ? 201 : 200);
+    return r.informe;
   }
 
   /** `?sinFirma=true`: los informes cerrados «Sin firma», que la Secretaría y el Firmante tienen que ver. */

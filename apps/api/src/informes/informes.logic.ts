@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
 import {
   CARACTERES_FIRMANTE,
+  CLIENT_REPORT_ID,
   ContenidoSellado,
   ESTADOS_EQUIPO,
   EquipoInforme,
@@ -143,8 +144,14 @@ export function validarInforme(cuerpo: unknown): InformeNuevo {
   else if (hayFirma) firma = validarFirma(cuerpo.firma, errores);
   else sinFirma = validarSinFirma(cuerpo.sinFirma, errores);
 
+  let clientReportId: string | null = null;
+  if (cuerpo.clientReportId !== undefined && cuerpo.clientReportId !== null) {
+    if (typeof cuerpo.clientReportId !== 'string' || !CLIENT_REPORT_ID.test(cuerpo.clientReportId)) errores.push('clientReportId tiene que ser un identificador de 8 a 100 caracteres (letras, números, - y _)');
+    else clientReportId = cuerpo.clientReportId;
+  }
+
   if (errores.length > 0) throw new BadRequestException({ message: 'Datos inválidos', errores });
-  return { consorcioId, equipos, firma, sinFirma, requiereRevision: sinFirma !== null, horaDispositivo: new Date(hora).toISOString() };
+  return { consorcioId, equipos, firma, sinFirma, requiereRevision: sinFirma !== null, horaDispositivo: new Date(hora).toISOString(), clientReportId };
 }
 
 /**
@@ -165,7 +172,7 @@ export function hashInforme(contenido: ContenidoSellado): string {
 
 /** Lo que se sella de un informe guardado (todo menos el hash y su versión). */
 export function contenidoSellado(i: InformeVisita): ContenidoSellado {
-  const { hashSha256: _h, versionHash: _v, ...resto } = i;
+  const { hashSha256: _h, versionHash: _v, clientReportId: _c, ...resto } = i;
   return resto;
 }
 

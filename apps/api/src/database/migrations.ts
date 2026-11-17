@@ -955,4 +955,13 @@ export const MIGRATIONS: Migration[] = [
       REVOKE UPDATE, DELETE ON verificaciones_informe FROM ascensores_app;
     `,
   },
+  {
+    id: '031_informes_idempotentes',
+    sql: `
+      -- HU-18 RNF-02: el celular genera un identificador al cerrar el informe y lo reenvía igual si se corta la conexión: la base garantiza
+      -- que el mismo identificador no cree dos informes (ni siquiera con dos envíos simultáneos).
+      ALTER TABLE informes_visita
+        ADD COLUMN IF NOT EXISTS client_report_id text UNIQUE CHECK (client_report_id IS NULL OR client_report_id ~ '^[A-Za-z0-9_-]{8,100}$');
+    `,
+  },
 ];

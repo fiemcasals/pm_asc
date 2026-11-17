@@ -148,6 +148,13 @@ export function armarInforme(
 export interface InformeCerrado {
   id: string;
   requiereRevision: boolean;
+  /** El sello del informe cerrado: SHA-256 de su contenido, firma y fotos (HU-18 RNF-01). */
+  hashSha256?: string | null;
+}
+
+/** El sello abreviado para mostrarlo en pantalla («3fa9c1d2e7b4…»); vacío si el informe no tiene sello. */
+export function selloCorto(hash: string | null | undefined): string {
+  return hash && /^[0-9a-f]{64}$/.test(hash) ? `${hash.slice(0, 12)}…` : '';
 }
 
 type Enviar = (url: string, init?: RequestInit) => Promise<Response>;

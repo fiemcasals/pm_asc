@@ -903,4 +903,56 @@ export const MIGRATIONS: Migration[] = [
       REVOKE UPDATE, DELETE ON informes_visita FROM ascensores_app;
     `,
   },
+  {
+    id: '030_sellado_informe',
+    sql: `
+      -- HU-18 RNF-01: el informe cerrado se sella con un SHA-256 de su contenido, su firma y sus fotos. Los informes anteriores al sellado
+      -- quedan sin hash (la verificación los marca como no coincidentes).
+      ALTER TABLE informes_visita
+        ADD COLUMN IF NOT EXISTS hash_sha256 text CHECK (hash_sha256 IS NULL OR hash_sha256 ~ '^[0-9a-f]{64}$'),
+        ADD COLUMN IF NOT EXISTS version_hash text;
+
+      -- Cada intento de modificar o borrar un informe cerrado (se rechaza con 409): quién, con qué rol, qué método y cuándo. Sólo se agrega.
+      CREATE TABLE intentos_modificacion_informe (
+        id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        informe_id uuid NOT NULL REFERENCES informes_visita (id) ON DELETE CASCADE,
+        usuario    text NOT NULL,
+        rol        text NOT NULL,
+        metodo     text NOT NULL CHECK (metodo IN ('PUT', 'PATCH', 'DELETE')),
+        fecha      timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX intentos_modificacion_informe_idx ON intentos_modificacion_informe (informe_id, fecha);
+
+      -- Cada verificación del sello: el hash guardado contra el recalculado, y quién verificó. Sólo se agrega.
+      CREATE TABLE verificaciones_informe (
+        id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        informe_id     uuid NOT NULL REFERENCES informes_visita (id) ON DELETE CASCADE,
+        usuario        text NOT NULL,
+        rol            text NOT NULL,
+        hash_guardado  text,
+        hash_calculado text NOT NULL CHECK (hash_calculado ~ '^[0-9a-f]{64}$'),
+        coincide       boolean NOT NULL,
+        verificado_en  timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX verificaciones_informe_idx ON verificaciones_informe (informe_id, verificado_en);
+
+      ALTER TABLE intentos_modificacion_informe ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE verificaciones_informe ENABLE ROW LEVEL SECURITY;
+      -- Cualquier usuario con sesión deja registrado su intento (el rol sale de la sesión); la auditoría la leen la Secretaría y el Administrador.
+      DROP POLICY IF EXISTS rls_intentos_informe_insert ON intentos_modificacion_informe;
+      CREATE POLICY rls_intentos_informe_insert ON intentos_modificacion_informe
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IS NOT NULL);
+      DROP POLICY IF EXISTS rls_intentos_informe_select ON intentos_modificacion_informe;
+      CREATE POLICY rls_intentos_informe_select ON intentos_modificacion_informe
+        FOR SELECT
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      DROP POLICY IF EXISTS rls_verificaciones_informe_admin_secretaria ON verificaciones_informe;
+      CREATE POLICY rls_verificaciones_informe_admin_secretaria ON verificaciones_informe
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      REVOKE UPDATE, DELETE ON intentos_modificacion_informe FROM ascensores_app;
+      REVOKE UPDATE, DELETE ON verificaciones_informe FROM ascensores_app;
+    `,
+  },
 ];

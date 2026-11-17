@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { obtenerChecklistParaTipo, type TipoMaquinaChecklist } from '../checklist/checklist.config';
 import { type RespuestasChecklist } from '../checklist/checklist.logic';
 import { type EquipoInspeccion } from '../checklist/navegacion';
-import { armarInforme, dniValido, enviarInforme, erroresFirmante, erroresSinFirma, firmaTrazada, puedeConsolidar, type EstadoVisita, type Punto } from './consolidacion';
+import { armarInforme, dniValido, enviarInforme, selloCorto, erroresFirmante, erroresSinFirma, firmaTrazada, puedeConsolidar, type EstadoVisita, type Punto } from './consolidacion';
 
 // HU-18 RF-01: consolidar el informe y firmar.
 const equipo = (id: string, tipo: TipoMaquinaChecklist = 'traccion'): EquipoInspeccion => ({ maquinaId: id, referenciaAgc: id.toUpperCase(), descripcion: '', tipo, salaCompartidaId: null });
@@ -179,5 +179,14 @@ describe('armarInforme y enviarInforme', () => {
     expect(ok).toHaveBeenCalledWith('/api/informes-visita', expect.objectContaining({ method: 'POST' }));
     expect(await enviarInforme(cuerpo, vi.fn().mockResolvedValue(respuesta(400, { message: 'Datos inválidos', errores: ['La firma está vacía'] })))).toEqual({ ok: false, error: 'La firma está vacía' });
     expect(await enviarInforme(cuerpo, vi.fn().mockRejectedValue(new Error('Sin conexión')))).toEqual({ ok: false, error: 'Sin conexión' });
+  });
+});
+
+describe('selloCorto (HU-18 RNF-01)', () => {
+  it('muestra los primeros 12 caracteres del SHA-256 y puntos suspensivos', () => {
+    expect(selloCorto('3fa9c1d2e7b4' + 'a'.repeat(52))).toBe('3fa9c1d2e7b4…');
+  });
+  it('sin sello, o con algo que no es un SHA-256, no muestra nada', () => {
+    for (const mal of [null, undefined, '', 'abc', 'g'.repeat(64), 'a'.repeat(63), 'A'.repeat(64)]) expect(selloCorto(mal)).toBe('');
   });
 });

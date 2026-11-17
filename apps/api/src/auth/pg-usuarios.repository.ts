@@ -14,6 +14,7 @@ interface UsuarioRow {
   eca: string | null;
   telefono: string | null;
   email: string | null;
+  zona: string | null;
 }
 
 interface SesionRow {
@@ -38,9 +39,10 @@ const aUsuario = (r: UsuarioRow): UsuarioGuardado => ({
   eca: r.eca,
   telefono: r.telefono,
   email: r.email,
+  zona: r.zona,
 });
 
-const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca, telefono, email';
+const COLUMNAS_USUARIO = 'id, usuario, nombre, rol, password_hash, activo, sesiones_revocadas_en, eca, telefono, email, zona';
 const COLUMNAS_SESION = 'id, usuario_id, refresh_hash, expira_en, revocada_en';
 
 const aSesion = (r: SesionRow): Sesion => ({
@@ -115,6 +117,12 @@ export class PgUsuariosRepository extends UsuariosRepository {
       `UPDATE usuarios SET telefono = $2, email = $3 WHERE id = $1 RETURNING ${COLUMNAS_USUARIO}`,
       [id, telefono, email],
     );
+    return rows[0] ? aUsuario(rows[0]) : null;
+  }
+
+  async guardarZona(id: string, zona: string | null): Promise<UsuarioGuardado | null> {
+    if (!ES_UUID.test(id)) return null;
+    const rows = await this.db.query<UsuarioRow>(`UPDATE usuarios SET zona = $2 WHERE id = $1 RETURNING ${COLUMNAS_USUARIO}`, [id, zona]);
     return rows[0] ? aUsuario(rows[0]) : null;
   }
 

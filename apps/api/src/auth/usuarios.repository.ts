@@ -31,6 +31,7 @@ export abstract class UsuariosRepository {
   abstract listar(): Promise<UsuarioGuardado[]>;
   /** Guarda el teléfono y el email del usuario (null los borra). Devuelve null si el usuario no existe. */
   abstract guardarContacto(id: string, telefono: string | null, email: string | null): Promise<UsuarioGuardado | null>;
+  abstract guardarZona(id: string, zona: string | null): Promise<UsuarioGuardado | null>;
 
   abstract crearSesion(sesion: Omit<Sesion, 'id' | 'revocadaEn'>): Promise<Sesion>;
   abstract buscarSesion(refreshHash: string): Promise<Sesion | null>;
@@ -86,6 +87,7 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
       sesionesRevocadasEn: null,
       ...datos,
       telefono: null,
+      zona: null,
       eca: datos.eca ?? null,
       email: datos.email ?? null,
     };
@@ -98,6 +100,13 @@ export class InMemoryUsuariosRepository extends UsuariosRepository {
     if (!u) return null;
     u.telefono = telefono;
     u.email = email;
+    return { ...u };
+  }
+
+  async guardarZona(id: string, zona: string | null): Promise<UsuarioGuardado | null> {
+    const u = this.usuarios.get(id);
+    if (!u) return null;
+    u.zona = zona;
     return { ...u };
   }
 

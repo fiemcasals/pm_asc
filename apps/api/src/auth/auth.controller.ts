@@ -9,6 +9,7 @@ import {
 } from './auth.types';
 import {
   validarContacto,
+  validarZona,
   validarLogin,
   validarNuevoUsuario,
   validarPedidoRecupero,
@@ -134,6 +135,13 @@ export class UsuariosController {
   @Roles('administrador')
   contacto(@Param('id') id: string, @Body() body: unknown): Promise<UsuarioConContacto> {
     return this.auth.guardarContacto(id, validarContacto(body));
+  }
+
+  /** Carga o borra la zona de un RT de Calle (HU-16 RF-01). */
+  @Put(':id/zona')
+  @Roles('administrador')
+  zona(@Param('id') id: string, @Body() body: unknown): Promise<UsuarioConContacto> {
+    return this.auth.guardarZona(id, validarZona(body));
   }
 
   /** Corta todas las sesiones del usuario (celular perdido, RT que deja la empresa). */

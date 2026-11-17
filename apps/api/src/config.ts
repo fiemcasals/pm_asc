@@ -30,6 +30,8 @@ export interface AppConfig {
   smtp: SmtpConfig | null;
   /** Feriados (AAAA-MM-DD) que cuentan como cerrado; null = la lista provisoria de src/horarios/feriados.ts (HU-01 RF-04). */
   feriados: string[] | null;
+  /** Precisión del GPS (radio de error, en metros) por encima de la cual se pide «Sin buena señal GPS» (HU-16 RF-02). */
+  gpsPrecisionMaxM: number;
   databaseUrl: string;
   /** URL opcional del usuario de aplicación sin BYPASSRLS ni propiedad de tablas. */
   databaseAppUrl?: string;
@@ -78,6 +80,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
 
   const causas = (env.VISITAS_FALLIDAS_CAUSAS ?? '').split(';').map((x) => x.trim()).filter(Boolean);
+  const gpsPrecisionMax = env.GPS_PRECISION_MAX_M === undefined || env.GPS_PRECISION_MAX_M.trim() === '' ? 30 : Number(env.GPS_PRECISION_MAX_M);
+  if (!Number.isFinite(gpsPrecisionMax) || gpsPrecisionMax <= 0) throw new Error('GPS_PRECISION_MAX_M tiene que ser un número de metros mayor que 0.');
   const minDiasVisitas = env.VISITAS_FALLIDAS_MIN_DIAS === undefined || env.VISITAS_FALLIDAS_MIN_DIAS.trim() === '' ? 1 : Number(env.VISITAS_FALLIDAS_MIN_DIAS);
   if (!Number.isInteger(minDiasVisitas) || minDiasVisitas < 0) {
     throw new Error('VISITAS_FALLIDAS_MIN_DIAS tiene que ser un entero de 0 en adelante.');
@@ -107,6 +111,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     appUrl: (env.APP_URL?.trim() || 'http://localhost:8050').replace(/\/+$/, ''),
     smtp,
     feriados: feriadosDeEntorno(env.FERIADOS),
+    gpsPrecisionMaxM: gpsPrecisionMax,
     databaseUrl: env.DATABASE_URL ?? '',
     databaseAppUrl: env.DATABASE_APP_URL || undefined,
     databaseAppPassword: env.DATABASE_APP_PASSWORD?.trim() || undefined,

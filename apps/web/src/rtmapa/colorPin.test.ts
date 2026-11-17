@@ -124,7 +124,7 @@ describe('enBuenosAires y la leyenda (criterio 3)', () => {
 
 describe('cargarMapaRt', () => {
   it('devuelve el mapa o null si la API falla', async () => {
-    const mapa = { rt: { nombre: 'Ana', zona: null }, ahora: '2026-11-17T13:00:00Z', feriados: [], edificios: [] };
+    const mapa = { rt: { nombre: 'Ana', zona: null }, ahora: '2026-11-17T13:00:00Z', feriados: [], presencia: { radioM: 30, precisionMaxM: 30 }, edificios: [] };
     const ok = vi.fn().mockResolvedValue({ ok: true, json: async () => mapa } as Response);
     expect(await cargarMapaRt(ok)).toEqual(mapa);
     expect(ok).toHaveBeenCalledWith('/api/rt/mapa');

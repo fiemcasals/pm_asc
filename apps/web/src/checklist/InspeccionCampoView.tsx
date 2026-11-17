@@ -27,6 +27,7 @@ import {
 } from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
 import { fetchConSesion } from '../auth/sesion';
+import { CierreInforme } from '../informe/CierreInforme';
 import { enviarReporteParada, puedeGuardarParada, usoRespondido, type BorradorParada } from './usoEquipo';
 import {
   EQUIPOS_EDIFICIO_DEMO,
@@ -897,6 +898,13 @@ export function InspeccionCampoView({
           );
         }}
       />
+      )}
+      {edificio?.consorcioId && (
+        <CierreInforme
+          consorcioId={edificio.consorcioId}
+          equipos={EQUIPOS}
+          visita={{ estadoPorEquipo, respuestasPorEquipo, obsPorEquipo, fotosPorEquipo, tipoOverride }}
+        />
       )}
     </section>
   );

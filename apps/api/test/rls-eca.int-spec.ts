@@ -17,6 +17,7 @@ const TABLAS_ECA = [
   'consorcios',
   'desbloqueos_edificio',
   'horarios_edificio',
+  'informes_visita',
   'inicios_inspeccion',
   'maquinas',
   'maquinas_pago_historial',

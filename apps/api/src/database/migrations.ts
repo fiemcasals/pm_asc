@@ -863,4 +863,44 @@ export const MIGRATIONS: Migration[] = [
       REVOKE UPDATE, DELETE ON reclamos_admin FROM ascensores_app;
     `,
   },
+  {
+    id: '029_informes_visita',
+    sql: `
+      -- HU-18 RF-01: el informe consolidado de la visita a un edificio, con la firma única del encargado o el cierre «Sin firma».
+      -- Hay firma o sin_firma, nunca las dos ni ninguna; «Sin firma» queda marcado para revisión (Secretaría y Firmante).
+      CREATE TABLE informes_visita (
+        id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id      uuid NOT NULL REFERENCES consorcios (id) ON DELETE CASCADE,
+        usuario           text NOT NULL,
+        contenido         jsonb NOT NULL,
+        firma             jsonb,
+        sin_firma         jsonb,
+        requiere_revision boolean NOT NULL,
+        hora_dispositivo  timestamptz NOT NULL,
+        hora_servidor     timestamptz NOT NULL DEFAULT now(),
+        CHECK ((firma IS NOT NULL) <> (sin_firma IS NOT NULL)),
+        CHECK (requiere_revision = (sin_firma IS NOT NULL)),
+        CHECK (jsonb_typeof(contenido -> 'equipos') = 'array' AND jsonb_array_length(contenido -> 'equipos') > 0)
+      );
+      CREATE INDEX informes_visita_revision_idx ON informes_visita (requiere_revision, hora_servidor DESC);
+      CREATE INDEX informes_visita_consorcio_idx ON informes_visita (consorcio_id, hora_servidor DESC);
+
+      ALTER TABLE informes_visita ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_informes_visita_admin_secretaria ON informes_visita;
+      CREATE POLICY rls_informes_visita_admin_secretaria ON informes_visita
+        FOR SELECT
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- El RT de Calle cierra el informe de los edificios que tiene asignados; él y el Firmante del edificio lo ven.
+      DROP POLICY IF EXISTS rls_informes_visita_rt_insert ON informes_visita;
+      CREATE POLICY rls_informes_visita_rt_insert ON informes_visita
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') = 'rt_calle' AND usuario_asignado_en_edificio(consorcio_id));
+      DROP POLICY IF EXISTS rls_informes_visita_asignados_select ON informes_visita;
+      CREATE POLICY rls_informes_visita_asignados_select ON informes_visita
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+      -- El informe cerrado no se modifica ni se borra desde la aplicación (sin políticas de UPDATE ni DELETE, y sin permisos).
+      REVOKE UPDATE, DELETE ON informes_visita FROM ascensores_app;
+    `,
+  },
 ];

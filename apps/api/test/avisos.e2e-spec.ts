@@ -73,9 +73,9 @@ describe('Avisos de falla crítica con revisión de la Secretaría (HU-11 RF-05)
     expect(res.body).toMatchObject({ estado: 'Enviado', aprobadoPor: 'secretaria' });
     expect(Number.isNaN(Date.parse(res.body.aprobadoEn))).toBe(false);
     expect(res.body.envios.map((e: { canal: string }) => e.canal)).toEqual(['whatsapp_eca', 'whatsapp_firmante', 'email_eca']);
-    expect(correo.enviados.at(-1)).toMatchObject({ a: 'eca@test.com', asunto: expect.stringContaining('Falla crítica'), texto: expect.stringContaining(id) });
+    expect(correo.enviados.at(-1)).toMatchObject({ a: 'eca@test.com', asunto: expect.stringContaining('Falla crítica'), texto: expect.stringContaining('/api/informe-aviso/') });
     expect(enviados.map((m) => m.to)).toEqual(['+5491100000001', '+5491100000002']);
-    expect(enviados[0].text).toContain(id);
+    expect(enviados[0].text).toMatch(/\/api\/informe-aviso\/[A-Za-z0-9_-]{43}/); // el enlace del aviso, con token aleatorio
     const historial = whatsapp.getHistorialEnvios(id);
     expect(historial).toHaveLength(2);
     expect(historial.every((h) => h.aprobadoPor === 'secretaria' && !!h.aprobadoEn)).toBe(true);

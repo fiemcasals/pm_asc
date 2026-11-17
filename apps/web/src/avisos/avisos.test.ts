@@ -3,7 +3,7 @@ import { type AvisoFalla, aprobarAviso, cargarAvisos, etiquetaCanal, ordenarBand
 
 const aviso = (estado: AvisoFalla['estado'], creadoEn: string, id = creadoEn): AvisoFalla => ({
   id, alertaId: id, consorcio: 'C', direccion: 'Calle 1', equipo: 'M1', eca: 'ECA', detalle: 'd', enlaceInforme: '/x', estado, creadoEn,
-  aprobadoPor: null, aprobadoEn: null, envios: [],
+  aprobadoPor: null, aprobadoEn: null, enlaceVenceEn: null, enlace: null, envios: [],
 });
 const respuesta = (status: number, cuerpo: unknown) => ({ ok: status < 400, status, json: async () => cuerpo }) as Response;
 

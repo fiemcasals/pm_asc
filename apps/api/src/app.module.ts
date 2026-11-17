@@ -41,6 +41,9 @@ import { VisitasFallidasRepository } from './visitas-fallidas/visitas-fallidas.r
 import { PgVisitasFallidasRepository } from './visitas-fallidas/pg-visitas-fallidas.repository';
 import { ParadasController } from './paradas/paradas.controller';
 import { ParadasService } from './paradas/paradas.service';
+import { InformesController } from './informes/informes.controller';
+import { InformesRepository, PgInformesRepository } from './informes/informes.repository';
+import { InformesService } from './informes/informes.service';
 import { BackofficeController } from './backoffice/backoffice.controller';
 import { BackofficeService } from './backoffice/backoffice.service';
 import { PgRemitosRepository, RemitosRepository } from './backoffice/remitos.repository';
@@ -103,6 +106,7 @@ export class AppModule implements NestModule {
         RtMapaController,
         IniciosController,
         BackofficeController,
+        InformesController,
         FallasCriticasController,
         SeguridadRlsController,
         SemaforoController,
@@ -139,6 +143,8 @@ export class AppModule implements NestModule {
         { provide: RemitosRepository, useClass: PgRemitosRepository },
         { provide: ReclamosRepository, useClass: PgReclamosRepository },
         BackofficeService,
+        { provide: InformesRepository, useClass: PgInformesRepository },
+        InformesService,
         FallasCriticasService,
         { provide: SemaforoRepository, useClass: PgSemaforoRepository },
         SemaforoService,

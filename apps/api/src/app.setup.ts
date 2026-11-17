@@ -1,4 +1,6 @@
 import { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { LIMITE_CUERPO } from './informes/informes.types';
 import { HttpAdapterHost } from '@nestjs/core';
 import { AppConfig } from './config';
 import { TextoInvalidoFilter } from './database/database-error.filter';
@@ -12,6 +14,8 @@ import { TextoInvalidoFilter } from './database/database-error.filter';
  */
 export function configureApp(app: INestApplication, config: AppConfig): void {
   app.setGlobalPrefix('api');
+  // El informe de la visita lleva fotos y la firma: el límite por defecto (100 KB) no alcanza.
+  (app as NestExpressApplication).useBodyParser?.('json', { limit: LIMITE_CUERPO });
 
   if (config.corsOrigins.length > 0) {
     app.enableCors({

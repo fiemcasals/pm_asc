@@ -35,6 +35,8 @@ describe('Informe consolidado de la visita: firma y «Sin firma» (HU-18 RF-01)'
   });
   beforeEach(() => {
     repo.informes.length = 0;
+    repo.intentos.length = 0;
+    repo.verificaciones.length = 0;
     repo.edificios.clear();
     repo.edificios.add(EDIFICIO);
   });
@@ -137,5 +139,87 @@ describe('Informe consolidado de la visita: firma y «Sin firma» (HU-18 RF-01)'
   it.each(['rt_calle', 'eca'])('el rol %s no ve los informes (403); sin sesión 401', async (rol) => {
     expect((await ver(rol)).status).toBe(403);
     expect((await http().get('/api/informes-visita')).status).toBe(401);
+  });
+
+  describe('HU-18 RNF-01: sellado, verificación y rechazo de modificaciones', () => {
+    const auditoria = (rol: string, id: string) => http().get(`/api/informes-visita/${id}/auditoria`).set('Authorization', `Bearer ${tokens[rol]}`);
+    const verificar = (rol: string, id: string) => http().post(`/api/informes-visita/${id}/verificar`).set('Authorization', `Bearer ${tokens[rol]}`);
+    const metodo = (m: 'put' | 'patch' | 'delete', rol: string, id: string) => http()[m](`/api/informes-visita/${id}`).set('Authorization', `Bearer ${tokens[rol]}`).send({ firma: null, equipos: [] });
+
+    it('al cerrar devuelve el hash SHA-256, la versión del cálculo y las horas del dispositivo y del servidor', async () => {
+      const horaCelular = new Date(Date.now() - 90_000).toISOString();
+      const res = await cerrar(informe({ horaDispositivo: horaCelular, horaServidor: '2020-01-01T00:00:00Z', hashSha256: 'a'.repeat(64) }));
+
+      expect(res.status).toBe(201);
+      expect(res.body.hashSha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(res.body.hashSha256).not.toBe('a'.repeat(64)); // el hash lo calcula la API, no lo manda el celular
+      expect(res.body.versionHash).toBe('sha256-v1');
+      expect(res.body.horaDispositivo).toBe(horaCelular);
+      expect(Math.abs(Date.parse(res.body.horaServidor) - Date.now())).toBeLessThan(10_000);
+      expect((await ver('secretaria')).body[0].hashSha256).toBe(res.body.hashSha256);
+    });
+
+    it.each(['rt_calle', 'secretaria', 'administrador', 'firmante'])('%s: un PUT, un PATCH y un DELETE sobre el informe cerrado → 409 con el motivo y no cambia nada', async (rol) => {
+      const r = await cerrar(informe());
+      const antes = JSON.stringify(repo.informes[0]);
+
+      for (const m of ['put', 'patch', 'delete'] as const) {
+        const res = await metodo(m, rol, r.body.id);
+        expect(res.status).toBe(409);
+        expect(res.body.message).toMatch(/cerrado: no se puede modificar ni borrar/);
+      }
+
+      expect(JSON.stringify(repo.informes[0])).toBe(antes);
+      expect(repo.informes).toHaveLength(1);
+    });
+
+    it('cada intento queda registrado con quién, su rol y el método, y la Secretaría lo ve en la auditoría', async () => {
+      const r = await cerrar(informe());
+      await metodo('put', 'rt_calle', r.body.id);
+      await metodo('delete', 'administrador', r.body.id);
+
+      const a = await auditoria('secretaria', r.body.id);
+
+      expect(a.status).toBe(200);
+      expect(a.body.intentosModificacion.map((i: { usuario: string; rol: string; metodo: string }) => [i.usuario, i.rol, i.metodo])).toEqual([['rt_calle', 'rt_calle', 'PUT'], ['administrador', 'administrador', 'DELETE']]);
+      expect(Number.isNaN(Date.parse(a.body.intentosModificacion[0].fecha))).toBe(false);
+    });
+
+    it('un informe que no existe → 404 y sin sesión 401, sin registrar nada', async () => {
+      expect((await metodo('put', 'rt_calle', 'no-existe')).status).toBe(404);
+      expect((await http().delete('/api/informes-visita/x')).status).toBe(401);
+      expect(repo.intentos).toHaveLength(0);
+    });
+
+    it('la verificación de un informe intacto coincide y queda asentada en la auditoría con quién la hizo', async () => {
+      const r = await cerrar(informe());
+
+      const v = await verificar('secretaria', r.body.id);
+
+      expect(v.status).toBe(201);
+      expect(v.body).toMatchObject({ coincide: true, usuario: 'secretaria', rol: 'secretaria', hashGuardado: r.body.hashSha256, hashCalculado: r.body.hashSha256 });
+      expect((await auditoria('administrador', r.body.id)).body.verificaciones).toEqual([expect.objectContaining({ coincide: true, usuario: 'secretaria' })]);
+    });
+
+    it('si el contenido guardado se altera por fuera de la API, la verificación lo detecta (coincide: false) y lo asienta', async () => {
+      const r = await cerrar(informe());
+      repo.informes[0].equipos[0].observaciones = { cabina: 'Texto cambiado a mano' };
+
+      const v = await verificar('administrador', r.body.id);
+
+      expect(v.body).toMatchObject({ coincide: false, hashGuardado: r.body.hashSha256 });
+      expect(v.body.hashCalculado).not.toBe(r.body.hashSha256);
+      expect((await auditoria('secretaria', r.body.id)).body.verificaciones[0].coincide).toBe(false);
+    });
+
+    it.each(['rt_calle', 'firmante', 'eca'])('el rol %s no verifica ni ve la auditoría (403); sin sesión 401; un informe inexistente 404', async (rol) => {
+      const r = await cerrar(informe());
+
+      expect((await verificar(rol, r.body.id)).status).toBe(403);
+      expect((await auditoria(rol, r.body.id)).status).toBe(403);
+      expect((await http().post(`/api/informes-visita/${r.body.id}/verificar`)).status).toBe(401);
+      expect((await verificar('secretaria', 'no-existe')).status).toBe(404);
+      expect(repo.verificaciones).toHaveLength(0);
+    });
   });
 });

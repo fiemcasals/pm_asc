@@ -11,6 +11,7 @@ import {
   type Punto,
   armarInforme,
   enviarInforme,
+  selloCorto,
   erroresFirmante,
   erroresSinFirma,
   firmaTrazada,
@@ -69,6 +70,11 @@ export function CierreInforme({ consorcioId, equipos, visita, onCerrado }: Props
       <section className="cierre-informe" data-testid="informe-cerrado" role="status">
         <h3>Informe cerrado</h3>
         <p>{cerrado.requiereRevision ? 'Quedó cerrado «Sin firma»: la Secretaría y el Firmante lo van a revisar.' : 'Quedó firmado por el encargado y cerrado.'}</p>
+        {selloCorto(cerrado.hashSha256) && (
+          <p className="portal-desc" data-testid="informe-sello" title={cerrado.hashSha256 ?? undefined}>
+            Sello digital (SHA-256): {selloCorto(cerrado.hashSha256)} · el informe ya no se puede modificar.
+          </p>
+        )}
       </section>
     );
   }

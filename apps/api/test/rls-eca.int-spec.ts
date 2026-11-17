@@ -19,6 +19,7 @@ const TABLAS_ECA = [
   'horarios_edificio',
   'informes_visita',
   'inicios_inspeccion',
+  'intentos_modificacion_informe',
   'maquinas',
   'maquinas_pago_historial',
   'reasignaciones_rt',
@@ -26,6 +27,7 @@ const TABLAS_ECA = [
   'reclamos_admin',
   'remitos_eca',
   'roles_edificio',
+  'verificaciones_informe',
   'visitas_fallidas',
 ];
 

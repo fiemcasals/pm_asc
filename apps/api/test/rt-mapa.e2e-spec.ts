@@ -54,7 +54,7 @@ describe('Mapa del RT (HU-16 RF-01)', () => {
     rtMapa.edificios.clear();
     for (const [id, lat, lng] of [[A, -34.6, -58.4], [B, -34.58, -58.42], [C, -34.62, -58.38]] as const) {
       horarios.agregarEdificio(id);
-      rtMapa.edificios.set(id, { ubicacion: { latitud: lat, longitud: lng }, maquinas: 2, inspeccionadasHoy: 0 });
+      rtMapa.edificios.set(id, { ubicacion: { latitud: lat, longitud: lng }, maquinas: 2, inspeccionadasHoy: 0, encargado: { nombre: `Encargado ${id}`, telefono: '11 5555-0000' } });
     }
   });
 
@@ -73,6 +73,7 @@ describe('Mapa del RT (HU-16 RF-01)', () => {
       expect(sinZona.body.rt).toEqual({ nombre: 'Ing. Aliado 1', zona: null });
       expect(Math.abs(Date.parse(sinZona.body.ahora) - antes)).toBeLessThan(5000);
       expect(sinZona.body.feriados).toContain('2026-11-23');
+      expect(sinZona.body.presencia).toEqual({ radioM: 30, precisionMaxM: 30 });
 
       expect((await zona('administrador', ids.rt_calle, { zona: 'Norte' })).status).toBe(200);
       expect((await mapa()).body.rt).toEqual({ nombre: 'Ing. Aliado 1', zona: 'Norte' });
@@ -114,6 +115,8 @@ describe('Mapa del RT (HU-16 RF-01)', () => {
       expect(a).toMatchObject({ nombre: 'Edificio A', direccion: 'Calle A 1', ubicacion: { latitud: -34.6, longitud: -58.4 }, aCoordinar: false });
       expect(Object.keys(a.franjas)).toEqual(['lunes', 'martes', 'miercoles', 'jueves', 'viernes']); // el horario por defecto
       expect(b).toMatchObject({ aCoordinar: true, franjas: {} });
+      expect(a.encargado).toEqual({ nombre: 'Encargado edif-a', telefono: '11 5555-0000' }); // para llamarlo desde la tarjeta
+      expect(a.encargado).not.toBeUndefined();
       expect(c.franjas).toEqual({ lunes: [{ desde: '09:00', hasta: '13:00' }] });
     });
 
@@ -142,7 +145,7 @@ describe('Mapa del RT (HU-16 RF-01)', () => {
 
       const res = await mapa();
 
-      expect(res.body.edificios[0]).toMatchObject({ id: A, ubicacion: null });
+      expect(res.body.edificios[0]).toMatchObject({ id: A, ubicacion: null, encargado: { nombre: null, telefono: null } });
     });
 
     it('un edificio del que no hay datos en la base (no es del RT) no sale', async () => {

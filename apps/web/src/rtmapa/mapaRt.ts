@@ -5,12 +5,16 @@ export interface EdificioMapaRt extends HorarioEdificio {
   nombre: string;
   direccion: string;
   ubicacion: { latitud: number; longitud: number } | null;
+  /** El encargado del edificio, para llamarlo desde la tarjeta. */
+  encargado: { nombre: string | null; telefono: string | null };
 }
 
 export interface MapaRt {
   rt: { nombre: string; zona: string | null };
   ahora: string;
   feriados: string[];
+  /** Las reglas de presencia que aplica la API al iniciar una inspección. */
+  presencia: { radioM: number; precisionMaxM: number };
   edificios: EdificioMapaRt[];
 }
 

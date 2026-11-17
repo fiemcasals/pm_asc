@@ -96,14 +96,18 @@ describe('Mapa del RT contra PostgreSQL real (HU-16 RF-01)', () => {
     expect(JSON.stringify((await mapa()).body)).not.toContain(edif.ajeno);
   });
 
-  it('la ubicación sale de PostGIS (null si el edificio no tiene punto) y trae el horario por defecto', async () => {
-    const e = (await mapa()).body.edificios as { id: string; ubicacion: { latitud: number; longitud: number } | null; aCoordinar: boolean; franjas: Record<string, unknown> }[];
+  it('la ubicación sale de PostGIS (null si el edificio no tiene punto), el encargado y el horario por defecto', async () => {
+    await admin.query("UPDATE consorcios SET encargado_nombre = 'Carlos Encargado', encargado_telefono = '11 4444-5555' WHERE id = $1", [edif.uno]);
+    const res = await mapa();
+    const e = res.body.edificios as { id: string; ubicacion: { latitud: number; longitud: number } | null; aCoordinar: boolean; franjas: Record<string, unknown> }[];
 
     const uno = e.find((x) => x.id === edif.uno)!;
     expect(uno.ubicacion!.latitud).toBeCloseTo(-34.6118, 4);
     expect(uno.ubicacion!.longitud).toBeCloseTo(-58.396, 4);
     expect(e.find((x) => x.id === edif.dos)!.ubicacion).toBeNull();
     expect(uno.aCoordinar).toBe(false);
+    expect((uno as unknown as { encargado: unknown }).encargado).toEqual({ nombre: 'Carlos Encargado', telefono: '11 4444-5555' });
+    expect((res.body as { presencia: unknown }).presencia).toEqual({ radioM: 30, precisionMaxM: 30 });
     expect(Object.keys(uno.franjas)).toContain('lunes');
   });
 

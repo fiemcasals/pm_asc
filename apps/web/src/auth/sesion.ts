@@ -132,6 +132,35 @@ export async function login(usuario: string, password: string): Promise<Resultad
   return { kind: 'error', message: r.message };
 }
 
+export type ResultadoSimple = { kind: 'ok' } | { kind: 'error'; message: string };
+
+/** POST sin sesión que no devuelve cuerpo (204). Traduce la falta de red al mismo mensaje del ingreso. */
+async function postSinSesion(url: string, datos: unknown): Promise<ResultadoSimple> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(datos),
+    });
+  } catch {
+    return { kind: 'error', message: MENSAJE_SIN_CONEXION };
+  }
+  if (!res.ok) return { kind: 'error', message: (await leerError(res, `Error ${res.status}`)).message };
+  return { kind: 'ok' };
+}
+
+/** "Olvidé mi contraseña": pide el mail con el enlace. Responde ok exista o no la cuenta. */
+export function pedirRecupero(usuario: string): Promise<ResultadoSimple> {
+  return postSinSesion('/api/auth/recuperar', { usuario });
+}
+
+/** Elige la contraseña nueva con el token que llegó por mail. */
+export function restablecerPassword(token: string, password: string): Promise<ResultadoSimple> {
+  return postSinSesion('/api/auth/restablecer', { token, password });
+}
+
 // ---- Renovación del token con la cookie. Cada cookie sirve una sola vez: los llamados
 // simultáneos (React monta dos veces en desarrollo, o dos pedidos que vencen juntos)
 // comparten el mismo pedido, si no el segundo recibiría 401 y cerraría la sesión.

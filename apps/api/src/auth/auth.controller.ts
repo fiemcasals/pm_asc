@@ -1,8 +1,19 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Req, Res } from '@nestjs/common';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService, DURACION_REFRESCO_MS, LoginBloqueadoException, ResultadoSesion } from './auth.service';
-import { UsuarioAutenticado, UsuarioConContacto, UsuarioPublico, UsuarioSesion } from './auth.types';
-import { validarContacto, validarLogin, validarNuevoUsuario } from './auth.validation';
+import {
+  UsuarioAutenticado,
+  UsuarioConContacto,
+  UsuarioPublico,
+  UsuarioSesion,
+} from './auth.types';
+import {
+  validarContacto,
+  validarLogin,
+  validarNuevoUsuario,
+  validarPedidoRecupero,
+  validarRestablecimiento,
+} from './auth.validation';
 import { Roles, UsuarioActual } from './roles.guard';
 
 /** Cookie del token de refresco: sólo la lee el servidor y sólo viaja a /api/auth. */
@@ -56,6 +67,24 @@ export class AuthController {
     }
   }
 
+  /**
+   * "Olvidé mi contraseña": manda el enlace por mail. Responde 204 siempre, exista o no la
+   * cuenta, para no delatar qué usuarios están registrados.
+   */
+  @Post('recuperar')
+  @HttpCode(204)
+  async recuperar(@Body() body: unknown): Promise<void> {
+    await this.auth.pedirRecupero(validarPedidoRecupero(body));
+  }
+
+  /** Elige la contraseña nueva con el token del mail. */
+  @Post('restablecer')
+  @HttpCode(204)
+  async restablecer(@Body() body: unknown): Promise<void> {
+    const { token, password } = validarRestablecimiento(body);
+    await this.auth.restablecer(token, password);
+  }
+
   @Post('logout')
   @HttpCode(204)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
@@ -80,6 +109,12 @@ export class AuthController {
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly auth: AuthService) {}
+
+  @Get()
+  @Roles('administrador')
+  listar(): Promise<UsuarioPublico[]> {
+    return this.auth.listarUsuarios();
+  }
 
   @Post()
   @Roles('administrador')

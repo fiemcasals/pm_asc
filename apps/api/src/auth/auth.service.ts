@@ -25,7 +25,16 @@ import {
   UsuarioSesion,
 } from './auth.types';
 import { TEXTO_CONSENTIMIENTO_UBICACION, VERSION_CONSENTIMIENTO_UBICACION } from './consentimiento';
-import { firmarAcceso, hashRefresco, nuevoTokenRefresco, verificarAcceso } from './tokens';
+import { Mailer } from './mailer';
+import {
+  firmarAcceso,
+  firmarRecupero,
+  hashRefresco,
+  leerRecupero,
+  nuevoTokenRefresco,
+  verificarAcceso,
+  verificarRecupero,
+} from './tokens';
 import { UsuariosRepository } from './usuarios.repository';
 
 /** Costo de bcrypt: 2^12 rondas. */
@@ -38,6 +47,13 @@ export const DURACION_REFRESCO_MS = 30 * 24 * 60 * 60 * 1000;
 export const MAX_INTENTOS_FALLIDOS = 5;
 /** Duración del bloqueo por intentos fallidos: 15 minutos. */
 export const DURACION_BLOQUEO_MS = 15 * 60 * 1000;
+/** Vida del enlace para restablecer la contraseña: 1 hora. */
+export const DURACION_RECUPERO_SEG = 60 * 60;
+/** Espera mínima entre dos pedidos de recupero de la misma cuenta: evita inundar una casilla. */
+export const ESPERA_ENTRE_RECUPEROS_MS = 2 * 60 * 1000;
+
+export const MENSAJE_ENLACE_INVALIDO =
+  'El enlace no es válido, ya se usó o venció. Pedí uno nuevo desde "Olvidé mi contraseña".';
 
 export const MENSAJE_CREDENCIALES = 'Usuario o contraseña incorrectos.';
 export const MENSAJE_BLOQUEO = 'Demasiados intentos fallidos. Probá de nuevo en 15 minutos.';
@@ -75,7 +91,14 @@ export class AuthService implements OnApplicationBootstrap {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(RELOJ) private readonly reloj: Reloj,
     private readonly usuarios: UsuariosRepository,
+    private readonly mailer: Mailer,
   ) {}
+
+  /**
+   * Último pedido de recupero por usuario, en memoria.
+   * ponytail: alcanza con una instancia de la API; si algún día hay varias, va a la base.
+   */
+  private readonly ultimoRecupero = new Map<string, number>();
 
   async onApplicationBootstrap(): Promise<void> {
     await this.crearAdminInicial();
@@ -92,6 +115,7 @@ export class AuthService implements OnApplicationBootstrap {
         nombre: 'Administrador',
         rol: 'administrador',
         passwordHash: await bcrypt.hash(admin.password, COSTO_BCRYPT),
+        email: admin.email,
       });
       if (creado) this.logger.log(`Administrador inicial creado: ${creado.usuario}`);
     } catch (err) {
@@ -108,7 +132,9 @@ export class AuthService implements OnApplicationBootstrap {
       throw new LoginBloqueadoException(Math.ceil((intentos.bloqueadoHasta.getTime() - ahora) / 1000));
     }
 
-    const guardado = await this.usuarios.buscarPorUsuario(usuario);
+    // Se puede ingresar con el nombre de usuario o con el email: la pantalla ofrece los dos.
+    const guardado =
+      (await this.usuarios.buscarPorUsuario(usuario)) ?? (await this.usuarios.buscarPorEmail(usuario));
     const hash = guardado?.activo ? guardado.passwordHash : await this.senuelo();
     const coincide = await bcrypt.compare(password, hash);
 
@@ -227,12 +253,91 @@ export class AuthService implements OnApplicationBootstrap {
     return { ...aPublico(usuario), consentimientoUbicacionPendiente: pendiente };
   }
 
+  /**
+   * Manda por mail un enlace para restablecer la contraseña. Siempre termina bien, exista o no
+   * la cuenta: la respuesta no puede revelar quién está registrado. `identificador` es el nombre
+   * de usuario o el email.
+   */
+  async pedirRecupero(identificador: string): Promise<void> {
+    const ahora = this.reloj.ahora();
+    const usuario =
+      (await this.usuarios.buscarPorUsuario(identificador)) ??
+      (await this.usuarios.buscarPorEmail(identificador));
+
+    if (!usuario?.activo || !usuario.email) {
+      this.logger.log(`Recupero pedido para "${identificador}": sin cuenta activa con email.`);
+      return;
+    }
+    const ultimo = this.ultimoRecupero.get(usuario.id);
+    if (ultimo !== undefined && ahora - ultimo < ESPERA_ENTRE_RECUPEROS_MS) {
+      this.logger.log(`Recupero de ${usuario.usuario}: ya se mandó uno hace menos de 2 minutos.`);
+      return;
+    }
+    this.ultimoRecupero.set(usuario.id, ahora);
+
+    const token = firmarRecupero(
+      usuario.id,
+      usuario.passwordHash,
+      this.config.authSecret,
+      ahora,
+      DURACION_RECUPERO_SEG,
+    );
+    const enlace = `${this.config.appUrl}/?t=${encodeURIComponent(token)}`;
+    try {
+      await this.mailer.enviar(
+        usuario.email,
+        'Restablecer tu contraseña — Inspecciones de Ascensores',
+        [
+          `Hola ${usuario.nombre}:`,
+          '',
+          `Para elegir una contraseña nueva de la cuenta "${usuario.usuario}", abrí este enlace:`,
+          enlace,
+          '',
+          'El enlace vence en 1 hora y se puede usar una sola vez.',
+          'Si no pediste el cambio, no hace falta que hagas nada: tu contraseña sigue siendo la misma.',
+        ].join('\n'),
+      );
+    } catch (err) {
+      // Que falle el correo no es algo que el que pide el recupero deba poder distinguir.
+      this.logger.error(
+        `No se pudo enviar el recupero a ${usuario.email}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  /**
+   * Cambia la contraseña con el token del mail. Cierra las sesiones abiertas (por si la cuenta
+   * estaba en manos de otro) y destraba el bloqueo por intentos fallidos.
+   */
+  async restablecer(token: string, password: string): Promise<void> {
+    const ahora = this.reloj.ahora();
+    const leido = leerRecupero(token);
+    const usuario = leido ? await this.usuarios.buscarPorId(leido.usuarioId) : null;
+    if (
+      !usuario?.activo ||
+      !verificarRecupero(token, usuario.passwordHash, this.config.authSecret, ahora)
+    ) {
+      throw new BadRequestException(MENSAJE_ENLACE_INVALIDO);
+    }
+    await this.usuarios.cambiarPassword(usuario.id, await bcrypt.hash(password, COSTO_BCRYPT));
+    await this.usuarios.revocarSesiones(usuario.id, new Date(ahora));
+    await this.usuarios.limpiarIntentos(usuario.usuario);
+    this.ultimoRecupero.delete(usuario.id);
+    this.logger.log(`Contraseña restablecida: ${usuario.usuario}`);
+  }
+
+  /** Los usuarios del sistema, sin datos sensibles: la pantalla del Administrador. */
+  async listarUsuarios(): Promise<UsuarioPublico[]> {
+    return (await this.usuarios.listar()).map(aPublico);
+  }
+
   async crearUsuario(datos: {
     usuario: string;
     nombre: string;
     rol: Rol;
     password: string;
     eca: string | null;
+    email: string | null;
   }): Promise<UsuarioPublico> {
     const creado = await this.usuarios.crear({
       usuario: datos.usuario,
@@ -240,6 +345,7 @@ export class AuthService implements OnApplicationBootstrap {
       rol: datos.rol,
       passwordHash: await bcrypt.hash(datos.password, COSTO_BCRYPT),
       eca: datos.eca,
+      email: datos.email,
     });
     if (!creado) throw new ConflictException(`El usuario "${datos.usuario}" ya existe.`);
     return aPublico(creado);

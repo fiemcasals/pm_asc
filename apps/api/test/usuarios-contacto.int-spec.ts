@@ -142,11 +142,11 @@ describe('Contacto del RT de Calle en su usuario y en la reasignación (HU-02 RF
       expect(await contactoEnBase(usuarios.carla)).toEqual({ telefono: null, email: null });
     });
 
-    it('el contacto no viaja en la sesión del propio usuario', async () => {
+    it('el teléfono no viaja en la sesión; el email propio sí (lo usa la pantalla de recupero, HU-14)', async () => {
       const yo = await http().get('/api/auth/me').set('Authorization', `Bearer ${tokenAdmin}`);
       expect(yo.status).toBe(200);
       expect(Object.keys(yo.body)).not.toContain('telefono');
-      expect(Object.keys(yo.body)).not.toContain('email');
+      expect(Object.keys(yo.body)).toContain('email'); // el propio, de HU-14; el de otros usuarios sigue siendo sólo del Administrador
     });
   });
 

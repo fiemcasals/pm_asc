@@ -661,7 +661,27 @@ export const MIGRATIONS: Migration[] = [
     `,
   },
   {
-    id: '022_constancia_visita_fallida',
+    id: '022_email_para_recupero',
+    sql: `
+      -- HU-14: restricciones del email de usuario, que usa el recupero de contraseña por correo. La columna la crea
+      -- 016_usuarios_contacto; acá sólo van el formato y la unicidad, que el recupero necesita para no mandar el enlace
+      -- a dos cuentas.
+      --
+      -- Va con IF NOT EXISTS / DROP IF EXISTS porque esto ya corrió en la base de la beta dos veces con otro número
+      -- (013 y 021, los dos pisados después por una migración del equipo con el mismo id). Así corre igual sobre esa
+      -- base, que ya tiene los objetos, y sobre una nueva. Los ids viejos quedan en schema_migrations de la beta como
+      -- huérfanos; el migrador ignora los que no conoce.
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email text;
+
+      ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_email_formato;
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_email_formato
+        CHECK (email IS NULL OR email ~ '^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+$');
+
+      CREATE UNIQUE INDEX IF NOT EXISTS usuarios_email_unico ON usuarios (lower(email)) WHERE email IS NOT NULL;
+    `,
+  },
+  {
+    id: '023_constancia_visita_fallida',
     sql: `
       -- HU-07 RF-06: la constancia guarda también la hora que marcaba el celular del RT (la del servidor es fecha_hora).
       ALTER TABLE visitas_fallidas ADD COLUMN IF NOT EXISTS hora_dispositivo timestamptz;

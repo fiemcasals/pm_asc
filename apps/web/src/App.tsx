@@ -13,6 +13,7 @@ import {
   type Usuario,
 } from './auth/sesion';
 import { InspeccionCampoView } from './checklist/InspeccionCampoView';
+import { ColaInformesAviso } from './informe/ColaInformesAviso';
 import { RecorridoRt } from './visitasFallidas/RecorridoRt';
 import { MapaRtView } from './rtmapa/MapaRtView';
 import { type EdificioMapaRt } from './rtmapa/mapaRt';
@@ -467,6 +468,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               Sin señal: estás trabajando con la sesión guardada en este dispositivo.
             </p>
           )}
+          {esRt && <ColaInformesAviso usuario={usuario.usuario} />}
           {vista === 'rt' && (
             <section className="rt-inicio" data-testid="vista-rt">
               <MapaRtView nombreSesion={usuario.nombre} onIniciarInspeccion={(e) => void iniciarInspeccionDesdeMapa(e)} />

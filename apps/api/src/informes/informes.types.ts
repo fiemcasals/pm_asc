@@ -53,6 +53,11 @@ export interface InformeVisita {
   horaDispositivo: string;
   /** Hora del servidor al cerrar: la fija la API y forma parte del sello. */
   horaServidor: string;
+  /**
+   * Identificador generado en el celular al cerrar el informe (HU-18 RNF-02): reenviar el mismo informe no lo duplica. NO forma parte del sello,
+   * porque es lo que usa el celular para reintentar y el hash se calcula en el servidor.
+   */
+  clientReportId: string | null;
   /** SHA-256 (hex) del informe cerrado: contenido, firma y fotos. null en informes anteriores al sellado. */
   hashSha256: string | null;
   versionHash: string | null;
@@ -60,8 +65,17 @@ export interface InformeVisita {
 
 export type InformeNuevo = Omit<InformeVisita, 'id' | 'usuario' | 'horaServidor' | 'hashSha256' | 'versionHash'>;
 
+/** El resultado de cerrar un informe: `creado: false` si ya existía uno con el mismo identificador del celular (se devuelve el original). */
+export interface ResultadoCierre {
+  informe: InformeVisita;
+  creado: boolean;
+}
+
+/** El identificador del celular: 8 a 100 caracteres de letras, números, guion y guion bajo (un UUID entra). */
+export const CLIENT_REPORT_ID = /^[A-Za-z0-9_-]{8,100}$/;
+
 /** Lo que se sella: todo el informe menos el propio hash. Cambiar cualquier dato (una foto, la firma, una hora) cambia el hash. */
-export type ContenidoSellado = Omit<InformeVisita, 'hashSha256' | 'versionHash'>;
+export type ContenidoSellado = Omit<InformeVisita, 'hashSha256' | 'versionHash' | 'clientReportId'>;
 
 /** Versión de la forma de calcular el hash (JSON canónico con las claves ordenadas, SHA-256). */
 export const VERSION_HASH = 'sha256-v1';

@@ -546,3 +546,83 @@ describe('Pisos y equipos reales del edificio (HU-17 RF-06 y RF-02)', () => {
     expect(equiposDeFicha([])).toEqual([]);
   });
 });
+
+import { abrirInspeccionDb, OFFLINE_DB_VERSION, STORE_COLA_INFORMES, encolarInformeVisita, listarInformesVisitaEnCola, quitarInformeVisitaDeCola } from './offlineStore';
+import { almacenIdb, cerrarInforme, enviarCola } from '../informe/cola';
+import { type CuerpoInforme } from '../informe/consolidacion';
+
+describe('Cola de informes cerrados en IndexedDB (HU-18 RNF-02)', () => {
+  const FOTO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD-FOTO';
+  const cuerpo = (id: string) =>
+    ({
+      clientReportId: id, consorcioId: 'c1', horaDispositivo: '2026-11-17T13:00:00.000Z',
+      equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: {}, fotos: { f1: { dataUrl: FOTO } } }],
+      sinFirma: { motivo: 'El encargado no está', foto: FOTO },
+    }) as unknown as CuerpoInforme;
+  const item = (id: string, usuario = 'rt.ana') => ({ clientReportId: id, usuario, cuerpo: cuerpo(id), creadoEn: '2026-11-17T13:00:00.000Z', estado: 'pendiente' as const });
+
+  it('la base sube de versión y crea el almacén nuevo sin tocar los anteriores', async () => {
+    const idb = crearIdbEnMemoria();
+    const abrir = vi.spyOn(idb, 'open');
+
+    const db = await abrirInspeccionDb(idb);
+
+    expect(OFFLINE_DB_VERSION).toBe(2);
+    expect(abrir).toHaveBeenCalledWith(OFFLINE_DB_NAME, 2);
+    for (const s of [STORE_VISITAS, STORE_COLA_FALLAS, STORE_COLA_INFORMES]) expect(db.objectStoreNames.contains(s)).toBe(true);
+  });
+
+  it('guarda, lista y quita informes, y volver a guardar el mismo identificador lo reemplaza', async () => {
+    const idb = crearIdbEnMemoria();
+
+    await encolarInformeVisita(item('informe-0001'), idb);
+    await encolarInformeVisita(item('informe-0002'), idb);
+    await encolarInformeVisita({ ...item('informe-0001'), estado: 'rechazado', ultimoError: 'no' }, idb);
+
+    const lista = await listarInformesVisitaEnColaOrdenada(idb);
+    expect(lista.map((i) => [i.clientReportId, i.estado])).toEqual([['informe-0001', 'rechazado'], ['informe-0002', 'pendiente']]);
+    await quitarInformeVisitaDeCola('informe-0001', idb);
+    expect((await listarInformesVisitaEnCola(idb)).map((i) => i.clientReportId)).toEqual(['informe-0002']);
+  });
+
+  it('conviven con la visita en curso y con la cola de fallas críticas sin pisarse', async () => {
+    const idb = crearIdbEnMemoria();
+    await guardarVisitaEnCurso({ equipoId: 'm1', solapaActiva: 'cabina', tipoOverride: {}, estadoPorEquipo: {}, respuestasPorEquipo: {}, obsPorEquipo: {}, fotosPorEquipo: {}, fallasPisoPorEquipo: {} }, idb);
+
+    await encolarInformeVisita(item('informe-0001'), idb);
+    await limpiarVisitaEnCurso(idb);
+
+    expect((await listarInformesVisitaEnCola(idb)).map((i) => i.clientReportId)).toEqual(['informe-0001']);
+    expect(await listarColaInformesCriticos(idb)).toEqual([]);
+  });
+
+  it('las fotos y la firma vuelven idénticas desde el almacenamiento', async () => {
+    const idb = crearIdbEnMemoria();
+    await encolarInformeVisita(item('informe-0001'), idb);
+
+    const [leido] = await almacenIdb(idb).listar();
+
+    expect(leido.cuerpo).toEqual(cuerpo('informe-0001'));
+    expect(JSON.stringify(leido.cuerpo)).toContain(FOTO);
+  });
+
+  it('sin señal queda en IndexedDB y al volver la señal se envía y se vacía (de punta a punta)', async () => {
+    const idb = crearIdbEnMemoria();
+    const almacen = almacenIdb(idb);
+    const enviar = vi.fn(async () => new Response(JSON.stringify({ id: 'inf-1', requiereRevision: true }), { status: 201 }));
+
+    const offline = await cerrarInforme({ usuario: 'rt.ana', almacen, enviar, cuerpo: cuerpo('informe-0001'), enLinea: false });
+    expect(offline).toEqual({ estado: 'encolado' });
+    expect(enviar).not.toHaveBeenCalled();
+    expect(await almacen.listar()).toHaveLength(1);
+
+    const sync = await enviarCola({ usuario: 'rt.ana', almacen, enviar });
+
+    expect(sync).toMatchObject({ enviados: 1, pendientes: 0 });
+    expect(await almacen.listar()).toHaveLength(0);
+  });
+});
+
+async function listarInformesVisitaEnColaOrdenada(idb: IDBFactory) {
+  return (await listarInformesVisitaEnCola(idb)).sort((a, b) => a.clientReportId.localeCompare(b.clientReportId));
+}

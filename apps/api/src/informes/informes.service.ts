@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { aResumen, contenidoSellado, hashInforme, validarInforme } from './informes.logic';
 import { InformesRepository } from './informes.repository';
-import { AuditoriaInforme, InformeVisita, IntentoModificacion, ResumenInforme, VERSION_HASH, VerificacionInforme } from './informes.types';
+import { AuditoriaInforme, InformeVisita, IntentoModificacion, ResumenInforme, ResultadoCierre, VERSION_HASH, VerificacionInforme } from './informes.types';
 
 export const MENSAJE_INFORME_CERRADO = 'El informe está cerrado: no se puede modificar ni borrar. El intento quedó registrado.';
 
@@ -16,10 +16,33 @@ export class InformesService {
    * fotos, firma o «Sin firma», usuario, id y las dos horas) y se guarda junto con la hora del dispositivo y la del servidor.
    */
   async crear(cuerpo: unknown, usuario: string): Promise<InformeVisita> {
-    const nuevo = validarInforme(cuerpo);
+    return (await this.crearIdempotente(cuerpo, usuario)).informe;
+  }
+
+  /**
+   * Cierra el informe **sin duplicarlo** (HU-18 RNF-02): si el celular reenvía un informe con el mismo `clientReportId` —porque se cortó la
+   * conexión antes de recibir la respuesta, o porque lo reintenta la cola— se devuelve el original (`creado: false`) en lugar de crear otro.
+   * Un identificador que ya pertenece a otro usuario da 409. La unicidad la garantiza la base, así que dos envíos simultáneos tampoco duplican.
+   */
+  async crearIdempotente(cuerpo: unknown, usuario: string): Promise<ResultadoCierre> {
+    const { clientReportId, ...nuevo } = validarInforme(cuerpo);
+    if (clientReportId) {
+      const previo = await this.repo.buscarPorClientId(clientReportId);
+      if (previo) return this.respuestaDeReenvio(previo, usuario);
+    }
     if (!(await this.repo.existeEdificio(nuevo.consorcioId))) throw new NotFoundException('Edificio no encontrado');
     const base = { ...nuevo, id: randomUUID(), usuario, horaServidor: new Date().toISOString() };
-    return this.repo.guardar({ ...base, hashSha256: hashInforme(base), versionHash: VERSION_HASH });
+    const guardado = await this.repo.guardar({ ...base, clientReportId, hashSha256: hashInforme(base), versionHash: VERSION_HASH });
+    if (guardado) return { informe: guardado, creado: true };
+    // Otro envío con el mismo identificador ganó la carrera: se devuelve ése.
+    const ganador = clientReportId ? await this.repo.buscarPorClientId(clientReportId) : null;
+    if (!ganador) throw new ConflictException('No se pudo cerrar el informe: probá de nuevo.');
+    return this.respuestaDeReenvio(ganador, usuario);
+  }
+
+  private respuestaDeReenvio(previo: InformeVisita, usuario: string): ResultadoCierre {
+    if (previo.usuario !== usuario) throw new ConflictException('Ese identificador de informe ya está en uso.');
+    return { informe: previo, creado: false };
   }
 
   /** `?sinFirma=true` trae los que la Secretaría y el Firmante tienen que ver; `false` los firmados; sin el parámetro, todos. */

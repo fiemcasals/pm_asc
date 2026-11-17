@@ -238,4 +238,62 @@ describe('Informe consolidado de la visita contra PostgreSQL real (HU-18 RF-01)'
       ]);
     });
   });
+
+  describe('HU-18 RNF-02: la base no deja duplicar el mismo informe', () => {
+    const idCelular = () => `${P}-${Math.random().toString(36).slice(2, 12)}`;
+    const filas = async (id: string) => (await admin.query('SELECT id FROM informes_visita WHERE client_report_id = $1', [id])).rows;
+
+    it('el primer envío responde 201 y guarda el identificador; reenviarlo responde 200 con el mismo informe y no crea otra fila', async () => {
+      const id = idCelular();
+      const a = await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+      const b = await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+
+      expect([a.status, b.status]).toEqual([201, 200]);
+      expect(b.body.id).toBe(a.body.id);
+      expect(b.body.hashSha256).toBe(a.body.hashSha256);
+      expect(await filas(id)).toHaveLength(1);
+    });
+
+    it('diez envíos simultáneos del mismo informe terminan en una sola fila (la restricción única de la base)', async () => {
+      const id = idCelular();
+
+      const res = await Promise.all(Array.from({ length: 10 }, () => cerrar(tokenRt, informe('propio', { clientReportId: id }))));
+
+      expect(res.filter((r) => r.status === 201)).toHaveLength(1);
+      expect(res.filter((r) => r.status === 200)).toHaveLength(9);
+      expect(new Set(res.map((r) => r.body.id)).size).toBe(1);
+      expect(await filas(id)).toHaveLength(1);
+    });
+
+    it('el informe reenviado sigue sellado: la verificación coincide aunque se haya reintentado', async () => {
+      const id = idCelular();
+      const a = await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+      await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+
+      const v = await http().post(`/api/informes-visita/${a.body.id}/verificar`).set('Authorization', `Bearer ${tokenSec}`);
+
+      expect(v.body.coincide).toBe(true);
+    });
+
+    it('la base exige un identificador válido y único (CHECK y UNIQUE)', async () => {
+      const id = idCelular();
+      await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+
+      await expect(admin.query("UPDATE informes_visita SET client_report_id = 'corto' WHERE client_report_id = $1", [id])).rejects.toThrow(/check/i);
+      await expect(
+        admin.query(`INSERT INTO informes_visita (consorcio_id, usuario, contenido, firma, requiere_revision, hora_dispositivo, client_report_id) VALUES ($1, 'x', '{"equipos":[{}]}', '{"a":1}', false, now(), $2)`, [edif.propio, id]),
+      ).rejects.toThrow(/unique|duplicate/i);
+    });
+
+    it('un identificador de otro usuario → 409 y no se devuelve su informe', async () => {
+      const id = idCelular();
+      await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+      await admin.query("UPDATE informes_visita SET usuario = 'otro.usuario' WHERE client_report_id = $1", [id]);
+
+      const res = await cerrar(tokenRt, informe('propio', { clientReportId: id }));
+
+      expect(res.status).toBe(409);
+      expect(JSON.stringify(res.body)).not.toContain('otro.usuario');
+    });
+  });
 });

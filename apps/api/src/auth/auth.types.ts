@@ -18,8 +18,9 @@ export interface UsuarioGuardado {
   sesionesRevocadasEn: Date | null;
   /** ECA a la que pertenece (sólo los usuarios con rol "eca"); null para el resto. */
   eca: string | null;
-  /** Teléfono y email de contacto (sólo se cargan a los RT de Calle); null si no tiene. */
+  /** Teléfono de contacto (sólo se carga a los RT de Calle); null si no tiene. */
   telefono: string | null;
+  /** Email: contacto y recupero de la contraseña. Opcional, pero sin él la cuenta no puede restablecerla. */
   email: string | null;
 }
 
@@ -31,10 +32,11 @@ export interface UsuarioPublico {
   rol: Rol;
   /** ECA del usuario (sólo rol "eca"); null para el resto. */
   eca: string | null;
+  email: string | null;
 }
 
 export function aPublico(u: UsuarioGuardado): UsuarioPublico {
-  return { id: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol, eca: u.eca };
+  return { id: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol, eca: u.eca, email: u.email };
 }
 
 /** El usuario con sus datos de contacto: sólo lo ve el Administrador, no viaja en la sesión. */

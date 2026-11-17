@@ -5,6 +5,38 @@ import { esRol, Rol, ROLES } from './auth.types';
 const MAX_BYTES_PASSWORD = 72;
 const MIN_PASSWORD = 10;
 const MAX_ECA = 120;
+const MAX_EMAIL = 200;
+/** Validación deliberadamente laxa: algo@algo.algo sin espacios. La verdad la dice el mail que llega. */
+const FORMATO_EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+function erroresDePassword(password: string): string[] {
+  const errores: string[] = [];
+  if (password.length < MIN_PASSWORD) errores.push(`password tiene que tener al menos ${MIN_PASSWORD} caracteres`);
+  if (Buffer.byteLength(password, 'utf8') > MAX_BYTES_PASSWORD) {
+    errores.push(`password no puede superar los ${MAX_BYTES_PASSWORD} bytes`);
+  }
+  return errores;
+}
+
+/** Quién pide el recupero: su nombre de usuario o su email. */
+export function validarPedidoRecupero(body: unknown): string {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const usuario = typeof b.usuario === 'string' ? b.usuario.trim() : '';
+  if (!usuario || usuario.length > MAX_EMAIL) {
+    throw new BadRequestException('usuario es obligatorio: tu nombre de usuario o tu email.');
+  }
+  return usuario;
+}
+
+export function validarRestablecimiento(body: unknown): { token: string; password: string } {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const token = typeof b.token === 'string' ? b.token.trim() : '';
+  const password = typeof b.password === 'string' ? b.password : '';
+  const errores = token ? [] : ['token es obligatorio'];
+  errores.push(...erroresDePassword(password));
+  if (errores.length > 0) throw new BadRequestException(errores);
+  return { token, password };
+}
 
 export function validarLogin(body: unknown): { usuario: string; password: string } {
   const b = (body ?? {}) as Record<string, unknown>;
@@ -23,6 +55,7 @@ export function validarNuevoUsuario(body: unknown): {
   rol: Rol;
   password: string;
   eca: string | null;
+  email: string | null;
 } {
   const b = (body ?? {}) as Record<string, unknown>;
   const errores: string[] = [];
@@ -35,9 +68,12 @@ export function validarNuevoUsuario(body: unknown): {
   if (!nombre || nombre.length > 120) errores.push('nombre es obligatorio (hasta 120 caracteres)');
   if (!esRol(b.rol)) errores.push(`rol tiene que ser uno de: ${ROLES.join(', ')}`);
   const password = typeof b.password === 'string' ? b.password : '';
-  if (password.length < MIN_PASSWORD) errores.push(`password tiene que tener al menos ${MIN_PASSWORD} caracteres`);
-  if (Buffer.byteLength(password, 'utf8') > MAX_BYTES_PASSWORD) {
-    errores.push(`password no puede superar los ${MAX_BYTES_PASSWORD} bytes`);
+  errores.push(...erroresDePassword(password));
+
+  // El email es opcional, pero sin él la cuenta no puede recuperar la contraseña por correo.
+  const email = typeof b.email === 'string' ? b.email.trim() : '';
+  if (email && (!FORMATO_EMAIL.test(email) || email.length > MAX_EMAIL)) {
+    errores.push(`email tiene que ser una dirección válida de hasta ${MAX_EMAIL} caracteres`);
   }
 
   // La ECA identifica a la Empresa Conservadora del usuario: obligatoria para el rol "eca" y
@@ -52,11 +88,10 @@ export function validarNuevoUsuario(body: unknown): {
   }
 
   if (errores.length > 0) throw new BadRequestException(errores);
-  return { usuario, nombre, rol: b.rol as Rol, password, eca };
+  return { usuario, nombre, rol: b.rol as Rol, password, eca, email: email || null };
 }
 
 const MAX_TELEFONO = 50;
-const MAX_EMAIL = 200;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**

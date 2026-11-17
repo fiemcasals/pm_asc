@@ -48,7 +48,9 @@ export default defineConfig(({ command, mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           navigateFallback: 'index.html',
-          navigateFallbackDenylist: [/^\/api\//],
+          // /api es del servidor y /manual es el manual de uso (HTML servido aparte): el
+          // service worker no los puede responder con el index de la app.
+          navigateFallbackDenylist: [/^\/api\//, /^\/manual/],
           runtimeCaching: [
             {
               urlPattern: /\/api\/checklist\/config/,

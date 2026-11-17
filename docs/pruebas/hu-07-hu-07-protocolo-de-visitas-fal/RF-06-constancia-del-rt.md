@@ -23,7 +23,7 @@ Captura: `imagenes/RF-06-constancia-guardada.png`.
 - Se guardan **coordenadas, precisión del GPS, hora del dispositivo y hora del servidor** (`fechaHora`, la pone la API; lo que mande el celular en ese campo se ignora).
 - El **inspector** es siempre el usuario de la sesión.
 - Para el RT son obligatorias la causa (de la lista configurada, si no 400 con las causas válidas) y la hora del dispositivo.
-- **Nada de eso se edita**: no hay endpoint para modificarlo y la base lo impide con un disparador (`visitas_fallidas_inmutable`, migración `022_constancia_visita_fallida`) para el rol de la aplicación.
+- **Nada de eso se edita**: no hay endpoint para modificarlo y la base lo impide con un disparador (`visitas_fallidas_inmutable`, migración `023_constancia_visita_fallida`) para el rol de la aplicación.
 - Una política RLS nueva deja al RT insertar **sólo en los edificios que tiene asignados**.
 - `GET /api/visitas-fallidas/causas` devuelve `{ causas, porDefecto }`.
 - `GET /api/recorrido` agrega `visitaFallidaHoy`; al RT le saca los edificios bloqueados **y** los que ya tienen una visita fallida de hoy (día de Buenos Aires). La Secretaría y el Administrador los siguen viendo, marcados.

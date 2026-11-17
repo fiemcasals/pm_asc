@@ -60,6 +60,47 @@ export function verificarAcceso(token: string, secreto: string, ahoraMs: number)
   return payload as PayloadAcceso;
 }
 
+/**
+ * Token para restablecer la contraseña. No se guarda en ningún lado: firma el id del usuario,
+ * el vencimiento y el hash de la contraseña vigente. Como el hash cambia al restablecer, el
+ * enlace sirve una sola vez y cualquier otro enlace pedido antes queda sin efecto.
+ */
+export function firmarRecupero(
+  usuarioId: string,
+  passwordHash: string,
+  secreto: string,
+  ahoraMs: number,
+  duracionSeg: number,
+): string {
+  const exp = Math.floor(ahoraMs / 1000) + duracionSeg;
+  const cuerpo = Buffer.from(`${usuarioId}.${exp}`).toString('base64url');
+  return `${cuerpo}.${firmar(`${cuerpo}.${passwordHash}`, secreto).toString('base64url')}`;
+}
+
+/** Lee el id y el vencimiento sin verificar la firma: hace falta para buscar el hash con el que se firmó. */
+export function leerRecupero(token: string): { usuarioId: string; exp: number } | null {
+  const partes = token.split('.');
+  if (partes.length !== 2) return null;
+  const [usuarioId, exp] = Buffer.from(partes[0], 'base64url').toString('utf8').split('.');
+  if (!usuarioId || !/^\d+$/.test(exp ?? '')) return null;
+  return { usuarioId, exp: Number(exp) };
+}
+
+/** true si el token es auténtico para ese hash de contraseña y no venció. */
+export function verificarRecupero(
+  token: string,
+  passwordHash: string,
+  secreto: string,
+  ahoraMs: number,
+): boolean {
+  const leido = leerRecupero(token);
+  if (!leido || Math.floor(ahoraMs / 1000) >= leido.exp) return false;
+  const [cuerpo, firma] = token.split('.');
+  const esperada = firmar(`${cuerpo}.${passwordHash}`, secreto);
+  const recibida = Buffer.from(firma, 'base64url');
+  return recibida.length === esperada.length && timingSafeEqual(recibida, esperada);
+}
+
 /** Token de refresco: 256 bits al azar. Al cliente va el token; a la base, sólo su hash. */
 export function nuevoTokenRefresco(): string {
   return randomBytes(32).toString('base64url');

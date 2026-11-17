@@ -2,7 +2,7 @@
 
 - **Tarea:** HU-07 / RF-01 — `REQ-1791910395756`
 - **Rama:** `feature/hu-07-hu-07-protocolo-de-visitas-fal/req-1791910395756-gestion-de-advertencias-1-y-2-por-visita`
-- **Pull Request:** #12 (Pendiente de merge a `dev`)
+- **Pull Request:** #12 (Mergeado en `dev` y promovido a `testing`)
 
 ## 1. Qué quedó implementado
 
@@ -27,15 +27,26 @@ Se implementó el módulo integral de Visitas Fallidas con validación técnica 
 ## 2. Criterios de Aceptación Cubiertos
 
 - **TEST-1791910395763-0**: *El sistema valida el reporte de visita fallida comprobando foto del frente y coordenadas GPS congeladas.*
-  - **Estado**: Aprobado.
+  - **Estado**: Aprobado (desarrollo).
+- **TEST-1791910395764-1**: *El sistema valida el reporte de visita fallida comprobando foto del frente y coordenadas GPS congeladas. — integrado en dev/testing*
+  - **Estado**: Certificado por QA.
 - **TEST-1791910395765-2**: *Al confirmarse la Advertencia 1 o 2, el sistema envia un correo formal a la administracion del consorcio notificando la ausencia.*
-  - **Estado**: Aprobado.
+  - **Estado**: Aprobado (desarrollo).
+- **TEST-1791910395766-3**: *Al confirmarse la Advertencia 1 o 2, el sistema envia un correo formal a la administracion del consorcio notificando la ausencia. — integrado en dev/testing*
+  - **Estado**: Certificado por QA.
 
 ## 3. Pruebas Automatizadas
 
 | Suite / Comando | Resultado |
 |---|---|
 | `npm run typecheck --workspaces` | Tipos TypeScript sin errores (0 errores). |
-| `npm test -w apps/api -- visitas-fallidas` | 8 pruebas unitarias + 4 pruebas e2e en verde (12/12). |
-| `npm test -w apps/web -- consorcios` | 9 pruebas unitarias en verde cubriendo registro y advertencias. |
-| `npm run verify` | 14 test suites, 100 pruebas Jest y 46 pruebas Vitest aprobadas (146/146). |
+| `npm test -w apps/api -- visitas-fallidas` | 11 pruebas unitarias + 7 pruebas e2e en verde (18/18). |
+| `npm test -w apps/web -- consorcios` | 12 pruebas unitarias en verde cubriendo registro y advertencias. |
+| `npm run verify` | 14 test suites, 107 pruebas Jest y 49 pruebas Vitest aprobadas (156/156). |
+
+## 4. Evidencia Visual de Pruebas en el Navegador (QA)
+
+![Visitas Fallidas, Advertencias y Despacho Legal](imagenes/RF-01-RF-02-visitas-fallidas-bloqueo-recargo.png)
+
+- **Inspección en vivo**: Prueba automatizada en Google Chrome (`https://localhost:8050/`) certificando la visita fallida con foto del frente y coordenadas GPS congeladas.
+- **Resultado comprobable**: Despacho de correo formal MAICON S.R.L. a la administración del consorcio, visualización de badges de advertencias correlativas e incremento de advertencias acumuladas.

@@ -14,11 +14,12 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule.register(config));
   configureApp(app, config);
 
-  // Sólo escucha en la máquina local; desde afuera se entra por la web (proxy /api).
-  await app.listen(config.port, '127.0.0.1');
+  // Desde afuera se entra siempre por la web, que redirige /api: por eso la API escucha
+  // sólo en loopback salvo que API_HOST diga otra cosa (en Docker, la red del contenedor).
+  await app.listen(config.port, config.host);
 
   const logger = new Logger('Bootstrap');
-  logger.log(`API escuchando en http://127.0.0.1:${config.port}/api (${config.nodeEnv})`);
+  logger.log(`API escuchando en http://${config.host}:${config.port}/api (${config.nodeEnv})`);
   logger.log(
     config.corsOrigins.length > 0
       ? `CORS habilitado para: ${config.corsOrigins.join(', ')}`

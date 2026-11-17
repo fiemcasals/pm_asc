@@ -64,6 +64,14 @@ export function BandejaAvisos() {
                 Aprobado por {a.aprobadoPor} el {a.aprobadoEn ? new Date(a.aprobadoEn).toLocaleString('es-AR') : ''}
               </p>
             )}
+            {a.enlace && (
+              <p data-testid="aviso-enlace">
+                Enlace del informe (sin contraseña, vence el {a.enlaceVenceEn ? new Date(a.enlaceVenceEn).toLocaleString('es-AR') : '—'}):{' '}
+                <a href={a.enlace} target="_blank" rel="noopener noreferrer">
+                  abrir
+                </a>
+              </p>
+            )}
             {a.envios.length > 0 && (
               <ul data-testid="aviso-envios">
                 {a.envios.map((e, i) => (

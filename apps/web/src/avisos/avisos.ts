@@ -24,6 +24,9 @@ export interface AvisoFalla {
   creadoEn: string;
   aprobadoPor: string | null;
   aprobadoEn: string | null;
+  /** Hasta cuándo sirve el enlace del informe y el enlace mismo (sólo para la Secretaría). */
+  enlaceVenceEn: string | null;
+  enlace: string | null;
   envios: EnvioAviso[];
 }
 

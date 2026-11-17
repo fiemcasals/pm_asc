@@ -1,12 +1,24 @@
-import { ConflictException, Injectable, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { ConflictException, Inject, Injectable, NotFoundException, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { Subscription } from 'rxjs';
 import { Mailer } from '../auth/mailer';
+import { APP_CONFIG, AppConfig } from '../config';
+import { VistaInformeAviso } from './informe-publico';
 import { EventoFallaCritica } from '../fallas-criticas/fallas-criticas.types';
 import { FallasCriticasService } from '../fallas-criticas/fallas-criticas.service';
 import { MaquinaAsignada } from '../firmante/firmante.types';
 import { WhatsAppConnectorService } from '../whatsapp/whatsapp-connector.service';
-import { AvisoFalla, CanalAviso, DESTINOS_PROVISORIOS, DestinosAviso, EnvioAviso } from './avisos.types';
+import { AvisoFalla, CanalAviso, DESTINOS_PROVISORIOS, DestinosAviso, EnvioAviso, VENCIMIENTO_ENLACE_MS } from './avisos.types';
+
+const TOKEN_VALIDO = /^[A-Za-z0-9_-]{43}$/;
+
+interface Interno {
+  /** El informe que muestra el enlace: se toma al crear el aviso. */
+  vista: VistaInformeAviso;
+  token?: string;
+  /** Cuándo se emitió el enlace (se renueva en cada intento de envío). */
+  emitidoEn?: number;
+}
 
 /**
  * Avisos de falla crítica con revisión previa (HU-11 RF-05). Al registrarse una falla crítica el aviso queda «Pendiente de revisión»
@@ -17,13 +29,19 @@ import { AvisoFalla, CanalAviso, DESTINOS_PROVISORIOS, DestinosAviso, EnvioAviso
 @Injectable()
 export class AvisosService implements OnModuleInit, OnModuleDestroy {
   private readonly avisos = new Map<string, AvisoFalla>();
+  private readonly internos = new Map<string, Interno>();
+  private readonly porToken = new Map<string, string>();
+  private readonly appUrl: string;
   private suscripcion?: Subscription;
 
   constructor(
     private readonly fallas: FallasCriticasService,
     private readonly whatsapp: WhatsAppConnectorService,
     private readonly mailer: Mailer,
-  ) {}
+    @Optional() @Inject(APP_CONFIG) config?: AppConfig,
+  ) {
+    this.appUrl = config?.appUrl ?? 'http://localhost:8050';
+  }
 
   onModuleInit(): void {
     this.suscripcion = this.fallas.eventos$().subscribe((evento) => this.crearDesdeEvento(evento));
@@ -52,9 +70,25 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       creadoEn: new Date().toISOString(),
       aprobadoPor: null,
       aprobadoEn: null,
+      enlaceVenceEn: null,
+      enlace: null,
       envios: [],
     };
     this.avisos.set(e.informeId, aviso);
+    const informe = this.fallas.obtenerInforme(e.informeId);
+    this.internos.set(e.informeId, {
+      vista: {
+        titulo: 'Falla crítica reportada',
+        equipo: aviso.equipo,
+        direccion: e.direccion,
+        consorcio: e.consorcio,
+        eca: e.eca,
+        fecha: e.registradoEn,
+        detalle: e.fallasDetalle.map((f) => f.nombre),
+        observaciones: informe.observaciones,
+        fotografias: informe.fotografias,
+      },
+    });
     return aviso;
   }
 
@@ -79,10 +113,38 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       creadoEn: new Date().toISOString(),
       aprobadoPor: null,
       aprobadoEn: null,
+      enlaceVenceEn: null,
+      enlace: null,
       envios: [],
     };
     this.avisos.set(alerta.id, aviso);
+    this.internos.set(alerta.id, {
+      vista: {
+        titulo: alerta.titulo,
+        equipo: aviso.equipo,
+        direccion: maquina.edificio.direccion,
+        consorcio: maquina.edificio.consorcio,
+        eca: maquina.eca,
+        fecha: alerta.fechaDeteccion,
+        detalle: [alerta.motivo],
+        observaciones: '',
+        fotografias: alerta.fotografiaCabinaTrabada ? [alerta.fotografiaCabinaTrabada] : [],
+      },
+    });
     return aviso;
+  }
+
+  /**
+   * Resuelve el token del enlace (HU-11 RF-06). Un token que no tiene el formato, no existe o fue alterado es «inexistente» y no revela
+   * nada; uno emitido hace más de 7 días es «vencido».
+   */
+  informePorToken(token: string): { resultado: 'ok'; vista: VistaInformeAviso } | { resultado: 'vencido' } | { resultado: 'inexistente' } {
+    if (typeof token !== 'string' || !TOKEN_VALIDO.test(token)) return { resultado: 'inexistente' };
+    const alertaId = this.porToken.get(token);
+    const interno = alertaId ? this.internos.get(alertaId) : undefined;
+    if (!interno || interno.token !== token || interno.emitidoEn === undefined) return { resultado: 'inexistente' };
+    if (Date.now() - interno.emitidoEn > VENCIMIENTO_ENLACE_MS) return { resultado: 'vencido' };
+    return { resultado: 'ok', vista: structuredClone(interno.vista) };
   }
 
   /** El estado del aviso de una alerta o informe, o null si no tiene aviso todavía. */
@@ -104,7 +166,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
    * y el correo con el enlace al informe a la ECA. Si todos los WhatsApp salen, el aviso pasa a «Enviado»; si alguno falla queda
    * «Falló el envío» (la aprobación se conserva) y se puede reintentar: sólo se vuelve a mandar lo que no salió.
    */
-  async aprobar(id: string, quien: { usuario: string }, destinos: DestinosAviso = {}, baseUrl = 'https://localhost:8050'): Promise<AvisoFalla> {
+  async aprobar(id: string, quien: { usuario: string }, destinos: DestinosAviso = {}): Promise<AvisoFalla> {
     const aviso = this.buscar(id);
     if (aviso.estado === 'Enviado') {
       throw new ConflictException('Este aviso ya fue aprobado y enviado.');
@@ -112,9 +174,16 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     aviso.aprobadoPor ??= quien.usuario;
     aviso.aprobadoEn ??= new Date().toISOString();
 
-    const enlace = `${baseUrl}${aviso.enlaceInforme}`;
+    // HU-11 RF-06: el enlace del mensaje lleva un token aleatorio de 256 bits y vence a los 7 días de emitido (se renueva al reintentar).
+    const interno = this.internos.get(aviso.alertaId)!;
+    interno.token ??= randomBytes(32).toString('base64url');
+    this.porToken.set(interno.token, aviso.alertaId);
+    interno.emitidoEn = Date.now();
+    aviso.enlaceVenceEn = new Date(interno.emitidoEn + VENCIMIENTO_ENLACE_MS).toISOString();
+    const enlace = `${this.appUrl}/api/informe-aviso/${interno.token}`;
+    aviso.enlace = enlace;
     const yaSalio = (canal: CanalAviso) => aviso.envios.some((e) => e.canal === canal && e.ok);
-    const contexto = { origen: 'manual' as const, alertaId: aviso.alertaId, maquinaId: aviso.maquinaId, enlaceDirecto: enlace, aprobadoPor: aviso.aprobadoPor, aprobadoEn: aviso.aprobadoEn };
+    const contexto = { origen: 'manual' as const, alertaId: aviso.alertaId, maquinaId: aviso.maquinaId, enlaceDirecto: `${this.appUrl}/api/informe-aviso/[token]`, aprobadoPor: aviso.aprobadoPor, aprobadoEn: aviso.aprobadoEn };
     const mensaje = (telefono: string, nombre: string) => ({
       telefonoDestino: telefono,
       nombreEca: nombre,

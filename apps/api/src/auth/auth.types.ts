@@ -22,6 +22,8 @@ export interface UsuarioGuardado {
   telefono: string | null;
   /** Email: contacto y recupero de la contraseña. Opcional, pero sin él la cuenta no puede restablecerla. */
   email: string | null;
+  /** Zona de trabajo (sólo se carga a los RT de Calle, por ejemplo «Norte»); null si no tiene. */
+  zona: string | null;
 }
 
 /** Lo que la API muestra de un usuario. */
@@ -43,10 +45,11 @@ export function aPublico(u: UsuarioGuardado): UsuarioPublico {
 export interface UsuarioConContacto extends UsuarioPublico {
   telefono: string | null;
   email: string | null;
+  zona: string | null;
 }
 
 export function aConContacto(u: UsuarioGuardado): UsuarioConContacto {
-  return { ...aPublico(u), telefono: u.telefono, email: u.email };
+  return { ...aPublico(u), telefono: u.telefono, email: u.email, zona: u.zona };
 }
 
 /** Lo que la API devuelve del usuario logueado: sus datos y lo que le falta aceptar. */

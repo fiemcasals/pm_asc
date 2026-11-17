@@ -13,6 +13,7 @@ import {
 } from './auth/sesion';
 import { InspeccionCampoView } from './checklist/InspeccionCampoView';
 import { RecorridoRt } from './visitasFallidas/RecorridoRt';
+import { MapaRtView } from './rtmapa/MapaRtView';
 import { cargarVisitaEnCurso, tieneProgresoVisita } from './checklist/offlineStore';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
@@ -444,14 +445,8 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
             </p>
           )}
           {vista === 'rt' && (
-            <section className="rt-inicio" aria-labelledby="rt-titulo" data-testid="vista-rt">
-              <h2 id="rt-titulo" className="portal-title">
-                Hola {usuario.nombre}
-              </h2>
-              <p className="portal-desc">
-                El mapa con pines por horario llega con la tarea "Mapa del RT con pines por horario" (HU-16). Mientras tanto,
-                acá tenés la lista de tus edificios pendientes de hoy.
-              </p>
+            <section className="rt-inicio" data-testid="vista-rt">
+              <MapaRtView nombreSesion={usuario.nombre} />
               <RecorridoRt />
             </section>
           )}

@@ -744,4 +744,13 @@ export const MIGRATIONS: Migration[] = [
         USING (usuario_asignado_en_edificio(consorcio_id));
     `,
   },
+  {
+    id: '025_zona_del_rt',
+    sql: `
+      -- HU-16 RF-01: la zona del RT de Calle (por ejemplo «Norte»), que se muestra en el encabezado de su pantalla.
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS zona text;
+      ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_zona_no_vacia;
+      ALTER TABLE usuarios ADD CONSTRAINT usuarios_zona_no_vacia CHECK (zona IS NULL OR btrim(zona) <> '');
+    `,
+  },
 ];

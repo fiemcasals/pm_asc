@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { FirmanteService } from '../src/firmante/firmante.service';
 import { BackofficeService } from '../src/backoffice/backoffice.service';
 import { normalizar, paginar } from '../src/backoffice/backoffice.logic';
+import { InMemoryReclamosRepository } from '../src/backoffice/reclamos.repository';
 import { InMemoryRemitosRepository } from '../src/backoffice/remitos.repository';
 
 // HU-05 RF-01: monitoreo paginado y filtrable, y registro del remito a la ECA.
@@ -16,7 +17,7 @@ describe('Monitoreo del backoffice (HU-05 RF-01)', () => {
 
   beforeEach(() => {
     remitos = new InMemoryRemitosRepository();
-    service = new BackofficeService(new FirmanteService(), remitos);
+    service = new BackofficeService(new FirmanteService(), remitos, new InMemoryReclamosRepository());
   });
 
   describe('criterio 1: listado paginado filtrable por dirección, ECA e inspector, con estado de visita', () => {
@@ -34,6 +35,7 @@ describe('Monitoreo del backoffice (HU-05 RF-01)', () => {
         id: 'VIS-2026-11-201', maquinaId: 'MAQ-CALLAO-M1', codigoAGC: 'M1', equipo: expect.any(String), direccion: 'Av. Callao 850, CABA', consorcio: expect.any(String),
         eca: 'Elevadores San Martín', inspector: 'germanG', estadoVisita: 'Advertencia', fecha: '2026-11-05T14:15:00.000Z', estadoOperativo: 'Normal',
         firmante: 'gonza', autorizada: false, rechazada: false, alertaCritica: false, remito: null,
+        administracion: expect.any(String), reclamo: null, fotos: expect.any(Number), itemsChecklist: 0,
       });
     });
 

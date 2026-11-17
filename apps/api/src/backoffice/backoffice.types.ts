@@ -12,6 +12,17 @@ export interface RemitoEca {
   enviadoEn: string;
 }
 
+/** El reclamo a la administración del consorcio por una visita con advertencia (HU-05 RF-02): quién y cuándo. */
+export interface ReclamoAdmin {
+  id: string;
+  maquinaId: string;
+  visitaId: string;
+  administracion: string;
+  direccion: string;
+  reclamadoPor: string;
+  reclamadoEn: string;
+}
+
 export interface FilaMonitoreo {
   /** El id de la visita; si el equipo todavía no tiene visita, «sin-visita:» + id del equipo. */
   id: string;
@@ -35,6 +46,33 @@ export interface FilaMonitoreo {
   alertaCritica: boolean;
   /** El remito a la ECA ya enviado, o null. */
   remito: RemitoEca | null;
+  /** La administración del consorcio, a la que se reclama una visita con advertencia. */
+  administracion: string;
+  /** El reclamo a la administración ya hecho, o null. */
+  reclamo: ReclamoAdmin | null;
+  /** Cuántas fotos y cuántos ítems de checklist tiene el informe de la visita (para la columna «Checklist»). */
+  fotos: number;
+  itemsChecklist: number;
+}
+
+/** El detalle de una visita para el visor de fotos e informe (HU-05 RF-02). */
+export interface DetalleVisita {
+  id: string;
+  maquinaId: string;
+  direccion: string;
+  consorcio: string;
+  administracion: string;
+  eca: string;
+  inspector: string;
+  estadoVisita: EstadoVisita;
+  fecha: string | null;
+  /** Título y motivo de la alerta crítica, si la hay; y el motivo de la advertencia, si la hubo. */
+  titulo: string | null;
+  motivo: string | null;
+  motivoAdvertencia: string | null;
+  nombreEncargado: string | null;
+  fotos: { etiqueta: string; url: string }[];
+  checklist: { item: string; estado: string; observaciones: string }[];
 }
 
 export interface FiltrosMonitoreo {

@@ -29,6 +29,8 @@ interface Fila {
   lng: number | null;
   maquinas: string;
   inspeccionadas: string;
+  encargado_nombre: string | null;
+  encargado_telefono: string | null;
 }
 
 @Injectable()
@@ -45,6 +47,8 @@ export class PgRtMapaRepository extends RtMapaRepository {
       `SELECT c.id::text AS id,
               ST_Y(c.ubicacion::geometry) AS lat,
               ST_X(c.ubicacion::geometry) AS lng,
+              c.encargado_nombre,
+              c.encargado_telefono,
               (SELECT count(*) FROM maquinas m WHERE m.consorcio_id = c.id)::text AS maquinas,
               (SELECT count(DISTINCT i.maquina_id) FROM inspecciones_checklist i
                 WHERE i.consorcio_id = c.id::text
@@ -58,6 +62,7 @@ export class PgRtMapaRepository extends RtMapaRepository {
         ubicacion: f.lat === null || f.lng === null ? null : { latitud: Number(f.lat), longitud: Number(f.lng) },
         maquinas: Number(f.maquinas),
         inspeccionadasHoy: Number(f.inspeccionadas),
+        encargado: { nombre: f.encargado_nombre, telefono: f.encargado_telefono },
       });
     }
     return r;

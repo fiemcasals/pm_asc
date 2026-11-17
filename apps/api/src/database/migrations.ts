@@ -753,4 +753,69 @@ export const MIGRATIONS: Migration[] = [
       ALTER TABLE usuarios ADD CONSTRAINT usuarios_zona_no_vacia CHECK (zona IS NULL OR btrim(zona) <> '');
     `,
   },
+  {
+    id: '026_inicios_inspeccion',
+    sql: `
+      -- HU-16 RF-02: el RT inicia la inspección a 30 m o menos del edificio. Se guardan las coordenadas, la precisión, la hora del
+      -- dispositivo y la del servidor; sin buena señal GPS se exige foto del frente y justificación y la Secretaría revisa la visita.
+      CREATE TABLE inicios_inspeccion (
+        id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        consorcio_id     uuid NOT NULL REFERENCES consorcios (id) ON DELETE CASCADE,
+        usuario          text NOT NULL,
+        gps_latitud      double precision NOT NULL,
+        gps_longitud     double precision NOT NULL,
+        gps_precision    double precision NOT NULL CHECK (gps_precision >= 0),
+        distancia_m      double precision,
+        hora_dispositivo timestamptz NOT NULL,
+        hora_servidor    timestamptz NOT NULL DEFAULT now(),
+        sin_buena_senal  boolean NOT NULL DEFAULT false,
+        foto_frente_url  text,
+        justificacion    text,
+        revision         text NOT NULL DEFAULT 'no_requiere' CHECK (revision IN ('no_requiere', 'pendiente', 'revisada')),
+        revisada_por     text,
+        revisada_en      timestamptz,
+        CHECK (NOT sin_buena_senal OR (foto_frente_url IS NOT NULL AND btrim(foto_frente_url) <> '' AND justificacion IS NOT NULL AND btrim(justificacion) <> '')),
+        CHECK (NOT sin_buena_senal OR revision <> 'no_requiere')
+      );
+      CREATE INDEX inicios_inspeccion_revision_idx ON inicios_inspeccion (revision, hora_servidor);
+
+      ALTER TABLE inicios_inspeccion ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_inicios_inspeccion_admin_secretaria ON inicios_inspeccion;
+      CREATE POLICY rls_inicios_inspeccion_admin_secretaria ON inicios_inspeccion
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- El RT de Calle registra el inicio en los edificios que tiene asignados y los ve.
+      DROP POLICY IF EXISTS rls_inicios_inspeccion_rt_insert ON inicios_inspeccion;
+      CREATE POLICY rls_inicios_inspeccion_rt_insert ON inicios_inspeccion
+        FOR INSERT
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') = 'rt_calle' AND usuario_asignado_en_edificio(consorcio_id));
+      DROP POLICY IF EXISTS rls_inicios_inspeccion_rt_select ON inicios_inspeccion;
+      CREATE POLICY rls_inicios_inspeccion_rt_select ON inicios_inspeccion
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+
+      -- El registro no se edita: ni el GPS, ni la hora, ni la foto, ni la justificación, ni quién lo hizo. Sólo cambia la revisión.
+      CREATE OR REPLACE FUNCTION inicios_inspeccion_inmutable() RETURNS trigger AS $f$
+      BEGIN
+        IF current_user = 'ascensores_app' AND (NEW.consorcio_id IS DISTINCT FROM OLD.consorcio_id
+           OR NEW.usuario IS DISTINCT FROM OLD.usuario
+           OR NEW.gps_latitud IS DISTINCT FROM OLD.gps_latitud
+           OR NEW.gps_longitud IS DISTINCT FROM OLD.gps_longitud
+           OR NEW.gps_precision IS DISTINCT FROM OLD.gps_precision
+           OR NEW.distancia_m IS DISTINCT FROM OLD.distancia_m
+           OR NEW.hora_dispositivo IS DISTINCT FROM OLD.hora_dispositivo
+           OR NEW.hora_servidor IS DISTINCT FROM OLD.hora_servidor
+           OR NEW.sin_buena_senal IS DISTINCT FROM OLD.sin_buena_senal
+           OR NEW.foto_frente_url IS DISTINCT FROM OLD.foto_frente_url
+           OR NEW.justificacion IS DISTINCT FROM OLD.justificacion) THEN
+          RAISE EXCEPTION 'El inicio de la inspección no se puede modificar (GPS, hora, foto y justificación quedan fijos)';
+        END IF;
+        RETURN NEW;
+      END;
+      $f$ LANGUAGE plpgsql;
+      DROP TRIGGER IF EXISTS inicios_inspeccion_inmutable_trg ON inicios_inspeccion;
+      CREATE TRIGGER inicios_inspeccion_inmutable_trg BEFORE UPDATE ON inicios_inspeccion
+        FOR EACH ROW EXECUTE FUNCTION inicios_inspeccion_inmutable();
+    `,
+  },
 ];

@@ -5,6 +5,7 @@ import { Login } from './auth/Login';
 import {
   alRevocarse,
   cerrarSesion,
+  fetchConSesion,
   guardarPerfil,
   MENSAJE_REVOCADA,
   pantallaInicial,
@@ -14,6 +15,8 @@ import {
 import { InspeccionCampoView } from './checklist/InspeccionCampoView';
 import { RecorridoRt } from './visitasFallidas/RecorridoRt';
 import { MapaRtView } from './rtmapa/MapaRtView';
+import { type EdificioMapaRt } from './rtmapa/mapaRt';
+import { type EdificioInspeccion, equiposDeFicha } from './checklist/navegacion';
 import { cargarVisitaEnCurso, tieneProgresoVisita } from './checklist/offlineStore';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
@@ -229,6 +232,8 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
       : pantallaInicial(usuario.rol),
   );
   const [health, setHealth] = useState<HealthState | null>(null);
+  // El edificio cuya inspección inició el RT desde el mapa (HU-16 RF-02): la pantalla de inspección usa sus equipos y sus pisos.
+  const [edificioEnInspeccion, setEdificioEnInspeccion] = useState<EdificioInspeccion | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [consorcioBuscadoId, setConsorcioBuscadoId] = useState<string | null>(null);
@@ -267,6 +272,24 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
     },
     [vista],
   );
+
+  /** El RT inició la inspección desde la tarjeta del mapa: se cargan los equipos y pisos del edificio y se pasa a la pantalla de inspección. */
+  const iniciarInspeccionDesdeMapa = useCallback(async (e: EdificioMapaRt) => {
+    let equipos: ReturnType<typeof equiposDeFicha> = [];
+    let pisos: string[] | null = null;
+    try {
+      const res = await fetchConSesion(`/api/consorcios/${encodeURIComponent(e.id)}`);
+      if (res.ok) {
+        const ficha = (await res.json()) as { maquinas?: Parameters<typeof equiposDeFicha>[0]; pisos?: string[] };
+        equipos = equiposDeFicha(ficha.maquinas ?? []);
+        pisos = ficha.pisos ?? null;
+      }
+    } catch {
+      // Sin conexión: se abre la inspección igual, con los datos de demostración.
+    }
+    setEdificioEnInspeccion(equipos.length > 0 ? { consorcioId: e.id, nombre: e.nombre, equipos, pisos } : null);
+    setVista('inspeccion');
+  }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -446,7 +469,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
           )}
           {vista === 'rt' && (
             <section className="rt-inicio" data-testid="vista-rt">
-              <MapaRtView nombreSesion={usuario.nombre} />
+              <MapaRtView nombreSesion={usuario.nombre} onIniciarInspeccion={(e) => void iniciarInspeccionDesdeMapa(e)} />
               <RecorridoRt />
             </section>
           )}
@@ -457,7 +480,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               usuario={usuario.usuario}
             />
           )}
-          {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} />}
+          {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} edificio={edificioEnInspeccion ?? undefined} />}
           {vista === 'eca' && <PortalEca />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />

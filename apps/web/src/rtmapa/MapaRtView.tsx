@@ -1,33 +1,44 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchConSesion } from '../auth/sesion';
 import { MapaUbicacionConsorcio, type MarcadorMapa } from '../consorcios/MapaUbicacionConsorcio';
+import { ConstanciaVisitaFallida } from '../visitasFallidas/ConstanciaVisitaFallida';
 import { COLOR_HEX, LEYENDA, ahoraCorregido, colorDePin, desfaseDeReloj, encabezadoRt } from './colorPin';
-import { type MapaRt, REFRESCO_MS, cargarMapaRt } from './mapaRt';
+import { type EdificioMapaRt, type MapaRt, REFRESCO_MS, cargarMapaRt } from './mapaRt';
+import { TarjetaEdificio } from './TarjetaEdificio';
 
+// Nombre legible de cada color (para el subtítulo del pin y la tarjeta).
 const NOMBRE_COLOR = { verde: 'Abierto ahora', rojo: 'Cerrado', amarillo: 'A coordinar' } as const;
 
+interface Props {
+  nombreSesion: string;
+  /** El RT inició la inspección del edificio (ya validada su presencia y registrada por la API): la app pasa a la inspección. */
+  onIniciarInspeccion: (edificio: EdificioMapaRt) => void;
+}
+
 /**
- * Pantalla inicial del RT de Calle (HU-16 RF-01): encabezado con saludo, zona y hora, y el mapa con sus edificios pendientes, cada pin
- * pintado según esté abierto (verde), cerrado (rojo) o «A coordinar» (amarillo). Los colores y la hora se recalculan solos, sin recargar.
+ * Pantalla inicial del RT de Calle (HU-16 RF-01 y RF-02): encabezado con saludo, zona y hora, y el mapa con sus edificios pendientes, cada pin
+ * pintado según esté abierto (verde), cerrado (rojo) o «A coordinar» (amarillo). Al tocar un pin se abre la tarjeta del edificio. Los colores
+ * y la hora se recalculan solos, sin recargar.
  */
-export function MapaRtView({ nombreSesion }: { nombreSesion: string }) {
+export function MapaRtView({ nombreSesion, onIniciarInspeccion }: Props) {
   const [mapa, setMapa] = useState<MapaRt | null>(null);
   const [error, setError] = useState(false);
   const [desfase, setDesfase] = useState(0);
   const [ahora, setAhora] = useState(() => new Date());
+  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null);
+  const [constanciaDe, setConstanciaDe] = useState<EdificioMapaRt | null>(null);
+
+  const cargar = useCallback(async () => {
+    const m = await cargarMapaRt(fetchConSesion);
+    if (!m) return setError(true);
+    setError(false);
+    setMapa(m);
+    setDesfase(desfaseDeReloj(m.ahora, Date.now()));
+  }, []);
 
   useEffect(() => {
-    let activo = true;
-    void cargarMapaRt(fetchConSesion).then((m) => {
-      if (!activo) return;
-      if (!m) return setError(true);
-      setMapa(m);
-      setDesfase(desfaseDeReloj(m.ahora, Date.now()));
-    });
-    return () => {
-      activo = false;
-    };
-  }, []);
+    void cargar();
+  }, [cargar]);
 
   useEffect(() => {
     const t = setInterval(() => setAhora(ahoraCorregido(Date.now(), desfase)), REFRESCO_MS);
@@ -44,6 +55,26 @@ export function MapaRtView({ nombreSesion }: { nombreSesion: string }) {
     });
   }, [mapa, ahora]);
   const sinPunto = mapa?.edificios.filter((e) => !e.ubicacion) ?? [];
+  const seleccionado = mapa?.edificios.find((e) => e.id === seleccionadoId) ?? null;
+
+  if (constanciaDe) {
+    return (
+      <ConstanciaVisitaFallida
+        edificio={{ id: constanciaDe.id, nombre: constanciaDe.nombre, direccion: constanciaDe.direccion, bloqueado: false, visitaFallidaHoy: false }}
+        onCancelar={() => setConstanciaDe(null)}
+        onGuardada={() => {
+          setConstanciaDe(null);
+          setSeleccionadoId(null);
+          void cargar(); // el edificio ya tiene visita fallida de hoy: sale del mapa
+        }}
+        onYaRegistrada={() => {
+          setConstanciaDe(null);
+          setSeleccionadoId(null);
+          void cargar();
+        }}
+      />
+    );
+  }
 
   return (
     <section className="mapa-rt" aria-labelledby="rt-titulo" data-testid="mapa-rt" style={{ maxWidth: '100%', overflowX: 'hidden' }}>
@@ -57,7 +88,13 @@ export function MapaRtView({ nombreSesion }: { nombreSesion: string }) {
       )}
       {mapa && (
         <>
-          <MapaUbicacionConsorcio ubicacion={null} marcadores={marcadores} testId="mapa-rt-pines" />
+          <MapaUbicacionConsorcio
+            ubicacion={null}
+            marcadores={marcadores}
+            testId="mapa-rt-pines"
+            onSeleccionarMarcador={setSeleccionadoId}
+            marcadorSeleccionadoId={seleccionadoId}
+          />
           <ul className="mapa-rt-leyenda" aria-label="Leyenda de colores" data-testid="mapa-rt-leyenda" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', listStyle: 'none', padding: 0, margin: '8px 0' }}>
             {LEYENDA.map((l) => (
               <li key={l.color} data-testid={`leyenda-${l.color}`}>
@@ -66,6 +103,17 @@ export function MapaRtView({ nombreSesion }: { nombreSesion: string }) {
               </li>
             ))}
           </ul>
+          {seleccionado && (
+            <TarjetaEdificio
+              key={seleccionado.id}
+              edificio={seleccionado}
+              color={colorDePin(seleccionado, mapa.feriados, ahora)}
+              reglas={{ radioM: mapa.presencia.radioM, precisionMaxM: mapa.presencia.precisionMaxM }}
+              onCerrar={() => setSeleccionadoId(null)}
+              onIniciada={(e) => onIniciarInspeccion(e)}
+              onNoSePudo={(e) => setConstanciaDe(e)}
+            />
+          )}
           {mapa.edificios.length === 0 && <p className="portal-desc">No tenés edificios pendientes por hoy.</p>}
           {sinPunto.length > 0 && (
             <p className="portal-desc" data-testid="mapa-rt-sin-punto">

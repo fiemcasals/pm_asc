@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { APP_CONFIG, AppConfig } from '../config';
+import { PRECISION_MAX_POR_DEFECTO_M, RADIO_PRESENCIA_M } from '../inicios-inspeccion/inicios.types';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { UsuariosRepository } from '../auth/usuarios.repository';
 import { HorariosService } from '../horarios/horarios.service';
@@ -17,6 +19,7 @@ export class RtMapaService {
     private readonly horarios: HorariosService,
     private readonly repo: RtMapaRepository,
     private readonly usuarios: UsuariosRepository,
+    @Optional() @Inject(APP_CONFIG) private readonly config?: AppConfig,
   ) {}
 
   /**
@@ -33,8 +36,11 @@ export class RtMapaService {
       const d = datos.get(e.id);
       if (!d || edificioResueltoHoy(d)) continue;
       const h = await this.horarios.obtener(e.id);
-      edificios.push({ id: e.id, nombre: e.nombre, direccion: e.direccion, ubicacion: d.ubicacion, aCoordinar: h.aCoordinar, franjas: h.franjas });
+      edificios.push({ id: e.id, nombre: e.nombre, direccion: e.direccion, ubicacion: d.ubicacion, aCoordinar: h.aCoordinar, franjas: h.franjas, encargado: d.encargado ?? { nombre: null, telefono: null } });
     }
-    return { rt: { nombre: rt.nombre, zona: rt.zona }, ahora: new Date().toISOString(), feriados: this.horarios.getFeriados(), edificios };
+    return { rt: { nombre: rt.nombre, zona: rt.zona }, ahora: new Date().toISOString(), feriados: this.horarios.getFeriados(),
+      presencia: { radioM: RADIO_PRESENCIA_M, precisionMaxM: this.config?.gpsPrecisionMaxM ?? PRECISION_MAX_POR_DEFECTO_M },
+      edificios,
+    };
   }
 }

@@ -11,6 +11,7 @@ export const TABLAS_CON_RLS = [
   'consorcios',
   'desbloqueos_edificio',
   'horarios_edificio',
+  'inicios_inspeccion',
   'maquinas',
   'maquinas_pago_historial',
   'roles_edificio',

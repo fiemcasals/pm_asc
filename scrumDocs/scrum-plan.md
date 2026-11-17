@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-17T14:23:46.627Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-17T14:23:53.471Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -36,7 +36,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 28 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | Hacer | germanG | RF-01 | — |
 | 29 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 30 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 31 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | Haciendo | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
+| 31 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | Hecho | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
 | 32 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | tested ✓ | dev-ma-2 | RF-01, RNF-02 | — |
 | 33 | RF-05 | Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 34 | RNF-01 | Índice por fecha para el semáforo y medición con volumen | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |

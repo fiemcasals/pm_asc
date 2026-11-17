@@ -80,6 +80,9 @@ describe('Recorrido del RT, desbloqueo y días entre visitas fallidas contra Pos
       [consorcioId, String(dias)],
     );
 
+  /** Con una visita fallida de hoy el pin no está en el recorrido del RT (HU-07 RF-06): para mirar el recorrido, las visitas pasan a ayer. */
+  const pasoUnDia = () => admin.query("UPDATE visitas_fallidas SET fecha_hora = fecha_hora - interval '1 day' WHERE consorcio_id = $1", [consorcioId]);
+
   it('criterio 3: la segunda visita fallida del mismo día responde 409, no suma advertencia y no deja fila', async () => {
     const primera = await fallar();
     expect(primera.status).toBe(201);
@@ -125,6 +128,7 @@ describe('Recorrido del RT, desbloqueo y días entre visitas fallidas contra Pos
     const registros = (await admin.query('SELECT usuario, motivo, fecha FROM desbloqueos_edificio WHERE consorcio_id = $1', [consorcioId])).rows;
     expect(registros).toHaveLength(1);
     expect(registros[0]).toMatchObject({ usuario: `${P}-secretaria`, motivo: 'Se coordinó con el administrador' });
+    await pasoUnDia();
     expect(await idsDelRt()).toContain(consorcioId);
     expect((await http().post(`/api/visitas-fallidas/consorcio/${consorcioId}/desbloquear`).set('Authorization', `Bearer ${tokenSecretaria}`).send({ motivo: 'otra vez' })).status).toBe(409);
   });
@@ -169,6 +173,7 @@ describe('Recorrido del RT, desbloqueo y días entre visitas fallidas contra Pos
     });
     expect(inspeccion.status).toBe(201);
 
+    await pasoUnDia();
     expect(await idsDelRt()).toContain(consorcioId);
     expect((await http().get(`/api/visitas-fallidas/consorcio/${consorcioId}`).set('Authorization', `Bearer ${tokenSecretaria}`)).body.totalAdvertencias).toBe(0);
     await retrasarUltima(1);

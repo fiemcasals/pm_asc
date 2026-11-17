@@ -31,10 +31,17 @@ export class VisitasFallidasService {
   private readonly repo: VisitasFallidasRepository;
   /** Días de calendario que tienen que pasar entre dos visitas fallidas del mismo edificio (0 = sin mínimo). */
   private readonly minDiasEntreVisitas: number;
+  private readonly causas: string[];
 
   constructor(@Optional() repo?: VisitasFallidasRepository, @Optional() @Inject(APP_CONFIG) config?: AppConfig) {
     this.repo = repo ?? new InMemoryVisitasFallidasRepository();
     this.minDiasEntreVisitas = config?.visitasFallidasMinDias ?? 1;
+    this.causas = config?.visitasFallidasCausas ?? ['Encargado o responsable ausente'];
+  }
+
+  /** Las causas que se pueden elegir al registrar una visita fallida; la primera es la de por defecto (HU-07 RF-06). */
+  getCausas(): { causas: string[]; porDefecto: string } {
+    return { causas: [...this.causas], porDefecto: this.causas[0] };
   }
 
   /**
@@ -44,6 +51,7 @@ export class VisitasFallidasService {
    */
   async registrarVisitaFallida(
     dto: ReporteVisitaFallidaDto,
+    quien?: { usuario: string; rol: string },
   ): Promise<VisitaFallidaRegistro> {
     if (!dto) {
       throw new BadRequestException('El cuerpo del reporte es obligatorio');
@@ -78,10 +86,29 @@ export class VisitasFallidasService {
       );
     }
 
+    // HU-07 RF-06: el RT de Calle tiene que elegir una causa de la lista configurada; la hora del dispositivo se guarda aparte de la del servidor.
+    const esRt = quien?.rol === 'rt_calle';
+    const causa = typeof dto.causa === 'string' ? dto.causa.trim() : '';
+    if (esRt && !causa) {
+      throw new BadRequestException('Elegí la causa de la visita fallida.');
+    }
+    if (causa && !this.causas.includes(causa)) {
+      throw new BadRequestException(`La causa «${causa}» no está entre las configuradas: ${this.causas.join(' / ')}.`);
+    }
+    let horaDispositivo: string | null = null;
+    if (dto.horaDispositivo !== undefined && dto.horaDispositivo !== null) {
+      const ms = typeof dto.horaDispositivo === 'string' ? Date.parse(dto.horaDispositivo) : NaN;
+      if (Number.isNaN(ms)) throw new BadRequestException('horaDispositivo tiene que ser una fecha y hora válida (ISO 8601).');
+      horaDispositivo = new Date(ms).toISOString();
+    } else if (esRt) {
+      throw new BadRequestException('Falta la hora del dispositivo (horaDispositivo).');
+    }
+
     const consorcioInfo = await this.resolverConsorcioInfo(dto.consorcioId);
     const fechaHora = new Date().toISOString();
-    const motivo = dto.motivo?.trim() || 'No se pudo realizar la inspección: encargado ausente';
-    const inspector = dto.inspector?.trim() || 'Inspector Técnico de Guardia (RT Calle)';
+    const motivo = causa || dto.motivo?.trim() || 'No se pudo realizar la inspección: encargado ausente';
+    // El inspector del RT es siempre quien tiene la sesión: no se puede cargar la constancia a nombre de otro.
+    const inspector = esRt && quien ? quien.usuario : dto.inspector?.trim() || 'Inspector Técnico de Guardia (RT Calle)';
 
     const guardado = await this.repo.registrar(dto.consorcioId, (previasCount, ultimaVisitaFallidaIso) => {
       // HU-07 RF-05: entre dos visitas fallidas del mismo edificio tiene que pasar al menos un día (de calendario, hora de Buenos
@@ -136,6 +163,7 @@ export class VisitasFallidasService {
         },
         inspector,
         fechaHora,
+        horaDispositivo,
         emailNotificacion,
       };
     });
@@ -516,8 +544,10 @@ export class VisitasFallidasService {
     const lista = edificios.map((e) => {
       const propias = todas.filter((v) => v.consorcioId === e.id);
       const ciclo = cicloDeAdvertencias(propias, inspecciones[e.id] ?? null);
-      return { ...e, bloqueado: estaBloqueado(ciclo, desbloqueos.filter((d) => d.consorcioId === e.id)) };
+      const ahora = Date.now();
+      const visitaFallidaHoy = propias.some((v) => diasCalendarioEntre(Date.parse(v.fechaHora), ahora) === 0);
+      return { ...e, bloqueado: estaBloqueado(ciclo, desbloqueos.filter((d) => d.consorcioId === e.id)), visitaFallidaHoy };
     });
-    return rol === 'rt_calle' ? lista.filter((e) => !e.bloqueado) : lista;
+    return rol === 'rt_calle' ? lista.filter((e) => !e.bloqueado && !e.visitaFallidaHoy) : lista;
   }
 }

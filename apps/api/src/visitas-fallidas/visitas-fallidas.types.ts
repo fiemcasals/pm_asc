@@ -8,6 +8,10 @@ export interface CoordenadasGPS {
 export interface ReporteVisitaFallidaDto {
   consorcioId: string;
   motivo?: string;
+  /** Causa elegida de la lista configurada (HU-07 RF-06); para el RT de Calle es obligatoria. */
+  causa?: string;
+  /** Hora que marcaba el celular al registrar (ISO). */
+  horaDispositivo?: string;
   fotoFrenteUrl: string;
   gps: CoordenadasGPS;
   inspector?: string;
@@ -34,7 +38,10 @@ export interface VisitaFallidaRegistro {
   fotoFrenteUrl: string;
   gps: CoordenadasGPS;
   inspector: string;
+  /** Hora del servidor al registrar: la fija la API y nadie la edita. */
   fechaHora: string;
+  /** Hora que marcaba el celular del RT, tal cual la mandó. */
+  horaDispositivo?: string | null;
   emailNotificacion?: EmailNotificacionConsorcio | null;
 }
 
@@ -89,6 +96,8 @@ export interface EdificioRecorrido {
   nombre: string;
   direccion: string;
   bloqueado: boolean;
+  /** Ya tiene una visita fallida de hoy (hora de Buenos Aires): al RT le desaparece el pin por ese día. */
+  visitaFallidaHoy: boolean;
 }
 
 /** Una anulación del recargo del 45 % de una máquina: quién, cuándo y por qué (HU-07 RF-04). */

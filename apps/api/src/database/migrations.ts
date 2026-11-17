@@ -719,4 +719,29 @@ export const MIGRATIONS: Migration[] = [
         FOR EACH ROW EXECUTE FUNCTION visitas_fallidas_inmutable();
     `,
   },
+  {
+    id: '024_horarios_edificio',
+    sql: `
+      -- HU-01 RF-04: horarios de atención por edificio. Sin fila rige el horario por defecto (lunes a viernes 08:00–12:00 y 17:00–20:00).
+      -- franjas: { "lunes": [{"desde":"08:00","hasta":"12:00"}, …], … } con hasta 2 franjas por día; a_coordinar reemplaza las franjas.
+      CREATE TABLE horarios_edificio (
+        consorcio_id    uuid PRIMARY KEY REFERENCES consorcios (id) ON DELETE CASCADE,
+        a_coordinar     boolean NOT NULL DEFAULT false,
+        franjas         jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(franjas) = 'object'),
+        actualizado_en  timestamptz NOT NULL DEFAULT now(),
+        actualizado_por text NOT NULL
+      );
+
+      ALTER TABLE horarios_edificio ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_horarios_edificio_admin_secretaria ON horarios_edificio;
+      CREATE POLICY rls_horarios_edificio_admin_secretaria ON horarios_edificio
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- El RT de Calle y el Firmante leen los horarios de los edificios que tienen asignados.
+      DROP POLICY IF EXISTS rls_horarios_edificio_rt_firmante_select ON horarios_edificio;
+      CREATE POLICY rls_horarios_edificio_rt_firmante_select ON horarios_edificio
+        FOR SELECT
+        USING (usuario_asignado_en_edificio(consorcio_id));
+    `,
+  },
 ];

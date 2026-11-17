@@ -1,3 +1,4 @@
+import { feriadosDeEntorno } from './horarios/feriados';
 import { randomBytes } from 'node:crypto';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
@@ -27,6 +28,8 @@ export interface AppConfig {
   appUrl: string;
   /** null si no hay SMTP configurado: el recupero avisa por log y no manda mail. */
   smtp: SmtpConfig | null;
+  /** Feriados (AAAA-MM-DD) que cuentan como cerrado; null = la lista provisoria de src/horarios/feriados.ts (HU-01 RF-04). */
+  feriados: string[] | null;
   databaseUrl: string;
   /** URL opcional del usuario de aplicación sin BYPASSRLS ni propiedad de tablas. */
   databaseAppUrl?: string;
@@ -103,6 +106,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     host: env.API_HOST?.trim() || '127.0.0.1',
     appUrl: (env.APP_URL?.trim() || 'http://localhost:8050').replace(/\/+$/, ''),
     smtp,
+    feriados: feriadosDeEntorno(env.FERIADOS),
     databaseUrl: env.DATABASE_URL ?? '',
     databaseAppUrl: env.DATABASE_APP_URL || undefined,
     databaseAppPassword: env.DATABASE_APP_PASSWORD?.trim() || undefined,

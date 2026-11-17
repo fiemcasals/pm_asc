@@ -10,6 +10,7 @@ export const APP_RLS_ROLE = 'ascensores_app';
 export const TABLAS_CON_RLS = [
   'consorcios',
   'desbloqueos_edificio',
+  'horarios_edificio',
   'maquinas',
   'maquinas_pago_historial',
   'roles_edificio',

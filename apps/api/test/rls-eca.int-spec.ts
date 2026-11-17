@@ -16,6 +16,7 @@ const TABLAS_ECA = [
   'alertas_avisos',
   'consorcios',
   'desbloqueos_edificio',
+  'horarios_edificio',
   'maquinas',
   'maquinas_pago_historial',
   'reasignaciones_rt',

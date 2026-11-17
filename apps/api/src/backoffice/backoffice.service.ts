@@ -1,7 +1,8 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { FirmanteService } from '../firmante/firmante.service';
-import { aFila, filtrar, ordenar, paginar } from './backoffice.logic';
-import { ESTADOS_VISITA, FiltrosMonitoreo, PaginaMonitoreo, POR_PAGINA_DEFECTO, POR_PAGINA_MAXIMA, RemitoEca } from './backoffice.types';
+import { aDetalle, aFila, filtrar, ordenar, paginar } from './backoffice.logic';
+import { DetalleVisita, ESTADOS_VISITA, FiltrosMonitoreo, PaginaMonitoreo, POR_PAGINA_DEFECTO, POR_PAGINA_MAXIMA, ReclamoAdmin, RemitoEca } from './backoffice.types';
+import { ReclamosRepository } from './reclamos.repository';
 import { RemitosRepository } from './remitos.repository';
 
 const entero = (v: unknown, nombre: string, min: number, max: number, defecto: number): number => {
@@ -22,6 +23,7 @@ export class BackofficeService {
   constructor(
     private readonly firmante: FirmanteService,
     private readonly remitos: RemitosRepository,
+    private readonly reclamos: ReclamosRepository,
   ) {}
 
   /**
@@ -39,8 +41,38 @@ export class BackofficeService {
     const porPagina = entero(query.porPagina, 'porPagina', 1, POR_PAGINA_MAXIMA, POR_PAGINA_DEFECTO);
 
     const porVisita = new Map((await this.remitos.listar()).map((r) => [r.visitaId, r]));
-    const filas = this.firmante.getMaquinas().map((m) => aFila(m, (id) => porVisita.get(id) ?? null));
+    const reclamosPorVisita = new Map((await this.reclamos.listar()).map((r) => [r.visitaId, r]));
+    const filas = this.firmante.getMaquinas().map((m) => aFila(m, (id) => porVisita.get(id) ?? null, (id) => reclamosPorVisita.get(id) ?? null));
     return paginar(ordenar(filtrar(filas, filtros)), pagina, porPagina);
+  }
+
+  /** El detalle de la visita de un equipo para el visor de fotos e informe. 404 si el equipo no existe. */
+  detalle(maquinaId: string): DetalleVisita {
+    const m = this.firmante.getMaquinas().find((x) => x.id === maquinaId);
+    if (!m) throw new NotFoundException('Equipo no encontrado');
+    return aDetalle(m);
+  }
+
+  /**
+   * Registra el reclamo a la administración del consorcio por una visita con advertencia (quién y cuándo). Sólo corresponde cuando la visita
+   * quedó en «Advertencia» (409 si no); un reclamo por visita (409 con el anterior).
+   */
+  async reclamarAdmin(cuerpo: unknown, usuario: string): Promise<ReclamoAdmin> {
+    const b = (cuerpo ?? {}) as Record<string, unknown>;
+    const maquinaId = typeof b.maquinaId === 'string' ? b.maquinaId.trim() : '';
+    if (!maquinaId) throw new BadRequestException('maquinaId es obligatorio');
+    const maquina = this.firmante.getMaquinas().find((m) => m.id === maquinaId);
+    if (!maquina) throw new NotFoundException('Equipo no encontrado');
+    if (!maquina.visita || maquina.estado !== 'Advertencia') {
+      throw new ConflictException('Sólo se le reclama a la administración una visita que quedó con advertencia.');
+    }
+    const visita = maquina.visita;
+    const guardado = await this.reclamos.guardar({ maquinaId: maquina.id, visitaId: visita.id, administracion: maquina.edificio.administracion, direccion: maquina.edificio.direccion, reclamadoPor: usuario });
+    if (!guardado) {
+      const previo = (await this.reclamos.listar()).find((r) => r.visitaId === visita.id);
+      throw new ConflictException(`Esta visita ya se le reclamó a ${maquina.edificio.administracion}${previo ? ` el ${previo.reclamadoEn} (${previo.reclamadoPor})` : ''}.`);
+    }
+    return guardado;
   }
 
   /**

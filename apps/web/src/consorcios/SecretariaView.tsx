@@ -14,6 +14,7 @@ import { FormularioConsorcio } from './FormularioConsorcio';
 import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
 import { SemaforoView } from '../semaforo/SemaforoView';
 import { BandejaAvisos } from '../avisos/BandejaAvisos';
+import { TableroMonitoreo } from '../backoffice/TableroMonitoreo';
 import { puedeSalir } from './roles';
 
 interface EdificiosPanelProps {
@@ -237,8 +238,32 @@ interface SecretariaViewProps {
   consorcioInicialId?: string | null;
 }
 
+/** Pestaña «Monitoreo» (HU-05 RF-02): el mapa de edificios y, debajo, el tablero dinámico de visitas. */
+function MonitoreoGeneral() {
+  const [edificios, setEdificios] = useState<ConsorcioMapaItem[]>([]);
+  useEffect(() => {
+    let activo = true;
+    void fetchConsorciosMapa().then((r) => {
+      if (activo && r.ok && r.data) setEdificios(r.data);
+    });
+    return () => {
+      activo = false;
+    };
+  }, []);
+  return (
+    <div data-testid="monitoreo-general">
+      <MapaUbicacionConsorcio
+        ubicacion={null}
+        marcadores={edificios.map((c) => ({ id: c.id, etiqueta: c.nombre, subtitulo: c.direccion, ubicacion: c.ubicacion }))}
+        testId="mapa-monitoreo"
+      />
+      <TableroMonitoreo />
+    </div>
+  );
+}
+
 export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
-  const [pestana, setPestana] = useState<'edificios' | 'roles' | 'semaforo' | 'avisos'>('edificios');
+  const [pestana, setPestana] = useState<'edificios' | 'roles' | 'semaforo' | 'avisos' | 'monitoreo'>('edificios');
 
   useEffect(() => {
     if (consorcioInicialId) {
@@ -277,12 +302,20 @@ export function SecretariaView({ consorcioInicialId }: SecretariaViewProps) {
         >
           Avisos a la ECA
         </button>
+        <button
+          className={`tab-btn ${pestana === 'monitoreo' ? 'active' : ''}`}
+          onClick={() => puedeSalir() && setPestana('monitoreo')}
+          data-testid="pestana-monitoreo"
+        >
+          Monitoreo
+        </button>
       </nav>
 
       {pestana === 'edificios' && <EdificiosPanel consorcioInicialId={consorcioInicialId} />}
       {pestana === 'roles' && <AsignacionRoles />}
       {pestana === 'semaforo' && <SemaforoView />}
       {pestana === 'avisos' && <BandejaAvisos />}
+      {pestana === 'monitoreo' && <MonitoreoGeneral />}
 
       <AlertaFallaCritica />
     </>

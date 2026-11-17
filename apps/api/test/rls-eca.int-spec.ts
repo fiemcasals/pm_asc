@@ -22,6 +22,7 @@ const TABLAS_ECA = [
   'maquinas_pago_historial',
   'reasignaciones_rt',
   'recargos_anulados',
+  'reclamos_admin',
   'remitos_eca',
   'roles_edificio',
   'visitas_fallidas',

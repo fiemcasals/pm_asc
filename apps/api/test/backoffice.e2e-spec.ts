@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { Rol } from '../src/auth/auth.types';
 import { InMemoryUsuariosRepository } from '../src/auth/usuarios.repository';
+import { InMemoryReclamosRepository } from '../src/backoffice/reclamos.repository';
 import { InMemoryRemitosRepository } from '../src/backoffice/remitos.repository';
 import { createTestApp, fakeDatabase, MailerDePrueba } from './create-test-app';
 
@@ -13,12 +14,14 @@ jest.setTimeout(30_000);
 describe('API de monitoreo del backoffice (HU-05 RF-01)', () => {
   let app: INestApplication;
   let remitos: InMemoryRemitosRepository;
+  let reclamos: InMemoryReclamosRepository;
   const tokens: Record<string, string> = {};
 
   beforeAll(async () => {
     const usuarios = new InMemoryUsuariosRepository();
     remitos = new InMemoryRemitosRepository();
-    ({ app } = await createTestApp({ NODE_ENV: 'development' }, fakeDatabase(), undefined, undefined, { usuarios }, undefined, undefined, new MailerDePrueba(), undefined, undefined, undefined, remitos));
+    reclamos = new InMemoryReclamosRepository();
+    ({ app } = await createTestApp({ NODE_ENV: 'development' }, fakeDatabase(), undefined, undefined, { usuarios }, undefined, undefined, new MailerDePrueba(), undefined, undefined, undefined, remitos, reclamos));
     const hash = await bcrypt.hash(PASSWORD, 4);
     const roles: Rol[] = ['administrador', 'secretaria', 'rt_calle', 'firmante', 'eca'];
     for (const rol of roles) {
@@ -31,6 +34,7 @@ describe('API de monitoreo del backoffice (HU-05 RF-01)', () => {
   });
   beforeEach(() => {
     remitos.remitos.length = 0;
+    reclamos.reclamos.length = 0;
   });
 
   const http = () => request(app.getHttpServer());
@@ -104,6 +108,42 @@ describe('API de monitoreo del backoffice (HU-05 RF-01)', () => {
       expect((await remito(rol, { maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(403);
       expect((await http().post('/api/backoffice/remito-eca').send({ maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(401);
       expect(remitos.remitos).toHaveLength(0);
+    });
+  });
+
+  describe('HU-05 RF-02: detalle de la visita y reclamo a la administración', () => {
+    const detalle = (rol: string, id: string) => http().get(`/api/backoffice/visitas/${id}`).set('Authorization', `Bearer ${tokens[rol]}`);
+    const reclamo = (rol: string, cuerpo: unknown) => http().post('/api/backoffice/reclamo-admin').set('Authorization', `Bearer ${tokens[rol]}`).send(cuerpo as object);
+
+    it.each(['secretaria', 'administrador'])('el rol %s ve el detalle con las fotos y el checklist', async (rol) => {
+      const res = await detalle(rol, 'MAQ-CORRIENTES-M1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.fotos).toHaveLength(2);
+      expect(res.body).toMatchObject({ direccion: 'Av. Corrientes 1234, CABA', inspector: 'dev-ma-2' });
+      expect((await detalle(rol, 'NO-EXISTE')).status).toBe(404);
+    });
+
+    it('reclama a la administración una visita con advertencia → 201 a nombre de la sesión; la segunda vez 409; una Recorrida 409', async () => {
+      const ok = await reclamo('secretaria', { maquinaId: 'MAQ-CALLAO-M1', reclamadoPor: 'otra.persona' });
+
+      expect(ok.status).toBe(201);
+      expect(ok.body).toMatchObject({ visitaId: 'VIS-2026-11-201', reclamadoPor: 'secretaria' });
+      expect((await reclamo('administrador', { maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(409);
+      expect((await reclamo('secretaria', { maquinaId: 'MAQ-SANTAFE-M1' })).status).toBe(409);
+      expect((await reclamo('secretaria', { maquinaId: 'NO-EXISTE' })).status).toBe(404);
+      expect((await reclamo('secretaria', {})).status).toBe(400);
+      expect(reclamos.reclamos).toHaveLength(1);
+      const fila = (await monitoreo('secretaria', '?direccion=callao')).body.items[0];
+      expect(fila.reclamo).toMatchObject({ reclamadoPor: 'secretaria' });
+    });
+
+    it.each(['rt_calle', 'firmante', 'eca'])('el rol %s no ve el detalle ni reclama (403); sin sesión 401', async (rol) => {
+      expect((await detalle(rol, 'MAQ-CORRIENTES-M1')).status).toBe(403);
+      expect((await reclamo(rol, { maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(403);
+      expect((await http().get('/api/backoffice/visitas/MAQ-CORRIENTES-M1')).status).toBe(401);
+      expect((await http().post('/api/backoffice/reclamo-admin').send({ maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(401);
+      expect(reclamos.reclamos).toHaveLength(0);
     });
   });
 });

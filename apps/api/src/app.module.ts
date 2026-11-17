@@ -44,6 +44,7 @@ import { ParadasService } from './paradas/paradas.service';
 import { BackofficeController } from './backoffice/backoffice.controller';
 import { BackofficeService } from './backoffice/backoffice.service';
 import { PgRemitosRepository, RemitosRepository } from './backoffice/remitos.repository';
+import { PgReclamosRepository, ReclamosRepository } from './backoffice/reclamos.repository';
 import { IniciosController } from './inicios-inspeccion/inicios.controller';
 import { IniciosRepository, } from './inicios-inspeccion/inicios.repository';
 import { PgIniciosRepository } from './inicios-inspeccion/inicios.repository';
@@ -136,6 +137,7 @@ export class AppModule implements NestModule {
         { provide: IniciosRepository, useClass: PgIniciosRepository },
         IniciosService,
         { provide: RemitosRepository, useClass: PgRemitosRepository },
+        { provide: ReclamosRepository, useClass: PgReclamosRepository },
         BackofficeService,
         FallasCriticasService,
         { provide: SemaforoRepository, useClass: PgSemaforoRepository },

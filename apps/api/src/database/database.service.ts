@@ -20,6 +20,7 @@ export const TABLAS_CON_RLS = [
   'visitas_fallidas',
   'reasignaciones_rt',
   'recargos_anulados',
+  'reclamos_admin',
   'remitos_eca',
 ] as const;
 const TABLAS_CON_RLS_SQL = TABLAS_CON_RLS.map((t) => `'${t}'`).join(', ');

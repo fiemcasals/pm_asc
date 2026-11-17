@@ -31,10 +31,12 @@ describe('Monitoreo del backoffice y remito a la ECA contra PostgreSQL real (HU-
     tokenAdmin = (await asegurarUsuarioPrueba(admin, config, { usuario: `${P}-admin`, rol: 'administrador' })).token;
     tokenRt = (await asegurarUsuarioPrueba(admin, config, { usuario: `${P}-rt`, rol: 'rt_calle' })).token;
     await admin.query('DELETE FROM remitos_eca WHERE enviado_por LIKE $1', [`${P}%`]);
+    await admin.query('DELETE FROM reclamos_admin WHERE reclamado_por LIKE $1', [`${P}%`]);
   });
 
   afterAll(async () => {
     await admin.query('DELETE FROM remitos_eca WHERE enviado_por LIKE $1', [`${P}%`]);
+    await admin.query('DELETE FROM reclamos_admin WHERE reclamado_por LIKE $1', [`${P}%`]);
     await admin.query('DELETE FROM usuarios WHERE usuario LIKE $1', [`${P}%`]);
     await admin.query('DELETE FROM intentos_login WHERE usuario LIKE $1', [`${P}%`]);
     await app.close();
@@ -98,5 +100,44 @@ describe('Monitoreo del backoffice y remito a la ECA contra PostgreSQL real (HU-
   it('el RT no ve el monitoreo ni registra remitos (403)', async () => {
     expect((await con(tokenRt).ver()).status).toBe(403);
     expect((await con(tokenRt).remito({ maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(403);
+  });
+
+  describe('HU-05 RF-02: reclamo a la administración', () => {
+    it('el reclamo de una visita con advertencia queda en la base (uno por visita) y la fila del listado lo muestra', async () => {
+      const res = await http().post('/api/backoffice/reclamo-admin').set('Authorization', `Bearer ${tokenSec}`).send({ maquinaId: 'MAQ-CALLAO-M1' });
+
+      expect(res.status).toBe(201);
+      const [fila] = (await admin.query('SELECT * FROM reclamos_admin WHERE visita_id = $1', ['VIS-2026-11-201'])).rows;
+      expect(fila).toMatchObject({ maquina_id: 'MAQ-CALLAO-M1', direccion: 'Av. Callao 850, CABA', reclamado_por: `${P}-sec` });
+      const lista = await con(tokenAdmin).ver('?direccion=callao');
+      expect(lista.body.items[0].reclamo).toMatchObject({ reclamadoPor: `${P}-sec` });
+      expect((await http().post('/api/backoffice/reclamo-admin').set('Authorization', `Bearer ${tokenAdmin}`).send({ maquinaId: 'MAQ-CALLAO-M1' })).status).toBe(409);
+      expect((await http().post('/api/backoffice/reclamo-admin').set('Authorization', `Bearer ${tokenSec}`).send({ maquinaId: 'MAQ-SANTAFE-M1' })).status).toBe(409);
+    });
+
+    it('el rol de la aplicación no modifica ni borra reclamos, y la RLS es sólo de la Secretaría y el Administrador', async () => {
+      const client = await admin.connect();
+      try {
+        for (const sql of ["UPDATE reclamos_admin SET reclamado_por = 'otro'", 'DELETE FROM reclamos_admin']) {
+          await client.query('BEGIN');
+          await client.query('SET LOCAL ROLE ascensores_app');
+          await client.query("SELECT set_config('app.rol_actual', 'administrador', true)");
+          await expect(client.query(sql)).rejects.toThrow(/permission denied/);
+          await client.query('ROLLBACK');
+        }
+      } finally {
+        client.release();
+      }
+      const pol = await admin.query("SELECT policyname, cmd FROM pg_policies WHERE tablename = 'reclamos_admin'");
+      expect(pol.rows).toEqual([{ policyname: 'rls_reclamos_admin_admin_secretaria', cmd: 'ALL' }]);
+    });
+
+    it('el detalle de la visita responde con las fotos y el RT no lo ve (403)', async () => {
+      const res = await http().get('/api/backoffice/visitas/MAQ-CORRIENTES-M1').set('Authorization', `Bearer ${tokenSec}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.fotos).toHaveLength(2);
+      expect((await http().get('/api/backoffice/visitas/MAQ-CORRIENTES-M1').set('Authorization', `Bearer ${tokenRt}`)).status).toBe(403);
+    });
   });
 });

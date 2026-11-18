@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-18T14:20:40.070Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T14:21:15.037Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -40,6 +40,7 @@ graph TD
     REQ_1794493274550["RF-03: Lista de Fallas Críticas definida por el cliente"]
     REQ_1794493274814["RF-04: Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra"]
     REQ_1794493275052["RF-05: Estado del ascensor: el RT lo marca y el Firmante lo confirma"]
+    REQ_1795011668144["RF-06: RT con sesión: fallas críticas y checklist solo para quien corresponde"]
   end
   subgraph US_1791560829237["HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita"]
     REQ_1791910395756["RF-01: Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio"]

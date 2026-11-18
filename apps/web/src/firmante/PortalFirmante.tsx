@@ -6,6 +6,7 @@ import {
   type MaquinaAsignada,
   obtenerMotivoBloqueo,
   puedeAutorizar,
+  puedeFirmarComo,
 } from './firmante';
 import { ModalAuditoria } from './ModalAuditoria';
 
@@ -14,13 +15,95 @@ interface PortalFirmanteProps {
   onConsumirMaquinaInicial?: () => void;
   /** El usuario de la sesión: el cartel de falla crítica muestra sólo las alertas de sus edificios (HU-06 RF-04). */
   usuario?: string;
+  /** El rol de la sesión: un Firmante ve y firma lo suyo; la Secretaría y el Administrador ven todo en modo lectura (HU-08 RF-04). */
+  rol?: string;
+}
+
+/** La tarjeta de una máquina del Firmante. Sólo el Firmante ve el botón de autorizar (HU-08 RF-04). */
+export function TarjetaMaquina({
+  m,
+  puedeFirmar,
+  onSeleccionar,
+}: {
+  m: MaquinaAsignada;
+  puedeFirmar: boolean;
+  onSeleccionar: (m: MaquinaAsignada) => void;
+}) {
+  const habilitado = puedeAutorizar(m);
+  const motivoBloqueo = obtenerMotivoBloqueo(m);
+  const yaAutorizada = m.visita?.autorizada;
+
+  return (
+    <article key={m.id} className="maquina-card" data-testid={`maquina-card-${m.id}`}>
+    <div className="maquina-main">
+      <div className="maquina-badge-col">
+        <span className="agc-code">{m.codigoAGC}</span>
+      </div>
+
+      <div className="maquina-info">
+        <h3 className="maquina-name">{m.nombre}</h3>
+        <p className="maquina-address">
+          📍 <strong>{m.edificio.direccion}</strong> · {m.edificio.consorcio}
+        </p>
+        <div className="maquina-meta">
+          <span>ECA: {m.eca}</span>
+          <span>•</span>
+          <span>RT Calle (60%): {m.rtCalle}</span>
+          <span>•</span>
+          <span>Mes: {m.mes}</span>
+        </div>
+      </div>
+
+      <div className="maquina-status-col">
+        <span className={`badge badge-${m.estado.toLowerCase().replace(/\s+/g, '-')}`}>
+          {m.estado}
+        </span>
+        {yaAutorizada && (
+          <span className="badge badge-autorizada" style={{ marginTop: '6px' }}>
+            ✓ Autorizada AGC
+          </span>
+        )}
+      </div>
+    </div>
+
+    <div className="maquina-actions">
+      <button
+        className="btn btn-secondary btn-sm"
+        onClick={() => onSeleccionar(m)}
+        data-testid={`btn-auditar-${m.id}`}
+      >
+        Auditar Informe y Fotos
+      </button>
+
+      {puedeFirmar && (
+        <button
+          className="btn btn-primary btn-sm"
+          disabled={!habilitado}
+          title={motivoBloqueo || 'Autorizar firma digital ante AGC'}
+          onClick={() => onSeleccionar(m)}
+          data-testid={`btn-autorizar-${m.id}`}
+        >
+          {yaAutorizada ? '✓ Autorizada' : 'Autorizar Firma AGC'}
+        </button>
+      )}
+    </div>
+
+    {puedeFirmar && !habilitado && !yaAutorizada && (
+      <div className="bloqueo-hint">
+        🔒 <small>{motivoBloqueo}</small>
+      </div>
+    )}
+  </article>
+  );
 }
 
 export function PortalFirmante({
   maquinaInicialId,
   onConsumirMaquinaInicial,
   usuario,
+  rol = 'firmante',
 }: PortalFirmanteProps) {
+  const puedeFirmar = puedeFirmarComo({ rol });
   const [maquinas, setMaquinas] = useState<MaquinaAsignada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,9 +186,24 @@ export function PortalFirmante({
           </p>
         </div>
         <div className="firmante-badge">
-          <span className="user-icon">👤</span> RT Legal: <strong>gonza</strong>
+          <span className="user-icon">👤</span>{' '}
+          {puedeFirmar ? (
+            <>
+              RT Legal: <strong data-testid="firmante-usuario">{usuario}</strong>
+            </>
+          ) : (
+            <>
+              Vista de lectura: <strong data-testid="firmante-todos">todos los Firmantes</strong>
+            </>
+          )}
         </div>
       </div>
+
+      {!puedeFirmar && (
+        <p className="portal-desc" data-testid="nota-solo-firmante">
+          Acá ves las máquinas de todos los Firmantes. La firma AGC la autoriza el Firmante: la Secretaría y el Administrador no la autorizan.
+        </p>
+      )}
 
       {mensajeExito && (
         <div className="alert alert-success" role="status">
@@ -150,72 +248,9 @@ export function PortalFirmante({
         <div className="empty-box">No se encontraron máquinas asignadas para este mes.</div>
       ) : (
         <div className="maquinas-list" data-testid="maquinas-lista">
-          {maquinas.map((m) => {
-            const habilitado = puedeAutorizar(m);
-            const motivoBloqueo = obtenerMotivoBloqueo(m);
-            const yaAutorizada = m.visita?.autorizada;
-
-            return (
-              <article key={m.id} className="maquina-card" data-testid={`maquina-card-${m.id}`}>
-                <div className="maquina-main">
-                  <div className="maquina-badge-col">
-                    <span className="agc-code">{m.codigoAGC}</span>
-                  </div>
-
-                  <div className="maquina-info">
-                    <h3 className="maquina-name">{m.nombre}</h3>
-                    <p className="maquina-address">
-                      📍 <strong>{m.edificio.direccion}</strong> · {m.edificio.consorcio}
-                    </p>
-                    <div className="maquina-meta">
-                      <span>ECA: {m.eca}</span>
-                      <span>•</span>
-                      <span>RT Calle (60%): {m.rtCalle}</span>
-                      <span>•</span>
-                      <span>Mes: {m.mes}</span>
-                    </div>
-                  </div>
-
-                  <div className="maquina-status-col">
-                    <span className={`badge badge-${m.estado.toLowerCase().replace(/\s+/g, '-')}`}>
-                      {m.estado}
-                    </span>
-                    {yaAutorizada && (
-                      <span className="badge badge-autorizada" style={{ marginTop: '6px' }}>
-                        ✓ Autorizada AGC
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="maquina-actions">
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setMaquinaSeleccionada(m)}
-                    data-testid={`btn-auditar-${m.id}`}
-                  >
-                    Auditar Informe y Fotos
-                  </button>
-
-                  <button
-                    className="btn btn-primary btn-sm"
-                    disabled={!habilitado}
-                    title={motivoBloqueo || 'Autorizar firma digital ante AGC'}
-                    onClick={() => setMaquinaSeleccionada(m)}
-                    data-testid={`btn-autorizar-${m.id}`}
-                  >
-                    {yaAutorizada ? '✓ Autorizada' : 'Autorizar Firma AGC'}
-                  </button>
-                </div>
-
-                {!habilitado && !yaAutorizada && (
-                  <div className="bloqueo-hint">
-                    🔒 <small>{motivoBloqueo}</small>
-                  </div>
-                )}
-              </article>
-            );
-          })}
+          {maquinas.map((m) => (
+            <TarjetaMaquina key={m.id} m={m} puedeFirmar={puedeFirmar} onSeleccionar={setMaquinaSeleccionada} />
+          ))}
         </div>
       )}
 
@@ -224,6 +259,7 @@ export function PortalFirmante({
           maquina={maquinaSeleccionada}
           onClose={() => setMaquinaSeleccionada(null)}
           onAutorizar={handleAutorizar}
+          puedeFirmar={puedeFirmar}
         />
       )}
     </section>

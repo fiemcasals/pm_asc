@@ -1,3 +1,4 @@
+import { fetchConSesion } from '../auth/sesion';
 export type EstadoVisita = 'Recorrida' | 'Pendiente de Visita' | 'Advertencia';
 
 export interface FotosObligatorias {
@@ -104,24 +105,37 @@ export function obtenerMotivoBloqueo(maquina: MaquinaAsignada): string | null {
   return null;
 }
 
+/** Cómo se manda un pedido a la API: con la sesión del usuario (`fetchConSesion`). Las pruebas inyectan uno propio. */
+type Enviar = (url: string, init?: RequestInit) => Promise<Response>;
+
+/** El Firmante es quien autoriza (y rechaza) la firma AGC: la Secretaría y el Administrador ven el panel en modo lectura (HU-08 RF-04). */
+export function puedeFirmarComo(usuario: { rol: string }): boolean {
+  return usuario.rol === 'firmante';
+}
+
 /**
- * Obtiene la lista de máquinas del mes asignadas al usuario firmante.
+ * El mensaje de una respuesta que no fue exitosa. 401 y 403 se explican (HU-08 RF-04: el panel pide sesión y cada rol hace lo suyo).
+ * `soloFirmante`: la acción es del Firmante (autorizar o rechazar), así que un 403 significa que quien pide no lo es.
+ */
+export function mensajeDeErrorFirmante(status: number, accion: string, soloFirmante = false): string {
+  if (status === 401) return 'La sesión venció: ingresá de nuevo.';
+  if (status === 403) return soloFirmante ? 'Sólo el Firmante autoriza o rechaza la firma AGC.' : 'Tu usuario no tiene acceso al panel del Firmante.';
+  return `Error ${status}: ${accion}`;
+}
+
+/**
+ * Obtiene las máquinas del mes del Firmante de la sesión (la Secretaría y el Administrador reciben las de todos).
  */
 export async function fetchMaquinasFirmante(
-  fetchFn: typeof fetch = fetch,
-  username: string = 'gonza',
+  fetchFn: Enviar = fetchConSesion,
   mes?: string,
 ): Promise<{ ok: boolean; data: MaquinaAsignada[]; error?: string }> {
   try {
     const url = mes ? `/api/firmante/maquinas?mes=${encodeURIComponent(mes)}` : '/api/firmante/maquinas';
-    const res = await fetchFn(url, {
-      headers: {
-        'x-user-name': username,
-      },
-    });
+    const res = await fetchFn(url);
 
     if (!res.ok) {
-      return { ok: false, data: [], error: `Error ${res.status}: no se pudo cargar las máquinas` };
+      return { ok: false, data: [], error: mensajeDeErrorFirmante(res.status, 'no se pudo cargar las máquinas') };
     }
 
     const data = (await res.json()) as MaquinaAsignada[];
@@ -140,19 +154,19 @@ export async function fetchMaquinasFirmante(
  */
 export async function autorizarFirmaMaquina(
   maquinaId: string,
-  fetchFn: typeof fetch = fetch,
-  username: string = 'gonza',
+  fetchFn: Enviar = fetchConSesion,
 ): Promise<{ ok: boolean; data?: AutorizarFirmaResponse; error?: string }> {
   try {
+    // La autorización queda a nombre del usuario de la sesión: el servidor lo toma de ahí.
     const res = await fetchFn('/api/firmante/autorizar', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-name': username,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ maquinaId }),
     });
 
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, error: mensajeDeErrorFirmante(res.status, 'no se pudo autorizar la firma', true) };
+    }
     const json = await res.json();
     if (!res.ok) {
       return { ok: false, error: json.message || json.error || 'No se pudo autorizar la firma' };
@@ -164,5 +178,33 @@ export async function autorizarFirmaMaquina(
       ok: false,
       error: err instanceof Error ? err.message : 'Error al conectar con la API',
     };
+  }
+}
+
+/**
+ * Rechaza el informe de una máquina con el motivo obligatorio (vuelve a la Secretaría). Queda a nombre del usuario de la sesión.
+ * Todavía no hay pantalla que lo use (HU-08 RF-03 sólo hizo la API); el cliente queda listo y con la sesión.
+ */
+export async function rechazarInformeMaquina(
+  maquinaId: string,
+  motivo: string,
+  fetchFn: Enviar = fetchConSesion,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetchFn('/api/firmante/rechazar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maquinaId, motivo }),
+    });
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, error: mensajeDeErrorFirmante(res.status, 'no se pudo rechazar el informe', true) };
+    }
+    if (!res.ok) {
+      const json = (await res.json().catch(() => ({}))) as { message?: string };
+      return { ok: false, error: json.message || 'No se pudo rechazar el informe' };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error al conectar con la API' };
   }
 }

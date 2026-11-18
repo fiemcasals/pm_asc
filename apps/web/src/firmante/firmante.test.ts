@@ -150,7 +150,7 @@ describe('Reglas de negocio del Firmante (HU-08 / RF-02)', () => {
           headers: { 'Content-Type': 'application/json' },
         });
 
-      const res = await fetchMaquinasFirmante(fakeFetch, 'gonza');
+      const res = await fetchMaquinasFirmante(fakeFetch);
       expect(res.ok).toBe(true);
       expect(res.data.length).toBe(2);
       expect(res.data[0].codigoAGC).toBe('M1');
@@ -160,7 +160,7 @@ describe('Reglas de negocio del Firmante (HU-08 / RF-02)', () => {
       const fakeFetch: typeof fetch = async () =>
         new Response('Error', { status: 500 });
 
-      const res = await fetchMaquinasFirmante(fakeFetch, 'gonza');
+      const res = await fetchMaquinasFirmante(fakeFetch);
       expect(res.ok).toBe(false);
       expect(res.error).toContain('Error 500');
     });
@@ -188,7 +188,7 @@ describe('Reglas de negocio del Firmante (HU-08 / RF-02)', () => {
         );
       };
 
-      const res = await autorizarFirmaMaquina('MAQ-1', fakeFetch, 'gonza');
+      const res = await autorizarFirmaMaquina('MAQ-1', fakeFetch);
       expect(res.ok).toBe(true);
       expect(res.data?.autorizacion.autorizada).toBe(true);
       expect(res.data?.autorizacion.protocoloAGC).toBe('AGC-2026-AUT-MAQ-1');
@@ -201,7 +201,7 @@ describe('Reglas de negocio del Firmante (HU-08 / RF-02)', () => {
           { status: 400, headers: { 'Content-Type': 'application/json' } },
         );
 
-      const res = await autorizarFirmaMaquina('MAQ-4', fakeFetch, 'gonza');
+      const res = await autorizarFirmaMaquina('MAQ-4', fakeFetch);
       expect(res.ok).toBe(false);
       expect(res.error).toContain('faltan fotos obligatorias');
     });

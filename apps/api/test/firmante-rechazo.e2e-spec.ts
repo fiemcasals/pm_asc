@@ -21,8 +21,10 @@ describe('Rechazo del informe por el Firmante y bandeja de la Secretaría (HU-08
     const hash = await bcrypt.hash(PASSWORD, 4);
     const roles: Rol[] = ['secretaria', 'administrador', 'rt_calle', 'firmante', 'eca'];
     for (const rol of roles) {
-      await usuarios.crear({ usuario: rol, nombre: rol, rol, passwordHash: hash, eca: rol === 'eca' ? 'ECA-E2E' : null });
-      const login = await request(app.getHttpServer()).post('/api/auth/login').send({ usuario: rol, password: PASSWORD });
+      // «gonza» es el Firmante de todas las máquinas de los datos de demostración (HU-08 RF-04: sólo el dueño de la máquina la autoriza o rechaza).
+      const usuario = rol === 'firmante' ? 'gonza' : rol;
+      await usuarios.crear({ usuario, nombre: rol, rol, passwordHash: hash, eca: rol === 'eca' ? 'ECA-E2E' : null });
+      const login = await request(app.getHttpServer()).post('/api/auth/login').send({ usuario, password: PASSWORD });
       expect(login.status).toBe(200);
       tokens[rol] = login.body.accessToken;
     }
@@ -37,14 +39,14 @@ describe('Rechazo del informe por el Firmante y bandeja de la Secretaría (HU-08
   });
 
   const http = () => request(app.getHttpServer());
-  const rechazar = (cuerpo: Record<string, unknown>, firmante = 'gonza') => http().post('/api/firmante/rechazar').set('x-user-name', firmante).send(cuerpo);
+  const rechazar = (cuerpo: Record<string, unknown>) => http().post('/api/firmante/rechazar').set('Authorization', `Bearer ${tokens.firmante}`).send(cuerpo);
   const bandeja = (rol?: string) => {
     const r = http().get('/api/firmante/bandeja-secretaria');
     return rol ? r.set('Authorization', `Bearer ${tokens[rol]}`) : r;
   };
 
   it('criterio 1: rechaza con motivo → 200 a nombre del Firmante', async () => {
-    const res = await rechazar({ maquinaId: MAQUINA, motivo: 'Falta la foto de cables' }, 'gonza');
+    const res = await rechazar({ maquinaId: MAQUINA, motivo: 'Falta la foto de cables' });
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ ok: true, maquinaId: MAQUINA, rechazo: { motivo: 'Falta la foto de cables', rechazadoPor: 'gonza' } });
@@ -83,7 +85,7 @@ describe('Rechazo del informe por el Firmante y bandeja de la Secretaría (HU-08
   it('un informe rechazado ya no se puede autorizar (409) y rechazarlo dos veces tampoco (409)', async () => {
     await rechazar({ maquinaId: MAQUINA, motivo: 'x' });
 
-    expect((await http().post('/api/firmante/autorizar').set('x-user-name', 'gonza').send({ maquinaId: MAQUINA })).status).toBe(409);
+    expect((await http().post('/api/firmante/autorizar').set('Authorization', `Bearer ${tokens.firmante}`).send({ maquinaId: MAQUINA })).status).toBe(409);
     expect((await rechazar({ maquinaId: MAQUINA, motivo: 'otra vez' })).status).toBe(409);
   });
 
@@ -115,7 +117,8 @@ describe('Rechazo del informe por el Firmante y bandeja de la Secretaría (HU-08
 
     it('un informe autorizado o rechazado dentro del plazo no genera aviso', async () => {
       fecha('2026-11-06T15:00:00Z');
-      await http().post('/api/firmante/autorizar').set('x-user-name', 'gonza').send({ maquinaId: MAQUINA }).expect(200);
+      const ingreso = await http().post('/api/auth/login').send({ usuario: 'gonza', password: PASSWORD });
+      await http().post('/api/firmante/autorizar').set('Authorization', `Bearer ${ingreso.body.accessToken}`).send({ maquinaId: MAQUINA }).expect(200);
 
       fecha('2026-12-01T15:00:00Z');
       const avisos = (await bandejaALaFecha()).body.avisosPlazo.map((a: { maquinaId: string }) => a.maquinaId);

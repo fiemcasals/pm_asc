@@ -11,14 +11,16 @@ export const ECA_SAN_MARTIN = 'Elevadores San Martín';
 
 export const PASSWORD_E2E = 'Clave-Segura-2026';
 
-export type NombreSesion = Rol | 'ecaPortena' | 'ecaMaicon' | 'ecaMaicon2' | 'ecaSanMartin' | 'ecaParcial' | 'ecaMayusculas' | 'ecaSinAsignar';
+export type NombreSesion = Rol | 'firmanteOtro' | 'ecaPortena' | 'ecaMaicon' | 'ecaMaicon2' | 'ecaSanMartin' | 'ecaParcial' | 'ecaMayusculas' | 'ecaSinAsignar';
 
 /** Los usuarios de prueba: uno por rol, y un usuario ECA por cada ECA de los datos de demostración. */
 const USUARIOS: { clave: NombreSesion; usuario: string; rol: Rol; eca: string | null }[] = [
   { clave: 'administrador', usuario: 'admin.e2e', rol: 'administrador', eca: null },
   { clave: 'secretaria', usuario: 'secretaria.e2e', rol: 'secretaria', eca: null },
   { clave: 'rt_calle', usuario: 'rt.e2e', rol: 'rt_calle', eca: null },
-  { clave: 'firmante', usuario: 'firmante.e2e', rol: 'firmante', eca: null },
+  // «gonza» es el Firmante de todas las máquinas de los datos de demostración; «firmanteOtro» no tiene ninguna.
+  { clave: 'firmante', usuario: 'gonza', rol: 'firmante', eca: null },
+  { clave: 'firmanteOtro', usuario: 'otro.firmante@e2e', rol: 'firmante', eca: null },
   { clave: 'ecaPortena', usuario: 'eca.portena@e2e', rol: 'eca', eca: ECA_PORTENA },
   { clave: 'ecaMaicon', usuario: 'eca.maicon@e2e', rol: 'eca', eca: ECA_MAICON },
   { clave: 'ecaSanMartin', usuario: 'eca.sanmartin@e2e', rol: 'eca', eca: ECA_SAN_MARTIN },

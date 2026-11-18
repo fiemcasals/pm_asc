@@ -1,4 +1,5 @@
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
+import { FilaAgcValidada, ResultadoPersistenciaAgc } from './importador-agc.types';
 import { RolesEdificio, RolesInput } from './roles.types';
 
 /** Lanzado cuando la base rechaza una referencia AGC repetida dentro del mismo edificio. */
@@ -46,4 +47,9 @@ export abstract class ConsorciosRepository {
   abstract asignarRoles(id: string, datos: RolesInput, esperado?: string | null): Promise<RolesEdificio | null>;
   /** Quita la asignación de roles del edificio; `false` si no existía. */
   abstract quitarRoles(id: string): Promise<boolean>;
+  /**
+   * Importa filas validadas del padrón Excel AGC: crea consorcios faltantes por dirección,
+   * crea máquinas nuevas y actualiza las existentes identificadas por matrícula AGC sin duplicarlas.
+   */
+  abstract importarMaquinasAgc(filas: FilaAgcValidada[]): Promise<ResultadoPersistenciaAgc>;
 }

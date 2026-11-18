@@ -27,6 +27,8 @@ export interface MaquinaInput {
   tipo: TipoMaquina;
   /** Identificador de sala compartida dentro del edificio (ej.: "sala-1"), o null si es individual. */
   salaCompartidaId: string | null;
+  /** Estado informado en el padrón AGC (APTO, NO APTO, etc.), opcional. */
+  estadoAgc?: string | null;
 }
 
 /** Lo que el cliente manda al crear o reemplazar un consorcio, ya validado y normalizado. */
@@ -42,6 +44,7 @@ export interface ConsorcioInput {
 
 export interface Maquina extends MaquinaInput {
   id: string;
+  estadoAgc?: string | null;
 }
 
 /** La ficha completa de un edificio: dirección, administración, datos operativos y máquinas. */

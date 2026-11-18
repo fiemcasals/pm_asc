@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:43:53.183Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:46:14.452Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -15,7 +15,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 7 | RF-07 | FIX: Los símbolos del remito PDF salen como caracteres rotos | HU-10 | — | — | tested ✓ | germanG | — | — |
 | 8 | RF-02 | Portal ECA con sesión: cada ECA ve solo lo suyo | HU-15 | — | — | tested ✓ | germanG | — | — |
 | 9 | RF-04 | Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo | HU-08 | — | — | tested ✓ | germanG | — | — |
-| 10 | RF-06 | RT con sesión: fallas críticas y checklist solo para quien corresponde | HU-06 | — | — | testing | germanG | — | — |
+| 10 | RF-06 | RT con sesión: fallas críticas y checklist solo para quien corresponde | HU-06 | — | — | tested ✓ | germanG | — | — |
 | 11 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 12 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 13 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -78,7 +78,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 70 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
 | 71 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 72 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
-| 73 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Haciendo | gonza | RF-03, RF-01, RF-01 | — |
+| 73 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hecho | gonza | RF-03, RF-01, RF-01 | — |
 | 74 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
 | 75 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
 | 76 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |

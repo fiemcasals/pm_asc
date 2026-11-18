@@ -3,6 +3,7 @@ import type { PoolClient } from 'pg';
 import { DatabaseService } from '../database/database.service';
 import { Consorcio, ConsorcioInput, ConsorcioMapaItem, ConsorcioResumen, Maquina, TipoMaquina } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError, TernaCambioError } from './consorcios.repository';
+import { DetalleImportacionAgc, FilaAgcValidada, ResultadoPersistenciaAgc } from './importador-agc.types';
 import { PORCENTAJES_OPERATIVOS, Responsable, RolesEdificio, RolesInput } from './roles.types';
 
 interface ConsorcioRow {
@@ -27,6 +28,7 @@ interface MaquinaRow {
   descripcion: string | null;
   tipo: TipoMaquina;
   sala_compartida_id: string | null;
+  estado_agc: string | null;
 }
 
 interface RolesRow {
@@ -79,6 +81,7 @@ function aConsorcio(fila: ConsorcioRow, maquinas: MaquinaRow[]): Consorcio {
         descripcion: m.descripcion,
         tipo: m.tipo,
         salaCompartidaId: m.sala_compartida_id,
+        estadoAgc: m.estado_agc ?? null,
       }),
     ),
     createdAt: fila.created_at.toISOString(),
@@ -89,8 +92,8 @@ function aConsorcio(fila: ConsorcioRow, maquinas: MaquinaRow[]): Consorcio {
 async function insertarMaquinas(client: PoolClient, consorcioId: string, datos: ConsorcioInput) {
   for (const m of datos.maquinas) {
     await client.query(
-      'INSERT INTO maquinas (consorcio_id, referencia_agc, descripcion, tipo, sala_compartida_id) VALUES ($1, $2, $3, $4, $5)',
-      [consorcioId, m.referenciaAgc, m.descripcion, m.tipo, m.salaCompartidaId],
+      'INSERT INTO maquinas (consorcio_id, referencia_agc, descripcion, tipo, sala_compartida_id, estado_agc) VALUES ($1, $2, $3, $4, $5, $6)',
+      [consorcioId, m.referenciaAgc, m.descripcion, m.tipo, m.salaCompartidaId, m.estadoAgc ?? null],
     );
   }
 }
@@ -106,7 +109,7 @@ async function leerFicha(client: PoolClient, id: string): Promise<Consorcio | nu
   );
   if (consorcio.rowCount === 0) return null;
   const maquinas = await client.query<MaquinaRow>(
-    `SELECT id, referencia_agc, descripcion, tipo, sala_compartida_id
+    `SELECT id, referencia_agc, descripcion, tipo, sala_compartida_id, estado_agc
        FROM maquinas
       WHERE consorcio_id = $1 ${ORDEN_MAQUINAS}`,
     [id],
@@ -346,5 +349,125 @@ export class PgConsorciosRepository extends ConsorciosRepository {
   async quitarRoles(id: string): Promise<boolean> {
     const filas = await this.db.query('DELETE FROM roles_edificio WHERE consorcio_id = $1 RETURNING consorcio_id', [id]);
     return filas.length > 0;
+  }
+
+  async importarMaquinasAgc(filas: FilaAgcValidada[]): Promise<ResultadoPersistenciaAgc> {
+    return this.db.transaction(async (client) => {
+      let creadas = 0;
+      let actualizadas = 0;
+      let consorciosCreados = 0;
+      const detalle: DetalleImportacionAgc[] = [];
+
+      for (const fila of filas) {
+        // 1. Buscar consorcio por dirección normalizada (o crearlo si aún no existe).
+        const consorcioExistente = await client.query<{ id: string }>(
+          `SELECT id
+             FROM consorcios
+            WHERE lower(trim(direccion)) = lower(trim($1))
+            ORDER BY created_at ASC
+            LIMIT 1`,
+          [fila.direccion],
+        );
+
+        let consorcioId: string;
+        if (consorcioExistente.rowCount && consorcioExistente.rows[0]) {
+          consorcioId = consorcioExistente.rows[0].id;
+          if (fila.ubicacion) {
+            await client.query(
+              `UPDATE consorcios
+                  SET ubicacion = COALESCE(ubicacion, ST_SetSRID(ST_MakePoint($2, $3), 4326)),
+                      updated_at = now()
+                WHERE id = $1`,
+              [consorcioId, fila.ubicacion.longitud, fila.ubicacion.latitud],
+            );
+          }
+        } else {
+          const creado = await client.query<{ id: string }>(
+            `INSERT INTO consorcios (nombre, direccion, pisos, ubicacion)
+             VALUES (
+               $1, $2, '[]'::jsonb,
+               CASE WHEN $3::double precision IS NOT NULL AND $4::double precision IS NOT NULL
+                    THEN ST_SetSRID(ST_MakePoint($4, $3), 4326)
+                    ELSE NULL END
+             )
+             RETURNING id`,
+            [
+              fila.nombreEdificio,
+              fila.direccion,
+              fila.ubicacion?.latitud ?? null,
+              fila.ubicacion?.longitud ?? null,
+            ],
+          );
+          consorcioId = creado.rows[0].id;
+          consorciosCreados += 1;
+        }
+
+        // 2. Identificar máquina existente por matrícula AGC (primero dentro del mismo consorcio,
+        //    y si no, coincidencia global única para actualizar sin duplicar).
+        let maquinaExistente = await client.query<{ id: string; consorcio_id: string }>(
+          `SELECT id, consorcio_id
+             FROM maquinas
+            WHERE consorcio_id = $1
+              AND lower(trim(referencia_agc)) = lower(trim($2))
+            LIMIT 1`,
+          [consorcioId, fila.matriculaAgc],
+        );
+
+        if (maquinaExistente.rowCount === 0) {
+          const globales = await client.query<{ id: string; consorcio_id: string }>(
+            `SELECT id, consorcio_id
+               FROM maquinas
+              WHERE lower(trim(referencia_agc)) = lower(trim($1))
+              ORDER BY created_at ASC`,
+            [fila.matriculaAgc],
+          );
+          if (globales.rowCount === 1) {
+            maquinaExistente = globales;
+          }
+        }
+
+        if (maquinaExistente.rowCount && maquinaExistente.rows[0]) {
+          const existente = maquinaExistente.rows[0];
+          await client.query(
+            `UPDATE maquinas
+                SET consorcio_id = $2,
+                    referencia_agc = $3,
+                    tipo = $4,
+                    estado_agc = $5,
+                    descripcion = COALESCE($6, descripcion)
+              WHERE id = $1`,
+            [existente.id, consorcioId, fila.matriculaAgc, fila.tipo, fila.estadoAgc, fila.descripcion],
+          );
+          actualizadas += 1;
+          detalle.push({
+            fila: fila.fila,
+            accion: 'actualizada',
+            matriculaAgc: fila.matriculaAgc,
+            consorcioId,
+            direccion: fila.direccion,
+            tipo: fila.tipo,
+            estadoAgc: fila.estadoAgc,
+          });
+        } else {
+          await client.query(
+            `INSERT INTO maquinas (consorcio_id, referencia_agc, descripcion, tipo, estado_agc)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [consorcioId, fila.matriculaAgc, fila.descripcion, fila.tipo, fila.estadoAgc],
+          );
+          creadas += 1;
+          detalle.push({
+            fila: fila.fila,
+            accion: 'creada',
+            matriculaAgc: fila.matriculaAgc,
+            consorcioId,
+            direccion: fila.direccion,
+            tipo: fila.tipo,
+            estadoAgc: fila.estadoAgc,
+          });
+        }
+      }
+
+      return { creadas, actualizadas, consorciosCreados, detalle };
+    });
   }
 }

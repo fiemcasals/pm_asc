@@ -46,6 +46,55 @@ export interface Maquina extends MaquinaInput {
   id: string;
   tipo?: TipoMaquina;
   salaCompartidaId?: string | null;
+  estadoAgc?: string | null;
+}
+
+export const MAX_BYTES_EXCEL_AGC = 5 * 1024 * 1024;
+
+export interface ErrorFilaAgc {
+  fila: number;
+  matriculaAgc: string | null;
+  motivo: string;
+}
+
+export interface DetalleImportacionAgc {
+  fila: number;
+  accion: 'creada' | 'actualizada';
+  matriculaAgc: string;
+  consorcioId: string;
+  direccion: string;
+  tipo: TipoMaquina;
+  estadoAgc: string;
+}
+
+export interface ResultadoImportacionAgc {
+  resumen: {
+    totalFilas: number;
+    creadas: number;
+    actualizadas: number;
+    rechazadas: number;
+    consorciosCreados: number;
+  };
+  creadas: number;
+  actualizadas: number;
+  rechazadas: number;
+  consorciosCreados: number;
+  errores: ErrorFilaAgc[];
+  detalle: DetalleImportacionAgc[];
+}
+
+export function validarArchivoExcelAgc(archivo: { name: string; size: number } | null): string | null {
+  if (!archivo) return 'Seleccioná un archivo .xlsx para importar.';
+  if (!archivo.name.toLowerCase().endsWith('.xlsx')) {
+    return 'Formato de archivo inválido: solo se admiten archivos .xlsx.';
+  }
+  if (archivo.size === 0) {
+    return 'El archivo .xlsx está vacío.';
+  }
+  if (archivo.size > MAX_BYTES_EXCEL_AGC) {
+    return 'El archivo supera el tamaño máximo permitido de 5 MB.';
+  }
+  return null;
 }
 
 export interface Consorcio {
@@ -195,6 +244,40 @@ export async function fetchConsorciosMapa(): Promise<FetchResult<ConsorcioMapaIt
     }
     const data = (await res.json()) as ConsorcioMapaItem[];
     return { ok: true, data };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function importarExcelAgc(archivo: File): Promise<FetchResult<ResultadoImportacionAgc>> {
+  try {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    const res = await fetchConSesion('/api/consorcios/importar-agc', {
+      method: 'POST',
+      body: formData,
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: json.message || `Error ${res.status}: no se pudo importar el archivo`,
+      };
+    }
+    return { ok: true, data: json as ResultadoImportacionAgc };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+export async function descargarPlantillaExcelAgc(): Promise<FetchResult<Blob>> {
+  try {
+    const res = await fetchConSesion('/api/consorcios/importar-agc/plantilla');
+    if (!res.ok) {
+      return { ok: false, error: `Error ${res.status}: no se pudo descargar la plantilla` };
+    }
+    const blob = await res.blob();
+    return { ok: true, data: blob };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
   }

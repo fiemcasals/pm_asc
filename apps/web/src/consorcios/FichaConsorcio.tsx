@@ -664,6 +664,7 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
                     <th>Ref. AGC</th>
                     <th>Descripción / Ubicación</th>
                     <th>Tipo</th>
+                    <th>Estado AGC</th>
                     <th>Sala de Máquinas</th>
                     <th>Identificador Único</th>
                   </tr>
@@ -681,6 +682,13 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
                         <span className="badge badge-autorizada" data-testid={`maquina-tipo-${m.referenciaAgc}`}>
                           {ETIQUETAS_TIPO_MAQUINA[m.tipo ?? 'traccion']}
                         </span>
+                      </td>
+                      <td data-testid={`maquina-estado-agc-${m.referenciaAgc}`}>
+                        {m.estadoAgc ? (
+                          <span className="badge badge-recorrida">{m.estadoAgc}</span>
+                        ) : (
+                          <span className="text-muted">Sin informar</span>
+                        )}
                       </td>
                       <td data-testid={`maquina-sala-${m.referenciaAgc}`}>
                         {m.salaCompartidaId ? (

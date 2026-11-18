@@ -964,4 +964,12 @@ export const MIGRATIONS: Migration[] = [
         ADD COLUMN IF NOT EXISTS client_report_id text UNIQUE CHECK (client_report_id IS NULL OR client_report_id ~ '^[A-Za-z0-9_-]{8,100}$');
     `,
   },
+  {
+    id: '032_maquinas_estado_agc',
+    sql: `
+      -- HU-01 RF-03: estado informado en el padrón oficial Excel de la AGC (APTO, NO APTO, OBSERVADO, etc.).
+      ALTER TABLE maquinas
+        ADD COLUMN IF NOT EXISTS estado_agc text;
+    `,
+  },
 ];

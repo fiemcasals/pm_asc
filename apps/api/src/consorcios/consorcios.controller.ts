@@ -1,22 +1,50 @@
 import {
+  ArgumentsHost,
   BadRequestException,
   Body,
+  Catch,
   ConflictException,
   Controller,
   Delete,
+  ExceptionFilter,
   Get,
   HttpCode,
   NotFoundException,
   Param,
+  PayloadTooLargeException,
   Post,
   Put,
+  Res,
+  UploadedFile,
+  UseFilters,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { Roles } from '../auth/roles.guard';
 import { validarConsorcio } from './consorcio.validation';
 import { Consorcio, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError, TernaCambioError } from './consorcios.repository';
+import { ArchivoExcelSubido, ImportadorAgcService } from './importador-agc.service';
+import { MAX_BYTES_EXCEL_AGC, ResultadoImportacionAgc } from './importador-agc.types';
 import { RolesEdificio } from './roles.types';
 import { validarRoles } from './roles.validation';
+
+/**
+ * Convierte el 413 de Multer (`LIMIT_FILE_SIZE`) en 400 Bad Request, para cumplir el contrato
+ * de RF-03: todo archivo que supere 5 MB se rechaza con 400 sin importar nada.
+ */
+@Catch(PayloadTooLargeException)
+class ArchivoDemasiadoGrandeComo400Filter implements ExceptionFilter {
+  catch(_exception: PayloadTooLargeException, host: ArgumentsHost): void {
+    const res = host.switchToHttp().getResponse<Response>();
+    res.status(400).json({
+      statusCode: 400,
+      error: 'Bad Request',
+      message: 'El archivo supera el tamaño máximo permitido de 5 MB.',
+    });
+  }
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -39,7 +67,10 @@ function exigirId(id: string): void {
 @Controller('consorcios')
 @Roles()
 export class ConsorciosController {
-  constructor(private readonly consorcios: ConsorciosRepository) {}
+  constructor(
+    private readonly consorcios: ConsorciosRepository,
+    private readonly importadorAgc: ImportadorAgcService,
+  ) {}
 
   /** Registra un consorcio con sus máquinas y referencias AGC. Devuelve la ficha creada. */
   @Post()
@@ -67,6 +98,35 @@ export class ConsorciosController {
   @Get('roles')
   listarRoles(): Promise<RolesEdificio[]> {
     return this.consorcios.listarRoles();
+  }
+
+  /**
+   * Importa el listado Excel (.xlsx, máx. 5 MB) del padrón AGC (HU-01 RF-03).
+   * Crea máquinas nuevas y actualiza existentes identificadas por matrícula AGC sin duplicarlas.
+   */
+  @Post('importar-agc')
+  @Roles('secretaria', 'administrador')
+  @HttpCode(200)
+  @UseFilters(ArchivoDemasiadoGrandeComo400Filter)
+  @UseInterceptors(
+    FileInterceptor('archivo', {
+      limits: { fileSize: MAX_BYTES_EXCEL_AGC, files: 1 },
+    }),
+  )
+  async importarExcelAgc(
+    @UploadedFile() archivo?: ArchivoExcelSubido,
+  ): Promise<ResultadoImportacionAgc> {
+    return this.importadorAgc.importarArchivo(archivo);
+  }
+
+  /** Descarga una planilla .xlsx modelo con las columnas requeridas para la importación AGC. */
+  @Get('importar-agc/plantilla')
+  @Roles('secretaria', 'administrador')
+  async descargarPlantillaAgc(@Res() res: Response): Promise<void> {
+    const buffer = await this.importadorAgc.generarPlantillaXlsx();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="plantilla-padron-agc.xlsx"');
+    res.send(buffer);
   }
 
   /** Ficha completa del edificio: dirección, datos de administración y máquinas. */

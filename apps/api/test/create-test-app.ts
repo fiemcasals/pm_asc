@@ -18,6 +18,7 @@ import { InMemoryRtMapaRepository, RtMapaRepository } from '../src/rt-mapa/rt-ma
 import { HorariosRepository, InMemoryHorariosRepository } from '../src/horarios/horarios.repository';
 import { InMemoryPagosRepository, PagosRepository } from '../src/pagos/pagos.repository';
 import { ConsorciosRepository, TernaCambioError } from '../src/consorcios/consorcios.repository';
+import { DetalleImportacionAgc, FilaAgcValidada, ResultadoPersistenciaAgc } from '../src/consorcios/importador-agc.types';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
 import {
@@ -226,6 +227,98 @@ export class InMemoryConsorciosRepository extends ConsorciosRepository {
 
   async quitarRoles(id: string): Promise<boolean> {
     return this.roles.delete(id);
+  }
+
+  async importarMaquinasAgc(filas: FilaAgcValidada[]): Promise<ResultadoPersistenciaAgc> {
+    let creadas = 0;
+    let actualizadas = 0;
+    let consorciosCreados = 0;
+    const detalle: DetalleImportacionAgc[] = [];
+
+    for (const fila of filas) {
+      const dirNorm = fila.direccion.trim().toLowerCase();
+      let consorcio = [...this.filas.values()].find((c) => c.direccion.trim().toLowerCase() === dirNorm);
+      if (!consorcio) {
+        const ahora = new Date().toISOString();
+        consorcio = {
+          id: randomUUID(),
+          nombre: fila.nombreEdificio,
+          direccion: fila.direccion,
+          administracion: { nombre: null, telefono: null, email: null },
+          encargado: { nombre: null, telefono: null },
+          pisos: [],
+          ubicacion: fila.ubicacion ? { ...fila.ubicacion } : null,
+          maquinas: [],
+          createdAt: ahora,
+          updatedAt: ahora,
+        };
+        this.filas.set(consorcio.id, consorcio);
+        consorciosCreados += 1;
+      } else if (fila.ubicacion && !consorcio.ubicacion) {
+        consorcio.ubicacion = { ...fila.ubicacion };
+        consorcio.updatedAt = new Date().toISOString();
+      }
+
+      const matNorm = fila.matriculaAgc.trim().toLowerCase();
+      let maquina = consorcio.maquinas.find((m) => m.referenciaAgc.trim().toLowerCase() === matNorm);
+      let consorcioOrigen = consorcio;
+
+      if (!maquina) {
+        const coincidencias: Array<{ c: Consorcio; idx: number }> = [];
+        for (const c of this.filas.values()) {
+          const idx = c.maquinas.findIndex((m) => m.referenciaAgc.trim().toLowerCase() === matNorm);
+          if (idx >= 0) coincidencias.push({ c, idx });
+        }
+        if (coincidencias.length === 1) {
+          consorcioOrigen = coincidencias[0].c;
+          maquina = consorcioOrigen.maquinas[coincidencias[0].idx];
+        }
+      }
+
+      if (maquina) {
+        if (consorcioOrigen.id !== consorcio.id) {
+          consorcioOrigen.maquinas = consorcioOrigen.maquinas.filter((m) => m.id !== maquina!.id);
+          consorcio.maquinas.push(maquina);
+        }
+        maquina.referenciaAgc = fila.matriculaAgc;
+        maquina.tipo = fila.tipo;
+        maquina.estadoAgc = fila.estadoAgc;
+        if (fila.descripcion !== null) maquina.descripcion = fila.descripcion;
+        consorcio.updatedAt = new Date().toISOString();
+        actualizadas += 1;
+        detalle.push({
+          fila: fila.fila,
+          accion: 'actualizada',
+          matriculaAgc: fila.matriculaAgc,
+          consorcioId: consorcio.id,
+          direccion: fila.direccion,
+          tipo: fila.tipo,
+          estadoAgc: fila.estadoAgc,
+        });
+      } else {
+        consorcio.maquinas.push({
+          id: randomUUID(),
+          referenciaAgc: fila.matriculaAgc,
+          descripcion: fila.descripcion,
+          tipo: fila.tipo,
+          salaCompartidaId: null,
+          estadoAgc: fila.estadoAgc,
+        });
+        consorcio.updatedAt = new Date().toISOString();
+        creadas += 1;
+        detalle.push({
+          fila: fila.fila,
+          accion: 'creada',
+          matriculaAgc: fila.matriculaAgc,
+          consorcioId: consorcio.id,
+          direccion: fila.direccion,
+          tipo: fila.tipo,
+          estadoAgc: fila.estadoAgc,
+        });
+      }
+    }
+
+    return { creadas, actualizadas, consorciosCreados, detalle };
   }
 }
 

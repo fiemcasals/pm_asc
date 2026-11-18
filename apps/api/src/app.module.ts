@@ -12,6 +12,7 @@ import { ChecklistController } from './checklist/checklist.controller';
 import { ChecklistService } from './checklist/checklist.service';
 import { ConsorciosController } from './consorcios/consorcios.controller';
 import { ConsorciosRepository } from './consorcios/consorcios.repository';
+import { ImportadorAgcService } from './consorcios/importador-agc.service';
 import { PgConsorciosRepository } from './consorcios/pg-consorcios.repository';
 import { DatabaseService } from './database/database.service';
 import { EcaContextMiddleware } from './database/eca-context.middleware';
@@ -121,6 +122,7 @@ export class AppModule implements NestModule {
         { provide: APP_GUARD, useClass: RolesGuard },
         { provide: APP_INTERCEPTOR, useClass: RlsContextInterceptor },
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
+        ImportadorAgcService,
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,
         ChecklistService,

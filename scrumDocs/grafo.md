@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-17T17:05:25.033Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T12:16:48.052Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -65,6 +65,7 @@ graph TD
     REQ_1794493276394["RF-04: Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse"]
     REQ_1794582638119["RF-05: Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta"]
     REQ_1794842211977["RF-06: FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA"]
+    REQ_1795004203523["RF-07: FIX: Los símbolos del remito PDF salen como caracteres rotos"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
     REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]

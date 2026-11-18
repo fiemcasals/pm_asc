@@ -1,6 +1,6 @@
 import {
-  Body,
   Controller,
+  ForbiddenException,
   Get,
   Headers,
   Param,
@@ -10,11 +10,11 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { Roles } from '../auth/roles.guard';
+import { UsuarioAutenticado } from '../auth/auth.types';
+import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { EcaService } from './eca.service';
 import { RemitoPdfService } from './remito-pdf.service';
 import {
-  AcuseReciboDto,
   AvisoSecretaria,
   AcuseReciboResponse,
   AlertasEcaResponse,
@@ -23,6 +23,11 @@ import {
   RemitoTecnicoResponse,
 } from './eca.types';
 
+/**
+ * Portal ECA (HU-15 RF-02). Las rutas piden sesión: un usuario ECA ve y descarga sólo lo de SU ECA (sale de la sesión: un header o
+ * un parámetro con otra ECA se ignora); la Secretaría y el Administrador ven cualquier ECA, eligiéndola. El remito y el acuse
+ * legal son de la ECA: los hace su usuario y queda a su nombre, no el que venga en la URL.
+ */
 @Controller('eca')
 export class EcaController {
   constructor(
@@ -30,38 +35,53 @@ export class EcaController {
     private readonly remitoPdfService: RemitoPdfService,
   ) {}
 
+  /** La ECA de un usuario con rol `eca` (de su sesión); `null` para la Secretaría y el Administrador, que eligen cuál mirar. */
+  private ecaPropia(usuario: UsuarioAutenticado): string | null {
+    if (usuario.rol !== 'eca') return null;
+    if (!usuario.eca || usuario.eca.trim() === '') {
+      throw new ForbiddenException('Tu usuario no tiene una ECA asignada: pedile al Administrador que la cargue.');
+    }
+    return usuario.eca;
+  }
+
   @Get('cobertura')
+  @Roles('eca', 'secretaria', 'administrador')
   async getCobertura(
+    @UsuarioActual() usuario: UsuarioAutenticado,
     @Headers('x-eca-name') ecaHeaderName?: string,
     @Headers('x-eca-id') ecaHeaderId?: string,
     @Query('eca') ecaQuery?: string,
     @Query('mes') mes: string = '2026-11',
   ): Promise<CoberturaEcaResponse> {
-    const eca = ecaHeaderName || ecaHeaderId || ecaQuery;
-    return this.ecaService.getCobertura(eca, mes);
+    const propia = this.ecaPropia(usuario);
+    return this.ecaService.getCobertura(propia ?? (ecaHeaderName || ecaHeaderId || ecaQuery), mes, propia !== null);
   }
 
   @Get('maquinas')
+  @Roles('eca', 'secretaria', 'administrador')
   async getMaquinas(
+    @UsuarioActual() usuario: UsuarioAutenticado,
     @Headers('x-eca-name') ecaHeaderName?: string,
     @Headers('x-eca-id') ecaHeaderId?: string,
     @Query('eca') ecaQuery?: string,
     @Query('mes') mes: string = '2026-11',
   ): Promise<MaquinaEca[]> {
-    const eca = ecaHeaderName || ecaHeaderId || ecaQuery;
-    return this.ecaService.getMaquinasFlota(eca, mes);
+    const propia = this.ecaPropia(usuario);
+    return this.ecaService.getMaquinasFlota(propia ?? (ecaHeaderName || ecaHeaderId || ecaQuery), mes, propia !== null);
   }
 
   @Get('alertas')
+  @Roles('eca', 'secretaria', 'administrador')
   async getAlertas(
+    @UsuarioActual() usuario: UsuarioAutenticado,
     @Headers('x-eca-name') ecaHeaderName?: string,
     @Headers('x-eca-id') ecaHeaderId?: string,
     @Query('eca') ecaQuery?: string,
     @Query('mes') mes: string = '2026-11',
   ): Promise<AlertasEcaResponse> {
-    const eca = ecaHeaderName || ecaHeaderId || ecaQuery;
-    const ecaCanonica = this.ecaService.resolverEca(eca);
-    const alertas = await this.ecaService.getAlertasCriticas(ecaCanonica, mes);
+    const propia = this.ecaPropia(usuario);
+    const ecaCanonica = propia ?? this.ecaService.resolverEca(ecaHeaderName || ecaHeaderId || ecaQuery);
+    const alertas = await this.ecaService.getAlertasCriticas(ecaCanonica, mes, propia !== null);
     return {
       eca: ecaCanonica,
       mes,
@@ -77,18 +97,17 @@ export class EcaController {
     return this.ecaService.getAvisosSecretaria();
   }
 
+  /** Sólo la ECA descarga su remito: la descarga registra el acuse de recibo legal a nombre de su usuario (el de la sesión). */
   @Get('remito/:alertaId')
+  @Roles('eca')
   async descargarRemito(
     @Param('alertaId') alertaId: string,
-    @Query('usuario') queryUsuario?: string,
+    @UsuarioActual() sesion: UsuarioAutenticado,
     @Query('formato') queryFormato?: string,
-    @Headers('x-user-id') headerUserId?: string,
-    @Headers('x-eca-user') headerEcaUser?: string,
     @Req() req?: Request,
     @Res() res?: Response,
   ): Promise<RemitoTecnicoResponse | void> {
-    const usuario = queryUsuario || headerEcaUser || headerUserId;
-    const remito = await this.ecaService.getRemitoTecnico(alertaId, usuario);
+    const remito = await this.ecaService.getRemitoTecnico(alertaId, sesion.usuario, { ecaPermitida: this.ecaPropia(sesion) ?? undefined });
 
     const accept = req?.headers['accept'];
     const esPdf =
@@ -135,7 +154,8 @@ export class EcaController {
     @Param('alertaId') alertaId: string,
     @Res() res: Response,
   ): Promise<void> {
-    const remito = await this.ecaService.getRemitoTecnico(alertaId);
+    // Sólo lectura: abrir este enlace no registra ningún acuse (HU-15 RF-02). El enlace con sesión o firmado llega con HU-11.
+    const remito = await this.ecaService.getRemitoTecnico(alertaId, undefined, { registrarAcuse: false });
 
     const checklistHtml = remito.checklist
       ? `
@@ -204,7 +224,11 @@ export class EcaController {
     ${checklistHtml}
 
     <div class="footer">
-      <div>✓ <strong>Acuse legal:</strong> Registrado el ${new Date(remito.acuseLegal.fechaHora).toLocaleString('es-AR')} por ${remito.acuseLegal.usuario}</div>
+      <div>${
+        remito.acuseLegal.registrado
+          ? `✓ <strong>Acuse legal:</strong> Registrado el ${new Date(remito.acuseLegal.fechaHora).toLocaleString('es-AR')} por ${remito.acuseLegal.usuario}`
+          : '<strong>Acuse legal:</strong> pendiente: lo registra la ECA al descargar el remito'
+      }</div>
       <div style="margin-top: 4px;">Protocolo digital respaldado conforme ley de conservación y transporte vertical.</div>
     </div>
   </div>
@@ -215,14 +239,13 @@ export class EcaController {
     res.send(html);
   }
 
+  /** Sólo la ECA acusa recibo, y queda a nombre del usuario de la sesión (un `usuario` en el cuerpo o en un header se ignora). */
   @Post('alertas/:alertaId/acuse')
+  @Roles('eca')
   async registrarAcuse(
     @Param('alertaId') alertaId: string,
-    @Body() dto: AcuseReciboDto = {},
-    @Headers('x-user-id') headerUserId?: string,
-    @Headers('x-eca-user') headerEcaUser?: string,
+    @UsuarioActual() sesion: UsuarioAutenticado,
   ): Promise<AcuseReciboResponse> {
-    const usuario = dto.usuario || headerEcaUser || headerUserId;
-    return this.ecaService.registrarAcuseRecibo(alertaId, usuario);
+    return this.ecaService.registrarAcuseRecibo(alertaId, sesion.usuario, this.ecaPropia(sesion) ?? undefined);
   }
 }

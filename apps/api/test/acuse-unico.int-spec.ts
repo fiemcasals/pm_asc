@@ -6,12 +6,15 @@ import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 // Integración real (HU-10 RF-05): el acuse de recibo legal sobrevive al reinicio de la API y es único por alerta.
+// Desde HU-15 RF-02 el portal ECA pide sesión: los acuses los hacen usuarios ECA reales y quedan a su nombre.
 // Requiere la base levantada con `npm run db:up` y DATABASE_URL (en el .env de la raíz o en el entorno).
 loadEnvFileInto(process.env);
 
 const P = 'RF05-int';
+const PRIMERO = `${P}-eca-maicon`; // el usuario de MAICON que acusa primero
 const ALERTA = 'ALT-MAICON-001'; // de MAICON Mantenimiento
 const OTRA_ALERTA = 'ALT-CP-001'; // de Conservación Porteña
 
@@ -19,6 +22,7 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
   const config = loadConfig();
   let pool: Pool;
   const apps: INestApplication[] = [];
+  const tokens = { maicon: '', maicon2: '', portena: '' };
 
   /** Arranca una instancia nueva de la API: la memoria empieza sin acuses, como tras un reinicio. */
   async function arrancar(): Promise<INestApplication> {
@@ -28,8 +32,10 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
     apps.push(app);
     return app;
   }
+  // Lo que ve el usuario ECA de la ECA pedida ('maicon' o 'porteña').
   const acuseInformado = async (app: INestApplication, alertaId: string, eca: string) => {
-    const res = await request(app.getHttpServer()).get('/api/eca/alertas').query({ eca }).expect(200);
+    const token = eca === 'porteña' ? tokens.portena : tokens.maicon;
+    const res = await request(app.getHttpServer()).get('/api/eca/alertas').set('Authorization', `Bearer ${token}`).expect(200);
     const item = res.body.alertas.find((a: { alerta: { id: string } }) => a.alerta.id === alertaId);
     return item.alerta.acuseRecibo ?? null;
   };
@@ -37,11 +43,15 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: config.databaseUrl });
+    tokens.maicon = (await asegurarUsuarioPrueba(pool, config, { usuario: PRIMERO, rol: 'eca', eca: 'MAICON Mantenimiento' })).token;
+    tokens.maicon2 = (await asegurarUsuarioPrueba(pool, config, { usuario: `${P}-eca-maicon-2`, rol: 'eca', eca: 'MAICON Mantenimiento' })).token;
+    tokens.portena = (await asegurarUsuarioPrueba(pool, config, { usuario: `${P}-eca-portena`, rol: 'eca', eca: 'Conservación Porteña S.R.L.' })).token;
     await pool.query('DELETE FROM acuses_recibo_legal WHERE alerta_id = ANY($1)', [[ALERTA, OTRA_ALERTA, `${P}-otra`]]);
   });
 
   afterAll(async () => {
     await pool.query('DELETE FROM acuses_recibo_legal WHERE usuario LIKE $1', [`${P}%`]);
+    await pool.query('DELETE FROM usuarios WHERE usuario LIKE $1', [`${P}%`]);
     for (const app of apps) await app.close();
     await pool.end();
   });
@@ -49,26 +59,27 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
   it('criterio 2: un segundo POST de la misma alerta no crea otra fila y devuelve el acuse ya registrado', async () => {
     const app = await arrancar();
 
-    const primero = await request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: `${P}-primero` });
-    const segundo = await request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: `${P}-segundo` });
+    const primero = await request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).set('Authorization', `Bearer ${tokens.maicon}`);
+    // Otro usuario de la misma ECA acusa después: no inserta otra fila ni le cambia el nombre al acuse.
+    const segundo = await request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).set('Authorization', `Bearer ${tokens.maicon2}`);
 
     expect(primero.status).toBe(201);
     expect(primero.body.yaRegistrado).toBe(false);
     expect(segundo.status).toBe(201);
     expect(segundo.body.yaRegistrado).toBe(true);
-    expect(segundo.body.acuse).toMatchObject({ usuario: `${P}-primero`, fechaHora: primero.body.acuse.fechaHora, id: primero.body.acuse.id });
+    expect(segundo.body.acuse).toMatchObject({ usuario: PRIMERO, fechaHora: primero.body.acuse.fechaHora, id: primero.body.acuse.id });
     expect(segundo.body.mensaje).toContain('ya estaba registrado');
-    expect(await filas(ALERTA)).toEqual([{ usuario: `${P}-primero`, eca: 'MAICON Mantenimiento' }]); // una sola fila, la del primero
+    expect(await filas(ALERTA)).toEqual([{ usuario: PRIMERO, eca: 'MAICON Mantenimiento' }]); // una sola fila, la del primero
   });
 
   it('el remito repetido tampoco duplica el acuse ni cambia al usuario', async () => {
     const app = await arrancar();
 
-    const res = await request(app.getHttpServer()).get(`/api/eca/remito/${ALERTA}`).query({ usuario: `${P}-remito` });
+    const res = await request(app.getHttpServer()).get(`/api/eca/remito/${ALERTA}`).query({ usuario: `${P}-remito` }).set('Authorization', `Bearer ${tokens.maicon2}`);
 
     expect(res.status).toBe(200);
     expect(await filas(ALERTA)).toHaveLength(1);
-    expect((await filas(ALERTA))[0].usuario).toBe(`${P}-primero`);
+    expect((await filas(ALERTA))[0].usuario).toBe(PRIMERO);
   });
 
   it('criterio 1: tras reiniciar la API (instancia nueva, memoria vacía) la alerta sigue figurando con su acuse, usuario y fecha', async () => {
@@ -77,7 +88,7 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
 
     const acuse = await acuseInformado(reiniciada, ALERTA, 'maicon');
 
-    expect(acuse).toEqual({ usuario: `${P}-primero`, fechaHora: new Date(guardado.fecha_hora).toISOString() });
+    expect(acuse).toEqual({ usuario: PRIMERO, fechaHora: new Date(guardado.fecha_hora).toISOString() });
   });
 
   it('criterio 4: el acuse de otra alerta o guardado con otra ECA no aparece en la alerta consultada', async () => {
@@ -88,7 +99,7 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
     );
     const reiniciada = await arrancar();
 
-    expect((await acuseInformado(reiniciada, ALERTA, 'maicon'))?.usuario).toBe(`${P}-primero`); // no se mezcló con el de la otra alerta
+    expect((await acuseInformado(reiniciada, ALERTA, 'maicon'))?.usuario).toBe(PRIMERO); // no se mezcló con el de la otra alerta
     expect((await acuseInformado(reiniciada, OTRA_ALERTA, 'porteña'))?.usuario).toBe(`${P}-otra-alerta`);
     expect(await acuseInformado(reiniciada, 'ALT-MAICON-002', 'maicon')).toBeNull(); // sin fila: sin acuse
 
@@ -115,7 +126,7 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
     await pool.query('DELETE FROM acuses_recibo_legal WHERE alerta_id = $1', ['ALT-MAICON-002']);
     await pool.query(
       `INSERT INTO acuses_recibo_legal (alerta_id, maquina_id, eca, usuario, tipo_alerta) VALUES ($1, 'MAQ-X', 'MAICON Mantenimiento', $2, 'Falla')`,
-      [ALERTA, `${P}-primero`],
+      [ALERTA, PRIMERO],
     ); // lo que esperan las pruebas siguientes
   });
 
@@ -137,8 +148,8 @@ describe('Acuse de recibo legal: se relee al reiniciar y es único por alerta (H
     await pool.query('DELETE FROM acuses_recibo_legal WHERE alerta_id = $1', [ALERTA]);
 
     const [a, b] = await Promise.all([
-      request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: `${P}-a` }),
-      request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: `${P}-b` }),
+      request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).set('Authorization', `Bearer ${tokens.maicon}`),
+      request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).set('Authorization', `Bearer ${tokens.maicon2}`),
     ]);
 
     expect([a.status, b.status]).toEqual([201, 201]);

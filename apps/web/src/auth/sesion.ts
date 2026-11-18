@@ -7,6 +7,8 @@ export interface Usuario {
   usuario: string;
   nombre: string;
   rol: Rol;
+  /** La ECA a la que pertenece (sólo los usuarios con rol «eca»); null para el resto (HU-15 RF-01). */
+  eca?: string | null;
   /** true si es RT de Calle y todavía no aceptó el aviso vigente de uso de ubicación. */
   consentimientoUbicacionPendiente?: boolean;
 }

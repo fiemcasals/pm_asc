@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:38:43.861Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:40:12.449Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -53,7 +53,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 45 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | tested ✓ | germanG | RF-01 | — |
 | 46 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 47 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 48 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | testing | gonza | RF-01 | — |
+| 48 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | tested ✓ | gonza | RF-01 | — |
 | 49 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | tested ✓ | germanG | RF-01 | — |
 | 50 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
 | 51 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
@@ -78,7 +78,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 70 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
 | 71 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 72 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
-| 73 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | germanG | RF-03, RF-01, RF-01 | — |
+| 73 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | Hacer | dev-ma-2 | RF-03, RF-01, RF-01 | — |
 | 74 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
 | 75 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
 | 76 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |

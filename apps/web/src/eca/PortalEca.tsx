@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { AlertasCriticas } from './AlertasCriticas';
 import {
+  alcanceEca,
   type CoberturaEca,
   fetchCoberturaEca,
   fetchMaquinasEca,
   type MaquinaEca,
+  puedeAcusarRemito,
 } from './eca';
 import { MedidorCobertura } from './MedidorCobertura';
 
@@ -14,10 +16,16 @@ const EMPRESAS_DISPONIBLES = [
   'MAICON Mantenimiento',
 ];
 
-export function PortalEca() {
-  const [ecaSeleccionada, setEcaSeleccionada] = useState<string>(
-    'Conservación Porteña S.R.L.',
-  );
+interface PortalEcaProps {
+  /** Quién ingresó: un usuario ECA ve siempre su ECA; la Secretaría y el Administrador eligen cuál mirar (HU-15 RF-02). */
+  usuario: { rol: string; eca?: string | null };
+}
+
+export function PortalEca({ usuario }: PortalEcaProps) {
+  const alcance = alcanceEca(usuario);
+  const [ecaElegida, setEcaSeleccionada] = useState<string>('Conservación Porteña S.R.L.');
+  // Un usuario ECA no elige: la ECA es la de su sesión (el servidor además ignora cualquier otra).
+  const ecaSeleccionada = alcance.modo === 'propia' ? alcance.eca : ecaElegida;
   const [mesSeleccionado, setMesSeleccionado] = useState<string>('2026-11');
   const [cobertura, setCobertura] = useState<CoberturaEca | null>(null);
   const [maquinas, setMaquinas] = useState<MaquinaEca[]>([]);
@@ -25,6 +33,7 @@ export function PortalEca() {
   const [error, setError] = useState<string | null>(null);
 
   const cargarDatos = async () => {
+    if (alcance.modo === 'sin-eca') return;
     setCargando(true);
     setError(null);
     try {
@@ -55,6 +64,19 @@ export function PortalEca() {
     void cargarDatos();
   }, [ecaSeleccionada, mesSeleccionado]);
 
+  if (alcance.modo === 'sin-eca') {
+    return (
+      <section className="portal-eca" aria-labelledby="portal-eca-titulo">
+        <h2 id="portal-eca-titulo" className="portal-title">
+          Portal de Cobertura y Monitoreo ECA
+        </h2>
+        <div className="alert alert-error" role="alert" data-testid="eca-sin-asignar">
+          Tu usuario no tiene una ECA asignada: pedile al Administrador que la cargue.
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="portal-eca" aria-labelledby="portal-eca-titulo">
       {/* Cabecera del Portal ECA */}
@@ -79,19 +101,25 @@ export function PortalEca() {
           <label htmlFor="select-eca" className="filter-label">
             Empresa Conservadora (ECA):
           </label>
-          <select
-            id="select-eca"
-            className="filter-select"
-            value={ecaSeleccionada}
-            onChange={(e) => setEcaSeleccionada(e.target.value)}
-            data-testid="select-eca"
-          >
-            {EMPRESAS_DISPONIBLES.map((eca) => (
-              <option key={eca} value={eca}>
-                {eca}
-              </option>
-            ))}
-          </select>
+          {alcance.modo === 'propia' ? (
+            <strong id="select-eca" data-testid="eca-propia">
+              {alcance.eca}
+            </strong>
+          ) : (
+            <select
+              id="select-eca"
+              className="filter-select"
+              value={ecaSeleccionada}
+              onChange={(e) => setEcaSeleccionada(e.target.value)}
+              data-testid="select-eca"
+            >
+              {EMPRESAS_DISPONIBLES.map((eca) => (
+                <option key={eca} value={eca}>
+                  {eca}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="filter-group">
@@ -125,7 +153,7 @@ export function PortalEca() {
       ) : (
         <>
           {/* Alertas Críticas (Fuera de Servicio y Reparación Urgente) */}
-          <AlertasCriticas maquinas={maquinas} />
+          <AlertasCriticas maquinas={maquinas} puedeAcusar={puedeAcusarRemito(usuario)} />
 
           {/* Criterio 1: Gráfico/Medidor de Cobertura */}
           {cobertura && <MedidorCobertura cobertura={cobertura} />}

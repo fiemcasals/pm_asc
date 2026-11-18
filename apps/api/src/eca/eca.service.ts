@@ -26,6 +26,15 @@ interface FilaAviso {
   fecha: Date | string;
 }
 
+/**
+ * ¿Es la misma ECA? Igualdad exacta, como la compara la base con el RLS (distingue mayúsculas), sin contar los espacios de los
+ * bordes. Si el filtro fuera más flexible que el RLS, un usuario vería alertas cuyo acuse la base le oculta.
+ */
+export function mismaEca(a: string | null | undefined, b: string | null | undefined): boolean {
+  const x = (a ?? '').trim();
+  return x !== '' && x === (b ?? '').trim();
+}
+
 const aEvento = (f: FilaAviso): EventoAlerta => ({
   tipo: f.tipo,
   fecha: new Date(f.fecha).toISOString(),
@@ -74,19 +83,23 @@ export class EcaService {
 
   /**
    * Obtiene la lista de máquinas pertenecientes a la flota de la ECA para un mes dado.
+   * `estricto` (HU-15 RF-02): la ECA viene de la sesión de un usuario ECA, así que se compara exacta; sin él (Secretaría y
+   * Administrador, que eligen la ECA a mirar) se acepta el nombre aproximado de siempre.
    */
   async getMaquinasFlota(
     ecaIdentificador?: string,
     mes: string = '2026-11',
+    estricto = false,
   ): Promise<MaquinaEca[]> {
-    const ecaCanonica = this.resolverEca(ecaIdentificador);
+    const ecaCanonica = estricto ? (ecaIdentificador ?? '').trim() : this.resolverEca(ecaIdentificador);
     const todas = this.firmanteService.getMaquinas();
 
     return todas.filter((m) => {
-      const matchEca =
-        m.eca.toLowerCase() === ecaCanonica.toLowerCase() ||
-        m.eca.toLowerCase().includes(ecaCanonica.toLowerCase()) ||
-        ecaCanonica.toLowerCase().includes(m.eca.toLowerCase());
+      const matchEca = estricto
+        ? mismaEca(m.eca, ecaCanonica)
+        : m.eca.toLowerCase() === ecaCanonica.toLowerCase() ||
+          m.eca.toLowerCase().includes(ecaCanonica.toLowerCase()) ||
+          ecaCanonica.toLowerCase().includes(m.eca.toLowerCase());
       const matchMes = !mes || m.mes === mes;
       return matchEca && matchMes;
     });
@@ -98,8 +111,9 @@ export class EcaService {
   async getAlertasCriticas(
     ecaIdentificador?: string,
     mes: string = '2026-11',
+    estricto = false,
   ): Promise<AlertaFlotaItem[]> {
-    const maquinas = await this.getMaquinasFlota(ecaIdentificador, mes);
+    const maquinas = await this.getMaquinasFlota(ecaIdentificador, mes, estricto);
     try {
       await this.cargarAcusesGuardados(maquinas.filter((m) => Boolean(m.alertaCritica)));
       await this.procesarAvisos();
@@ -128,6 +142,15 @@ export class EcaService {
   }
 
   /**
+   * La ECA con la que se lee de la base. Un usuario ECA lee con la de su sesión (el RLS lo restringe a lo suyo); la Secretaría y el
+   * Administrador, que no tienen ECA propia, leen con la ECA de las alertas que están viendo (si se usara el contexto de su sesión,
+   * sin ECA, el RLS les ocultaría los acuses y los avisos de las ECA ajenas).
+   */
+  private ecaParaLeer(ctx: ReturnType<typeof getRlsContext>, ecaDeLasAlertas: string): string | null {
+    return ctx?.esExplicito && ctx.rol === 'eca' ? ctx.eca : ecaDeLasAlertas;
+  }
+
+  /**
    * El acuse guardado en la base es el que vale: al reiniciar la API la memoria arranca sin acuses, así que se vuelven a
    * leer. Se busca por alerta y por la ECA de la máquina (más el RLS), así que el acuse de otra ECA o de otra alerta no se
    * mezcla. Sin base configurada no hay nada que leer.
@@ -141,7 +164,7 @@ export class EcaService {
     for (const [eca, delGrupo] of porEca) {
       // comoSistema: el proceso de avisos lee los acuses de cada ECA aunque lo dispare otra sesión (por ejemplo la Secretaría); si no,
       // el RLS de esa sesión los ocultaría y se mandaría un aviso por una alerta que sí se acusó.
-      const filas = await runWithEcaContext(!comoSistema && ctx?.esExplicito ? ctx.eca : eca, () =>
+      const filas = await runWithEcaContext(comoSistema ? eca : this.ecaParaLeer(ctx, eca), () =>
         this.db!.query<FilaAcuse & { alerta_id: string }>(
           'SELECT alerta_id, id, usuario, fecha_hora FROM acuses_recibo_legal WHERE eca = $1 AND alerta_id = ANY($2::text[])',
           [eca, delGrupo.map((m) => m.alertaCritica!.id)],
@@ -161,9 +184,10 @@ export class EcaService {
   async getCobertura(
     ecaIdentificador?: string,
     mes: string = '2026-11',
+    estricto = false,
   ): Promise<CoberturaEcaResponse> {
-    const ecaCanonica = this.resolverEca(ecaIdentificador);
-    const maquinas = await this.getMaquinasFlota(ecaCanonica, mes);
+    const ecaCanonica = estricto ? (ecaIdentificador ?? '').trim() : this.resolverEca(ecaIdentificador);
+    const maquinas = await this.getMaquinasFlota(ecaCanonica, mes, estricto);
 
     const totalMaquinas = maquinas.length;
     const inspeccionadas = maquinas.filter((m) => m.estado === 'Recorrida').length;
@@ -210,13 +234,9 @@ export class EcaService {
   async registrarAcuseRecibo(
     alertaId: string,
     usuarioSolicitante?: string,
+    ecaPermitida?: string,
   ): Promise<AcuseReciboResponse> {
-    const maquinas = this.firmanteService.getMaquinas();
-    const maquina = maquinas.find((m) => m.alertaCritica?.id === alertaId);
-
-    if (!maquina || !maquina.alertaCritica) {
-      throw new NotFoundException(`No se encontró alerta crítica con identificador ${alertaId}`);
-    }
+    const maquina = this.maquinaDeAlerta(alertaId, ecaPermitida);
 
     const usuario =
       usuarioSolicitante?.trim() ||
@@ -276,19 +296,44 @@ export class EcaService {
   }
 
   /**
+   * La máquina de una alerta. Con `ecaPermitida` (un usuario ECA) la alerta tiene que ser de esa ECA: si es de otra da el mismo
+   * 404 que una alerta que no existe, para no revelar que existe (HU-15 RF-02).
+   */
+  private maquinaDeAlerta(alertaId: string, ecaPermitida?: string): MaquinaEca & { alertaCritica: NonNullable<MaquinaEca['alertaCritica']> } {
+    const maquina = this.firmanteService.getMaquinas().find((m) => m.alertaCritica?.id === alertaId);
+    if (!maquina || !maquina.alertaCritica || (ecaPermitida !== undefined && !mismaEca(maquina.eca, ecaPermitida))) {
+      throw new NotFoundException(`No se encontró alerta crítica con identificador ${alertaId}`);
+    }
+    return maquina as MaquinaEca & { alertaCritica: NonNullable<MaquinaEca['alertaCritica']> };
+  }
+
+  /**
    * Genera el remito técnico de notificación con el informe y fotos de la falla,
    * y registra automáticamente la fecha, hora y usuario para el acuse legal.
+   *
+   * `registrarAcuse: false` lo arma sólo para leerlo (la vista del informe): muestra el acuse si ya existe, pero nunca lo crea —
+   * el acuse es la constancia de que la ECA tomó conocimiento, y no lo puede crear quien sólo abre un enlace.
    */
   async getRemitoTecnico(
     alertaId: string,
     usuarioSolicitante?: string,
+    opciones: { ecaPermitida?: string; registrarAcuse?: boolean } = {},
   ): Promise<RemitoTecnicoResponse> {
-    const acuseRes = await this.registrarAcuseRecibo(alertaId, usuarioSolicitante);
-    const maquina = this.firmanteService
-      .getMaquinas()
-      .find((m) => m.alertaCritica?.id === alertaId)!;
+    let acuse: { fechaHora: string; usuario: string } | null;
+    if (opciones.registrarAcuse === false) {
+      const m = this.maquinaDeAlerta(alertaId, opciones.ecaPermitida);
+      try {
+        await this.cargarAcusesGuardados([m]);
+      } catch (err) {
+        this.logger.warn(`No se pudo releer el acuse de ${alertaId}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      acuse = m.alertaCritica.acuseRecibo ?? null;
+    } else {
+      acuse = (await this.registrarAcuseRecibo(alertaId, usuarioSolicitante, opciones.ecaPermitida)).acuse;
+    }
+    const maquina = this.maquinaDeAlerta(alertaId, opciones.ecaPermitida);
 
-    const alerta = maquina.alertaCritica!;
+    const alerta = maquina.alertaCritica;
 
     return {
       id: `REM-${alerta.id}`,
@@ -309,9 +354,9 @@ export class EcaService {
       checklist: alerta.checklist,
       fechaDeteccion: alerta.fechaDeteccion,
       acuseLegal: {
-        registrado: true,
-        fechaHora: acuseRes.acuse.fechaHora,
-        usuario: acuseRes.acuse.usuario,
+        registrado: acuse !== null,
+        fechaHora: acuse?.fechaHora ?? '',
+        usuario: acuse?.usuario ?? '',
       },
     };
   }
@@ -382,7 +427,7 @@ export class EcaService {
     const porEca = new Map<string, MaquinaEca[]>();
     for (const m of maquinas) porEca.set(m.eca, [...(porEca.get(m.eca) ?? []), m]);
     for (const [eca, delGrupo] of porEca) {
-      const filas = await runWithEcaContext(ctx?.esExplicito ? ctx.eca : eca, () =>
+      const filas = await runWithEcaContext(this.ecaParaLeer(ctx, eca), () =>
         this.db!.query<FilaAviso>(
           `SELECT alerta_id, tipo, eca, edificio, mensaje, fecha FROM alertas_avisos WHERE eca = $1 AND alerta_id = ANY($2::text[])
             ORDER BY fecha, CASE tipo WHEN 'recordatorio_eca_24h' THEN 0 ELSE 1 END`,

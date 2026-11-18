@@ -483,7 +483,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
             />
           )}
           {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} edificio={edificioEnInspeccion ?? undefined} />}
-          {vista === 'eca' && <PortalEca />}
+          {vista === 'eca' && <PortalEca usuario={usuario} />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />
           )}

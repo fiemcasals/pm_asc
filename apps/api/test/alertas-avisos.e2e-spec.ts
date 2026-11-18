@@ -39,7 +39,8 @@ describe('Recordatorio a las 24 h y aviso a las 48 h sin acuse, por HTTP (HU-10 
   });
 
   const http = () => request(app.getHttpServer());
-  const alertas = async (eca: string) => (await http().get('/api/eca/alertas').query({ eca })).body.alertas as { alerta: { id: string; historial: { tipo: string; eca: string; edificio: string }[] } }[];
+  // La Secretaría ve la lista de cualquier ECA (HU-15 RF-02: el portal ECA pide sesión).
+  const alertas = async (eca: string) => (await http().get('/api/eca/alertas').set('Authorization', `Bearer ${tokens.secretaria}`).query({ eca })).body.alertas as { alerta: { id: string; historial: { tipo: string; eca: string; edificio: string }[] } }[];
   const historialDe = async (eca: string, alertaId: string) => (await alertas(eca)).find((a) => a.alerta.id === alertaId)!.alerta.historial;
   const avisos = (rol?: string) => {
     const r = http().get('/api/eca/avisos-secretaria');

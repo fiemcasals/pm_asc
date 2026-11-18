@@ -1,3 +1,4 @@
+import { fetchConSesion } from '../auth/sesion';
 export type EstadoOperativo = 'Normal' | 'Fuera de Servicio' | 'Reparación Urgente';
 
 export type TipoAlertaCritica = 'FUERA_DE_SERVICIO' | 'REPARACION_URGENTE';
@@ -121,24 +122,33 @@ export interface RemitoTecnico {
   filename?: string;
 }
 
-export async function descargarRemitoTecnico(
-  alertaId: string,
-  usuario?: string,
-): Promise<FetchResult<RemitoTecnico>> {
-  try {
-    const params = new URLSearchParams();
-    if (usuario) params.set('usuario', usuario);
-    params.set('formato', 'pdf');
+/**
+ * El mensaje de una respuesta HTTP que no fue exitosa. 401 y 403 se explican (HU-15 RF-02: el portal pide sesión y cada rol ve lo suyo).
+ * `soloEca`: la ruta es de la ECA (remito y acuse), así que un 403 significa que quien pide no es una ECA.
+ */
+export function mensajeDeError(status: number, accion: string, soloEca = false): string {
+  if (status === 401) return 'La sesión venció: ingresá de nuevo.';
+  if (status === 403) {
+    return soloEca ? 'Sólo la ECA puede descargar el remito y registrar el acuse legal.' : 'Tu usuario no tiene acceso a esta información (o no tiene una ECA asignada).';
+  }
+  if (status === 404) return `No se encontró lo que se pidió (error 404): ${accion}`;
+  return `Error ${status}: ${accion}`;
+}
 
-    const query = params.toString() ? `?${params.toString()}` : '';
-    const res = await fetch(`/api/eca/remito/${alertaId}${query}`, {
+/**
+ * Descarga el remito de la alerta en PDF. Lo hace la ECA con su sesión: el acuse legal queda a nombre de ese usuario
+ * (el servidor lo toma de la sesión, no de lo que mande la pantalla).
+ */
+export async function descargarRemitoTecnico(alertaId: string): Promise<FetchResult<RemitoTecnico>> {
+  try {
+    const res = await fetchConSesion(`/api/eca/remito/${encodeURIComponent(alertaId)}?formato=pdf`, {
       headers: {
         Accept: 'application/pdf, application/json',
       },
     });
 
     if (!res.ok) {
-      return { ok: false, error: `Error ${res.status}: no se pudo descargar el remito técnico` };
+      return { ok: false, error: mensajeDeError(res.status, 'no se pudo descargar el remito técnico', true) };
     }
 
     const contentType = res.headers?.get?.('content-type') || '';
@@ -146,7 +156,7 @@ export async function descargarRemitoTecnico(
     if (contentType.includes('application/pdf')) {
       const blob = typeof res.blob === 'function' ? await res.blob() : new Blob([], { type: 'application/pdf' });
       const fechaHora = res.headers?.get?.('x-acuse-fecha-hora') || new Date().toISOString();
-      const acuseUsuario = decodeURIComponent(res.headers?.get?.('x-acuse-usuario') || usuario || '');
+      const acuseUsuario = decodeURIComponent(res.headers?.get?.('x-acuse-usuario') || '');
       const codigoAGC = res.headers?.get?.('x-codigo-agc') || 'M1';
 
       const dispo = res.headers?.get?.('content-disposition');
@@ -305,14 +315,14 @@ export async function fetchAlertasEca(
 ): Promise<FetchResult<AlertasEcaResponse>> {
   try {
     const params = new URLSearchParams({ eca: ecaName, mes });
-    const res = await fetch(`/api/eca/alertas?${params.toString()}`, {
+    const res = await fetchConSesion(`/api/eca/alertas?${params.toString()}`, {
       headers: {
         'x-eca-name': ecaName,
       },
     });
 
     if (!res.ok) {
-      return { ok: false, error: `Error ${res.status}: no se pudo obtener alertas de la flota` };
+      return { ok: false, error: mensajeDeError(res.status, 'no se pudo obtener alertas de la flota') };
     }
 
     const data = (await res.json()) as AlertasEcaResponse;
@@ -331,14 +341,14 @@ export async function fetchCoberturaEca(
 ): Promise<FetchResult<CoberturaEca>> {
   try {
     const params = new URLSearchParams({ eca: ecaName, mes });
-    const res = await fetch(`/api/eca/cobertura?${params.toString()}`, {
+    const res = await fetchConSesion(`/api/eca/cobertura?${params.toString()}`, {
       headers: {
         'x-eca-name': ecaName,
       },
     });
 
     if (!res.ok) {
-      return { ok: false, error: `Error ${res.status}: no se pudo obtener cobertura` };
+      return { ok: false, error: mensajeDeError(res.status, 'no se pudo obtener cobertura') };
     }
 
     const data = (await res.json()) as CoberturaEca;
@@ -357,14 +367,14 @@ export async function fetchMaquinasEca(
 ): Promise<FetchResult<MaquinaEca[]>> {
   try {
     const params = new URLSearchParams({ eca: ecaName, mes });
-    const res = await fetch(`/api/eca/maquinas?${params.toString()}`, {
+    const res = await fetchConSesion(`/api/eca/maquinas?${params.toString()}`, {
       headers: {
         'x-eca-name': ecaName,
       },
     });
 
     if (!res.ok) {
-      return { ok: false, error: `Error ${res.status}: no se pudo obtener máquinas de la flota` };
+      return { ok: false, error: mensajeDeError(res.status, 'no se pudo obtener máquinas de la flota') };
     }
 
     const data = (await res.json()) as MaquinaEca[];
@@ -375,6 +385,24 @@ export async function fetchMaquinasEca(
       error: err instanceof Error ? err.message : 'Error de conexión',
     };
   }
+}
+
+/** Qué ECA mira el portal según quién ingresó (HU-15 RF-02). */
+export type AlcanceEca = { modo: 'propia'; eca: string } | { modo: 'elegir' } | { modo: 'sin-eca' };
+
+/**
+ * Un usuario ECA ve siempre la suya (sale de su sesión; el servidor ignora cualquier otra); si su usuario no tiene ECA asignada, no puede
+ * ver nada. La Secretaría y el Administrador eligen cuál mirar. Otro rol no entra a este portal (el servidor le responde 403).
+ */
+export function alcanceEca(usuario: { rol: string; eca?: string | null }): AlcanceEca {
+  if (usuario.rol !== 'eca') return { modo: 'elegir' };
+  const eca = usuario.eca?.trim();
+  return eca ? { modo: 'propia', eca } : { modo: 'sin-eca' };
+}
+
+/** El remito y el acuse de recibo legal son de la ECA: sólo un usuario ECA los descarga y registra (HU-15 RF-02). */
+export function puedeAcusarRemito(usuario: { rol: string }): boolean {
+  return usuario.rol === 'eca';
 }
 
 /**

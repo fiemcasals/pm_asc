@@ -480,6 +480,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               maquinaInicialId={maquinaBuscadaId}
               onConsumirMaquinaInicial={() => setMaquinaBuscadaId(null)}
               usuario={usuario.usuario}
+              rol={usuario.rol}
             />
           )}
           {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} edificio={edificioEnInspeccion ?? undefined} />}

@@ -9,9 +9,11 @@ interface ModalAuditoriaProps {
   maquina: MaquinaAsignada;
   onClose: () => void;
   onAutorizar: (maquinaId: string) => Promise<void>;
+  /** false: la Secretaría y el Administrador ven el informe pero no autorizan (la firma AGC la autoriza el Firmante). */
+  puedeFirmar?: boolean;
 }
 
-export function ModalAuditoria({ maquina, onClose, onAutorizar }: ModalAuditoriaProps) {
+export function ModalAuditoria({ maquina, onClose, onAutorizar, puedeFirmar = true }: ModalAuditoriaProps) {
   const [autorizando, setAutorizando] = useState(false);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
 
@@ -176,7 +178,13 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar }: ModalAuditoria
             </div>
           )}
 
-          {!habilitado && !visita?.autorizada && (
+          {!puedeFirmar && !visita?.autorizada && (
+            <div className="alert alert-warning" data-testid="modal-solo-firmante">
+              🔒 <strong>Sólo lectura:</strong> la firma AGC la autoriza el Firmante.
+            </div>
+          )}
+
+          {puedeFirmar && !habilitado && !visita?.autorizada && (
             <div className="alert alert-warning">
               🔒 <strong>Autorización bloqueada:</strong> {motivoBloqueo}
             </div>
@@ -187,7 +195,7 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar }: ModalAuditoria
           <button className="btn btn-secondary" onClick={onClose} disabled={autorizando}>
             Cerrar
           </button>
-          {!visita?.autorizada && (
+          {puedeFirmar && !visita?.autorizada && (
             <button
               className="btn btn-primary"
               disabled={!habilitado || autorizando}

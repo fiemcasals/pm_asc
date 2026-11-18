@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -33,8 +34,14 @@ export class WhatsAppController {
     const res = await this.connector.enviarMensajeAlerta(input);
 
     if (!res.ok) {
+      const statusCode =
+        res.estadoEntrega === 'sin_telefono'
+          ? 400
+          : res.estadoEntrega === 'no_configurado'
+            ? 503
+            : 502;
       const payload = {
-        statusCode: res.estadoEntrega === 'no_configurado' ? 503 : 502,
+        statusCode,
         ok: false,
         estadoEntrega: res.estadoEntrega,
         error: res.error,
@@ -43,6 +50,9 @@ export class WhatsAppController {
         intentos: res.intentos,
         timestampEnvio: res.timestampEnvio,
       };
+      if (res.estadoEntrega === 'sin_telefono') {
+        throw new BadRequestException(payload);
+      }
       if (res.estadoEntrega === 'no_configurado') {
         throw new ServiceUnavailableException(payload);
       }
@@ -68,6 +78,14 @@ export class WhatsAppController {
     @Body() dto: TriggerAlertaCriticaDto,
   ): Promise<WhatsAppDisparoResult> {
     return this.triggerService.dispararAlertaInmediata(dto);
+  }
+
+  @Get('estado')
+  getEstado(): { configurado: boolean; proveedor: 'meta' | 'twilio' | 'custom' | null } {
+    return {
+      configurado: this.connector.estaConfigurado(),
+      proveedor: this.connector.getProveedorActivo(),
+    };
   }
 
   @Get('historial')

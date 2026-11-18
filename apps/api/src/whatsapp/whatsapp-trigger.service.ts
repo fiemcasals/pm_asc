@@ -1,5 +1,6 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { AvisosService } from '../avisos/avisos.service';
+import { ConsorciosRepository } from '../consorcios/consorcios.repository';
 import { FirmanteService } from '../firmante/firmante.service';
 import { WhatsAppConnectorService } from './whatsapp-connector.service';
 import {
@@ -15,11 +16,43 @@ export class WhatsAppTriggerService {
     private readonly connector: WhatsAppConnectorService,
     private readonly firmanteService: FirmanteService,
     private readonly avisos: AvisosService,
+    @Optional() private readonly consorcios?: ConsorciosRepository,
   ) {}
 
   /**
+   * Resuelve el teléfono de la ECA responsable del edificio desde la terna de roles (`roles_edificio`).
+   * Nunca usa un número fijo hardcodeado: si la ECA no tiene teléfono cargado devuelve vacío.
+   */
+  private async resolverTelefonoEcaEdificio(direccion: string, nombreEca: string): Promise<string> {
+    if (!this.consorcios) return '';
+    try {
+      const [edificios, roles] = await Promise.all([
+        this.consorcios.listar(),
+        this.consorcios.listarRoles(),
+      ]);
+      const dirNorm = direccion.trim().toLowerCase();
+      const edificio = edificios.find((c) => {
+        const cDir = c.direccion.trim().toLowerCase();
+        return cDir === dirNorm || dirNorm.startsWith(cDir) || cDir.startsWith(dirNorm);
+      });
+      if (edificio) {
+        const rol = roles.find((r) => r.consorcioId === edificio.id);
+        return rol?.eca?.telefono?.trim() ?? '';
+      }
+      const ecaNorm = nombreEca.trim().toLowerCase();
+      const rolPorEca = roles.find(
+        (r) => r.eca?.nombre.trim().toLowerCase() === ecaNorm && Boolean(r.eca.telefono?.trim()),
+      );
+      return rolPorEca?.eca?.telefono?.trim() ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  /**
    * Ejecuta el disparo automático de WhatsApp ante una anomalía crítica.
-   * Si no hay proveedor configurado, registra el intento como no realizado sin simular entrega.
+   * Toma el teléfono destino de la ECA asignada al edificio en la terna de roles (o del DTO explícito).
+   * Sin teléfono cargado o sin proveedor configurado, registra el intento como no realizado sin simular entrega.
    */
   async dispararAlertaInmediata(
     dto: TriggerAlertaCriticaDto,
@@ -58,7 +91,11 @@ export class WhatsAppTriggerService {
     }
     const baseUrl = dto.baseUrl || 'https://localhost:8050';
     const enlaceDirecto = `${baseUrl}/api/eca/remito/${alerta.id}/informe`;
-    const telefono = dto.telefonoDestino || '+5491144009988';
+
+    // HU-11 RF-04: el teléfono sale de la terna de roles del edificio (no de un número fijo hardcodeado).
+    const telefono =
+      dto.telefonoDestino?.trim() ||
+      (await this.resolverTelefonoEcaEdificio(maquina.edificio.direccion, maquina.eca));
 
     const resEnvio = await this.connector.enviarMensajeAlerta(
       {

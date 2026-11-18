@@ -16,6 +16,23 @@ export interface SmtpConfig {
   desde: string;
 }
 
+/** Credenciales de proveedor real de WhatsApp (HU-11 RF-04), siempre leídas de variables de entorno. */
+export type WhatsAppProviderConfig =
+  | {
+      proveedor: 'meta';
+      accessToken: string;
+      phoneNumberId: string;
+      apiVersion: string;
+      baseUrl: string;
+    }
+  | {
+      proveedor: 'twilio';
+      accountSid: string;
+      authToken: string;
+      fromNumber: string;
+      baseUrl: string;
+    };
+
 export interface AppConfig {
   nodeEnv: string;
   port: number;
@@ -28,6 +45,8 @@ export interface AppConfig {
   appUrl: string;
   /** null si no hay SMTP configurado: el recupero avisa por log y no manda mail. */
   smtp: SmtpConfig | null;
+  /** null si no hay proveedor real de WhatsApp configurado en variables de entorno (HU-11 RF-04). */
+  whatsapp: WhatsAppProviderConfig | null;
   /** Feriados (AAAA-MM-DD) que cuentan como cerrado; null = la lista provisoria de src/horarios/feriados.ts (HU-01 RF-04). */
   feriados: string[] | null;
   /** Precisión del GPS (radio de error, en metros) por encima de la cual se pide «Sin buena señal GPS» (HU-16 RF-02). */
@@ -104,12 +123,43 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         }
       : null;
 
+  const waProviderRaw = (env.WHATSAPP_PROVIDER ?? '').trim().toLowerCase();
+  const metaToken = env.WHATSAPP_META_ACCESS_TOKEN?.trim() ?? '';
+  const metaPhoneId = env.WHATSAPP_META_PHONE_NUMBER_ID?.trim() ?? '';
+  const twilioSid = env.WHATSAPP_TWILIO_ACCOUNT_SID?.trim() ?? '';
+  const twilioToken = env.WHATSAPP_TWILIO_AUTH_TOKEN?.trim() ?? '';
+  const twilioFrom = env.WHATSAPP_TWILIO_FROM?.trim() ?? '';
+
+  let whatsapp: WhatsAppProviderConfig | null = null;
+  if (waProviderRaw === 'meta' || (!waProviderRaw && metaToken && metaPhoneId)) {
+    if (metaToken && metaPhoneId) {
+      whatsapp = {
+        proveedor: 'meta',
+        accessToken: metaToken,
+        phoneNumberId: metaPhoneId,
+        apiVersion: env.WHATSAPP_META_API_VERSION?.trim() || 'v21.0',
+        baseUrl: (env.WHATSAPP_META_BASE_URL?.trim() || 'https://graph.facebook.com').replace(/\/+$/, ''),
+      };
+    }
+  } else if (waProviderRaw === 'twilio' || (!waProviderRaw && twilioSid && twilioToken && twilioFrom)) {
+    if (twilioSid && twilioToken && twilioFrom) {
+      whatsapp = {
+        proveedor: 'twilio',
+        accountSid: twilioSid,
+        authToken: twilioToken,
+        fromNumber: twilioFrom,
+        baseUrl: (env.WHATSAPP_TWILIO_BASE_URL?.trim() || 'https://api.twilio.com').replace(/\/+$/, ''),
+      };
+    }
+  }
+
   return {
     nodeEnv,
     port: Number(env.API_PORT ?? 3050),
     host: env.API_HOST?.trim() || '127.0.0.1',
     appUrl: (env.APP_URL?.trim() || 'http://localhost:8050').replace(/\/+$/, ''),
     smtp,
+    whatsapp,
     feriados: feriadosDeEntorno(env.FERIADOS),
     gpsPrecisionMaxM: gpsPrecisionMax,
     databaseUrl: env.DATABASE_URL ?? '',

@@ -235,6 +235,11 @@ export class FirmanteService {
     return this.maquinas;
   }
 
+  /** ¿La máquina es de este Firmante? Por su usuario de login (que no distingue mayúsculas, como el login). */
+  private esDelFirmante(m: MaquinaAsignada, firmante: string): boolean {
+    return m.firmanteUsername.trim().toLowerCase() === firmante.trim().toLowerCase();
+  }
+
   async getMaquinasDelMes(
     firmanteIdOrUsername?: string,
     mes?: string,
@@ -249,9 +254,14 @@ export class FirmanteService {
     });
   }
 
+  /**
+   * `firmantePermitido` (HU-08 RF-04): el Firmante de la sesión; la máquina tiene que ser suya, si no da el mismo 404 que una
+   * máquina que no existe (no se revela que existe).
+   */
   async autorizarFirma(
     dto: AutorizarFirmaDto,
     firmanteUsername: string = 'gonza',
+    firmantePermitido?: string,
   ): Promise<AutorizarFirmaResponse> {
     if (!dto || (!dto.maquinaId && !dto.visitaId)) {
       throw new BadRequestException('maquinaId o visitaId es requerido');
@@ -263,7 +273,7 @@ export class FirmanteService {
         (dto.visitaId && m.visita?.id === dto.visitaId),
     );
 
-    if (!maquina) {
+    if (!maquina || (firmantePermitido !== undefined && !this.esDelFirmante(maquina, firmantePermitido))) {
       throw new NotFoundException('Máquina o visita no encontrada');
     }
 
@@ -333,6 +343,7 @@ export class FirmanteService {
     dto: RechazarInformeDto,
     firmanteUsername: string = 'gonza',
     ahora: Date = new Date(),
+    firmantePermitido?: string,
   ): Promise<RechazarInformeResponse> {
     if (!dto || (!dto.maquinaId && !dto.visitaId)) {
       throw new BadRequestException('maquinaId o visitaId es requerido');
@@ -344,7 +355,9 @@ export class FirmanteService {
     const maquina = this.maquinas.find(
       (m) => (dto.maquinaId && m.id === dto.maquinaId) || (dto.visitaId && m.visita?.id === dto.visitaId),
     );
-    if (!maquina) throw new NotFoundException('Máquina o visita no encontrada');
+    if (!maquina || (firmantePermitido !== undefined && !this.esDelFirmante(maquina, firmantePermitido))) {
+      throw new NotFoundException('Máquina o visita no encontrada');
+    }
     const visita = maquina.visita;
     if (maquina.estado !== 'Recorrida' || !visita) {
       throw new BadRequestException(

@@ -1,8 +1,12 @@
 import { INestApplication, Logger } from '@nestjs/common';
 import request from 'supertest';
+import { InMemoryUsuariosRepository } from '../src/auth/usuarios.repository';
 import { FakeDatabase, createTestApp, fakeDatabase } from './create-test-app';
+import { NombreSesion, USUARIO_DE, bearer, crearSesiones } from './sesiones-e2e';
 
 // HU-10 RF-03: el acuse de recibo legal sólo se informa como registrado si quedó guardado.
+// Desde HU-15 RF-02 el portal ECA pide sesión: todo lo hace el usuario ECA de MAICON Mantenimiento y el acuse queda a su nombre.
+const QUIEN = USUARIO_DE.ecaMaicon;
 const ALERTA = 'ALT-MAICON-001'; // alerta de MAICON Mantenimiento
 const INSERT = /INSERT INTO acuses_recibo_legal/;
 
@@ -12,6 +16,7 @@ const errorPg = (code: string, message: string) => Object.assign(new Error(messa
 describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-03)', () => {
   let app: INestApplication;
   let db: FakeDatabase;
+  let tokens: Record<NombreSesion, string>;
   let warn: jest.SpyInstance;
   let errorLog: jest.SpyInstance;
 
@@ -28,8 +33,15 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
 
   async function arrancar(base: FakeDatabase = fakeDatabase()) {
     db = base;
-    ({ app } = await createTestApp({ NODE_ENV: 'development' }, db));
-    return request(app.getHttpServer());
+    const usuarios = new InMemoryUsuariosRepository();
+    ({ app } = await createTestApp({ NODE_ENV: 'development' }, db, undefined, undefined, { usuarios }));
+    tokens = await crearSesiones(app, usuarios);
+    const agente = request(app.getHttpServer());
+    // Lo que hacen estas pruebas lo hace el usuario ECA de MAICON.
+    return {
+      get: (url: string) => agente.get(url).set('Authorization', bearer(tokens.ecaMaicon)),
+      post: (url: string) => agente.post(url).set('Authorization', bearer(tokens.ecaMaicon)),
+    } as unknown as ReturnType<typeof request>;
   }
 
   /** Lo que la API informa hoy de la alerta: su acuseRecibo, o null si todavía no tiene. */
@@ -48,14 +60,14 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
 
       expect(res.status).toBe(201);
       expect(res.body.ok).toBe(true);
-      expect(res.body.acuse.usuario).toBe('qa.valido');
+      expect(res.body.acuse.usuario).toBe(QUIEN); // el de la sesión: el `usuario` del cuerpo se ignora
 
       const inserts = db.consultas.filter((c) => INSERT.test(c.texto));
       expect(inserts).toHaveLength(1);
       expect(inserts[0].params[0]).toBe(ALERTA); // alerta_id
-      expect(inserts[0].params[3]).toBe('qa.valido'); // usuario
+      expect(inserts[0].params[3]).toBe(QUIEN); // usuario
 
-      expect((await acuseDe(http))?.usuario).toBe('qa.valido');
+      expect((await acuseDe(http))?.usuario).toBe(QUIEN);
     });
   });
 
@@ -80,11 +92,11 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
 
       const res = await http.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.reintento' });
       expect(res.status).toBe(201);
-      expect((await acuseDe(http))?.usuario).toBe('qa.reintento');
+      expect((await acuseDe(http))?.usuario).toBe(QUIEN);
     });
   });
 
-  describe('criterio 2 — con un carácter NUL en usuario', () => {
+  describe('criterio 2 — con un dato que la base no puede guardar (carácter NUL)', () => {
     it('POST responde 400 con message "Datos inválidos" y la alerta sigue sin acuse', async () => {
       const http = await arrancar(
         fakeDatabase({ errorDeQuery: errorPg('22021', 'invalid byte sequence for encoding "UTF8": 0x00') }),
@@ -104,7 +116,7 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
     it('GET /api/eca/remito/:alertaId responde 500 y no entrega el remito ni marca el acuse', async () => {
       const http = await arrancar(fakeDatabase({ errorDeQuery: new Error('connect ECONNREFUSED') }));
 
-      const res = await http.get(`/api/eca/remito/${ALERTA}`).query({ usuario: 'operador.legal@maicon.com.ar' });
+      const res = await http.get(`/api/eca/remito/${ALERTA}`);
 
       expect(res.status).toBe(500);
       expect(res.headers['content-disposition']).toBeUndefined();
@@ -115,7 +127,7 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
     it('con la base sana el remito se entrega y el acuse queda guardado (no cambia lo que ya funcionaba)', async () => {
       const http = await arrancar();
 
-      const res = await http.get(`/api/eca/remito/${ALERTA}`).query({ usuario: 'operador.legal@maicon.com.ar' });
+      const res = await http.get(`/api/eca/remito/${ALERTA}`);
 
       expect(res.status).toBe(200);
       expect(res.headers['content-disposition']).toContain('attachment');
@@ -128,26 +140,27 @@ describe('Acuse de recibo legal: se informa sólo si quedó guardado (HU-10 RF-0
     it('un segundo POST no inserta otra fila: devuelve el acuse ya registrado, con su usuario y su fecha', async () => {
       const http = await arrancar();
 
-      const primero = await http.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.primero' });
-      const segundo = await http.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.segundo' });
+      const primero = await http.post(`/api/eca/alertas/${ALERTA}/acuse`);
+      // Otro usuario de la misma ECA acusa después: no inserta otra fila ni le cambia el nombre al acuse.
+      const segundo = await request(app.getHttpServer()).post(`/api/eca/alertas/${ALERTA}/acuse`).set('Authorization', bearer(tokens.ecaMaicon2));
 
       expect(primero.body.yaRegistrado).toBe(false);
       expect(segundo.status).toBe(201);
       expect(segundo.body.yaRegistrado).toBe(true);
-      expect(segundo.body.acuse).toMatchObject({ usuario: 'qa.primero', fechaHora: primero.body.acuse.fechaHora });
+      expect(segundo.body.acuse).toMatchObject({ usuario: QUIEN, fechaHora: primero.body.acuse.fechaHora });
       expect(db.acuses).toHaveLength(1);
-      expect(db.acuses[0].usuario).toBe('qa.primero');
+      expect(db.acuses[0].usuario).toBe(QUIEN);
     });
 
     it('tras reiniciar la API (memoria nueva, misma base) la alerta sigue figurando con su acuse', async () => {
       const antes = await arrancar();
-      const registrado = await antes.post(`/api/eca/alertas/${ALERTA}/acuse`).send({ usuario: 'qa.persistido' });
+      const registrado = await antes.post(`/api/eca/alertas/${ALERTA}/acuse`);
       const base = db;
       await app.close();
 
       const http = await arrancar(base); // otra instancia: el servicio arranca sin acuses en memoria
 
-      expect(await acuseDe(http)).toEqual({ usuario: 'qa.persistido', fechaHora: registrado.body.acuse.fechaHora });
+      expect(await acuseDe(http)).toEqual({ usuario: QUIEN, fechaHora: registrado.body.acuse.fechaHora });
     });
 
     it('un acuse de otra alerta o de otra ECA no aparece en la alerta consultada', async () => {

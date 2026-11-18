@@ -58,10 +58,10 @@ describe('eca module', () => {
       expect(res.data).toEqual(mockCobertura);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/eca/cobertura?eca=Conservaci%C3%B3n+Porte%C3%B1a+S.R.L.&mes=2026-11'),
-        expect.objectContaining({
-          headers: { 'x-eca-name': 'Conservación Porteña S.R.L.' },
-        }),
+        expect.objectContaining({ credentials: 'same-origin' }),
       );
+      const [, init] = vi.mocked(global.fetch).mock.calls[0] as unknown as [string, RequestInit];
+      expect(new Headers(init.headers).get('x-eca-name')).toBe('Conservación Porteña S.R.L.');
     });
 
     it('maneja respuestas HTTP no exitosas', async () => {
@@ -371,10 +371,7 @@ describe('eca module', () => {
         json: async () => mockRemito,
       } as Response);
 
-      const res = await descargarRemitoTecnico(
-        'ALT-1',
-        'operador.legal@maicon.com.ar',
-      );
+      const res = await descargarRemitoTecnico('ALT-1');
       expect(res.ok).toBe(true);
       expect(res.data?.id).toBe('REM-ALT-1');
       expect(res.data?.acuseLegal.registrado).toBe(true);
@@ -398,7 +395,7 @@ describe('eca module', () => {
         blob: async () => mockBlob,
       } as unknown as Response);
 
-      const res = await descargarRemitoTecnico('ALT-1', 'operador.legal@maicon.com.ar');
+      const res = await descargarRemitoTecnico('ALT-1');
 
       expect(res.ok).toBe(true);
       expect(res.data?.id).toBe('REM-ALT-1');

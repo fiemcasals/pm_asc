@@ -33,8 +33,9 @@ describe('Recordatorio a las 24 h y aviso a las 48 h sin acuse contra PostgreSQL
     apps.push(app);
     return app;
   }
+  // La Secretaría ve la lista de cualquier ECA (HU-15 RF-02: el portal ECA pide sesión).
   const alertas = async (app: INestApplication, eca: string) =>
-    (await request(app.getHttpServer()).get('/api/eca/alertas').query({ eca }).expect(200)).body.alertas as {
+    (await request(app.getHttpServer()).get('/api/eca/alertas').set('Authorization', `Bearer ${tokenSecretaria}`).query({ eca }).expect(200)).body.alertas as {
       alerta: { id: string; historial: { tipo: string; eca: string; edificio: string; fecha: string }[] };
     }[];
   const tiposDe = async (app: INestApplication, eca: string, alertaId: string) =>

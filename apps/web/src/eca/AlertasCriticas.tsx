@@ -8,6 +8,8 @@ import {
 interface AlertasCriticasProps {
   maquinas: MaquinaEca[];
   onAcuseRegistrado?: (alertaId: string, fechaHora: string, usuario: string) => void;
+  /** El remito y el acuse legal son de la ECA: la Secretaría y el Administrador ven las alertas pero no los descargan (HU-15 RF-02). */
+  puedeAcusar?: boolean;
 }
 
 interface NotificacionPanel {
@@ -32,6 +34,8 @@ export interface AccionesAlertaProps {
   waEnviado?: { idMensaje: string; timestamp: string };
   waError?: string;
   remitoClassName: string;
+  /** false: no es una ECA, así que no se ofrece el remito (lo descarga la ECA y queda su acuse legal). */
+  puedeDescargarRemito?: boolean;
   onDescargarRemito: (m: MaquinaEca) => void;
   onEnviarWhatsApp: (m: MaquinaEca) => void;
 }
@@ -46,19 +50,26 @@ export function AccionesAlertaCritica({
   waEnviado,
   waError,
   remitoClassName,
+  puedeDescargarRemito = true,
   onDescargarRemito,
   onEnviarWhatsApp,
 }: AccionesAlertaProps) {
   return (
     <div className="alerta-acciones-container">
-      <button
-        className={`btn-descargar-remito ${remitoClassName}`}
-        data-testid={`btn-descargar-remito-${maquina.id}`}
-        onClick={() => onDescargarRemito(maquina)}
-        disabled={descargandoId === alertaId}
-      >
-        📥 Descargar Remito de Notificación
-      </button>
+      {puedeDescargarRemito ? (
+        <button
+          className={`btn-descargar-remito ${remitoClassName}`}
+          data-testid={`btn-descargar-remito-${maquina.id}`}
+          onClick={() => onDescargarRemito(maquina)}
+          disabled={descargandoId === alertaId}
+        >
+          📥 Descargar Remito de Notificación
+        </button>
+      ) : (
+        <p className="portal-desc" data-testid={`nota-solo-eca-${maquina.id}`}>
+          El remito y el acuse de recibo legal los descarga y registra la ECA.
+        </p>
+      )}
 
       <button
         className="btn-whatsapp-alerta"
@@ -108,7 +119,7 @@ export function AccionesAlertaCritica({
   );
 }
 
-export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticasProps) {
+export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = true }: AlertasCriticasProps) {
   const [descargandoId, setDescargandoId] = useState<string | null>(null);
   const [enviandoWaId, setEnviandoWaId] = useState<string | null>(null);
   const [acusesLocales, setAcusesLocales] = useState<
@@ -149,11 +160,8 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
     setNotificacion(null);
 
     try {
-      const usuario = m.eca.toLowerCase().includes('maicon')
-        ? 'operador.legal@maicon.com.ar'
-        : 'responsable.tecnico@eca.com.ar';
-
-      const res = await descargarRemitoTecnico(alertaId, usuario);
+      // El acuse legal queda a nombre del usuario de la sesión: el servidor lo toma de ahí.
+      const res = await descargarRemitoTecnico(alertaId);
 
       if (res.ok && res.data) {
         const remito = res.data;
@@ -341,6 +349,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
                   waEnviado={waEnviados[alertaId]}
                   waError={waErrores[alertaId]}
                   remitoClassName="btn-remito-rojo"
+                  puedeDescargarRemito={puedeAcusar}
                   onDescargarRemito={handleDescargarRemito}
                   onEnviarWhatsApp={handleEnviarWhatsApp}
                 />
@@ -476,6 +485,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado }: AlertasCriticas
               waEnviado={waEnviados[alertaId]}
               waError={waErrores[alertaId]}
               remitoClassName="btn-remito-naranja"
+              puedeDescargarRemito={puedeAcusar}
               onDescargarRemito={handleDescargarRemito}
               onEnviarWhatsApp={handleEnviarWhatsApp}
             />

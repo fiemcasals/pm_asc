@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-18T13:54:22.548Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T14:03:29.229Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -373,6 +373,18 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 2. El informe rechazado aparece en la bandeja de la Secretaría con el motivo, y no en la del RT de Calle.
 3. Un informe que lleva más de 5 días hábiles (lunes a viernes) sin autorizar genera un aviso a la Secretaría, una sola vez.
 4. Un informe autorizado o rechazado dentro del plazo no genera aviso.
+
+### RF-04: Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo (Funcional)
+
+Hoy las rutas del Firmante (máquinas, autorizar y rechazar) no piden sesión: cualquiera puede autorizar o rechazar la firma AGC de cualquier máquina, porque autorizar y rechazar no controlan que la máquina sea del Firmante y la identidad sale de un header (con «gonza» por defecto). Pedir sesión de rol Firmante, tomar su identidad de la sesión, controlar que la máquina sea suya y hacer que el portal de la web trabaje con esa sesión; la Secretaría y el Administrador ven todo pero no autorizan. Fuente: revisión de seguridad del 18/11/2026 (serie que empezó con el Portal ECA).
+
+**Condiciones de aprobación**
+
+1. Sin sesión, las rutas del Firmante (máquinas, autorizar y rechazar) responden 401.
+2. Un Firmante ve solo sus máquinas (según su sesión) y no puede autorizar ni rechazar la de otro Firmante (404, igual al de una máquina inexistente).
+3. La Secretaría y el Administrador ven las máquinas de todos los Firmantes pero no autorizan ni rechazan (403); el RT y la ECA reciben 403 en todo.
+4. La autorización y el rechazo quedan a nombre del usuario de la sesión.
+5. La web funciona con la sesión: el Firmante ve, autoriza y rechaza lo suyo; la Secretaría ve todo sin esos botones.
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 

@@ -1,7 +1,10 @@
 export const MENSAJE_WHATSAPP_NO_CONFIGURADO =
   'El envío por WhatsApp no está configurado: no hay proveedor de mensajería activo.';
 
-export type EstadoEntregaWhatsApp = 'entregado' | 'enviado' | 'fallido' | 'no_configurado';
+export const MENSAJE_TELEFONO_ECA_FALTANTE =
+  'No se realizó el envío: la ECA responsable del edificio no tiene un teléfono cargado en la terna de roles.';
+
+export type EstadoEntregaWhatsApp = 'entregado' | 'enviado' | 'fallido' | 'no_configurado' | 'sin_telefono';
 
 export interface MensajeAlertaWhatsAppInput {
   telefonoDestino?: string;
@@ -23,15 +26,26 @@ export interface WhatsAppEnvioResult {
   timestampEnvio: string;
   tiempoRespuestaMs: number;
   estadoEntrega: EstadoEntregaWhatsApp;
+  proveedor?: 'meta' | 'twilio' | 'custom';
   error?: string;
 }
 
+export interface WhatsAppTransportResponse {
+  status: number;
+  body?: unknown;
+  /** ID oficial devuelto por el proveedor (wamid de Meta o SID de Twilio), si aplica. */
+  providerMessageId?: string;
+  /** Mensaje de error devuelto por el proveedor cuando rechaza el envío. */
+  errorDetail?: string;
+}
+
 export interface WhatsAppTransport {
+  readonly proveedor?: 'meta' | 'twilio' | 'custom';
   postMessage(
     url: string,
     payload: unknown,
     headers: Record<string, string>,
-  ): Promise<{ status: number; body?: unknown }>;
+  ): Promise<WhatsAppTransportResponse>;
 }
 
 export interface TriggerAlertaCriticaDto {

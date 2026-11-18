@@ -204,8 +204,9 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       fechaDeteccion: aviso.creadoEn,
     });
 
+    const telefonoEca = await this.resolverTelefonoEca(aviso, destinos.telefonoEca);
     const whatsappA: [CanalAviso, string, string][] = [
-      ['whatsapp_eca', destinos.telefonoEca ?? DESTINOS_PROVISORIOS.telefonoEca, aviso.eca],
+      ['whatsapp_eca', telefonoEca, aviso.eca],
       ['whatsapp_firmante', destinos.telefonoFirmante ?? DESTINOS_PROVISORIOS.telefonoFirmante, aviso.firmanteUsername || 'Firmante'],
     ];
     for (const [canal, telefono, nombre] of whatsappA) {
@@ -271,6 +272,34 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
     aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
     return structuredClone(aviso);
+  }
+
+  private async resolverTelefonoEca(aviso: AvisoFalla, telefonoExplicito?: string): Promise<string> {
+    if (telefonoExplicito !== undefined) return telefonoExplicito.trim();
+    if (this.consorcios) {
+      try {
+        const [edificios, roles] = await Promise.all([
+          this.consorcios.listar(),
+          this.consorcios.listarRoles(),
+        ]);
+        const dirNorm = aviso.direccion.trim().toLowerCase();
+        const consorcioMatch = edificios.find((c) => {
+          const cDir = c.direccion.trim().toLowerCase();
+          return cDir === dirNorm || dirNorm.startsWith(cDir) || cDir.startsWith(dirNorm);
+        });
+        if (consorcioMatch) {
+          const rolEdificio = roles.find((r) => r.consorcioId === consorcioMatch.id);
+          // Si el edificio existe en la base, se respeta estrictamente su terna (sin número fijo hardcodeado).
+          return rolEdificio?.eca?.telefono?.trim() ?? '';
+        }
+        const ecaNorm = aviso.eca.trim().toLowerCase();
+        const porEca = roles.find((r) => r.eca?.nombre.trim().toLowerCase() === ecaNorm);
+        if (porEca) return porEca.eca?.telefono?.trim() ?? '';
+      } catch {
+        // Fallback abajo si la consulta no está disponible.
+      }
+    }
+    return DESTINOS_PROVISORIOS.telefonoEca;
   }
 
   private async resolverEmailEca(aviso: AvisoFalla, emailExplicito?: string): Promise<string> {

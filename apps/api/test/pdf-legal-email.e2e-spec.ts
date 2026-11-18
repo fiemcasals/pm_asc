@@ -54,6 +54,7 @@ describe('HU-06 RF-02 · Generación de PDF Legal MAICON S.R.L. y envío por ema
   const registrarFallaCritica = async () => {
     const res = await request(app.getHttpServer())
       .post('/api/fallas-criticas/informes')
+      .set('Authorization', `Bearer ${sesiones.rt_calle}`)
       .send({
         maquinaId: 'MAQ-CORRIENTES-M1',
         inspector: 'rt.e2e',

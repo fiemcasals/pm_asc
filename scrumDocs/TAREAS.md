@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-17T17:05:22.987Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T12:16:46.415Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -459,6 +459,17 @@ Reemplazar la descarga del remito t�cnico en formato JSON por un documento PDF
 2. El documento PDF contiene el membrete formal de MAICON S.R.L., datos del consorcio, maquina, detalles de la falla critica detectada y sello de notificacion legal.
 3. La descarga del PDF registra el acuse de recibo legal en la base de datos (con usuario, fecha y hora exacta).
 4. Las pruebas automatizadas verifican que el endpoint responde con un buffer PDF valido (%PDF-) y cabecera Content-Disposition con extension .pdf.
+
+### RF-07: FIX: Los símbolos del remito PDF salen como caracteres rotos (Funcional)
+
+El remito técnico en PDF usa los símbolos de advertencia y de tilde (y el título de la alerta puede traer emojis) que la fuente estándar del PDF no tiene: salen como «& þ» y «'». Reemplazarlos por palabras y limpiar el texto que viene de los datos para que ningún carácter salga roto, sin cambiar el contenido del documento. Fuente: verificación de QA de la tarjeta RF-06 de HU-10 del 18/11/2026.
+
+**Condiciones de aprobación**
+
+1. El texto del PDF no tiene caracteres fuera de la codificación de la fuente: ya no aparecen «& þ» ni otros símbolos rotos.
+2. Los estados se leen como palabras, «ATENCIÓN» y «OK», en lugar de los símbolos de advertencia y de tilde.
+3. Un título de alerta con emoji se imprime sin el emoji y sin dejar caracteres basura.
+4. El membrete, los datos del consorcio, el diagnóstico y el acuse siguen iguales, y las pruebas del ECA siguen en verde.
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 

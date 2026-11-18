@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-18T12:31:52.756Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T13:22:32.544Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -93,6 +93,7 @@ graph TD
     REQ_1794493999670["RNF-02: Acceso de RT y Firmante a edificios de varias ECA"]
     REQ_1794500686999["RF-01: Asociar la ECA al usuario y exponerla en la sesión"]
     REQ_1794500687294["RNF-03: Tomar la ECA y el rol del RLS desde la sesión del usuario"]
+    REQ_1795008148136["RF-02: Portal ECA con sesión: cada ECA ve solo lo suyo"]
   end
   subgraph US_1794493998209["HU-16: HU-16: Mapa del RT y llegada al edificio"]
     REQ_1794493999840["RF-01: Mapa del RT con pines por horario"]

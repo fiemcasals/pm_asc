@@ -16,15 +16,17 @@ describe('Enlace del aviso sin contraseña y válido por 7 días (HU-11 RF-06)',
   let whatsapp: WhatsAppConnectorService;
   let mensajes: { to: string; text: string }[];
   let tokenSecretaria = '';
+  let tokenRt = '';
 
   beforeAll(async () => {
     const usuarios = new InMemoryUsuariosRepository();
     ({ app } = await createTestApp({ NODE_ENV: 'development' }, undefined, undefined, undefined, { usuarios }));
     whatsapp = app.get(WhatsAppConnectorService);
     const hash = await bcrypt.hash(PASSWORD, 4);
-    const cuentas: [string, Rol][] = [['secretaria', 'secretaria']];
+    const cuentas: [string, Rol][] = [['secretaria', 'secretaria'], ['rt1', 'rt_calle']];
     for (const [usuario, rol] of cuentas) await usuarios.crear({ usuario, nombre: usuario, rol, passwordHash: hash, eca: null });
     tokenSecretaria = (await request(app.getHttpServer()).post('/api/auth/login').send({ usuario: 'secretaria', password: PASSWORD })).body.accessToken;
+    tokenRt = (await request(app.getHttpServer()).post('/api/auth/login').send({ usuario: 'rt1', password: PASSWORD })).body.accessToken;
   });
   afterAll(async () => {
     jest.useRealTimers();
@@ -42,7 +44,7 @@ describe('Enlace del aviso sin contraseña y válido por 7 días (HU-11 RF-06)',
 
   const http = () => request(app.getHttpServer());
   const informar = async (extra: Record<string, unknown> = {}, maquinaId = 'MAQ-CORRIENTES-M1') =>
-    (await http().post('/api/fallas-criticas/informes').send({ maquinaId, inspector: 'rt1', fallasCriticas: ['BOTON_PARE_FALLA'], ...extra })).body.informe.id as string;
+    (await http().post('/api/fallas-criticas/informes').set('Authorization', `Bearer ${tokenRt}`).send({ maquinaId, inspector: 'rt1', fallasCriticas: ['BOTON_PARE_FALLA'], ...extra })).body.informe.id as string;
   const aprobar = (id: string) => http().post(`/api/avisos/${id}/aprobar`).set('Authorization', `Bearer ${tokenSecretaria}`).send({});
   /** Aprueba el aviso y devuelve la ruta del enlace que viajó en el WhatsApp. */
   const enlaceDe = async (id: string): Promise<string> => {

@@ -49,7 +49,7 @@ describe('Avisos de falla crítica con revisión de la Secretaría (HU-11 RF-05)
     aprobar: (id: string, cuerpo: Record<string, unknown> = {}) => http().post(`/api/avisos/${id}/aprobar`).set('Authorization', `Bearer ${tokens[usuario]}`).send(cuerpo),
   });
   const informar = async () => {
-    const res = await http().post('/api/fallas-criticas/informes').send({ maquinaId: 'MAQ-CORRIENTES-M1', inspector: 'rt1', fallasCriticas: ['BOTON_PARE_FALLA'] });
+    const res = await http().post('/api/fallas-criticas/informes').set('Authorization', `Bearer ${tokens.rt1}`).send({ maquinaId: 'MAQ-CORRIENTES-M1', inspector: 'rt1', fallasCriticas: ['BOTON_PARE_FALLA'] });
     return res.body.informe.id as string;
   };
 

@@ -22,6 +22,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
   const inspeccionesCreadas: string[] = [];
   const ids: Record<string, { consorcio: string; maquinas: string[] }> = {};
   let auth = ''; // sesión de la Secretaría: con el RLS estricto (HU-15 RNF-03) todas las rutas con datos la piden
+  let tokenRt = ''; // el RT: desde HU-06 RF-06 crear una inspección pide sesión de RT
 
   beforeAll(async () => {
     const config = loadConfig();
@@ -30,6 +31,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
     configureApp(app, config);
     await app.init();
     auth = `Bearer ${(await asegurarUsuarioPrueba(pool, config, { usuario: `${PREFIJO}-secretaria`, rol: 'secretaria' })).token}`;
+    tokenRt = (await asegurarUsuarioPrueba(pool, config, { usuario: `${PREFIJO}-rt`, rol: 'rt_calle' })).token;
 
     // A: 2 máquinas, las dos inspeccionadas el 5/11 → inspeccionado. Con RT de Calle asignado.
     await crearEdificio('A', ['M1', 'M2']);
@@ -97,7 +99,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
 
   /** Registra una inspección por la API real y le fija el instante, que la API fija en "ahora". */
   async function inspeccionar(clave: string, indiceMaquina: number, instanteIso: string) {
-    const res = await api.post('/api/checklist/inspecciones')
+    const res = await http().post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokenRt}`)
       .send({
         consorcioId: ids[clave].consorcio,
         maquinaId: ids[clave].maquinas[indiceMaquina],
@@ -194,7 +196,7 @@ describe('Semáforo mensual contra PostgreSQL + PostGIS real (HU-04 RF-01)', () 
   it('una inspección que declara un edificio pero trae la máquina de otro no cuenta para ninguno de los dos', async () => {
     // Se registra una inspección del edificio C pero con el id de la máquina de F: no es una máquina de C, y
     // tampoco debe contarse para F (su registro dice que es de C). F conserva su única inspección, la del día 1.
-    const res = await api.post('/api/checklist/inspecciones').send({
+    const res = await http().post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokenRt}`).send({
       consorcioId: ids.C.consorcio, maquinaId: ids.F.maquinas[0], referenciaAgc: 'M1', tipoMaquina: 'traccion', estadoEquipo: 'en_uso', datos: {},
     });
     inspeccionesCreadas.push(res.body.id);

@@ -105,8 +105,12 @@ export class FallasCriticasService {
     return { abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn, primera: true };
   }
 
-  registrarInforme(body: unknown): RegistrarInformeResponse {
-    const input = validarInforme(body);
+  /**
+   * `inspectorSesion` (HU-06 RF-06): el usuario de la sesión. Es el inspector del informe; el `inspector` que venga en el cuerpo se ignora
+   * (cualquiera podía mandar otro nombre). Sin él (uso interno y pruebas del servicio) se sigue tomando del cuerpo.
+   */
+  registrarInforme(body: unknown, inspectorSesion?: string): RegistrarInformeResponse {
+    const input = validarInforme(body, inspectorSesion);
 
     if (input.clientReportId && this.informesPorClientId.has(input.clientReportId)) {
       const existente = this.informesPorClientId.get(input.clientReportId)!;
@@ -234,7 +238,7 @@ function esTextoNoVacio(v: unknown): v is string {
 }
 
 /** Valida el cuerpo del informe y devuelve 400 nombrando cada campo que está mal. */
-export function validarInforme(body: unknown): InformeFallaInput {
+export function validarInforme(body: unknown, inspectorSesion?: string): InformeFallaInput {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) {
     throw new BadRequestException('El cuerpo del informe tiene que ser un objeto JSON');
   }
@@ -242,7 +246,7 @@ export function validarInforme(body: unknown): InformeFallaInput {
   const errores: string[] = [];
 
   if (!esTextoNoVacio(b.maquinaId)) errores.push('maquinaId es obligatorio');
-  if (!esTextoNoVacio(b.inspector)) errores.push('inspector es obligatorio');
+  if (inspectorSesion === undefined && !esTextoNoVacio(b.inspector)) errores.push('inspector es obligatorio');
 
   const tieneListaFallas = b.fallasCriticas !== undefined;
   if (tieneListaFallas && (!Array.isArray(b.fallasCriticas) || !b.fallasCriticas.every(esTextoNoVacio))) {
@@ -280,7 +284,7 @@ export function validarInforme(body: unknown): InformeFallaInput {
   return {
     ...(esTextoNoVacio(b.clientReportId) ? { clientReportId: b.clientReportId.trim() } : {}),
     maquinaId: (b.maquinaId as string).trim(),
-    inspector: (b.inspector as string).trim(),
+    inspector: inspectorSesion !== undefined ? inspectorSesion : (b.inspector as string).trim(),
     cablesDesgastados: cables as boolean,
     limitadorAnulado: limitador as boolean,
     ...(tieneListaFallas

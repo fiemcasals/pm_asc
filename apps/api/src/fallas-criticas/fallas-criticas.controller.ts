@@ -51,10 +51,11 @@ export class FallasCriticasController {
     return this.service.abrir(id, usuario);
   }
 
-  /** El RT de calle carga el informe de una máquina. */
+  /** El RT de calle carga el informe de una máquina. Sólo el RT lo registra y el inspector es el usuario de la sesión (HU-06 RF-06). */
   @Post('informes')
-  registrar(@Body() body: unknown): RegistrarInformeResponse {
-    return this.service.registrarInforme(body);
+  @Roles('rt_calle')
+  registrar(@Body() body: unknown, @UsuarioActual() usuario: UsuarioAutenticado): RegistrarInformeResponse {
+    return this.service.registrarInforme(body, usuario.usuario);
   }
 
   /** Canal en tiempo real (Server-Sent Events) que escucha el panel de Secretaría. */

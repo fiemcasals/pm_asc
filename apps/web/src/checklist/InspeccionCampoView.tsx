@@ -216,7 +216,9 @@ export function InspeccionCampoView({
         );
       } else {
         setAvisoInformeCritico(
-          `Sin señal: informe de Falla Crítica guardado en el celular (${resultado.pendientesEnCola} pendiente) y se enviará una sola vez al volver la conexión.`,
+          resultado.motivoEncolado === 'sesion'
+            ? `Tu sesión venció: el informe de Falla Crítica quedó guardado en el celular (${resultado.pendientesEnCola} pendiente). Ingresá de nuevo y se envía solo, una sola vez.`
+            : `Sin señal: informe de Falla Crítica guardado en el celular (${resultado.pendientesEnCola} pendiente) y se enviará una sola vez al volver la conexión.`,
         );
       }
     } catch (err) {

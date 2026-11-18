@@ -168,7 +168,7 @@ describe('Recorrido del RT, desbloqueo y días entre visitas fallidas contra Pos
   });
 
   it('criterio 4: una visita exitosa (inspección) reinicia el contador: el edificio vuelve al recorrido y la próxima falla es Advertencia 1', async () => {
-    const inspeccion = await http().post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokenAdmin}`).send({
+    const inspeccion = await http().post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokenRt}`).send({
       consorcioId, maquinaId, referenciaAgc: 'M1', tipoMaquina: 'traccion', estadoEquipo: 'en_uso', datos: {},
     });
     expect(inspeccion.status).toBe(201);

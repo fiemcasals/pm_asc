@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-18T13:54:24.711Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T14:03:30.650Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -53,6 +53,7 @@ graph TD
     REQ_1791910395959["RF-01: API de Máquinas Asignadas y Autorización de Firma AGC"]
     REQ_1791910396039["RF-02: UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría"]
     REQ_1794493276116["RF-03: Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles"]
+    REQ_1795010603476["RF-04: Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]

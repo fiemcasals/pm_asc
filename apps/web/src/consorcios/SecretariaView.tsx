@@ -11,6 +11,7 @@ import {
 } from './consorcios';
 import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
+import { ImportadorExcelAgc } from './ImportadorExcelAgc';
 import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
 import { SemaforoView } from '../semaforo/SemaforoView';
 import { BandejaAvisos } from '../avisos/BandejaAvisos';
@@ -30,6 +31,7 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
   const [cargandoFicha, setCargandoFicha] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarImportadorAgc, setMostrarImportadorAgc] = useState(false);
   const [filtro, setFiltro] = useState('');
 
   const cargarConsorcios = async (seleccionarId?: string) => {
@@ -105,6 +107,13 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
             {mostrarMapaGlobal ? '✕ Ocultar Mapa' : `🗺️ Vista Mapa (${consorciosMapa.length}/${consorcios.length})`}
           </button>
           <button
+            className="btn btn-secondary"
+            onClick={() => setMostrarImportadorAgc((prev) => !prev)}
+            data-testid="btn-toggle-importar-agc"
+          >
+            {mostrarImportadorAgc ? '✕ Cerrar Importador AGC' : 'Importar Excel AGC'}
+          </button>
+          <button
             className="btn btn-primary"
             onClick={() => setMostrarFormulario(!mostrarFormulario)}
             data-testid="btn-toggle-formulario"
@@ -113,6 +122,15 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
           </button>
         </div>
       </div>
+
+      {mostrarImportadorAgc && (
+        <ImportadorExcelAgc
+          onImportacionCompleta={() => {
+            void cargarConsorcios();
+          }}
+          onCerrar={() => setMostrarImportadorAgc(false)}
+        />
+      )}
 
       {mostrarMapaGlobal && (
         <div className="consorcio-form-card" style={{ marginBottom: '16px' }} data-testid="panel-vista-mapa">

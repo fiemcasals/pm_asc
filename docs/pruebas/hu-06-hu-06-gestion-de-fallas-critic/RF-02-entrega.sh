@@ -22,12 +22,20 @@ trap 'rm -rf "$TMP"' EXIT
 
 echo "== HU-06 / RF-02 (PDF Legal MAICON S.R.L. y email a ECA) contra $BASE_URL"
 
-# Login Secretaría
+# Login Secretaría y RT de Calle (RF-06 exige sesión rt_calle para registrar fallas críticas)
 printf '{"usuario":"demo.secretaria","password":"Demo-Clave-2026"}' > "$TMP/login.json"
 curl -s -o "$TMP/login_res.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
 TOKEN="$(json "$TMP/login_res.json" 'b.accessToken')"
 if [ -z "$TOKEN" ] || [ "$TOKEN" = "undefined" ]; then
   echo "  ❌ No pude ingresar como demo.secretaria"
+  exit 1
+fi
+
+printf '{"usuario":"demo.rt","password":"Demo-Clave-2026"}' > "$TMP/login_rt.json"
+curl -s -o "$TMP/login_rt_res.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login_rt.json" "$BASE_URL/api/auth/login"
+TOKEN_RT="$(json "$TMP/login_rt_res.json" 'b.accessToken')"
+if [ -z "$TOKEN_RT" ] || [ "$TOKEN_RT" = "undefined" ]; then
+  echo "  ❌ No pude ingresar como demo.rt"
   exit 1
 fi
 
@@ -44,7 +52,7 @@ cat > "$TMP/falla.json" <<'JSON'
   ]
 }
 JSON
-CODE="$(curl -s -o "$TMP/falla_res.json" -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d @"$TMP/falla.json" "$BASE_URL/api/fallas-criticas/informes")"
+CODE="$(curl -s -o "$TMP/falla_res.json" -w '%{http_code}' -X POST -H "Authorization: Bearer $TOKEN_RT" -H 'Content-Type: application/json' -d @"$TMP/falla.json" "$BASE_URL/api/fallas-criticas/informes")"
 INF_ID="$(json "$TMP/falla_res.json" 'b.informe && b.informe.id')"
 if [ "$CODE" = "201" ] && [ -n "$INF_ID" ] && [ "$INF_ID" != "undefined" ]; then
   pass "falla crítica registrada (HTTP 201, id=$INF_ID)"

@@ -39,7 +39,7 @@ describe('Checklist configurable endpoints (e2e)', () => {
   });
 
   it('POST y GET /api/checklist/inspecciones fija la versión del checklist usada', async () => {
-    const creada = await http().post('/api/checklist/inspecciones').send({
+    const creada = await http().post('/api/checklist/inspecciones').set('x-rol-de-prueba', 'rt_calle').send({
       consorcioId: '11111111-1111-4111-8111-111111111111',
       maquinaId: '22222222-2222-4222-8222-222222222222',
       referenciaAgc: 'm1',

@@ -97,7 +97,7 @@ describe('Reasignación del RT de Calle contra PostgreSQL + PostGIS real (HU-04 
   }
 
   async function inspeccionar(clave: string, instanteIso: string) {
-    const res = await api.post('/api/checklist/inspecciones').send({
+    const res = await http().post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokensRt[usuarios.ana]}`).send({
       consorcioId: ids[clave].consorcio, maquinaId: ids[clave].maquina, referenciaAgc: 'M1', tipoMaquina: 'traccion', estadoEquipo: 'en_uso', datos: {},
     });
     expect(res.status).toBe(201);

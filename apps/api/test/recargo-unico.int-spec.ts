@@ -23,6 +23,7 @@ describe('Recargo del 45 % una sola vez y su anulación contra PostgreSQL real (
   let admin: Pool; // dueño de las tablas: arma y limpia datos
   let appPool: Pool; // el rol sin privilegios que usa la API
   let tokenAdmin = '';
+  let tokenRt = '';
   let tokenSecretaria = '';
   let consorcioId = '';
   let m1 = '';
@@ -39,6 +40,7 @@ describe('Recargo del 45 % una sola vez y su anulación contra PostgreSQL real (
     await app.init();
     tokenAdmin = (await asegurarUsuarioPrueba(admin, config, { usuario: `${P}-admin`, rol: 'administrador' })).token;
     tokenSecretaria = (await asegurarUsuarioPrueba(admin, config, { usuario: `${P}-secretaria`, rol: 'secretaria' })).token;
+    tokenRt = (await asegurarUsuarioPrueba(admin, config, { usuario: `${P}-rt`, rol: 'rt_calle' })).token;
 
     const alta = await comoAdmin('post', '/api/consorcios').send({
       nombre: `${P} edificio`, direccion: 'Calle 1', maquinas: [{ referenciaAgc: 'M1' }, { referenciaAgc: 'M2' }],
@@ -101,7 +103,7 @@ describe('Recargo del 45 % una sola vez y su anulación contra PostgreSQL real (
 
   it('una inspección del mes (en hora de Buenos Aires) libera a la máquina; una del mes anterior no', async () => {
     const insp = async (maquinaId: string, ref: string) =>
-      (await comoAdmin('post', '/api/checklist/inspecciones').send({
+      (await request(app.getHttpServer()).post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokenRt}`).send({
         consorcioId, maquinaId, referenciaAgc: ref, tipoMaquina: 'traccion', estadoEquipo: 'en_uso', datos: {},
       })).body.id as string;
     const id1 = await insp(m1, 'M1');

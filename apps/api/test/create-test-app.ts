@@ -331,7 +331,8 @@ export async function createTestApp(
   if (!auth.usuarios) {
     app.use((req: any, _res: any, next: any) => {
       if (!req.headers['x-forzar-sin-sesion']) {
-        req.usuario = { id: 'test-user', usuario: 'test-dev', rol: 'secretaria', eca: null };
+        // Por defecto, una Secretaría. `x-rol-de-prueba` elige otro rol (por ejemplo rt_calle) para las pruebas que no arman sus propios usuarios.
+        req.usuario = { id: 'test-user', usuario: 'test-dev', rol: req.headers['x-rol-de-prueba'] ?? 'secretaria', eca: null };
       }
       next();
     });

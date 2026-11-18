@@ -1,3 +1,4 @@
+import { fetchConSesion, leerPerfil } from '../auth/sesion';
 import { type ChecklistSolapaConfig } from './checklist.config';
 import {
   claveFotoAnomalia,
@@ -26,6 +27,8 @@ export interface PayloadInformeCriticoChecklist {
 export interface ResultadoDespachoCritico {
   tieneFallasCriticas: boolean;
   estado: 'sin_criticas' | 'enviado' | 'encolado';
+  /** Por qué quedó en la cola: sin señal o servidor caído, o la sesión venció / no alcanza para registrar (HU-06 RF-06). */
+  motivoEncolado?: 'sin-senal' | 'sesion';
   informeId?: string;
   eventoEmitido?: boolean;
   pendientesEnCola: number;
@@ -117,32 +120,64 @@ export function construirPayloadInformeCritico(params: {
   };
 }
 
+type Enviar = (url: string, init?: RequestInit) => Promise<Response>;
+
+/** El usuario con la sesión abierta en este celular (su perfil guardado), o null si no hay. */
+export function usuarioDeLaSesion(): string | null {
+  return leerPerfil()?.usuario ?? null;
+}
+
+/**
+ * 401 (la sesión venció) y 403 (esta sesión no puede registrarlas): la falla crítica NO se descarta, queda guardada y se manda cuando
+ * haya una sesión que pueda (HU-06 RF-06). Antes cualquier 4xx la sacaba de la cola.
+ */
+export function esErrorDeSesion(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
+/** Errores pasajeros (servidor caído o saturado): se reintentan. */
+export function esErrorPasajero(status: number): boolean {
+  return status >= 500 || status === 408 || status === 425 || status === 429;
+}
+
 let syncEnCurso: Promise<{ enviados: number; pendientes: number }> | null = null;
 
+/**
+ * Manda las fallas críticas pendientes con la sesión del usuario. Sólo manda las de quien tiene la sesión abierta (el inspector sale de la
+ * sesión: si otro RT ingresara en el mismo celular, no se mandarían a su nombre). Sin sesión válida (401/403) corta y deja todo guardado.
+ */
 export async function sincronizarColaFallasCriticas(
   customFactory?: IDBFactory,
-  fetchFn: typeof fetch = fetch,
+  fetchFn: Enviar = fetchConSesion,
+  usuario: string | null = usuarioDeLaSesion(),
+  usuarioVigente: () => string | null = usuarioDeLaSesion,
 ): Promise<{ enviados: number; pendientes: number }> {
   if (syncEnCurso) return syncEnCurso;
 
   syncEnCurso = (async () => {
-    const pendientes = await listarColaInformesCriticos(customFactory);
+    const todas = await listarColaInformesCriticos(customFactory);
+    const pendientes = todas.filter((i) => !i.usuario || i.usuario === usuario);
     let enviados = 0;
 
     for (const item of pendientes) {
+      if (usuarioVigente() !== usuario) break;
       try {
         const res = await fetchFn('/api/fallas-criticas/informes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item.payload),
         });
-        if (res.ok || (res.status >= 400 && res.status < 500)) {
-          // 201 OK o error definitivo 4xx: sacar de cola para no ciclar infinitamente
-          if (res.ok) enviados += 1;
+        if (res.ok) {
+          enviados += 1;
+          await eliminarInformeDeCola(item.clientReportId, customFactory);
+        } else if (esErrorDeSesion(res.status)) {
+          break; // sin sesión que pueda registrarlas: no tiene sentido seguir, y no se pierde nada
+        } else if (!esErrorPasajero(res.status)) {
+          // Error definitivo (por ejemplo 400 o 404): sacar de la cola para no ciclar infinitamente
           await eliminarInformeDeCola(item.clientReportId, customFactory);
         }
       } catch {
-        // Sigue sin conexión: queda en IndexedDB para el próximo evento online
+        // Sigue sin conexión (o la sesión se revocó): queda en IndexedDB para el próximo intento
       }
     }
 
@@ -159,14 +194,18 @@ export async function despacharOEncolarInformeCritico(params: {
   payload: PayloadInformeCriticoChecklist;
   enLinea?: boolean;
   idbFactory?: IDBFactory;
-  fetchFn?: typeof fetch;
+  fetchFn?: Enviar;
+  /** Quien la carga (la sesión): queda en la cola para que sólo esa persona la mande. */
+  usuario?: string | null;
 }): Promise<ResultadoDespachoCritico> {
   const {
     payload,
     enLinea = typeof navigator !== 'undefined' ? navigator.onLine : true,
     idbFactory,
-    fetchFn = fetch,
+    fetchFn = fetchConSesion,
+    usuario = usuarioDeLaSesion(),
   } = params;
+  let motivoEncolado: 'sin-senal' | 'sesion' = 'sin-senal';
 
   if (enLinea) {
     try {
@@ -189,10 +228,13 @@ export async function despacharOEncolarInformeCritico(params: {
           pendientesEnCola: pendientes.length,
         };
       }
-      if (res.status >= 400 && res.status < 500) {
+      if (esErrorDeSesion(res.status)) {
+        motivoEncolado = 'sesion'; // se guarda y se manda al volver a ingresar: no se pierde
+      } else if (res.status >= 400 && res.status < 500 && !esErrorPasajero(res.status)) {
         throw new Error(`HTTP ${res.status}`);
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'SesionRevocadaError') motivoEncolado = 'sesion';
       if (err instanceof Error && err.message.startsWith('HTTP 4')) {
         throw err;
       }
@@ -203,6 +245,7 @@ export async function despacharOEncolarInformeCritico(params: {
   await encolarInformeCritico(
     {
       clientReportId: payload.clientReportId,
+      ...(usuario ? { usuario } : {}),
       payload,
       creadoEn: new Date().toISOString(),
       intentos: 0,
@@ -213,6 +256,7 @@ export async function despacharOEncolarInformeCritico(params: {
   return {
     tieneFallasCriticas: true,
     estado: 'encolado',
+    motivoEncolado,
     pendientesEnCola: pendientes.length,
   };
 }

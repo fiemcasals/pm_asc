@@ -8,6 +8,7 @@ import { CHECKLIST_VERSION } from '../src/checklist/checklist.config';
 import { loadConfig } from '../src/config';
 import { MIGRATIONS } from '../src/database/migrations';
 import { loadEnvFileInto } from '../src/env-file';
+import { asegurarUsuarioPrueba } from './test-auth-helper';
 
 loadEnvFileInto(process.env);
 
@@ -15,10 +16,13 @@ describe('Checklist configurable contra PostgreSQL real (int)', () => {
   let app: INestApplication;
   let pool: Pool;
   const creadas: string[] = [];
+  let tokenRt = '';
 
   beforeAll(async () => {
     const config = loadConfig();
     pool = new Pool({ connectionString: config.databaseUrl });
+    // Desde HU-06 RF-06 crear una inspección pide sesión de RT.
+    tokenRt = (await asegurarUsuarioPrueba(pool, config, { usuario: 'chk-int-rt', rol: 'rt_calle' })).token;
     app = await NestFactory.create(AppModule.register(config), { logger: false });
     configureApp(app, config);
     await app.init();
@@ -28,6 +32,7 @@ describe('Checklist configurable contra PostgreSQL real (int)', () => {
     if (creadas.length > 0) {
       await pool.query('DELETE FROM inspecciones_checklist WHERE id = ANY($1)', [creadas]);
     }
+    await pool.query("DELETE FROM usuarios WHERE usuario = 'chk-int-rt'");
     await app.close();
     await pool.end();
   });
@@ -38,7 +43,7 @@ describe('Checklist configurable contra PostgreSQL real (int)', () => {
     const migs = await pool.query<{ id: string }>('SELECT id FROM schema_migrations ORDER BY id');
     expect(migs.rows.map((m) => m.id)).toEqual(MIGRATIONS.map((m) => m.id));
 
-    const res = await http().post('/api/checklist/inspecciones').send({
+    const res = await http().post('/api/checklist/inspecciones').set('Authorization', `Bearer ${tokenRt}`).send({
       consorcioId: '11111111-1111-4111-8111-111111111111',
       maquinaId: '22222222-2222-4222-8222-222222222222',
       referenciaAgc: 'M2',

@@ -33,7 +33,7 @@ describe('Alertas de falla crítica: Firmante asignado y primera apertura, por H
     abrir: (id: string) => http().post(`/api/fallas-criticas/informes/${id}/abrir`).set('Authorization', `Bearer ${tokens[usuario]}`),
   });
   const informar = async () =>
-    (await http().post('/api/fallas-criticas/informes').send({ maquinaId: 'MAQ-CORRIENTES-M1', inspector: 'rt1', fallasCriticas: ['BOTON_PARE_FALLA'] })).body.informe.id as string;
+    (await http().post('/api/fallas-criticas/informes').set('Authorization', `Bearer ${tokens.rt1}`).send({ maquinaId: 'MAQ-CORRIENTES-M1', inspector: 'rt1', fallasCriticas: ['BOTON_PARE_FALLA'] })).body.informe.id as string;
 
   it('criterio 1: el Firmante asignado ve la alerta en su lista; otro Firmante no; la Secretaría y el Administrador sí', async () => {
     await informar();

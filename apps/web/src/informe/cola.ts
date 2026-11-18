@@ -259,6 +259,11 @@ export function fechaCorta(iso: string): string {
   return new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+/** Las fallas críticas del celular que todavía no se mandaron (HU-06 RF-06): «1 falla crítica sin enviar», «N fallas críticas sin enviar». */
+export function textoFallasSinEnviar(n: number): string {
+  return `${n} ${n === 1 ? 'falla crítica' : 'fallas críticas'} sin enviar`;
+}
+
 export function textoSinSubir(n: number): string {
   return `${n} ${n === 1 ? 'inspección' : 'inspecciones'} sin subir`;
 }

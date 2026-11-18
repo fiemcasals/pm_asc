@@ -73,7 +73,7 @@ describe('Fallas críticas (e2e)', () => {
 
       const inicio = Date.now();
       const alta = await request(app.getHttpServer())
-        .post('/api/fallas-criticas/informes')
+        .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
         .send({
           maquinaId: 'MAQ-CORRIENTES-M1',
           inspector: 'dev-ma-2',
@@ -101,7 +101,7 @@ describe('Fallas críticas (e2e)', () => {
 
   it('el enlace del evento abre el informe en HTML (200) y no registra acuse', async () => {
     const alta = await request(app.getHttpServer())
-      .post('/api/fallas-criticas/informes')
+      .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
       .send({ maquinaId: 'MAQ-CALLAO-M1', inspector: 'dev-ma-2', cablesDesgastados: false, limitadorAnulado: true })
       .expect(201);
 
@@ -114,7 +114,7 @@ describe('Fallas críticas (e2e)', () => {
 
   it('informe sin falla crítica: 201 con eventoEmitido=false', async () => {
     const res = await request(app.getHttpServer())
-      .post('/api/fallas-criticas/informes')
+      .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
       .send({ maquinaId: 'MAQ-CALLAO-M1', inspector: 'dev-ma-2', cablesDesgastados: false, limitadorAnulado: false })
       .expect(201);
     expect(res.body.eventoEmitido).toBe(false);
@@ -122,15 +122,17 @@ describe('Fallas críticas (e2e)', () => {
 
   it('400 con el detalle de los campos inválidos', async () => {
     const res = await request(app.getHttpServer())
-      .post('/api/fallas-criticas/informes')
+      .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
       .send({ maquinaId: 'MAQ-CALLAO-M1' })
       .expect(400);
-    expect(res.body.message).toContain('inspector es obligatorio');
+    expect(res.body.message).toContain('cablesDesgastados tiene que ser true o false');
+    // El inspector ya no se pide en el cuerpo: es el usuario de la sesión (HU-06 RF-06).
+    expect(res.body.message).not.toContain('inspector es obligatorio');
   });
 
   it('404 si la máquina no existe', async () => {
     await request(app.getHttpServer())
-      .post('/api/fallas-criticas/informes')
+      .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
       .send({ maquinaId: 'MAQ-X', inspector: 'dev-ma-2', cablesDesgastados: true, limitadorAnulado: false })
       .expect(404);
   });
@@ -152,7 +154,7 @@ describe('Fallas críticas (e2e)', () => {
     };
 
     const primero = await request(app.getHttpServer())
-      .post('/api/fallas-criticas/informes')
+      .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
       .send(payload)
       .expect(201);
 
@@ -160,7 +162,7 @@ describe('Fallas críticas (e2e)', () => {
     expect(primero.body.informe.fallasCriticas).toEqual(['PARACAIDAS_ANOMALIA']);
 
     const reintento = await request(app.getHttpServer())
-      .post('/api/fallas-criticas/informes')
+      .post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle')
       .send(payload)
       .expect(201);
 

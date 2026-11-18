@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Header, HttpCode, Param, Post, Sse } from '@nestjs/common';
-import { Observable, interval, map, merge } from 'rxjs';
+import { Body, Controller, Get, Header, HttpCode, Inject, Optional, Param, Post, Sse } from '@nestjs/common';
+import { Observable, interval, map, merge, takeUntil, timer } from 'rxjs';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
+import { APP_CONFIG, AppConfig } from '../config';
 import { FallasCriticasService } from './fallas-criticas.service';
 import {
   EventoFallaCritica,
@@ -13,6 +14,9 @@ import {
 
 /** Cada cuánto se manda un `ping` por el canal para que ningún proxy corte la conexión ociosa. */
 export const PING_MS = 25_000;
+
+/** Cuánto dura una conexión al canal si la configuración no dice otra cosa: 5 minutos (después el panel la reabre con la sesión). */
+export const VIGENCIA_CANAL_POR_DEFECTO_MS = 5 * 60 * 1000;
 
 interface MensajeSse {
   type: string;
@@ -34,7 +38,14 @@ export const ETIQUETA_FALLA: Record<FallaCritica, string> = {
 
 @Controller('fallas-criticas')
 export class FallasCriticasController {
-  constructor(private readonly service: FallasCriticasService) {}
+  private readonly vigenciaCanalMs: number;
+
+  constructor(
+    private readonly service: FallasCriticasService,
+    @Optional() @Inject(APP_CONFIG) config?: AppConfig,
+  ) {
+    this.vigenciaCanalMs = config?.canalFallasVigenciaMs ?? VIGENCIA_CANAL_POR_DEFECTO_MS;
+  }
 
   /** Lista de informes críticos activos para Secretaría y Firmante (el Firmante, sólo los de sus edificios). */
   @Get('informes')
@@ -58,17 +69,22 @@ export class FallasCriticasController {
     return this.service.registrarInforme(body, usuario.usuario);
   }
 
-  /** Canal en tiempo real (Server-Sent Events) que escucha el panel de Secretaría. */
+  /**
+   * Canal en tiempo real (Server-Sent Events) que escucha el panel de Secretaría y el del Firmante (HU-06 RF-07). Pide sesión; un Firmante
+   * recibe solo lo de sus edificios. Una conexión abierta no se vuelve a validar, así que el servidor la corta pasado `vigenciaCanalMs`:
+   * el panel la reabre con la sesión (que se renueva o, si la revocaron, ya no entra).
+   */
   @Sse('eventos')
-  eventos(): Observable<MensajeSse> {
+  @Roles('secretaria', 'administrador', 'firmante')
+  eventos(@UsuarioActual() usuario: UsuarioAutenticado): Observable<MensajeSse> {
     const fallas = this.service
-      .eventos$()
+      .eventosPara(usuario)
       .pipe(map((evento) => ({ type: 'falla-critica', data: JSON.stringify(evento) })));
     const aperturas = this.service
-      .aperturas$()
+      .aperturasPara(usuario)
       .pipe(map((evento) => ({ type: 'falla-abierta', data: JSON.stringify(evento) })));
     const pings = interval(PING_MS).pipe(map(() => ({ type: 'ping', data: '{}' })));
-    return merge(fallas, aperturas, pings);
+    return merge(fallas, aperturas, pings).pipe(takeUntil(timer(this.vigenciaCanalMs)));
   }
 
   /** El informe, legible en el navegador. Sólo lectura: no registra ningún acuse. */

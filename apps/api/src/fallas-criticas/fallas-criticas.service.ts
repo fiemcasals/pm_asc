@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, filter } from 'rxjs';
 import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
 import { FirmanteService } from '../firmante/firmante.service';
 import {
@@ -46,6 +46,11 @@ function detalleOrdenado(codigos: FallaCritica[]): FallaCriticaDetalle[] {
 }
 const MAX_FOTOGRAFIAS = 10;
 
+/** Una alerta de un edificio con ese Firmante: la Secretaría y el Administrador ven todas; un Firmante, solo las suyas (sin distinguir mayúsculas). */
+function esVisiblePara(firmanteDelEdificio: string, usuario: { usuario: string; rol: string }): boolean {
+  return usuario.rol !== 'firmante' || firmanteDelEdificio.toLowerCase() === usuario.usuario.toLowerCase();
+}
+
 /**
  * Recibe los informes que carga el RT de calle y, si traen una falla crítica (cables
  * desgastados o limitador de velocidad anulado), emite un evento en tiempo real para el panel
@@ -75,6 +80,24 @@ export class FallasCriticasService {
   }
 
   /**
+   * Lo que ve un usuario por el canal en tiempo real (HU-06 RF-07): la Secretaría y el Administrador, todas las fallas críticas; un Firmante,
+   * solo las de los edificios que tiene asignados (el mismo criterio que la lista y que abrir una alerta).
+   */
+  eventosPara(usuario: { usuario: string; rol: string }): Observable<EventoFallaCritica> {
+    return this.eventos.pipe(filter((evento) => esVisiblePara(evento.firmanteUsername, usuario)));
+  }
+
+  /** Las aperturas de alerta que ve ese usuario por el canal: las de las alertas que él puede ver. */
+  aperturasPara(usuario: { usuario: string; rol: string }): Observable<EventoAperturaFalla> {
+    return this.aperturas.pipe(
+      filter((apertura) => {
+        const informe = this.informes.get(apertura.informeId);
+        return informe !== undefined && esVisiblePara(informe.firmanteUsername, usuario);
+      }),
+    );
+  }
+
+  /**
    * Lista eventos críticos ya emitidos (en orden cronológico) para Secretaría y Firmante al abrir su panel. Un Firmante sólo ve las
    * alertas de los edificios que tiene asignados (HU-06 RF-04); la Secretaría y el Administrador ven todas.
    */
@@ -82,7 +105,7 @@ export class FallasCriticasService {
     const lista: EventoFallaCritica[] = [];
     for (const informe of this.informes.values()) {
       if (informe.fallasCriticas.length === 0) continue;
-      if (para?.rol === 'firmante' && informe.firmanteUsername.toLowerCase() !== para.usuario.toLowerCase()) continue;
+      if (para && !esVisiblePara(informe.firmanteUsername, para)) continue;
       lista.push(aEventoFalla(informe));
     }
     return lista;
@@ -95,7 +118,7 @@ export class FallasCriticasService {
   abrir(id: string, usuario: { usuario: string; rol: string }): { abiertaPor: string; abiertaEn: string; primera: boolean } {
     const informe = this.informes.get(id);
     if (!informe || informe.fallasCriticas.length === 0) throw new NotFoundException(`No existe la alerta ${id}`);
-    if (usuario.rol === 'firmante' && informe.firmanteUsername.toLowerCase() !== usuario.usuario.toLowerCase()) {
+    if (!esVisiblePara(informe.firmanteUsername, usuario)) {
       throw new ForbiddenException('Esta alerta es de un edificio que no tenés asignado.');
     }
     if (informe.abiertaPor) return { abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn!, primera: false };

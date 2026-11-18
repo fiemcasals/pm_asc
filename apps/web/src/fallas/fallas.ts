@@ -1,4 +1,5 @@
 import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
+import { abrirCanalConSesion } from './canalSesion';
 
 export type FallaCritica = 'CABLES_DESGASTADOS' | 'LIMITADOR_ANULADO' | (string & {});
 
@@ -93,15 +94,19 @@ export interface FuenteEventos {
 }
 
 /**
- * Se suscribe al canal de fallas críticas. EventSource reconecta solo si se corta la conexión.
+ * Se suscribe al canal de fallas críticas, que pide sesión (HU-06 RF-07): se lee con `abrirCanalConSesion` (no con EventSource, que no
+ * puede mandar la sesión), que lo reabre solo si se corta o si el servidor lo cierra. `onReconexion` avisa que el canal volvió después
+ * de un corte: lo que pasó mientras tanto no llegó por acá y conviene volver a pedir la lista.
  * Devuelve la función para cerrar la suscripción.
  */
 export function suscribirFallasCriticas(
   onEvento: (e: EventoFallaCritica) => void,
-  crearFuente: (url: string) => FuenteEventos = (url) => new EventSource(url),
+  crearFuente: (url: string) => FuenteEventos = (url) => abrirCanalConSesion(url),
   onApertura?: (e: EventoAperturaFalla) => void,
+  onReconexion?: () => void,
 ): () => void {
   const fuente = crearFuente(URL_EVENTOS_FALLAS);
+  if (onReconexion) fuente.addEventListener('reconexion', () => onReconexion());
   fuente.addEventListener('falla-critica', (msg) => {
     const evento = parsearEventoFalla(msg.data);
     if (evento) onEvento(evento);
@@ -190,6 +195,27 @@ export const REPETICION_ALARMA_MS = 6000;
  */
 export function debeSonarAlarma(pendientes: readonly EventoFallaCritica[], abiertasAhora: ReadonlySet<string>): boolean {
   return pendientes.some((e) => !e.abiertaPor && !abiertasAhora.has(e.informeId));
+}
+
+/**
+ * Junta la lista que devuelve la API con las alertas que el panel ya muestra: las que ya están se actualizan (si alguien la abrió mientras
+ * el canal estaba cortado, la alarma tiene que dejar de sonar) y las que faltan se agregan, salvo las que este usuario ya marcó como vistas.
+ * Si no cambia nada devuelve la misma lista (para no volver a dibujar). `agregadas` cuenta las alertas nuevas.
+ */
+export function fusionarPendientes(
+  actuales: readonly EventoFallaCritica[],
+  recibidas: readonly EventoFallaCritica[],
+  yaVistas: ReadonlySet<string>,
+): { pendientes: readonly EventoFallaCritica[]; agregadas: number } {
+  const recibidaPor = new Map(recibidas.map((e) => [e.informeId, e]));
+  const actualizadas = actuales.map((e) => {
+    const nueva = recibidaPor.get(e.informeId);
+    return nueva && nueva.abiertaPor !== e.abiertaPor ? { ...e, abiertaPor: nueva.abiertaPor, abiertaEn: nueva.abiertaEn } : e;
+  });
+  const ids = new Set(actuales.map((e) => e.informeId));
+  const nuevas = recibidas.filter((e) => !yaVistas.has(e.informeId) && !ids.has(e.informeId));
+  const cambio = nuevas.length > 0 || actualizadas.some((e, i) => e !== actuales[i]);
+  return { pendientes: cambio ? [...actualizadas, ...nuevas] : actuales, agregadas: nuevas.length };
 }
 
 /** Un Firmante ve sólo las alertas de los edificios que tiene asignados; sin dato de asignación no se muestra ninguna. */

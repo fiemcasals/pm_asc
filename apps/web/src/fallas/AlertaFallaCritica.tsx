@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { fetchConSesion } from '../auth/sesion';
 import {
   REPETICION_ALARMA_MS,
@@ -7,6 +7,7 @@ import {
   alertasDelFirmante,
   debeSonarAlarma,
   EventoFallaCritica,
+  fusionarPendientes,
   reproducirAvisoSonoro,
   suscribirFallasCriticas,
 } from './fallas';
@@ -28,23 +29,27 @@ export function AlertaFallaCritica({ rol = 'secretaria', usuario }: { rol?: 'sec
   // Alertas que se abrieron (acá o en otra pantalla) desde que se cargó esta.
   const [abiertas, setAbiertas] = useState<ReadonlySet<string>>(new Set());
 
+  const pendientesAhora = useRef<readonly EventoFallaCritica[]>([]);
+  pendientesAhora.current = pendientes;
+
   useEffect(() => {
     let activo = true;
-    void fetchConSesion('/api/fallas-criticas/informes')
-      .then((res) => (res.ok ? (res.json() as Promise<EventoFallaCritica[]>) : []))
-      .then((lista) => {
-        if (!activo || !Array.isArray(lista)) return;
-        const yaVistas = vistasPorRol[rol] ?? new Set<string>();
-        const propias = rol === 'firmante' ? alertasDelFirmante(lista, usuario) : lista;
-        setPendientes((actuales) => {
-          const ids = new Set(actuales.map((e) => e.informeId));
-          const nuevos = propias.filter((ev) => !yaVistas.has(ev.informeId) && !ids.has(ev.informeId));
-          return nuevos.length > 0 ? [...actuales, ...nuevos] : actuales;
+    /** Pide la lista de alertas y la junta con lo que se muestra. Al volver el canal tras un corte, avisa si hay alguna nueva. */
+    const cargarLista = (trasReconexion: boolean) =>
+      fetchConSesion('/api/fallas-criticas/informes')
+        .then((res) => (res.ok ? (res.json() as Promise<EventoFallaCritica[]>) : []))
+        .then((lista) => {
+          if (!activo || !Array.isArray(lista)) return;
+          const yaVistas = vistasPorRol[rol] ?? new Set<string>();
+          const propias = rol === 'firmante' ? alertasDelFirmante(lista, usuario) : lista;
+          const { agregadas } = fusionarPendientes(pendientesAhora.current, propias, yaVistas);
+          setPendientes((actuales) => fusionarPendientes(actuales, propias, yaVistas).pendientes as EventoFallaCritica[]);
+          if (trasReconexion && agregadas > 0) reproducirAvisoSonoro();
+        })
+        .catch(() => {
+          // Sin conexión o endpoint no disponible aún
         });
-      })
-      .catch(() => {
-        // Sin conexión o endpoint no disponible aún
-      });
+    void cargarLista(false);
 
     const unsub = suscribirFallasCriticas(
       (evento) => {
@@ -59,6 +64,8 @@ export function AlertaFallaCritica({ rol = 'secretaria', usuario }: { rol?: 'sec
       undefined,
       // Alguien abrió la alerta (en esta pantalla o en otra): la alarma deja de sonar.
       (apertura) => setAbiertas((previas) => new Set(previas).add(apertura.informeId)),
+      // El canal volvió tras un corte (o tras el cierre periódico del servidor): lo que pasó en el medio hay que pedirlo.
+      () => void cargarLista(true),
     );
 
     return () => {

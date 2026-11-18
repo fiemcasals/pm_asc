@@ -2,6 +2,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createTransport, type Transporter } from 'nodemailer';
 import { APP_CONFIG, AppConfig } from '../config';
 
+export interface AdjuntoCorreo {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+}
+
 /**
  * Correo saliente por SMTP. Sin SMTP_* configurado no manda nada: deja el aviso en el log
  * (en desarrollo, con el enlace, para poder probar el recupero sin casilla de correo).
@@ -17,7 +23,11 @@ export class Mailer {
     return this.config.smtp !== null;
   }
 
-  async enviar(a: string, asunto: string, texto: string): Promise<void> {
+  get remitente(): string {
+    return this.config.smtp?.desde ?? 'notificaciones@maicon.com.ar';
+  }
+
+  async enviar(a: string, asunto: string, texto: string, adjuntos?: AdjuntoCorreo[]): Promise<void> {
     const smtp = this.config.smtp;
     if (!smtp) {
       this.logger.warn(`SMTP no configurado: no se envió "${asunto}" a ${a}.`);
@@ -31,7 +41,21 @@ export class Mailer {
       secure: smtp.puerto === 465,
       auth: { user: smtp.usuario, pass: smtp.clave },
     });
-    await this.transporte.sendMail({ from: smtp.desde, to: a, subject: asunto, text: texto });
+    await this.transporte.sendMail({
+      from: smtp.desde,
+      to: a,
+      subject: asunto,
+      text: texto,
+      ...(adjuntos && adjuntos.length > 0
+        ? {
+            attachments: adjuntos.map((adj) => ({
+              filename: adj.filename,
+              content: adj.content,
+              contentType: adj.contentType,
+            })),
+          }
+        : {}),
+    });
     this.logger.log(`Correo "${asunto}" enviado a ${a}.`);
   }
 }

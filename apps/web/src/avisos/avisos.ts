@@ -9,6 +9,20 @@ export interface EnvioAviso {
   estado: string;
   motivo?: string;
   fecha: string;
+  archivoPdf?: string;
+  pdfSha256?: string;
+}
+
+export interface ConstanciaEmailLegal {
+  estado: 'Enviado' | 'Envío fallido' | 'No configurado';
+  destino: string;
+  remitente: string;
+  fecha: string;
+  archivoPdf: string;
+  pdfSha256: string;
+  tamanoBytes: number;
+  intentos: number;
+  motivo?: string;
 }
 
 export interface AvisoFalla {
@@ -27,6 +41,7 @@ export interface AvisoFalla {
   /** Hasta cuándo sirve el enlace del informe y el enlace mismo (sólo para la Secretaría). */
   enlaceVenceEn: string | null;
   enlace: string | null;
+  constanciaEmailLegal?: ConstanciaEmailLegal | null;
   envios: EnvioAviso[];
 }
 
@@ -67,6 +82,34 @@ export async function aprobarAviso(id: string, enviar: Enviar): Promise<{ ok: tr
     const json = (await res.json()) as { message?: string | string[] } & AvisoFalla;
     if (!res.ok) return { ok: false, error: Array.isArray(json.message) ? json.message.join(' · ') : json.message || `No se pudo aprobar el aviso (error ${res.status})` };
     return { ok: true, aviso: json };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+/** Reintenta el envío del email con PDF legal a la ECA cuando el envío anterior quedó como Envío fallido. */
+export async function reintentarEmailAviso(id: string, enviar: Enviar): Promise<{ ok: true; aviso: AvisoFalla } | { ok: false; error: string }> {
+  try {
+    const res = await enviar(`/api/avisos/${encodeURIComponent(id)}/reintentar-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    const json = (await res.json()) as { message?: string | string[] } & AvisoFalla;
+    if (!res.ok) return { ok: false, error: Array.isArray(json.message) ? json.message.join(' · ') : json.message || `No se pudo reintentar el correo (error ${res.status})` };
+    return { ok: true, aviso: json };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
+  }
+}
+
+/** Descarga el PDF legal con membrete MAICON S.R.L. de un aviso. */
+export async function descargarPdfLegalAviso(id: string, enviar: Enviar): Promise<{ ok: true; blob: Blob; filename: string } | { ok: false; error: string }> {
+  try {
+    const res = await enviar(`/api/avisos/${encodeURIComponent(id)}/pdf-legal`);
+    if (!res.ok) return { ok: false, error: `No se pudo generar el PDF legal (error ${res.status})` };
+    const blob = await res.blob();
+    return { ok: true, blob, filename: `deslinde-maicon-${id}.pdf` };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : 'Error de conexión' };
   }

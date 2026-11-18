@@ -7,10 +7,26 @@ export interface EnvioAviso {
   canal: CanalAviso;
   destino: string;
   ok: boolean;
-  /** entregado / enviado / fallido / no_configurado (como informa el proveedor o el correo). */
+  /** entregado / enviado / Envío fallido / no_configurado (como informa el proveedor o el correo). */
   estado: string;
   motivo?: string;
   fecha: string;
+  /** Archivo PDF legal adjunto cuando el canal es `email_eca`. */
+  archivoPdf?: string;
+  pdfSha256?: string;
+}
+
+/** Constancia del envío del PDF legal MAICON S.R.L. por correo a la ECA (HU-06 RF-02). */
+export interface ConstanciaEmailLegal {
+  estado: 'Enviado' | 'Envío fallido' | 'No configurado';
+  destino: string;
+  remitente: string;
+  fecha: string;
+  archivoPdf: string;
+  pdfSha256: string;
+  tamanoBytes: number;
+  intentos: number;
+  motivo?: string;
 }
 
 export interface AvisoFalla {
@@ -34,6 +50,8 @@ export interface AvisoFalla {
   enlaceVenceEn: string | null;
   /** El enlace del informe que viaja en el aviso; sólo lo ven la Secretaría y el Administrador (si el WhatsApp falla se puede mandar a mano). */
   enlace: string | null;
+  /** Constancia formal del envío del PDF legal MAICON S.R.L. por email a la ECA (HU-06 RF-02). */
+  constanciaEmailLegal: ConstanciaEmailLegal | null;
   /** Cada envío intentado al aprobar (WhatsApp a la ECA y al Firmante, y el correo a la ECA). */
   envios: EnvioAviso[];
 }

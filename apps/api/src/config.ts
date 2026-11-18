@@ -51,6 +51,11 @@ export interface AppConfig {
   feriados: string[] | null;
   /** Precisión del GPS (radio de error, en metros) por encima de la cual se pide «Sin buena señal GPS» (HU-16 RF-02). */
   gpsPrecisionMaxM: number;
+  /**
+   * Cuánto dura como máximo una conexión al canal en tiempo real de fallas críticas (HU-06 RF-07). Una conexión abierta no se vuelve a
+   * validar, así que el servidor la corta y el panel la reabre con la sesión: una sesión revocada deja de recibir en ese plazo.
+   */
+  canalFallasVigenciaMs: number;
   databaseUrl: string;
   /** URL opcional del usuario de aplicación sin BYPASSRLS ni propiedad de tablas. */
   databaseAppUrl?: string;
@@ -101,6 +106,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const causas = (env.VISITAS_FALLIDAS_CAUSAS ?? '').split(';').map((x) => x.trim()).filter(Boolean);
   const gpsPrecisionMax = env.GPS_PRECISION_MAX_M === undefined || env.GPS_PRECISION_MAX_M.trim() === '' ? 30 : Number(env.GPS_PRECISION_MAX_M);
   if (!Number.isFinite(gpsPrecisionMax) || gpsPrecisionMax <= 0) throw new Error('GPS_PRECISION_MAX_M tiene que ser un número de metros mayor que 0.');
+  const canalSeg = env.CANAL_FALLAS_VIGENCIA_SEG === undefined || env.CANAL_FALLAS_VIGENCIA_SEG.trim() === '' ? 300 : Number(env.CANAL_FALLAS_VIGENCIA_SEG);
+  // Hasta 15 minutos: lo que dura el token de acceso. Más que eso dejaría el canal abierto con una sesión ya vencida.
+  if (!Number.isInteger(canalSeg) || canalSeg < 1 || canalSeg > 900) {
+    throw new Error('CANAL_FALLAS_VIGENCIA_SEG tiene que ser un entero de segundos entre 1 y 900.');
+  }
   const minDiasVisitas = env.VISITAS_FALLIDAS_MIN_DIAS === undefined || env.VISITAS_FALLIDAS_MIN_DIAS.trim() === '' ? 1 : Number(env.VISITAS_FALLIDAS_MIN_DIAS);
   if (!Number.isInteger(minDiasVisitas) || minDiasVisitas < 0) {
     throw new Error('VISITAS_FALLIDAS_MIN_DIAS tiene que ser un entero de 0 en adelante.');
@@ -162,6 +172,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     whatsapp,
     feriados: feriadosDeEntorno(env.FERIADOS),
     gpsPrecisionMaxM: gpsPrecisionMax,
+    canalFallasVigenciaMs: canalSeg * 1000,
     databaseUrl: env.DATABASE_URL ?? '',
     databaseAppUrl: env.DATABASE_APP_URL || undefined,
     databaseAppPassword: env.DATABASE_APP_PASSWORD?.trim() || undefined,

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:46:14.452Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:46:37.175Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -407,7 +407,7 @@ PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/36. RNF-01 imple
 - Estimado: 4h
 
 ### RF-04 — Enviar las alertas por WhatsApp a través de un proveedor real
-Inicio de desarrollo de HU-11 RF-04 (Conector WhatsApp proveedor real Meta Cloud API / Twilio y telefono de la ECA desde terna de roles) a nombre de gonza.
+Implementacion completa de HU-11 RF-04 a nombre de gonza (PR #83 contra dev). WhatsAppProviderTransport HTTP real compatible con Meta Cloud API y Twilio desde variables de entorno, eliminacion del numero fijo +5491144009988, resolucion del telefono ECA desde roles_edificio (sin telefono no envia e informa motivo), propagacion del error exacto del proveedor con historial fallido y cero credenciales en repositorio. 5 suites (40/40 tests) en verde; RF-04-entrega.sh 7/7 OK (--carga 25: 0 fallos, prom 122 ms, max 255 ms).
 - Estimado: 0h
 
 ### RF-05 — Enviar los avisos a la ECA solo después de la revisión de la Secretaría

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-18T12:31:50.864Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T13:22:31.168Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -630,6 +630,18 @@ Origen: revisión de los PRs #28 y #29 contra la API de autenticación de HU-14 
 2. El login, el refresco y GET /api/auth/me devuelven la "eca" del usuario cuando tiene una.
 3. El guard deja la ECA en la petición (req.usuario.eca), tomada de la base en cada pedido: cambiarle la ECA a un usuario vale en el pedido siguiente.
 4. La migración agrega la columna sin romper usuarios existentes, y un test de integración contra PostgreSQL real la verifica.
+
+### RF-02: Portal ECA con sesión: cada ECA ve solo lo suyo (Funcional)
+
+Hoy las rutas del portal ECA (alertas, cobertura, máquinas, remito y acuse) no piden sesión: cualquiera puede verlas y registrar un acuse legal con el usuario que escriba en la URL, y la ECA se toma de un header que cualquiera puede cambiar. Pedir sesión de rol ECA (con Secretaría y Administrador viendo todas las ECA), tomar la ECA y el usuario del acuse desde la sesión y hacer que el portal de la web trabaje con esa sesión. Fuente: revisión de seguridad del 18/11/2026 (el guard de la API es abierto por defecto: una ruta sin @Roles es pública).
+
+**Condiciones de aprobación**
+
+1. Sin sesión, las rutas del portal ECA (alertas, cobertura, máquinas, remito y acuse) responden 401.
+2. Un usuario ECA solo ve y descarga lo de su ECA: la ECA sale de su sesión, un header o parámetro con otra ECA se ignora y una alerta de otra ECA da 404.
+3. Secretaría y Administrador ven cualquier ECA; RT y Firmante reciben 403.
+4. El usuario del acuse legal es el de la sesión, aunque la URL traiga otro usuario.
+5. El portal de la web funciona con la sesión: al ingresar como ECA se ven sus alertas y se descarga el remito.
 
 ### RNF-01: Row Level Security por ECA (No funcional)
 

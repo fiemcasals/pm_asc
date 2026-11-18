@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-18T14:51:09.000Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T14:51:51.952Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -285,6 +285,18 @@ Hoy cargar un informe de falla crítica (POST /api/fallas-criticas/informes) y l
 3. El inspector del informe de falla crítica es el usuario de la sesión, no el que venga en el cuerpo del pedido.
 4. La cola del celular manda las fallas críticas con la sesión y, si la sesión venció, las conserva (no las descarta) y las manda al volver a ingresar.
 5. El celular pide la configuración del checklist con la sesión, y sigue usando el respaldo local si no hay red o sesión.
+
+### RF-07: Canal en tiempo real de fallas críticas con sesión (Funcional)
+
+El canal de eventos de fallas críticas (GET /api/fallas-criticas/eventos, Server-Sent Events) es público: cualquiera lo abre y recibe en vivo cada falla crítica (edificio, dirección, máquina, inspector, ECA) y cada apertura de alerta, y a todo Firmante le llegan las de todos los edificios (el panel filtra en el navegador, que no es una barrera). Pedir sesión (Secretaría, Administrador y Firmante), que el Firmante reciba solo lo suyo, y hacer que el panel escuche con la sesión: EventSource no puede mandar el encabezado Authorization, así que el panel pasa a leer el canal con fetch. Como una conexión abierta no se vuelve a validar, el canal se cierra solo cada pocos minutos y el panel lo reabre con la sesión (renovándola), de modo que una sesión revocada deja de recibir. Fuente: revisión de seguridad del 18/11/2026 (serie que empezó con el Portal ECA).
+
+**Condiciones de aprobación**
+
+1. Sin sesión (o con un token inventado), el canal de eventos de fallas críticas responde 401 y no manda ningún evento.
+2. Abren el canal la Secretaría, el Administrador y el Firmante; el RT y la ECA reciben 403.
+3. El Firmante recibe por el canal solo las fallas críticas y las aperturas de alerta de sus edificios; la Secretaría y el Administrador reciben todas.
+4. El canal se cierra solo pasado un tiempo (5 minutos) para volver a validar la sesión; el panel lo reabre renovando la sesión, y si la sesión fue revocada no lo reabre.
+5. El panel de Secretaría y el del Firmante escuchan el canal con la sesión (sin EventSource), muestran las alertas como antes y se reconectan solos, con espera creciente, si se corta la conexión.
 
 ## HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita
 

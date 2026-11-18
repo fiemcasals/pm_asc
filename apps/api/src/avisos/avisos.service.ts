@@ -3,7 +3,9 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { Subscription } from 'rxjs';
 import { Mailer } from '../auth/mailer';
 import { APP_CONFIG, AppConfig } from '../config';
+import { ConsorciosRepository } from '../consorcios/consorcios.repository';
 import { VistaInformeAviso } from './informe-publico';
+import { PdfLegalFallaService, PdfLegalGenerado } from './pdf-legal-falla.service';
 import { EventoFallaCritica } from '../fallas-criticas/fallas-criticas.types';
 import { FallasCriticasService } from '../fallas-criticas/fallas-criticas.service';
 import { MaquinaAsignada } from '../firmante/firmante.types';
@@ -34,13 +36,18 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
   private readonly appUrl: string;
   private suscripcion?: Subscription;
 
+  private readonly pdfService: PdfLegalFallaService;
+
   constructor(
     private readonly fallas: FallasCriticasService,
     private readonly whatsapp: WhatsAppConnectorService,
     private readonly mailer: Mailer,
     @Optional() @Inject(APP_CONFIG) config?: AppConfig,
+    @Optional() pdfLegal?: PdfLegalFallaService,
+    @Optional() private readonly consorcios?: ConsorciosRepository,
   ) {
     this.appUrl = config?.appUrl ?? 'http://localhost:8050';
+    this.pdfService = pdfLegal ?? new PdfLegalFallaService();
   }
 
   onModuleInit(): void {
@@ -72,6 +79,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       aprobadoEn: null,
       enlaceVenceEn: null,
       enlace: null,
+      constanciaEmailLegal: null,
       envios: [],
     };
     this.avisos.set(e.informeId, aviso);
@@ -115,6 +123,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       aprobadoEn: null,
       enlaceVenceEn: null,
       enlace: null,
+      constanciaEmailLegal: null,
       envios: [],
     };
     this.avisos.set(alerta.id, aviso);
@@ -205,29 +214,183 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       aviso.envios.push({ canal, destino: r.telefonoDestino, ok: r.ok, estado: r.estadoEntrega, ...(r.error ? { motivo: r.error } : {}), fecha: r.timestampEnvio });
     }
 
-    if (!yaSalio('email_eca')) aviso.envios.push(await this.enviarCorreo(aviso, destinos.emailEca ?? DESTINOS_PROVISORIOS.emailEca, enlace));
+    if (!yaSalio('email_eca')) {
+      const emailDestino = await this.resolverEmailEca(aviso, destinos.emailEca);
+      aviso.envios.push(await this.enviarCorreoConPdfLegal(aviso, emailDestino, enlace));
+    }
 
     const whatsappOk = whatsappA.every(([canal]) => yaSalio(canal));
-    aviso.estado = whatsappOk ? 'Enviado' : 'Falló el envío';
+    const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
+    aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
     return structuredClone(aviso);
   }
 
-  private async enviarCorreo(aviso: AvisoFalla, destino: string, enlace: string): Promise<EnvioAviso> {
-    const fecha = new Date().toISOString();
-    if (!this.mailer.habilitado) {
-      // Sin SMTP el Mailer sólo deja el aviso en el log: no se marca como enviado.
-      await this.mailer.enviar(destino, `Falla crítica en ${aviso.direccion}`, enlace);
-      return { canal: 'email_eca', destino, ok: false, estado: 'no_configurado', motivo: 'El correo no está configurado (SMTP).', fecha };
-    }
-    try {
-      await this.mailer.enviar(
-        destino,
-        `Falla crítica en ${aviso.direccion}`,
-        `Se registró una falla crítica en ${aviso.equipo} (${aviso.direccion}, ${aviso.consorcio}): ${aviso.detalle}.\n\nInforme técnico: ${enlace}\n`,
+  /** Genera el PDF formal MAICON S.R.L. para el aviso (con membrete, datos del edificio/máquina, fallas y fotos adjuntas). */
+  async generarPdfLegal(id: string): Promise<PdfLegalGenerado> {
+    const aviso = this.buscar(id);
+    const interno = this.internos.get(aviso.alertaId)!;
+    return this.pdfService.generarPdf({
+      avisoId: aviso.id,
+      alertaId: aviso.alertaId,
+      consorcio: interno.vista.consorcio,
+      direccion: interno.vista.direccion,
+      equipo: interno.vista.equipo,
+      eca: interno.vista.eca,
+      fechaDeteccion: interno.vista.fecha,
+      fallas: interno.vista.detalle,
+      observaciones: interno.vista.observaciones,
+      fotografias: interno.vista.fotografias,
+      aprobadoPor: aviso.aprobadoPor,
+      aprobadoEn: aviso.aprobadoEn,
+      enlaceInforme: aviso.enlace,
+    });
+  }
+
+  /**
+   * Reintenta el envío del email legal con PDF adjunto a la ECA para un aviso ya aprobado cuyo correo falló
+   * (HU-06 RF-02, criterio 4). No permite enviar antes de la aprobación de la Secretaría.
+   */
+  async reintentarEmail(id: string, destinos: DestinosAviso = {}): Promise<AvisoFalla> {
+    const aviso = this.buscar(id);
+    if (!aviso.aprobadoPor || !aviso.aprobadoEn) {
+      throw new ConflictException(
+        'El aviso todavía está pendiente de revisión: la Secretaría debe aprobarlo antes de enviar el correo legal a la ECA.',
       );
-      return { canal: 'email_eca', destino, ok: true, estado: 'enviado', fecha };
+    }
+    if (aviso.envios.some((e) => e.canal === 'email_eca' && e.ok)) {
+      throw new ConflictException('El correo con PDF legal a la ECA ya fue enviado exitosamente para este aviso.');
+    }
+
+    const enlace = aviso.enlace ?? `${this.appUrl}${aviso.enlaceInforme}`;
+    const emailDestino = await this.resolverEmailEca(aviso, destinos.emailEca);
+    aviso.envios.push(await this.enviarCorreoConPdfLegal(aviso, emailDestino, enlace));
+
+    const whatsappOk = (['whatsapp_eca', 'whatsapp_firmante'] as CanalAviso[]).every((canal) =>
+      aviso.envios.some((e) => e.canal === canal && e.ok),
+    );
+    const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
+    aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
+    return structuredClone(aviso);
+  }
+
+  private async resolverEmailEca(aviso: AvisoFalla, emailExplicito?: string): Promise<string> {
+    if (emailExplicito && emailExplicito.trim()) return emailExplicito.trim();
+    if (this.consorcios) {
+      try {
+        const [edificios, roles] = await Promise.all([
+          this.consorcios.listar(),
+          this.consorcios.listarRoles(),
+        ]);
+        const dirNorm = aviso.direccion.trim().toLowerCase();
+        const consorcioMatch = edificios.find((c) => {
+          const cDir = c.direccion.trim().toLowerCase();
+          return cDir === dirNorm || dirNorm.startsWith(cDir) || cDir.startsWith(dirNorm);
+        });
+        if (consorcioMatch) {
+          const rolEdificio = roles.find((r) => r.consorcioId === consorcioMatch.id);
+          if (rolEdificio?.eca?.email?.trim()) return rolEdificio.eca.email.trim();
+        }
+        const ecaNorm = aviso.eca.trim().toLowerCase();
+        const porEca = roles.find((r) => r.eca?.nombre.trim().toLowerCase() === ecaNorm && r.eca.email?.trim());
+        if (porEca?.eca?.email?.trim()) return porEca.eca.email.trim();
+      } catch {
+        // Si la consulta de consorcios falla, se usa el destino provisorio sin frenar el flujo.
+      }
+    }
+    return DESTINOS_PROVISORIOS.emailEca;
+  }
+
+  private async enviarCorreoConPdfLegal(aviso: AvisoFalla, destino: string, enlace: string): Promise<EnvioAviso> {
+    const fecha = new Date().toISOString();
+    const intentosPrevios = aviso.constanciaEmailLegal?.intentos ?? 0;
+    const pdf = await this.generarPdfLegal(aviso.id);
+    const remitente = (this.mailer as { remitente?: string }).remitente ?? 'notificaciones@maicon.com.ar';
+    const asunto = `Falla crítica en ${aviso.direccion} — Notificación Formal MAICON S.R.L.`;
+    const cuerpo = [
+      `Estimada ECA ${aviso.eca},`,
+      '',
+      `Se notifica formalmente una falla crítica detectada en ${aviso.equipo} (${aviso.direccion}, ${aviso.consorcio}):`,
+      `${aviso.detalle}.`,
+      '',
+      'Se adjunta el PDF legal con membrete de MAICON S.R.L. para el deslinde de responsabilidad.',
+      `Informe técnico en línea: ${enlace}`,
+      '',
+      `Aprobado por Secretaría: ${aviso.aprobadoPor ?? 'Secretaría'} (${aviso.aprobadoEn ?? fecha})`,
+    ].join('\n');
+
+    if (!this.mailer.habilitado) {
+      await this.mailer.enviar(destino, asunto, cuerpo, [
+        { filename: pdf.filename, content: pdf.buffer, contentType: pdf.mimeType },
+      ]);
+      aviso.constanciaEmailLegal = {
+        estado: 'No configurado',
+        destino,
+        remitente,
+        fecha,
+        archivoPdf: pdf.filename,
+        pdfSha256: pdf.sha256,
+        tamanoBytes: pdf.buffer.length,
+        intentos: intentosPrevios + 1,
+        motivo: 'El correo no está configurado (SMTP).',
+      };
+      return {
+        canal: 'email_eca',
+        destino,
+        ok: false,
+        estado: 'no_configurado',
+        motivo: 'El correo no está configurado (SMTP).',
+        fecha,
+        archivoPdf: pdf.filename,
+        pdfSha256: pdf.sha256,
+      };
+    }
+
+    try {
+      await this.mailer.enviar(destino, asunto, cuerpo, [
+        { filename: pdf.filename, content: pdf.buffer, contentType: pdf.mimeType },
+      ]);
+      aviso.constanciaEmailLegal = {
+        estado: 'Enviado',
+        destino,
+        remitente,
+        fecha,
+        archivoPdf: pdf.filename,
+        pdfSha256: pdf.sha256,
+        tamanoBytes: pdf.buffer.length,
+        intentos: intentosPrevios + 1,
+      };
+      return {
+        canal: 'email_eca',
+        destino,
+        ok: true,
+        estado: 'enviado',
+        fecha,
+        archivoPdf: pdf.filename,
+        pdfSha256: pdf.sha256,
+      };
     } catch (err) {
-      return { canal: 'email_eca', destino, ok: false, estado: 'fallido', motivo: err instanceof Error ? err.message : 'No se pudo enviar el correo', fecha };
+      const motivo = err instanceof Error ? err.message : 'No se pudo enviar el correo';
+      aviso.constanciaEmailLegal = {
+        estado: 'Envío fallido',
+        destino,
+        remitente,
+        fecha,
+        archivoPdf: pdf.filename,
+        pdfSha256: pdf.sha256,
+        tamanoBytes: pdf.buffer.length,
+        intentos: intentosPrevios + 1,
+        motivo,
+      };
+      return {
+        canal: 'email_eca',
+        destino,
+        ok: false,
+        estado: 'Envío fallido',
+        motivo,
+        fecha,
+        archivoPdf: pdf.filename,
+        pdfSha256: pdf.sha256,
+      };
     }
   }
 

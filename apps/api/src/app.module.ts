@@ -33,6 +33,7 @@ import { SemaforoService } from './semaforo/semaforo.service';
 import { AvisosController } from './avisos/avisos.controller';
 import { AvisosService } from './avisos/avisos.service';
 import { InformeAvisoController } from './avisos/informe-aviso.controller';
+import { PdfLegalFallaService } from './avisos/pdf-legal-falla.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
@@ -131,6 +132,7 @@ export class AppModule implements NestModule {
         WhatsAppFormatterService,
         WhatsAppConnectorService,
         WhatsAppTriggerService,
+        PdfLegalFallaService,
         AvisosService,
         VisitasFallidasService,
         ParadasService,

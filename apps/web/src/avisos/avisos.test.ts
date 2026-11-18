@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type AvisoFalla, aprobarAviso, cargarAvisos, etiquetaCanal, ordenarBandeja, puedeAprobar } from './avisos';
+import { type AvisoFalla, aprobarAviso, cargarAvisos, descargarPdfLegalAviso, etiquetaCanal, ordenarBandeja, puedeAprobar, reintentarEmailAviso } from './avisos';
 
 const aviso = (estado: AvisoFalla['estado'], creadoEn: string, id = creadoEn): AvisoFalla => ({
   id, alertaId: id, consorcio: 'C', direccion: 'Calle 1', equipo: 'M1', eca: 'ECA', detalle: 'd', enlaceInforme: '/x', estado, creadoEn,
@@ -59,5 +59,22 @@ describe('etiquetaCanal', () => {
     expect(etiquetaCanal('whatsapp_eca')).toBe('WhatsApp a la ECA');
     expect(etiquetaCanal('whatsapp_firmante')).toBe('WhatsApp al Firmante');
     expect(etiquetaCanal('email_eca')).toBe('Correo a la ECA');
+  });
+});
+
+describe('PDF Legal MAICON S.R.L. y reintento de email (HU-06 RF-02)', () => {
+  it('reintentarEmailAviso hace POST a /reintentar-email y devuelve el aviso actualizado', async () => {
+    const enviar = vi.fn().mockResolvedValue(respuesta(201, { ...aviso('Enviado', '1'), aprobadoPor: 'sec' }));
+    const r = await reintentarEmailAviso('AV-1', enviar);
+    expect(r).toMatchObject({ ok: true, aviso: { estado: 'Enviado' } });
+    expect(enviar).toHaveBeenCalledWith('/api/avisos/AV-1/reintentar-email', expect.objectContaining({ method: 'POST' }));
+  });
+
+  it('descargarPdfLegalAviso pide GET /pdf-legal y devuelve blob y nombre .pdf', async () => {
+    const blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
+    const enviar = vi.fn().mockResolvedValue({ ok: true, status: 200, blob: async () => blob } as Response);
+    const r = await descargarPdfLegalAviso('AV-1', enviar);
+    expect(r).toMatchObject({ ok: true, filename: 'deslinde-maicon-AV-1.pdf' });
+    expect(enviar).toHaveBeenCalledWith('/api/avisos/AV-1/pdf-legal');
   });
 });

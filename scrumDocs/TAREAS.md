@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-18T14:20:38.439Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-18T14:21:13.592Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -273,6 +273,18 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 2. Solo el RT Firmante asignado al edificio puede confirmar o rechazar el estado; otro rol recibe 403.
 3. El estado confirmado se ve en la ficha de la máquina y en el portal de la ECA.
 4. Volver a "Normal" exige una nueva inspección del RT con al menos una foto; sin foto responde 400.
+
+### RF-06: RT con sesión: fallas críticas y checklist solo para quien corresponde (Funcional)
+
+Hoy cargar un informe de falla crítica (POST /api/fallas-criticas/informes) y las rutas del checklist (configuración, crear y ver inspecciones) no piden sesión: cualquiera puede registrar una falla crítica, que dispara el aviso a la Secretaría, y el inspector se toma del cuerpo del pedido. Pedir sesión, dejar que registren solo el RT, tomar el inspector de la sesión y hacer que el celular trabaje con esa sesión sin perder fallas críticas: la cola offline hoy descarta cualquier error 4xx, así que con sesión un 401 borraría una falla pendiente. Fuente: revisión de seguridad del 18/11/2026 (serie que empezó con el Portal ECA).
+
+**Condiciones de aprobación**
+
+1. Sin sesión, registrar un informe de falla crítica y las rutas del checklist (configuración, crear y ver inspecciones) responden 401.
+2. Solo el RT registra informes de falla crítica y crea inspecciones; el resto de los roles recibe 403. La configuración y la lectura del checklist son para el RT, la Secretaría, el Administrador y el Firmante.
+3. El inspector del informe de falla crítica es el usuario de la sesión, no el que venga en el cuerpo del pedido.
+4. La cola del celular manda las fallas críticas con la sesión y, si la sesión venció, las conserva (no las descarta) y las manda al volver a ingresar.
+5. El celular pide la configuración del checklist con la sesión, y sigue usando el respaldo local si no hay red o sesión.
 
 ## HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita
 

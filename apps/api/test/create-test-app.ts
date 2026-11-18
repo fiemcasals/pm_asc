@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
 import { Reloj, RELOJ, relojDelSistema } from '../src/auth/auth.types';
-import { Mailer } from '../src/auth/mailer';
+import { AdjuntoCorreo, Mailer } from '../src/auth/mailer';
 import { RolesGuard } from '../src/auth/roles.guard';
 import { InMemoryUsuariosRepository, UsuariosRepository } from '../src/auth/usuarios.repository';
 import { configureApp } from '../src/app.setup';
@@ -36,11 +36,16 @@ import {
 
 /** Correo en memoria: guarda lo que se habría enviado. Ninguna prueba manda un mail de verdad. */
 export class MailerDePrueba {
-  readonly enviados: { a: string; asunto: string; texto: string }[] = [];
-  readonly habilitado = true;
+  readonly enviados: { a: string; asunto: string; texto: string; adjuntos?: AdjuntoCorreo[] }[] = [];
+  habilitado = true;
+  remitente = 'notificaciones@maicon.com.ar';
+  errorAlEnviar: Error | null = null;
 
-  async enviar(a: string, asunto: string, texto: string): Promise<void> {
-    this.enviados.push({ a, asunto, texto });
+  async enviar(a: string, asunto: string, texto: string, adjuntos?: AdjuntoCorreo[]): Promise<void> {
+    if (this.errorAlEnviar) {
+      throw this.errorAlEnviar;
+    }
+    this.enviados.push({ a, asunto, texto, ...(adjuntos ? { adjuntos } : {}) });
   }
 }
 

@@ -33,6 +33,11 @@ export interface VisitaEnCursoSnapshot {
 
 export interface InformeCriticoEncolado {
   clientReportId: string;
+  /**
+   * Quién lo cargó (HU-06 RF-06): la API toma el inspector de la sesión que lo manda, así que sólo lo envía esa persona. Los que se
+   * encolaron antes de esta versión no lo tienen y los envía quien tenga la sesión abierta.
+   */
+  usuario?: string;
   payload: unknown;
   creadoEn: string;
   intentos: number;

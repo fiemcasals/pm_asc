@@ -1,3 +1,4 @@
+import { fetchConSesion } from '../auth/sesion';
 import {
   CHECKLIST_VERSION,
   obtenerChecklistParaTipo,
@@ -93,7 +94,7 @@ export function esSolapaCompleta(
 /** Carga el motor configurable desde la API con respaldo local de la misma versión. */
 export async function fetchChecklistConfig(tipo: TipoMaquinaChecklist): Promise<ChecklistMotorConfig> {
   try {
-    const res = await fetch(`/api/checklist/config?tipo=${encodeURIComponent(tipo)}`);
+    const res = await fetchConSesion(`/api/checklist/config?tipo=${encodeURIComponent(tipo)}`);
     if (!res.ok) return obtenerChecklistParaTipo(tipo);
     const data = (await res.json()) as ChecklistMotorConfig;
     if (!data || !Array.isArray(data.solapas) || data.solapas.length === 0) {

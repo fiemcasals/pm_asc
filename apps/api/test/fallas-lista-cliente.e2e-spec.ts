@@ -17,7 +17,7 @@ describe('Lista de fallas críticas del cliente por HTTP (HU-06 RF-03)', () => {
   });
 
   const informe = (maquinaId: string, fallasCriticas: string[]) =>
-    request(app.getHttpServer()).post('/api/fallas-criticas/informes').send({ maquinaId, inspector: 'dev-ma-2', fallasCriticas });
+    request(app.getHttpServer()).post('/api/fallas-criticas/informes').set('x-rol-de-prueba', 'rt_calle').send({ maquinaId, inspector: 'dev-ma-2', fallasCriticas });
 
   it('criterio 1 y 4: una falla de la lista genera la alerta, con nombre legible y zona, en la lista de eventos de la Secretaría', async () => {
     const res = await informe(TRACCION, ['PARACAIDAS_ANOMALIA', 'STOP_FOSA_DEFICIENTE_INEXISTENTE']);

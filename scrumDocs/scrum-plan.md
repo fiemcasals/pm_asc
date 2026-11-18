@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:03:23.520Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:03:26.341Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -14,7 +14,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 6 | RF-06 | FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA | HU-10 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 7 | RF-07 | FIX: Los símbolos del remito PDF salen como caracteres rotos | HU-10 | — | — | tested ✓ | germanG | — | — |
 | 8 | RF-02 | Portal ECA con sesión: cada ECA ve solo lo suyo | HU-15 | — | — | tested ✓ | germanG | — | — |
-| 9 | RF-04 | Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo | HU-08 | — | — | Hacer | Sin asignar | — | — |
+| 9 | RF-04 | Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo | HU-08 | — | — | Haciendo | germanG | — | — |
 | 10 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 11 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 12 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |

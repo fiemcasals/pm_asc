@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:51:48.694Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:51:51.433Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -16,7 +16,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 8 | RF-02 | Portal ECA con sesión: cada ECA ve solo lo suyo | HU-15 | — | — | tested ✓ | germanG | — | — |
 | 9 | RF-04 | Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo | HU-08 | — | — | tested ✓ | germanG | — | — |
 | 10 | RF-06 | RT con sesión: fallas críticas y checklist solo para quien corresponde | HU-06 | — | — | tested ✓ | germanG | — | — |
-| 11 | RF-07 | Canal en tiempo real de fallas críticas con sesión | HU-06 | — | — | Hacer | Sin asignar | — | — |
+| 11 | RF-07 | Canal en tiempo real de fallas críticas con sesión | HU-06 | — | — | Haciendo | germanG | — | — |
 | 12 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 13 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 14 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |

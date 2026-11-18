@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:38:10.704Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:38:38.191Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -284,7 +284,7 @@ PR #20 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/20). Migrac
 - Estimado: 0h
 
 ### RF-02 — Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA
-Inicio de desarrollo de HU-09 RF-02 (PDF Legal MAICON S.R.L. y envio por email a la ECA) a nombre de gonza.
+Implementacion completa de HU-06 RF-02 a nombre de gonza (PR #81 contra dev). PdfLegalFallaService con membrete MAICON S.R.L., datos del edificio/maquina, fallas y fotos adjuntas; Mailer con adjuntos PDF; AvisosService sin envios al registrar falla, envio al aprobar con constanciaEmailLegal y reintento ante Envio fallido (POST /api/avisos/:id/reintentar-email y GET /api/avisos/:id/pdf-legal); UI en BandejaAvisos. 25 tests API + 9 tests Web en verde; RF-02-entrega.sh 6/6 OK (--carga 25: 0 fallos, prom 107 ms, max 136 ms).
 - Estimado: 4h
 
 ### RF-03 — Lista de Fallas Críticas definida por el cliente

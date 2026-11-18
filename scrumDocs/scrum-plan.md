@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:26:25.166Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:28:07.801Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -22,7 +22,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 14 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 15 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 16 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 17 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | Hecho ✓ dev | gonza | RF-01 | — |
+| 17 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 18 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 19 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 20 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
@@ -53,7 +53,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 45 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | tested ✓ | germanG | RF-01 | — |
 | 46 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 47 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 48 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | germanG | RF-01 | — |
+| 48 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | Hacer | dev-ma-2 | RF-01 | — |
 | 49 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | tested ✓ | germanG | RF-01 | — |
 | 50 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
 | 51 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |

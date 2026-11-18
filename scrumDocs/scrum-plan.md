@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-18T14:25:24.160Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-18T14:26:22.059Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -146,7 +146,7 @@ Filtro global de errores (database/database-error.filter.ts, registrado en app.s
 - Estimado: 1h
 
 ### RF-03 — Importar el listado Excel de la AGC (máquinas, ubicaciones y estados)
-Inicio de desarrollo de RF-03 (Importador Excel AGC .xlsx) a nombre de gonza.
+Implementacion completa de HU-01 RF-03 a nombre de gonza (PR #80 contra dev). Migracion 032_maquinas_estado_agc, ImportadorAgcService con ExcelJS, validacion estricta .xlsx (magic bytes ZIP) y <= 5 MB (HTTP 400), UI ImportadorExcelAgc en Secretaria. 74 suites API (1060 tests) + 23 suites Web (392 tests) + int-spec PostgreSQL en verde; RF-03-entrega.sh 9/9 OK (--carga 20: 0 fallos, prom 115 ms, max 146 ms).
 - Estimado: 5h
 
 ### RF-02 — Pantalla de ingreso

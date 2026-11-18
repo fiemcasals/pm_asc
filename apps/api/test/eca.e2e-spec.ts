@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp } from './create-test-app';
+import { textoDelPdf } from './pdf-extraer-texto';
 
 describe('EcaController (e2e)', () => {
   let app: INestApplication;
@@ -144,6 +145,36 @@ describe('EcaController (e2e)', () => {
       const buffer = Buffer.from(res.body);
       expect(buffer.toString('utf-8', 0, 5)).toBe('%PDF-');
       expect(buffer.length).toBeGreaterThan(1000);
+    });
+
+    it.each([
+      ['ALT-MAICON-001', 'DIAGNÓSTICO TÉCNICO DE FALLA CRÍTICA: REPARACIÓN URGENTE'],
+      ['ALT-CP-001', 'DIAGNÓSTICO TÉCNICO DE FALLA CRÍTICA: FUERA DE SERVICIO: CABINA TRABADA'],
+    ])('RF-07: el PDF de %s se lee limpio: sin símbolos rotos y con los estados en palabras', async (alertaId, titulo) => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/eca/remito/${alertaId}?formato=pdf&usuario=operador.legal@maicon.com.ar`)
+        .responseType('blob')
+        .expect(200);
+
+      const texto = textoDelPdf(Buffer.from(res.body));
+
+      expect(texto).toContain(titulo);
+      expect(texto).toContain('OK · Acuse Legal Registrado: ');
+      expect(texto).toContain('OK · Usuario Notificado: ');
+      expect(texto).toContain('operador.legal@maicon.com.ar');
+      expect(texto).not.toMatch(/[þ&]/);
+    });
+
+    it('RF-07: los ítems del checklist del PDF dicen ATENCIÓN con su estado, no un símbolo', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/eca/remito/ALT-MAICON-001?formato=pdf&usuario=operador.legal@maicon.com.ar')
+        .responseType('blob')
+        .expect(200);
+
+      const texto = textoDelPdf(Buffer.from(res.body));
+
+      expect(texto).toMatch(/ATENCIÓN · (Critico|Falla)/);
+      expect(texto).toContain('CHECKLIST DE SEGURIDAD INSPECCIONADO');
     });
 
     it('RF-06: GET /api/eca/remito/:alertaId con Accept: application/pdf genera remito en formato PDF', async () => {

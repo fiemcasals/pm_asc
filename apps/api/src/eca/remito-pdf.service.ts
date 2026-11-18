@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
 import { RemitoTecnicoResponse } from './eca.types';
+import { textoParaPdf as t } from './pdf-texto';
 
 @Injectable()
 export class RemitoPdfService {
@@ -14,7 +15,7 @@ export class RemitoPdfService {
         size: 'A4',
         margin: 40,
         info: {
-          Title: `Remito Técnico Oficial - ${remito.codigoAGC} - ${remito.id}`,
+          Title: `Remito Técnico Oficial - ${t(remito.codigoAGC)} - ${t(remito.id)}`,
           Author: 'MAICON S.R.L. - Sistema de Gestión de Elevadores',
           Subject: 'Notificación Fehaciente de Falla Crítica y Acuse Legal AGC',
           Keywords: 'elevador, remito, ascensor, agc, maicon, falla critica, acuse legal',
@@ -81,11 +82,11 @@ export class RemitoPdfService {
         .fontSize(8.5)
         .text('N° REMITO: ', MARGIN + 10, pillY + 9, { continued: true })
         .font('Helvetica')
-        .text(`${remito.id}   |   `, { continued: true })
+        .text(`${t(remito.id)}   |   `, { continued: true })
         .font('Helvetica-Bold')
         .text('ALERTA ID: ', { continued: true })
         .font('Helvetica')
-        .text(`${remito.alertaId}   |   `, { continued: true })
+        .text(`${t(remito.alertaId)}   |   `, { continued: true })
         .font('Helvetica-Bold')
         .text('FECHA EMISIÓN: ', { continued: true })
         .font('Helvetica')
@@ -115,33 +116,33 @@ export class RemitoPdfService {
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#334155')
         .text('Consorcio: ', col1X, dataRowY1, { continued: true })
-        .font('Helvetica').fillColor('#0f172a').text(remito.edificio.consorcio);
+        .font('Helvetica').fillColor('#0f172a').text(t(remito.edificio.consorcio));
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#334155')
         .text('Dirección: ', col1X, dataRowY2, { continued: true })
-        .font('Helvetica').fillColor('#0f172a').text(remito.edificio.direccion);
+        .font('Helvetica').fillColor('#0f172a').text(t(remito.edificio.direccion));
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#334155')
         .text('Administración: ', col1X, dataRowY3, { continued: true })
-        .font('Helvetica').fillColor('#0f172a').text(remito.edificio.administracion || 'No informada');
+        .font('Helvetica').fillColor('#0f172a').text(t(remito.edificio.administracion) || 'No informada');
 
       // Columna 2
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#334155')
         .text('Código AGC: ', col2X, dataRowY1, { continued: true })
-        .font('Helvetica-Bold').fillColor('#991b1b').text(remito.codigoAGC);
+        .font('Helvetica-Bold').fillColor('#991b1b').text(t(remito.codigoAGC));
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#334155')
         .text('Elevador: ', col2X, dataRowY2, { continued: true })
-        .font('Helvetica').fillColor('#0f172a').text(remito.nombreMaquina);
+        .font('Helvetica').fillColor('#0f172a').text(t(remito.nombreMaquina));
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#334155')
         .text('Conservadora (ECA): ', col2X, dataRowY3, { continued: true })
-        .font('Helvetica-Bold').fillColor('#0f172a').text(remito.eca);
+        .font('Helvetica-Bold').fillColor('#0f172a').text(t(remito.eca));
 
       currentY += box1Height + 14;
 
@@ -156,12 +157,12 @@ export class RemitoPdfService {
         .fillColor('#9f1239')
         .font('Helvetica-Bold')
         .fontSize(10)
-        .text(`DIAGNÓSTICO TÉCNICO DE FALLA CRÍTICA: ${remito.titulo.toUpperCase()}`, MARGIN + 12, box2Y + 10);
+        .text(`DIAGNÓSTICO TÉCNICO DE FALLA CRÍTICA: ${t(remito.titulo).toUpperCase()}`, MARGIN + 12, box2Y + 10);
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#881337')
         .text('Tipo de Alerta: ', MARGIN + 12, box2Y + 28, { continued: true })
-        .font('Helvetica-Bold').fillColor('#b91c1c').text(remito.tipoAlerta, { continued: true })
+        .font('Helvetica-Bold').fillColor('#b91c1c').text(t(remito.tipoAlerta), { continued: true })
         .font('Helvetica-Bold').fillColor('#881337').text('   |   Fecha Detección: ', { continued: true })
         .font('Helvetica').fillColor('#0f172a').text(new Date(remito.fechaDeteccion).toLocaleString('es-AR'));
 
@@ -171,7 +172,7 @@ export class RemitoPdfService {
 
       doc
         .font('Helvetica').fontSize(8.5).fillColor('#1e293b')
-        .text(remito.motivo, MARGIN + 12, box2Y + 56, {
+        .text(t(remito.motivo), MARGIN + 12, box2Y + 56, {
           width: CONTENT_WIDTH - 24,
           align: 'left',
         });
@@ -209,15 +210,15 @@ export class RemitoPdfService {
 
           doc
             .font('Helvetica-Bold').fontSize(8).fillColor('#0f172a')
-            .text(item.item, MARGIN + 8, currentY + 6, { width: 155, ellipsis: true });
+            .text(t(item.item), MARGIN + 8, currentY + 6, { width: 155, ellipsis: true });
 
           doc
             .font('Helvetica-Bold').fontSize(8).fillColor('#b91c1c')
-            .text(`⚠️ ${item.estado}`, MARGIN + 170, currentY + 6);
+            .text(`ATENCIÓN · ${t(item.estado)}`, MARGIN + 170, currentY + 6, { width: 86, ellipsis: true });
 
           doc
             .font('Helvetica').fontSize(8).fillColor('#475569')
-            .text(item.observaciones, MARGIN + 260, currentY + 6, { width: CONTENT_WIDTH - 270, ellipsis: true });
+            .text(t(item.observaciones), MARGIN + 260, currentY + 6, { width: CONTENT_WIDTH - 270, ellipsis: true });
 
           currentY += rowHeight;
         }
@@ -251,19 +252,19 @@ export class RemitoPdfService {
         ? new Date(remito.acuseLegal.fechaHora).toLocaleString('es-AR')
         : new Date().toLocaleString('es-AR');
 
-      const acuseUser = remito.acuseLegal?.usuario || 'responsable.tecnico@eca.com.ar';
+      const acuseUser = t(remito.acuseLegal?.usuario) || 'responsable.tecnico@eca.com.ar';
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#14532d')
-        .text('✓ Acuse Legal Registrado: ', MARGIN + 12, currentY + 62, { continued: true })
+        .text('OK · Acuse Legal Registrado: ', MARGIN + 12, currentY + 62, { continued: true })
         .font('Helvetica').text(`SÍ (Conforme Ley CABA)   |   Fecha/Hora: `, { continued: true })
         .font('Helvetica-Bold').text(acuseFecha);
 
       doc
         .font('Helvetica-Bold').fontSize(8.5).fillColor('#14532d')
-        .text('✓ Usuario Notificado: ', MARGIN + 12, currentY + 78, { continued: true })
+        .text('OK · Usuario Notificado: ', MARGIN + 12, currentY + 78, { continued: true })
         .font('Helvetica').text(`${acuseUser}   |   ECA: `, { continued: true })
-        .font('Helvetica-Bold').text(remito.eca);
+        .font('Helvetica-Bold').text(t(remito.eca));
 
       doc
         .font('Helvetica-Oblique').fontSize(7.5).fillColor('#166534')

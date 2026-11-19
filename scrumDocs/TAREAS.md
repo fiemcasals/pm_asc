@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:18:08.483Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:19:34.077Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -808,6 +808,49 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 2. A 30 m o menos aparecen "Iniciar Inspección" y "No se pudo realizar la inspección"; más lejos no aparecen.
 3. Si la precisión del GPS no alcanza, aparece "Sin buena señal GPS", que exige foto del frente y justificación escrita, y marca la visita para revisión de la Secretaría.
 4. Al iniciar se registran coordenadas, precisión, hora del dispositivo y hora del servidor, y ninguna se puede editar.
+
+### RF-03: Mapa base de CABA propio, que se dibuja sin conexión (Funcional)
+
+El mapa de hoy es un dibujo fijo de 600×260 con tres avenidas dibujadas a mano, sin relación exacta con las calles reales, y no sirve para ubicarse en la calle. El RT trabaja muchas veces sin wifi y sin señal, así que el mapa tiene que dibujarse completo aun sin conexión, y eso descarta usar los mosaicos del servidor público de OpenStreetMap: su política prohíbe descargarlos para uso sin conexión. La opción es un mapa vectorial propio: un archivo PMTiles con las calles de CABA, generado una vez desde los datos de OpenStreetMap con la herramienta pmtiles de Protomaps (recuadro de CABA: longitud -58.535 a -58.335, latitud -34.705 a -34.525), que el servidor de la app entrega y el celular guarda para usarlo sin señal. Esta tarea deja listo el mapa base y su descarga; dibujar los pines es la tarea siguiente.
+
+**Condiciones de aprobación**
+
+1. Un script bajo scripts/ genera el archivo de mapa de CABA con pmtiles extract a partir de una compilación de Protomaps con fecha, con el recuadro de CABA y un zoom máximo de 15 o menos, y deja anotados la fecha y la fuente; el mapa se dibuja sin pedirle nada a ningún servidor de mapas de terceros.
+2. Las tipografías y los íconos que necesita el estilo del mapa también salen del servidor de la app, no de un tercero.
+3. El archivo pesa 60 MB o menos (si pesa más, se baja el zoom máximo); el tamaño real queda anotado en el documento de entrega.
+4. Un botón «Descargar mapa para usar sin señal» baja el archivo una sola vez, con un indicador de avance, y lo guarda en el celular de modo que el mapa lo lea desde ahí.
+5. Con el mapa ya descargado y la red cortada (modo avión), el mapa base de CABA se dibuja completo, con calles y nombres de calles, y se puede acercar y desplazar entre los zooms 10 y 15; una prueba con Playwright corta la red y lo verifica.
+6. Si el mapa no se descargó y no hay red, la pantalla dice «Mapa sin descargar: conectate a una red para bajarlo» y no queda un recuadro en blanco ni roto.
+7. El mapa muestra la atribución «© OpenStreetMap contributors» y la del proveedor del estilo.
+8. Cuando el servidor tiene una versión más nueva del archivo, la app lo avisa y la actualiza sin borrar la versión anterior hasta que la nueva termine de bajar.
+
+### RF-04: Componente de mapa con pines por estado, zoom y nombres que no se pisan (Funcional)
+
+Un componente de mapa nuevo, con MapLibre GL JS, que reemplaza al dibujo actual (MapaUbicacionConsorcio) y se apoya en el mapa base de la tarea anterior. Mantiene lo que el componente de hoy ya hace —pines de color por estado, elegir un edificio con clic o teclado, fijar una ubicación tocando el mapa— y corrige lo que hoy está mal: las posiciones salen distorsionadas porque el recuadro de CABA se estira, los nombres se pisan o se cortan y no hay zoom ni desplazamiento. Mismo contrato de datos que el componente actual, para poder cambiarlo pantalla por pantalla.
+
+**Condiciones de aprobación**
+
+1. El componente recibe los mismos datos que el actual (marcadores con id, etiqueta, color y subtítulo; una ubicación única; modo editable para fijar un punto) y se dibuja sobre el mapa base de CABA propio.
+2. Los pines se ubican por latitud y longitud reales, sin distorsión: dos edificios a 500 metros de distancia se ven a 500 metros en el mapa; una prueba lo verifica con coordenadas conocidas.
+3. El mapa se acerca y se aleja con la rueda y con el pellizco, se desplaza arrastrando, y al abrirse encuadra a todos los edificios con margen.
+4. Los nombres de los edificios no se pisan: con 20 edificios cercanos, las etiquetas de menor prioridad se ocultan (los rojos primero) y reaparecen al acercar; el pin siempre se ve.
+5. Cada pin se puede elegir con clic o con teclado y mantiene su aria-label «Nombre. Color: estado», igual que hoy.
+6. El mapa sigue el tema claro u oscuro de la app.
+7. En modo editable, tocar el mapa fija la ubicación y devuelve latitud y longitud con 6 decimales, y el pin se puede arrastrar para ajustarla.
+8. En un celular de 360 px de ancho el mapa ocupa el ancho disponible y se maneja con una mano; una prueba con Playwright en esa medida y con la red cortada comprueba que se ven el mapa base y los pines.
+
+### RF-05: Usar el mapa nuevo en las pantallas y retirar el dibujo anterior (Funcional)
+
+Cambia el componente viejo por el nuevo en las cinco pantallas que hoy lo usan: ficha del edificio (lectura y edición), alta de consorcio, Secretaría (dos lugares), Semáforo y Mapa del RT. En el Mapa del RT, que es donde más se trabaja sin señal, agrega que el mapa siga mostrando los edificios con los últimos datos descargados cuando no hay conexión.
+
+**Condiciones de aprobación**
+
+1. La ficha del edificio (lectura y edición), el alta de consorcio, Secretaría (los dos lugares donde aparece), el Semáforo y el Mapa del RT usan el componente nuevo; en apps/web/src no queda ninguna referencia a MapaUbicacionConsorcio ni a las avenidas dibujadas a mano («Av. Rivadavia», «Av. 9 de Julio», «Av. Cabildo / Santa Fe»).
+2. Las pruebas de la web existentes siguen en verde, y npm run verify y npm run test:int también.
+3. En el Mapa del RT, con la red cortada y el mapa ya descargado, se ven el mapa base y los pines con los últimos datos descargados, y un cartel indica a qué hora son esos datos.
+4. El Semáforo conserva los colores de sus pines, su leyenda y la nota «El mapa muestra solamente edificios: no hay seguimiento de técnicos en vivo».
+5. La app no pide ninguna geolocalización nueva: la prueba de apps/web/src/auth/ubicacion.test.ts que prohíbe otros accesos sigue en verde.
+6. La guía visual tiene capturas con Playwright de las cinco pantallas, en escritorio y en un celular de 360 px, con la mejora a la vista.
 
 ## HU-17: HU-17: Inspección técnica por solapas
 

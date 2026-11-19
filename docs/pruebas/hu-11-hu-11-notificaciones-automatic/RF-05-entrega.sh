@@ -33,11 +33,14 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Demo-Clave-2026",4))')"
 sql "delete from usuarios where usuario='demo.rt.avisos'" >/dev/null
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.rt.avisos','demo.rt.avisos','rt_calle','$HASH')" >/dev/null
+# Ingresar con un usuario que no existe suma intentos fallidos y a los 5 bloquea la cuenta 15 minutos: antes se revisa que estén los datos de demo.
+[ "$(docker exec "${DB_CONTAINER:-mant-asc-db}" psql -U ascensores -d ascensores -tAc "select count(*) from usuarios where usuario in ('demo.secretaria')" 2>/dev/null | tr -d '\r')" = "1" ] || { echo "  ❌ faltan los datos de demo (o no hay docker): corré antes bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh"; exit 2; }
 SEC="$(login demo.secretaria)"; RT="$(login demo.rt.avisos)"
 { [ -n "$SEC" ] && [ "$SEC" != "undefined" ] && [ -n "$RT" ] && [ "$RT" != "undefined" ]; } || { echo "  ❌ no pude ingresar: corré antes RF-02-datos-demo.sh"; exit 1; }
 
 echo "1. Al registrarse una falla crítica no sale nada: el aviso queda «Pendiente de revisión» en la bandeja"
-http - POST /api/fallas-criticas/informes '{"maquinaId":"MAQ-CORRIENTES-M1","inspector":"rt1","fallasCriticas":["BOTON_PARE_FALLA"]}'
+# Sólo el RT registra el informe y el inspector es el usuario de la sesión (HU-06 RF-06).
+http "$RT" POST /api/fallas-criticas/informes '{"maquinaId":"MAQ-CORRIENTES-M1","fallasCriticas":["BOTON_PARE_FALLA"]}'
 ID="$(json "$TMP/r.json" 'b.informe.id')"
 [ "$CODE" = "201" ] && [ -n "$ID" ] && pass "informe con falla crítica registrado ($ID)" || { fail "informe → $CODE $(cat "$TMP/r.json" | head -c 200)"; exit 1; }
 http "$SEC" GET "/api/whatsapp/historial?alertaId=$ID"

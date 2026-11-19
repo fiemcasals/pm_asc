@@ -30,6 +30,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Demo-Clave-2026",4))')"
 sql "delete from usuarios where usuario='demo.rt.sello'" >/dev/null
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.rt.sello','demo.rt.sello','rt_calle','$HASH')" >/dev/null
+# Ingresar con un usuario que no existe suma intentos fallidos y a los 5 bloquea la cuenta 15 minutos: antes se revisa que estén los datos de demo.
+[ "$(docker exec "${DB_CONTAINER:-mant-asc-db}" psql -U ascensores -d ascensores -tAc "select count(*) from usuarios where usuario in ('demo.admin','demo.secretaria')" 2>/dev/null | tr -d '\r')" = "2" ] || { echo "  ❌ faltan los datos de demo (o no hay docker): corré antes bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh"; exit 2; }
 ADMIN="$(login demo.admin)"; SEC="$(login demo.secretaria)"; RT="$(login demo.rt.sello)"
 { [ -n "$ADMIN" ] && [ "$ADMIN" != "undefined" ] && [ -n "$SEC" ] && [ "$SEC" != "undefined" ] && [ -n "$RT" ] && [ "$RT" != "undefined" ]; } || { echo "  ❌ no pude ingresar: corré antes RF-02-datos-demo.sh"; exit 1; }
 printf '%s' '{"nombre":"DEMO HU18 sello","direccion":"Calle Sello 1","maquinas":[{"referenciaAgc":"M1"}]}' > "$TMP/e.json"
@@ -55,11 +57,12 @@ ID="$(json "$TMP/r.json" 'b.id')"; H="$(json "$TMP/r.json" 'b.hashSha256')"
 [ "$CODE" = "201" ] && echo "$H" | grep -Eq '^[0-9a-f]{64}$' && pass "el informe se cierra (201) con un hash SHA-256 de 64 caracteres" || { fail "cerrar → $CODE $(head -c 300 "$TMP/r.json")"; exit 1; }
 [ "$H" != "$(printf 'a%.0s' $(seq 1 64))" ] && pass "el hash lo calcula la API: el que mandó el celular se ignoró" || fail "se usó el hash del celular"
 [ "$(sql "select hash_sha256 from informes_visita where id='$ID'")" = "$H" ] && [ "$(sql "select version_hash from informes_visita where id='$ID'")" = "sha256-v1" ] && pass "quedó guardado en la base con la versión del cálculo (sha256-v1)" || fail "hash en la base"
+# El API sella el informe sin hashSha256, versionHash ni clientReportId (el identificador con que el celular reenvía, HU-18 RNF-02): el recálculo por fuera hace lo mismo.
 EXP="$(sql "select contenido::text from informes_visita where id='$ID'" >/dev/null; node -e '
   const { createHash } = require("crypto");
   const canon = (v) => v === null || typeof v !== "object" ? JSON.stringify(v) : Array.isArray(v) ? "[" + v.map(canon).join(",") + "]" : "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}";
   const i = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-  const { hashSha256, versionHash, ...resto } = i;
+  const { hashSha256, versionHash, clientReportId, ...resto } = i;
   console.log(createHash("sha256").update(canon(resto), "utf8").digest("hex"));
 ' "$TMP/r.json")"
 [ "$EXP" = "$H" ] && pass "se recalcula por fuera con otro programa (JSON canónico + SHA-256) y da el mismo hash" || fail "el hash no coincide con el cálculo independiente"

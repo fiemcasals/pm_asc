@@ -1,0 +1,116 @@
+/* Mapa base de CABA y su descarga (HU-16 RF-03). Usa los colores de la app, así sigue el tema claro u oscuro. */
+
+.mapa-base-envoltorio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapa-base {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+/* Más específico que `.maplibregl-map { position: relative }`: si no, el contenedor colapsa a alto cero y recorta el mapa. */
+.mapa-base > .mapa-base__lienzo {
+  position: absolute;
+  inset: 0;
+}
+
+.mapa-base__aviso {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.mapa-base__aviso--bloqueo {
+  background: var(--surface-sunken);
+  color: var(--text);
+  pointer-events: auto;
+}
+
+.mapa-base__aviso--bloqueo span {
+  color: var(--muted);
+}
+
+/* El control de zoom y la atribución de MapLibre quedan legibles en el tema oscuro. */
+:root[data-theme='dark'] .maplibregl-ctrl-group {
+  background: var(--card);
+}
+:root[data-theme='dark'] .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+:root[data-theme='dark'] .maplibregl-ctrl-attrib {
+  background: rgba(15, 15, 18, 0.75);
+  color: var(--muted);
+}
+:root[data-theme='dark'] .maplibregl-ctrl-attrib a {
+  color: var(--text);
+}
+
+.mapa-descarga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-subtle);
+}
+
+.mapa-descarga--compacto {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.mapa-descarga__texto {
+  margin: 0;
+  color: var(--text);
+}
+
+.mapa-descarga__avance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+}
+
+.mapa-descarga__avance progress {
+  flex: 1 1 160px;
+  height: 10px;
+  accent-color: var(--accent);
+}
+
+.mapa-descarga__error {
+  width: 100%;
+  margin: 0;
+  color: var(--danger);
+}
+
+.panel-mapa {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-mapa__nota {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

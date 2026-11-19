@@ -46,7 +46,9 @@ export default defineConfig(({ command, mode }) => {
         // En desarrollo también se registra el service worker, para poder verificarlo.
         devOptions: { enabled: true, type: 'module' },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          // El mapa (HU-16 RF-03): sus tipografías (.pbf) y los íconos (.json) se guardan con la app. El archivo de
+          // calles (caba.pmtiles, ~11 MB) NO: se baja a pedido con «Descargar mapa para usar sin señal».
+          globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}', 'mapa/**/*.{pbf,json}'],
           navigateFallback: 'index.html',
           // /api es del servidor y /manual es el manual de uso (HTML servido aparte): el
           // service worker no los puede responder con el index de la app.

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-19T13:01:43.897Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T13:45:44.806Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -176,6 +176,19 @@ Si la Secretaría confirma con una vista vieja (otra persona ya reasignó el edi
 2. Después de recargarse, la sugerencia y la lista de candidatos corresponden al RT vigente y el RT vigente no figura entre los candidatos.
 3. El botón "Confirmar reasignación" vuelve a quedar disponible sin cerrar el panel.
 4. No se agrega ningún registro a "Reasignaciones registradas" por la confirmación rechazada.
+
+### RF-04: [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert (Funcional)
+
+docs/pruebas/hu-04-.../RF-02-entrega.sh falla hoy 2 de sus 14 verificaciones aunque la app anda bien. La función inspeccionado() carga la inspección del 5/11 del edificio C2 con la sesión de la Secretaría; desde HU-06 RF-06 el checklist es solo del RT y el API responde 403, así que la inspección nunca se crea, el RT c queda con 2 pendientes en lugar de 1 (candidatos 'd:0,b:2,c:2' en vez de 'd:0,c:1,b:2') y la verificación «un edificio ya inspeccionado no cuenta como carga» falla. Además el login de la Secretaría de prueba usa curl sin el certificado de mkcert: contra https://localhost:8050 no ingresa y el script se corta. Es el mismo defecto que se corrigió en RF-02-datos-demo.sh (HU-11 RF-07). Se arregla solo este script: ningún archivo de apps/ cambia.
+
+**Condiciones de aprobación**
+
+1. docs/pruebas/hu-04-.../RF-02-entrega.sh carga la inspección del 5/11/2026 del edificio C2 ingresando con la sesión del RT c (el checklist es solo del RT), y si el API no la crea, el script corta e imprime el motivo en lugar de seguir con un SQL sobre un id inexistente.
+2. El login de la Secretaría de prueba usa el certificado de mkcert igual que el resto de las llamadas: corrido contra https://localhost:8050 ingresa sin error de TLS.
+3. Corrido contra https://localhost:8050 y contra http://127.0.0.1:3050, el script termina con "14 verificaciones OK, 0 fallidas", incluida «un edificio ya inspeccionado no cuenta como carga (c: 2 edificios, 1 pendiente)».
+4. El modo --carga 20 termina con 0 consultas fallidas contra las dos direcciones.
+5. Al terminar, la base no tiene usuarios RF02-ent-*, edificios de prueba ni filas de esos usuarios en intentos_login.
+6. El diff del Pull Request toca solamente archivos bajo docs/pruebas/: ningún archivo de apps/ cambia.
 
 ### RNF-01: Índice por fecha para el semáforo y medición con volumen (No funcional)
 

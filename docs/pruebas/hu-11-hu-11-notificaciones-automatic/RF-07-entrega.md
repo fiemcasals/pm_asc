@@ -3,7 +3,7 @@
 - **Tarea:** RF-07 — `REQ-1795091473089`
 - **Rama:** `feature/hu-11-hu-11-notificaciones-automatic/req-1795091473089-fix-scripts-de-entrega-desactualizados-d`
 - **Script del flujo integrado:** [RF-07-entrega.sh](RF-07-entrega.sh) (corre los 12 scripts, uno tras otro)
-- **Guía visual:** no aplica. Son scripts de terminal, sin pantalla.
+- **Guía visual:** [RF-07-datos-de-demo.md](RF-07-datos-de-demo.md). Los scripts son de terminal, pero los datos de demo que arregla se ven en Secretaría › Semáforo; las 4 capturas están sacadas con Playwright y con el elemento de cada paso resaltado.
 - **Depende de:** nada. Cambia solo archivos bajo `docs/pruebas/`; no toca `apps/`.
 
 ## 1. Qué quedó implementado

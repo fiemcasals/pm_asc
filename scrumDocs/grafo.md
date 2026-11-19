@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-19T13:01:45.480Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T13:45:46.291Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -29,6 +29,7 @@ graph TD
     REQ_1791910395476["RF-02: Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida"]
     REQ_1794582638375["RNF-01: Índice por fecha para el semáforo y medición con volumen"]
     REQ_1794582638528["RF-03: Refrescar el panel de reasignación cuando el RT del edificio cambió"]
+    REQ_1795095941025["RF-04: [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert"]
   end
   subgraph US_1791560829061["HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice"]
     REQ_1791910395565["RF-01: API de Monitoreo Backoffice y Acciones Comerciales"]

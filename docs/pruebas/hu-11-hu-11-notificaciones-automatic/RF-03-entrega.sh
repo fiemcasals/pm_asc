@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # HU-11 / RF-03 (REQ-1794155773535) — No informar como entregado un WhatsApp que no se envió.
 #
-# Recorre los criterios 1 y 3 contra la API levantada sin proveedor de WhatsApp configurado:
+# Recorre los criterios 1 y 3 contra la API levantada sin proveedor de WhatsApp configurado (el 3 necesita además los datos de demo:
+# bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh):
 #   bash docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-03-entrega.sh
 #   bash docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-03-entrega.sh --carga 50
 #
@@ -31,8 +32,11 @@ FALLAS=0
 pass() { echo "  ✅ $1"; OK=$((OK + 1)); }
 fail() { echo "  ❌ $1"; FALLAS=$((FALLAS + 1)); }
 
+DB_CONTAINER="${DB_CONTAINER:-mant-asc-db}"
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+sql() { docker exec "$DB_CONTAINER" psql -U ascensores -d ascensores -tAc "$1"; }
+limpiar() { sql "delete from usuarios where usuario='demo.rt.disparo'" >/dev/null 2>&1; rm -rf "$TMP"; }
+trap limpiar EXIT
 
 json() { node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=eval(process.argv[2]);console.log(v===undefined?"":(typeof v==="object"?JSON.stringify(v):v))' "$1" "$2" 2>/dev/null; }
 
@@ -77,29 +81,49 @@ else
   fail "HTTP $code1 · ok='$ok1' · estadoEntrega='$estado1' · message='$msg1'"
 fi
 
-echo "3. Disparo automático ante alerta crítica registra envío como no realizado cuando falta proveedor"
-ALERTA="ALT-MAICON-001"
+echo "3. Una falla crítica no sale sola: pendiente de revisión → 409 y sin envíos; aprobada por la Secretaría → el envío queda «no realizado», nunca «entregado»"
+# Ingresar con un usuario que no existe suma intentos fallidos y a los 5 bloquea la cuenta 15 minutos: antes se revisa que estén los datos de demo.
+[ "$(docker exec "$DB_CONTAINER" psql -U ascensores -d ascensores -tAc "select count(*) from usuarios where usuario = 'demo.secretaria'" 2>/dev/null | tr -d '\r')" = "1" ] || { echo "  ❌ faltan los datos de demo (o no hay docker): corré antes bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh"; exit 2; }
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Demo-Clave-2026",4))')"
+sql "delete from usuarios where usuario='demo.rt.disparo'" >/dev/null
+sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.rt.disparo','demo.rt.disparo','rt_calle','$HASH')" >/dev/null
+login() { printf '{"usuario":"%s","password":"Demo-Clave-2026"}' "$1" > "$TMP/l.json"; "${CURL[@]}" -o "$TMP/lr.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/l.json" "$BASE_URL/api/auth/login"; json "$TMP/lr.json" 'b.accessToken'; }
+SEC="$(login demo.secretaria)"; RT="$(login demo.rt.disparo)"
+{ [ -n "$SEC" ] && [ -n "$RT" ]; } || { fail "no pude ingresar como demo.secretaria y demo.rt.disparo"; exit 1; }
+
+# Sólo el RT registra el informe y el inspector es el usuario de la sesión (HU-06 RF-06).
+codeI="$("${CURL[@]}" -o "$TMP/inf.json" -w '%{http_code}' -X POST -H "Authorization: Bearer $RT" -H 'Content-Type: application/json' \
+  -d '{"maquinaId":"MAQ-CORRIENTES-M1","fallasCriticas":["BOTON_PARE_FALLA"]}' "$BASE_URL/api/fallas-criticas/informes")"
+ALERTA="$(json "$TMP/inf.json" 'b.informe.id')"
+if [ "$codeI" = "201" ] && [ -n "$ALERTA" ]; then pass "falla crítica registrada por un RT ($ALERTA)"; else fail "informe → HTTP $codeI $(head -c 200 "$TMP/inf.json")"; exit 1; fi
+
 code3="$("${CURL[@]}" -o "$TMP/trig.json" -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
-  -d "{\"alertaId\":\"$ALERTA\",\"telefonoDestino\":\"+5491199887766\"}" \
-  "$BASE_URL/api/whatsapp/trigger-alerta-critica")"
-ok3="$(json "$TMP/trig.json" 'b.ok')"
-realizado3="$(json "$TMP/trig.json" 'b.envioRealizado')"
-estado3="$(json "$TMP/trig.json" 'b.estado')"
-entrega3="$(json "$TMP/trig.json" 'b.estadoEntrega')"
-if [ "$code3" = "201" ] && [ "$ok3" = "false" ] && [ "$realizado3" = "false" ] && [ "$estado3" = "no_realizado" ] && [ "$entrega3" = "no_configurado" ]; then
-  pass "Trigger HTTP $code3 · ok: $ok3 · envioRealizado: $realizado3 · estado: $estado3 · estadoEntrega: $entrega3"
+  -d "{\"alertaId\":\"$ALERTA\",\"telefonoDestino\":\"+5491199887766\"}" "$BASE_URL/api/whatsapp/trigger-alerta-critica")"
+if [ "$code3" = "409" ] && grep -q "pendiente de revisión" "$TMP/trig.json"; then
+  pass "Disparo sobre el aviso pendiente → HTTP $code3 «pendiente de revisión»: la Secretaría tiene que aprobarlo antes"
 else
-  fail "Trigger HTTP $code3 · ok='$ok3' · envioRealizado='$realizado3' · estado='$estado3' · estadoEntrega='$entrega3'"
+  fail "Disparo sobre el aviso pendiente → HTTP $code3 $(head -c 200 "$TMP/trig.json")"
 fi
 
-echo "   Verificando registro en GET /api/whatsapp/historial?alertaId=$ALERTA"
-codeh="$("${CURL[@]}" -o "$TMP/hist.json" -w '%{http_code}' "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA")"
-ultEstado="$(json "$TMP/hist.json" 'b.registros[b.registros.length-1].estado')"
-ultOrigen="$(json "$TMP/hist.json" 'b.registros[b.registros.length-1].origen')"
-if [ "$codeh" = "200" ] && [ "$ultEstado" = "no_realizado" ] && [ "$ultOrigen" = "automatico" ]; then
-  pass "Historial HTTP $codeh · último registro: origen=$ultOrigen estado=$ultEstado"
+echo "   Verificando que no salió nada: GET /api/whatsapp/historial?alertaId=$ALERTA"
+"${CURL[@]}" -o "$TMP/hist0.json" "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA"
+total0="$(json "$TMP/hist0.json" 'b.total')"
+if [ "$total0" = "0" ]; then pass "Historial sin envíos antes de la aprobación (total=$total0)"; else fail "Historial con envíos sin aprobación (total='$total0')"; fi
+
+code4="$("${CURL[@]}" -o "$TMP/apr.json" -w '%{http_code}' -X POST -H "Authorization: Bearer $SEC" -H 'Content-Type: application/json' \
+  -d '{}' "$BASE_URL/api/avisos/$ALERTA/aprobar")"
+if [ "$code4" = "201" ]; then pass "La Secretaría aprueba el aviso → HTTP $code4"; else fail "Aprobar → HTTP $code4 $(head -c 200 "$TMP/apr.json")"; fi
+
+echo "   Verificando el registro: GET /api/whatsapp/historial?alertaId=$ALERTA"
+"${CURL[@]}" -o "$TMP/hist1.json" "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA"
+total1="$(json "$TMP/hist1.json" 'b.total')"
+sinSalir="$(json "$TMP/hist1.json" 'b.registros.length>0&&b.registros.every(r=>r.estado==="no_realizado"&&r.estadoEntrega==="no_configurado")')"
+entregados="$(json "$TMP/hist1.json" 'b.registros.filter(r=>r.estadoEntrega==="entregado"||r.estado==="entregado").length')"
+if [ "$total1" -ge 1 ] 2>/dev/null && [ "$sinSalir" = "true" ] && [ "$entregados" = "0" ]; then
+  pass "Historial tras aprobar: $total1 registros, todos «no_realizado» / «no_configurado»; ninguno informado como entregado"
 else
-  fail "Historial HTTP $codeh · origen='$ultOrigen' estado='$ultEstado'"
+  fail "Historial tras aprobar: total='$total1' · todos no realizados='$sinSalir' · entregados='$entregados'"
 fi
 
 echo

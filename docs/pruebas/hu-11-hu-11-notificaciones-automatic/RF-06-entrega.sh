@@ -5,13 +5,17 @@
 #
 # Requiere la API levantada (npm run dev con DATABASE_APP_PASSWORD y AUTH_JWT_SECRET) y los datos de demostración:
 # bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh
-# Entra como demo.secretaria. El vencimiento a los 7 días no se puede esperar en una corrida: lo prueban los tests con reloj
+# Entra como demo.secretaria y crea un RT temporal (demo.rt.enlace) que registra las fallas, porque sólo el RT lo hace (HU-06 RF-06); lo borra al terminar. El vencimiento a los 7 días no se puede esperar en una corrida: lo prueban los tests con reloj
 # simulado (apps/api/test/avisos-enlace.spec.ts e informe-aviso.e2e-spec.ts); acá se verifica la fecha de vencimiento informada.
 # BASE_URL por defecto http://127.0.0.1:3050 (la API directa).
 
 set -u
 BASE_URL="${BASE_URL:-http://127.0.0.1:3050}"
-TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+DB_CONTAINER="${DB_CONTAINER:-mant-asc-db}"
+TMP="$(mktemp -d)"
+sql() { docker exec "$DB_CONTAINER" psql -U ascensores -d ascensores -tAc "$1"; }
+limpiar() { sql "delete from usuarios where usuario='demo.rt.enlace'" >/dev/null; rm -rf "$TMP"; }
+trap limpiar EXIT
 OK=0; KO=0
 pass() { echo "  ✅ $1"; OK=$((OK+1)); }
 fail() { echo "  ❌ $1"; KO=$((KO+1)); }
@@ -26,9 +30,15 @@ http() { # http <token|-> <metodo> <ruta> [cuerpo] → código en $CODE, cuerpo 
 pagina() { CODE="$(curl -s -D "$TMP/h.txt" -o "$TMP/p.html" -w '%{http_code}' "$BASE_URL$1")"; }
 
 echo "== HU-11 / RF-06 contra $BASE_URL"
-SEC="$(login demo.secretaria)"
-{ [ -n "$SEC" ] && [ "$SEC" != "undefined" ]; } || { echo "  ❌ no pude ingresar: corré antes RF-02-datos-demo.sh"; exit 1; }
-http - POST /api/fallas-criticas/informes '{"maquinaId":"MAQ-CORRIENTES-M1","inspector":"rt1","fallasCriticas":["BOTON_PARE_FALLA"],"observaciones":"Pulsador trabado en planta baja"}'
+# Ingresar con un usuario que no existe suma intentos fallidos y a los 5 bloquea la cuenta 15 minutos: antes se revisa que estén los datos de demo.
+[ "$(docker exec "${DB_CONTAINER:-mant-asc-db}" psql -U ascensores -d ascensores -tAc "select count(*) from usuarios where usuario in ('demo.secretaria')" 2>/dev/null | tr -d '\r')" = "1" ] || { echo "  ❌ faltan los datos de demo (o no hay docker): corré antes bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh"; exit 2; }
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Demo-Clave-2026",4))')"
+sql "delete from usuarios where usuario='demo.rt.enlace'" >/dev/null
+sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.rt.enlace','demo.rt.enlace','rt_calle','$HASH')" >/dev/null
+SEC="$(login demo.secretaria)"; RT="$(login demo.rt.enlace)"
+{ [ -n "$SEC" ] && [ "$SEC" != "undefined" ] && [ -n "$RT" ] && [ "$RT" != "undefined" ]; } || { echo "  ❌ no pude ingresar: corré antes RF-02-datos-demo.sh"; exit 1; }
+http "$RT" POST /api/fallas-criticas/informes '{"maquinaId":"MAQ-CORRIENTES-M1","fallasCriticas":["BOTON_PARE_FALLA"],"observaciones":"Pulsador trabado en planta baja"}'
 ID="$(json "$TMP/r.json" 'b.informe.id')"
 http "$SEC" POST "/api/avisos/$ID/aprobar" '{}'
 ENLACE="$(json "$TMP/r.json" 'b.enlace')"
@@ -58,7 +68,7 @@ DIAS="$(node -e 'console.log(Math.round((Date.parse(process.argv[1])-Date.now())
 echo "     (el 410 «Este enlace venció» pasados los 7 días lo prueban los tests con reloj simulado)"
 
 echo "4. Muestra sólo el informe de ese aviso"
-http - POST /api/fallas-criticas/informes '{"maquinaId":"MAQ-CALLAO-M1","inspector":"rt1","fallasCriticas":["BOTON_PARE_FALLA"],"observaciones":"Otro edificio distinto"}'
+http "$RT" POST /api/fallas-criticas/informes '{"maquinaId":"MAQ-CALLAO-M1","fallasCriticas":["BOTON_PARE_FALLA"],"observaciones":"Otro edificio distinto"}'
 ID2="$(json "$TMP/r.json" 'b.informe.id')"
 http "$SEC" POST "/api/avisos/$ID2/aprobar" '{}'
 ENLACE2="$(json "$TMP/r.json" 'b.enlace')"

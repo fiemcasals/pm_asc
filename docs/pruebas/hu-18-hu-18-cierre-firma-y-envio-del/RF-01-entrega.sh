@@ -32,6 +32,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Demo-Clave-2026",4))')"
 sql "delete from usuarios where usuario in ('demo.rt.informe','demo.rt.informe2')" >/dev/null
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.rt.informe','demo.rt.informe','rt_calle','$HASH'),('demo.rt.informe2','demo.rt.informe2','rt_calle','$HASH')" >/dev/null
+# Ingresar con un usuario que no existe suma intentos fallidos y a los 5 bloquea la cuenta 15 minutos: antes se revisa que estén los datos de demo.
+[ "$(docker exec "${DB_CONTAINER:-mant-asc-db}" psql -U ascensores -d ascensores -tAc "select count(*) from usuarios where usuario in ('demo.admin','demo.secretaria')" 2>/dev/null | tr -d '\r')" = "2" ] || { echo "  ❌ faltan los datos de demo (o no hay docker): corré antes bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh"; exit 2; }
 ADMIN="$(login demo.admin)"; SEC="$(login demo.secretaria)"; RT="$(login demo.rt.informe)"; RT2="$(login demo.rt.informe2)"
 { [ -n "$ADMIN" ] && [ "$ADMIN" != "undefined" ] && [ -n "$SEC" ] && [ "$SEC" != "undefined" ] && [ -n "$RT" ] && [ "$RT" != "undefined" ] && [ -n "$RT2" ] && [ "$RT2" != "undefined" ]; } || { echo "  ❌ no pude ingresar: corré antes RF-02-datos-demo.sh"; exit 1; }
 printf '%s' '{"nombre":"DEMO HU18 informe","direccion":"Calle Informe 1","maquinas":[{"referenciaAgc":"M1"},{"referenciaAgc":"M2"}]}' > "$TMP/e.json"

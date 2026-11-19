@@ -3,7 +3,7 @@
 - **Tarea:** RF-04 — `REQ-1795095941025`
 - **Rama:** `feature/hu-04-hu-04-semaforo-de-control-mens/req-1795095941025-fix-script-de-entrega-de-hu-04-rf-02-la`
 - **Script del flujo integrado:** [RF-04-entrega.sh](RF-04-entrega.sh)
-- **Guía visual:** no aplica. Es un script de terminal. Lo que el arreglo muestra en pantalla (el edificio inspeccionado el 5/11 en verde en el Semáforo) ya está documentado, con capturas, en el paso 4 de [RF-07-datos-de-demo.md](../hu-11-hu-11-notificaciones-automatic/RF-07-datos-de-demo.md).
+- **Guía visual:** [RF-04-reasignar-en-pantalla.md](RF-04-reasignar-en-pantalla.md). El arreglo es de un script de terminal, pero lo que ese script verifica se ve en Secretaría › Semáforo › «Reasignar»: 3 capturas sacadas con Playwright, con el elemento de cada paso resaltado. El edificio inspeccionado el 5/11 en verde también está en el paso 4 de [RF-07-datos-de-demo.md](../hu-11-hu-11-notificaciones-automatic/RF-07-datos-de-demo.md).
 - **Depende de:** nada. Cambia solo archivos bajo `docs/pruebas/`; no toca `apps/`.
 
 ## 1. Qué quedó implementado

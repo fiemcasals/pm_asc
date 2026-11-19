@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:14:00.459Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:17:44.899Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -79,6 +79,9 @@ graph TD
     REQ_1794493273993["RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría"]
     REQ_1794493274385["RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días"]
     REQ_1795091473089["RF-07: FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04"]
+    REQ_1795097860369["RF-08: Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada"]
+    REQ_1795097860589["RF-09: Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor"]
+    REQ_1795097860686["RF-10: Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]
@@ -119,6 +122,12 @@ graph TD
     REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
     REQ_1794494002697["RNF-01: Sellado del informe"]
     REQ_1794494002926["RNF-02: Cola de sincronización del celular"]
+  end
+  subgraph US_1795097860829["RO-02: Probar el envío real de WhatsApp con el celular de German"]
+    REQ_1795097860837["RF-01: Probar el envío real de WhatsApp con el celular de German"]
+  end
+  subgraph US_1795097860904["RO-03: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso"]
+    REQ_1795097860908["RF-01: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885

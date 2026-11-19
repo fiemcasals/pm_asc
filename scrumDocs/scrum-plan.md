@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-19T13:52:59.038Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-19T14:13:27.303Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -133,7 +133,7 @@ PR #86 contra dev. Se arreglaron 6 scripts de entrega desactualizados y el scrip
 - Estimado: 4h
 
 ### RF-04 — [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert
-Inicio: arreglo del script de entrega de HU-04 RF-02. Solo se toca un archivo bajo docs/pruebas/.
+PR #87 contra dev. Se arregló docs/pruebas/hu-04-.../RF-02-entrega.sh (que fallaba 2 de 14 verificaciones aunque la app andaba bien); solo cambian archivos bajo docs/pruebas/ (1 script modificado; nuevos: RF-04-entrega.sh, RF-04-entrega.md, la guía visual RF-04-reasignar-en-pantalla.md y 3 capturas sacadas con Playwright). Causas: la inspección del 5/11 del edificio C2 se cargaba con la sesión de la Secretaría y desde HU-06 RF-06 el checklist es solo del RT (403), así que el RT c pesaba 2 y no 1; y el login usaba curl a secas, que contra https://localhost:8050 termina con el error 35 de Schannel. Ahora el RT c carga la inspección con su sesión, el script corta con el motivo si el API no la crea, y el login usa el mismo curl con --ssl-no-revoke y el certificado de mkcert. Resultado: 14 verificaciones OK, 0 fallidas contra https://localhost:8050 y contra http://127.0.0.1:3050 (antes: 12 OK y 2 fallidas por la API directa, y sin ingresar por HTTPS); --carga 20 con 0 fallidas en las dos (p95 70 ms por HTTPS y 34 ms por la API directa); 0 residuos en la base. Guía visual con Playwright: lo que verifica el script se ve en Secretaría › Semáforo › «Reasignar» (rt.carla con 1 pendiente aunque tiene 2 edificios). Mínimo necesario agregado: RF-04-entrega.sh, el corredor que pide el estándar de entrega. Detalle en docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-04-entrega.md.
 - Estimado: 1h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

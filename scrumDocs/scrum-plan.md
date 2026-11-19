@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-19T13:45:51.034Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-19T13:46:05.755Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -133,6 +133,7 @@ PR #86 contra dev. Se arreglaron 6 scripts de entrega desactualizados y el scrip
 - Estimado: 4h
 
 ### RF-04 — [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert
+Inicio: arreglo del script de entrega de HU-04 RF-02. Solo se toca un archivo bajo docs/pruebas/.
 - Estimado: 1h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

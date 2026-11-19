@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-18T17:01:15.802Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T12:31:16.304Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -571,6 +571,21 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 2. El link contiene un token aleatorio de al menos 128 bits; un token inexistente o alterado responde 404 sin revelar datos.
 3. Pasados 7 días desde el envío, el link responde 410 con el mensaje "Este enlace venció" y no muestra el informe.
 4. El link muestra únicamente el informe de ese aviso, no otros edificios ni otras fallas de la ECA.
+
+### RF-07: FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04 (Funcional)
+
+Seis scripts de entrega fallan hoy aunque la app anda bien, porque se escribieron antes de cambios posteriores: HU-18 RNF-01 suma clientReportId al recalcular el hash (el API no lo sella desde RNF-02); HU-11 RF-03 dispara un aviso que ahora queda pendiente de revisión; HU-11 RF-05 y RF-06 registran la falla crítica sin sesión de RT (desde el PR #82 el endpoint la exige); HU-15 RNF-01 y RNF-02 usan el header x-eca-actual, que RNF-03 reemplazó por la sesión. Además RF-02-datos-demo.sh de HU-04 tira un error SQL al cargar la inspección del 5/11, y los scripts que dependen de los datos de demo intentan ingresar aunque falten, con lo que bloquean la cuenta demo.secretaria 15 minutos. Se arreglan solo los scripts y el script de datos de demo: ningún archivo de apps/ cambia.
+
+**Condiciones de aprobación**
+
+1. docs/pruebas/hu-18-.../RNF-01-entrega.sh recalcula el hash por fuera sin el campo clientReportId, que el API no incluye en el contenido sellado, y termina con "Resultado: 18 ok, 0 con error".
+2. docs/pruebas/hu-11-.../RF-05-entrega.sh y RF-06-entrega.sh registran la falla crítica ingresando antes con un usuario de rol rt_calle, y terminan con 0 fallas.
+3. docs/pruebas/hu-11-.../RF-03-entrega.sh verifica que el disparo automático sobre un aviso pendiente de revisión responde 409 con el mensaje de que la Secretaría tiene que aprobarlo, que no sale ningún WhatsApp, y que una vez aprobado el envío queda como no realizado por falta de proveedor; termina con 0 fallas.
+4. docs/pruebas/hu-15-.../RNF-01-entrega.sh y RNF-02-entrega.sh ingresan con una sesión (POST /api/auth/login) en lugar de mandar el header x-eca-actual, y terminan con 0 fallas.
+5. docs/pruebas/hu-04-.../RF-02-datos-demo.sh carga los 5 edificios DEMO y la inspección del 5/11/2026 sin ningún error de SQL en la salida.
+6. Los scripts que dependen de los datos de demo (HU-11 RF-05 y RF-06, HU-15 RF-02, HU-18 RF-01, RNF-01 y RNF-02) revisan antes que existan; si faltan, avisan que hay que correr RF-02-datos-demo.sh y salen con código 2 sin intentar ingresar, de modo que intentos_login queda sin filas de demo.secretaria.
+7. Desde una base con los datos de demo recién cargados, los 12 scripts de entrega de HU-11 (RF-03 a RF-06), HU-15 (RF-01, RF-02, RNF-01, RNF-02 y RNF-03) y HU-18 (RF-01, RNF-01 y RNF-02), corridos uno tras otro, terminan con 0 fallas.
+8. El diff del Pull Request toca solamente archivos bajo docs/pruebas/: ningún archivo de apps/ cambia.
 
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 

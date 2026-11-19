@@ -17,7 +17,9 @@
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm test --workspaces",
     "test:int": "npm run test:int -w apps/api",
-    "verify": "npm run typecheck && npm test"
+    "verify": "npm run typecheck && npm test",
+    "mapa:assets": "node scripts/mapa/descargar-assets.mjs",
+    "mapa:generar": "node scripts/mapa/generar-mapa-caba.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.5",

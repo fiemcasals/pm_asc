@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:17:44.899Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:18:10.059Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -184,6 +184,7 @@ graph TD
   REQ_1791910396892 --> REQ_1794493273993
   REQ_1791910396553 --> REQ_1794493273993
   REQ_1794493273993 --> REQ_1794493274385
+  REQ_1795097860589 --> REQ_1795097860686
   REQ_1794486918351 --> REQ_1794488168014
   REQ_1791560828605 --> REQ_1794493998753
   REQ_1794493998753 --> REQ_1794493998996
@@ -223,4 +224,5 @@ graph TD
   REQ_1794494002445 --> REQ_1794494002697
   REQ_1794494002445 --> REQ_1794494002926
   REQ_1794494001967 --> REQ_1794494002926
+  REQ_1795097860369 --> REQ_1795097860908
 ```

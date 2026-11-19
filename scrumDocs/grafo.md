@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:18:10.059Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:19:35.805Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -106,6 +106,9 @@ graph TD
   subgraph US_1794493998209["HU-16: HU-16: Mapa del RT y llegada al edificio"]
     REQ_1794493999840["RF-01: Mapa del RT con pines por horario"]
     REQ_1794494000129["RF-02: Tarjeta del edificio y validación de presencia a 30 m"]
+    REQ_1795097971049["RF-03: Mapa base de CABA propio, que se dibuja sin conexión"]
+    REQ_1795097971265["RF-04: Componente de mapa con pines por estado, zoom y nombres que no se pisan"]
+    REQ_1795097971367["RF-05: Usar el mapa nuevo en las pantallas y retirar el dibujo anterior"]
   end
   subgraph US_1794493998283["HU-17: HU-17: Inspección técnica por solapas"]
     REQ_1794494000545["RF-01: Motor del checklist configurable"]
@@ -201,6 +204,8 @@ graph TD
   REQ_1794493998460 --> REQ_1794493999840
   REQ_1794493276926 --> REQ_1794493999840
   REQ_1794493999840 --> REQ_1794494000129
+  REQ_1795097971049 --> REQ_1795097971265
+  REQ_1795097971265 --> REQ_1795097971367
   REQ_1791560828605 --> REQ_1794494000545
   REQ_1794493274550 --> REQ_1794494000545
   REQ_1794494000129 --> REQ_1794494000700

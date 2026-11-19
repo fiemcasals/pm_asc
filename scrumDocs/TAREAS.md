@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:13:59.025Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:17:43.304Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -600,6 +600,46 @@ Seis scripts de entrega fallan hoy aunque la app anda bien, porque se escribiero
 7. Desde una base con los datos de demo recién cargados, los 12 scripts de entrega de HU-11 (RF-03 a RF-06), HU-15 (RF-01, RF-02, RNF-01, RNF-02 y RNF-03) y HU-18 (RF-01, RNF-01 y RNF-02), corridos uno tras otro, terminan con 0 fallas.
 8. El diff del Pull Request toca solamente archivos bajo docs/pruebas/: ningún archivo de apps/ cambia.
 
+### RF-08: Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada (Funcional)
+
+Hoy el conector manda el aviso como texto libre (type "text" en Meta, Body en Twilio). Meta solo permite texto libre dentro de las 24 horas posteriores a un mensaje del destinatario, y Twilio tiene la misma restricción fuera del sandbox: una alerta que inicia el sistema tiene que salir como mensaje de plantilla, aprobada de antemano por el proveedor, con parámetros. Se cambia el envío para que use la plantilla y se deja escrito el texto que hay que registrar en el panel del proveedor. No cambia quién recibe el aviso ni cuándo sale (eso sigue siendo después de que la Secretaría lo aprueba).
+
+**Condiciones de aprobación**
+
+1. Con WHATSAPP_PROVIDER=meta, el envío manda type "template" con template.name tomado de WHATSAPP_META_TEMPLATE_NAME, language.code de WHATSAPP_META_TEMPLATE_LANG (por defecto es_AR) y los parámetros del cuerpo en este orden: edificio, equipo, estado, detalle y enlace del informe; el receptor HTTP de prueba recibe ese cuerpo exacto y ningún campo de texto libre.
+2. Con WHATSAPP_PROVIDER=twilio, el envío manda ContentSid tomado de WHATSAPP_TWILIO_CONTENT_SID y ContentVariables con esos mismos 5 valores, y no manda Body de texto libre.
+3. Si falta el nombre de la plantilla (Meta) o el ContentSid (Twilio), no sale ningún mensaje: el envío queda no_realizado con estadoEntrega no_configurado y el motivo dice que falta la plantilla; no cae a texto libre.
+4. Los valores de los parámetros se limpian de saltos de línea, tabulaciones y de más de 4 espacios seguidos, y se recortan a 1024 caracteres, porque Meta rechaza los parámetros con esos caracteres; una prueba automática lo verifica con un detalle de falla de varias líneas.
+5. El texto de la plantilla, con sus 5 variables y un ejemplo de cada una, queda en un documento bajo docs/pruebas/hu-11-hu-11-notificaciones-automatic/ listo para copiar al panel del proveedor.
+6. Las pruebas automáticas de apps/api/test/whatsapp-proveedor.e2e-spec.ts cubren los casos 1 a 4, y npm run verify y npm run test:int siguen en verde.
+
+### RF-09: Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor (Funcional)
+
+Hoy un envío figura "entregado" apenas el proveedor acepta el pedido (respuesta 2xx): eso no prueba que el mensaje haya llegado al celular. Meta y Twilio avisan a una URL del sistema cuando el mensaje se envía, se entrega, se lee o falla. Se agregan esas dos entradas públicas, con validación de la firma del proveedor para que nadie pueda inventar estados, y el historial pasa a distinguir "aceptado por el proveedor" de "entregado". Es la regla de HU-11 RF-03 (no informar como entregado lo que no se entregó) llevada hasta el final.
+
+**Condiciones de aprobación**
+
+1. GET /api/whatsapp/webhook/meta devuelve el valor de hub.challenge solo cuando hub.verify_token coincide con WHATSAPP_META_VERIFY_TOKEN; con cualquier otro valor responde 403.
+2. POST /api/whatsapp/webhook/meta valida la cabecera X-Hub-Signature-256 (HMAC-SHA256 del cuerpo sin modificar con WHATSAPP_META_APP_SECRET); sin firma o con firma inválida responde 401 y no cambia ningún registro.
+3. POST /api/whatsapp/webhook/twilio valida X-Twilio-Signature con WHATSAPP_TWILIO_AUTH_TOKEN y la URL pública configurada; con firma inválida responde 401 y no cambia ningún registro.
+4. Cada evento válido actualiza el registro del historial que tiene ese id de mensaje (wamid o SM): sent pasa a enviado, delivered a entregado, read a leido y failed a fallido con el código y el mensaje de error del proveedor.
+5. El estado nunca retrocede y los eventos repetidos son inofensivos: un delivered que llega después de un read, o el mismo evento dos veces, no cambia el registro ni crea filas nuevas.
+6. Un evento de un mensaje que el sistema no conoce responde 200 sin crear nada, para que el proveedor no lo reintente.
+7. El historial distingue aceptado (el proveedor recibió el pedido) de entregado (el proveedor confirmó la entrega): un envío cuya respuesta fue 2xx figura aceptado y solo pasa a entregado con el evento correspondiente.
+8. Los secretos de firma salen solo de variables de entorno y GET /api/whatsapp/estado no los expone; las pruebas de HU-11 RF-03 y RF-04 siguen en verde con la nueva distinción.
+
+### RF-10: Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío (Funcional)
+
+El API ya informa si hay un proveedor de WhatsApp activo (GET /api/whatsapp/estado), pero la pantalla de Secretaría no lo muestra: si no hay proveedor, la Secretaría aprueba un aviso y recién después ve «Falló el envío», sin saber por qué. La bandeja tiene que avisar de entrada si WhatsApp está activo y mostrar, por cada aviso, el estado real que confirma el proveedor (RF de confirmación de entrega).
+
+**Condiciones de aprobación**
+
+1. La bandeja de avisos muestra un cartel con el estado de WhatsApp tomado de GET /api/whatsapp/estado: «WhatsApp activo: Meta», «WhatsApp activo: Twilio» o «WhatsApp no configurado: los avisos aprobados no salen por WhatsApp»; no muestra credenciales ni números de teléfono.
+2. Con WhatsApp no configurado, el botón «Aprobar y enviar» sigue funcionando y el aviso queda «Falló el envío» como hoy, pero el cartel ya lo explicaba antes de apretarlo.
+3. Cada aviso muestra el estado de su envío con lo que confirmó el proveedor: Enviado, Entregado, Leído o Falló con el motivo que informó.
+4. Si GET /api/whatsapp/estado no responde, el cartel dice que no se pudo consultar el estado y la bandeja sigue usable.
+5. Las pruebas de la web cubren los tres estados del cartel (no configurado, Meta y Twilio) y el caso en que no se puede consultar, y la guía visual tiene capturas sacadas con Playwright de la bandeja con y sin WhatsApp activo.
+
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 
 ### RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline (Funcional)
@@ -927,3 +967,23 @@ Inicializar el monorepo (web React+Vite PWA, API NestJS, PostgreSQL+PostGIS en D
 3. Con la configuración de producción, la API no devuelve encabezados CORS.
 4. docker compose up levanta PostgreSQL con PostGIS, y /api/health informa la versión de PostGIS.
 5. https://localhost:8050 carga la app web y registra el service worker.
+
+## RO-02: Probar el envío real de WhatsApp con el celular de German
+
+### RF-01: Probar el envío real de WhatsApp con el celular de German (Funcional)
+
+Hasta ahora el conector con Meta y Twilio solo se probó contra un receptor falso local; nunca salió un mensaje real. Con una cuenta de prueba (el sandbox de Twilio o el número de prueba de Meta Cloud API, que no piden verificar una empresa) se manda un aviso real al celular de German para ver cómo llega, cuánto tarda y qué muestra el enlace. Sirve para decidir con datos antes de desarrollar las tareas de plantilla y confirmación. Las credenciales se cargan solo en el .env local o en la terminal.
+
+**Condiciones de aprobación**
+
+_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._
+
+## RO-03: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso
+
+### RF-01: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso (Funcional)
+
+Para que los avisos salgan en producción hace falta un número de WhatsApp Business de MAICON, con la empresa verificada por el proveedor y la plantilla del aviso aprobada. Es un trámite con el cliente y con el proveedor que puede llevar días, por eso conviene empezarlo cuanto antes. Depende de que la tarea de plantilla deje escrito el texto final.
+
+**Condiciones de aprobación**
+
+_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-19T14:55:47.140Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-19T14:55:59.991Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -154,7 +154,7 @@ PR #87 contra dev. Se arregló docs/pruebas/hu-04-.../RF-02-entrega.sh (que fall
 - Estimado: 2h
 
 ### RF-03 — Mapa base de CABA propio, que se dibuja sin conexión
-Inicio: mapa base de CABA propio, que se dibuja sin conexión (archivo PMTiles propio, MapLibre, descarga al celular).
+PR #88 contra dev. Mapa base de CABA propio que se dibuja sin conexión: archivo PMTiles de CABA (10,67 MB, zoom 0 a 15, 533 mosaicos, build 20261118 de Protomaps) generado con `npm run mapa:generar` (script propio en Node que lee la compilación por pedidos de rango; no va a git); tipografías (OFL) e íconos (MIT) propios en apps/web/public/mapa (0,87 MB); MapaBase con MapLibre (zoom, límites en CABA, tema claro y oscuro, controles en castellano, atribución de OpenStreetMap y Protomaps); botón «Descargar mapa para usar sin señal» con avance y cancelar, que guarda el archivo en la caché del navegador, avisa de versiones nuevas y reemplaza la anterior recién cuando la nueva terminó de bajar y es un PMTiles válido; la PWA guarda el worker de MapLibre, las tipografías y los íconos (29 entradas, 3,6 MiB) y no el archivo de CABA; panel «Mapa de CABA para usar sin señal» en Estado del sistema. Pruebas: npm run verify con tipos OK, API 1143 y web 539 (24 nuevos); RF-03-entrega.sh 11 de 11, --carga 100 con 0 fallidos y --regenerar de punta a punta; con la app compilada y Playwright, con la red cortada y la página recargada el mapa se dibuja completo con calles y nombres hasta el zoom 15,93; sin red y sin mapa guardado, el aviso «Mapa sin descargar: conectate a una red para bajarlo»; al volver la red se dibuja solo; versión nueva → «Actualizar el mapa»; tema claro y oscuro; celular de 360 px; los 42 pedidos al abrir, acercar y descargar el mapa fueron todos a la propia app. Cambio respecto de lo planeado: la condición 1 decía «con pmtiles extract»; en este entorno no se pudo bajar y ejecutar esa herramienta, así que el generador es un script propio y se reescribió la condición sin nombrarla (PM). Límites: solo se probó en Chromium, no en un Android real; el archivo del mapa no está en git y hay que generarlo al clonar y al desplegar. Los pines (RF-04) y el cambio de las 5 pantallas (RF-05) quedan para las tareas siguientes. Detalle en docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-03-entrega.md y guía con capturas de Playwright en RF-03-mapa-sin-conexion.md.
 - Estimado: 12h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

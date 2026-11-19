@@ -10,7 +10,7 @@
 # RF-02-semaforo-secretaria.md. Requiere `npm run db:up` y `npm run dev` (o sólo la API: BASE_URL=http://127.0.0.1:3050),
 # más docker para crear los usuarios y fechar las inspecciones de prueba.
 #
-# Datos que deja: ninguno. Crea 1 Secretaría, 4 RT ("RF02-ent-<pid>-a..d") y 4 edificios, y los borra al terminar.
+# Datos que deja: ninguno. Crea 1 Secretaría, 4 RT ("RF02-ent-<pid>-a..d") y 5 edificios, y los borra al terminar. El RT c ingresa para cargar la inspección de prueba.
 
 set -u
 
@@ -53,7 +53,8 @@ if [ -z "$(sql 'select 1')" ]; then echo "  ❌ no hay acceso a la base por dock
 HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync(process.argv[1],4))' "$PASSWORD")"
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$P-sec','$P-sec','secretaria','$HASH')" >/dev/null
 # Con HU-02 RF-05 el contacto del RT vive en su usuario y la terna lo toma al reasignar: cada RT de prueba lo tiene.
-for rt in a b c d; do sql "insert into usuarios (usuario, nombre, rol, password_hash, telefono, email) values ('$P-$rt','$P-$rt','rt_calle','sin-login','11 4444-$rt','$P-$rt@rt.com')" >/dev/null; done
+# El RT "c" entra con una sesión real: la inspección de prueba la carga él, porque el checklist es solo del RT (HU-06 RF-06). Los demás no ingresan.
+for rt in a b c d; do clave="sin-login"; [ "$rt" = "c" ] && clave="$HASH"; sql "insert into usuarios (usuario, nombre, rol, password_hash, telefono, email) values ('$P-$rt','$P-$rt','rt_calle','$clave','11 4444-$rt','$P-$rt@rt.com')" >/dev/null; done
 
 edificio() { # edificio <clave> <rt> → ids en $TMP/<clave>.id y .maq
   printf '{"nombre":"%s %s","direccion":"Calle %s","maquinas":[{"referenciaAgc":"M1"}]}' "$P" "$1" "$1" > "$TMP/a.json"
@@ -63,16 +64,22 @@ edificio() { # edificio <clave> <rt> → ids en $TMP/<clave>.id y .maq
   printf '{"rtCalle":{"nombre":"%s","telefono":"11 5555-0000"},"firmante":{"nombre":"Firmante","email":"f@f.com"},"eca":{"nombre":"ECA","email":"e@e.com"}}' "$2" > "$TMP/ro.json"
   "${CURL[@]}" -o /dev/null -X PUT -H 'Content-Type: application/json' -d @"$TMP/ro.json" "$BASE_URL/api/consorcios/$id/roles"
 }
-inspeccionado() { # inspeccionado <clave>: una inspección del 5/11
+inspeccionado() { # inspeccionado <clave>: una inspección del 5/11, cargada por el RT "c" con su sesión (el checklist es solo del RT, HU-06 RF-06)
   printf '{"consorcioId":"%s","maquinaId":"%s","referenciaAgc":"M1","tipoMaquina":"traccion","estadoEquipo":"en_uso","datos":{}}' "$(cat "$TMP/$1.id")" "$(cat "$TMP/$1.maq")" > "$TMP/i.json"
-  "${CURL[@]}" -o "$TMP/ir.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/i.json" "$BASE_URL/api/checklist/inspecciones"
-  sql "update inspecciones_checklist set created_at='2026-11-05T10:00:00-03:00' where id='$(json "$TMP/ir.json" 'b.id')'" >/dev/null
+  "${CURL_SIN_SESION[@]}" -o "$TMP/ir.json" -X POST -H "Authorization: Bearer $TOKEN_RT" -H 'Content-Type: application/json' -d @"$TMP/i.json" "$BASE_URL/api/checklist/inspecciones"
+  local insp; insp="$(json "$TMP/ir.json" 'b.id')"
+  { [ -n "$insp" ] && [ "$insp" != "undefined" ]; } || { echo "  ❌ no se pudo cargar la inspección de prueba del edificio $1: $(head -c 200 "$TMP/ir.json")"; exit 1; }
+  sql "update inspecciones_checklist set created_at='2026-11-05T10:00:00-03:00' where id='$insp'" >/dev/null
 }
 
 printf '{"usuario":"%s-sec","password":"%s"}' "$P" "$PASSWORD" > "$TMP/login.json"
-curl -s -o "$TMP/login-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
+"${CURL[@]}" -o "$TMP/login-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
 TOKEN="$(json "$TMP/login-resp.json" 'b.accessToken')"
-[ -n "$TOKEN" ] || { echo "  ❌ no se pudo ingresar como Secretaría (¿DATABASE_APP_PASSWORD y AUTH_JWT_SECRET definidas?)"; exit 1; }
+{ [ -n "$TOKEN" ] && [ "$TOKEN" != "undefined" ]; } || { echo "  ❌ no se pudo ingresar como Secretaría (¿DATABASE_APP_PASSWORD y AUTH_JWT_SECRET definidas?)"; exit 1; }
+printf '{"usuario":"%s-c","password":"%s"}' "$P" "$PASSWORD" > "$TMP/login-rt.json"
+"${CURL[@]}" -o "$TMP/login-rt-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login-rt.json" "$BASE_URL/api/auth/login"
+TOKEN_RT="$(json "$TMP/login-rt-resp.json" 'b.accessToken')"
+{ [ -n "$TOKEN_RT" ] && [ "$TOKEN_RT" != "undefined" ]; } || { echo "  ❌ no se pudo ingresar como el RT c, que carga la inspección de prueba"; exit 1; }
 AUTH="Authorization: Bearer $TOKEN"
 CURL_SIN_SESION=("${CURL[@]}")   # para comprobar el 401
 CURL+=(-H "$AUTH")                  # el resto va con la sesión (el RLS estricto la pide en todas las rutas con datos)

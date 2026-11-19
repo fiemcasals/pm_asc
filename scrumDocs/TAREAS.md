@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:23:33.474Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:53:55.743Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -811,11 +811,11 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 
 ### RF-03: Mapa base de CABA propio, que se dibuja sin conexión (Funcional)
 
-El mapa de hoy es un dibujo fijo de 600×260 con tres avenidas dibujadas a mano, sin relación exacta con las calles reales, y no sirve para ubicarse en la calle. El RT trabaja muchas veces sin wifi y sin señal, así que el mapa tiene que dibujarse completo aun sin conexión, y eso descarta usar los mosaicos del servidor público de OpenStreetMap: su política prohíbe descargarlos para uso sin conexión. La opción es un mapa vectorial propio: un archivo PMTiles con las calles de CABA, generado una vez desde los datos de OpenStreetMap con la herramienta pmtiles de Protomaps (recuadro de CABA: longitud -58.535 a -58.335, latitud -34.705 a -34.525), que el servidor de la app entrega y el celular guarda para usarlo sin señal. Esta tarea deja listo el mapa base y su descarga; dibujar los pines es la tarea siguiente.
+El mapa de hoy es un dibujo fijo de 600×260 con tres avenidas dibujadas a mano, sin relación exacta con las calles reales, y no sirve para ubicarse en la calle. El RT trabaja muchas veces sin wifi y sin señal, así que el mapa tiene que dibujarse completo aun sin conexión, y eso descarta usar los mosaicos del servidor público de OpenStreetMap: su política prohíbe descargarlos para uso sin conexión. La opción es un mapa vectorial propio: un archivo PMTiles con las calles de CABA, generado una vez desde los datos de OpenStreetMap con un script propio que lee la compilación diaria de Protomaps (hace lo mismo que la herramienta pmtiles extract, sin depender de un ejecutable externo) (recuadro de CABA: longitud -58.535 a -58.335, latitud -34.705 a -34.525), que el servidor de la app entrega y el celular guarda para usarlo sin señal. Esta tarea deja listo el mapa base y su descarga; dibujar los pines es la tarea siguiente.
 
 **Condiciones de aprobación**
 
-1. Un script bajo scripts/ genera el archivo de mapa de CABA con pmtiles extract a partir de una compilación de Protomaps con fecha, con el recuadro de CABA y un zoom máximo de 15 o menos, y deja anotados la fecha y la fuente; el mapa se dibuja sin pedirle nada a ningún servidor de mapas de terceros.
+1. Un script bajo scripts/ (npm run mapa:generar) genera el archivo de mapa de CABA a partir de una compilación de Protomaps con fecha, con el recuadro de CABA y un zoom máximo de 15 o menos, y deja anotados la fecha y la fuente; el mapa se dibuja sin pedirle nada a ningún servidor de mapas de terceros.
 2. Las tipografías y los íconos que necesita el estilo del mapa también salen del servidor de la app, no de un tercero.
 3. El archivo pesa 60 MB o menos (si pesa más, se baja el zoom máximo); el tamaño real queda anotado en el documento de entrega.
 4. Un botón «Descargar mapa para usar sin señal» baja el archivo una sola vez, con un indicador de avance, y lo guarda en el celular de modo que el mapa lo lea desde ahí.

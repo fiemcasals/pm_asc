@@ -39,6 +39,12 @@ npm run verify     # tipos + tests de API (Jest) y web (Vitest)
 npm run test:int   # integración contra la base real (requiere npm run db:up)
 ```
 
+## Probar en un celular Android
+
+Cómo abrir la app desde el Chrome de un Android, instalarla y probarla sin conexión (cable USB con
+`adb reverse`, certificado de mkcert en el celular, o por Wi-Fi): [docs/android/INSTALAR-Y-PROBAR-EN-ANDROID.md](docs/android/INSTALAR-Y-PROBAR-EN-ANDROID.md).
+El mapa de CABA necesita su archivo, que no está en git: `npm run mapa:generar` (una vez).
+
 ## CORS (sólo desarrollo)
 
 Los Tests de "Verificación en vivo" de Scrum Master AI los corre el navegador desde

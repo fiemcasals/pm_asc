@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-19T12:54:30.049Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-19T13:01:02.875Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -128,7 +128,7 @@ Desarrollo completado y verificado. Remito técnico oficial generado en PDF con 
 - Estimado: 0h
 
 ### RF-07 — FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04
-PR #86 contra dev. Se arreglaron 6 scripts de entrega desactualizados y el script de datos de demo; solo cambian archivos bajo docs/pruebas/ (10 modificados, RF-07-entrega.sh y RF-07-entrega.md nuevos). Resultado: los 12 scripts de entrega de HU-11, HU-15 y HU-18 terminan con código 0 (RF-07-entrega.sh, 2 min 17 s), con la base sin datos de demo (los carga y los borra) y con ellos cargados (no los toca). Antes: HU-18 RNF-01 17 OK y 1 con error; HU-11 RF-05 y RF-06 se cortaban con un TypeError; HU-11 RF-03 1 OK y 2 fallidas; HU-15 RNF-01 y RNF-02 0 OK y 4 fallas cada uno. Los 9 scripts que dependen de los datos de demo salen con código 2 sin intentar ingresar y no suman intentos en intentos_login. El script de datos de demo carga 5 edificios y 2 inspecciones del 5/11 sin error de SQL. Fuera de alcance, sin tocar: docs/pruebas/hu-04-.../RF-02-entrega.sh también falla (2 verificaciones, el peso del RT c; y por TLS contra https://localhost:8050), con y sin datos de demo; queda para otra tarea. Mínimo necesario agregado: RF-07-entrega.sh, el corredor que pide el estándar de entrega. Detalle en docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-07-entrega.md.
+PR #86 contra dev. Se arreglaron 6 scripts de entrega desactualizados y el script de datos de demo; solo cambian archivos bajo docs/pruebas/ (10 scripts modificados; nuevos: RF-07-entrega.sh, RF-07-entrega.md, la guía visual RF-07-datos-de-demo.md y 4 capturas sacadas con Playwright). Resultado: los 12 scripts de entrega de HU-11, HU-15 y HU-18 terminan con código 0 (RF-07-entrega.sh, 2 min 17 s), con la base sin datos de demo (los carga y los borra) y con ellos cargados (no los toca). Antes: HU-18 RNF-01 17 OK y 1 con error; HU-11 RF-05 y RF-06 se cortaban con un TypeError; HU-11 RF-03 1 OK y 2 fallidas; HU-15 RNF-01 y RNF-02 0 OK y 4 fallas cada uno. Los 9 scripts que dependen de los datos de demo salen con código 2 sin intentar ingresar y no suman intentos en intentos_login. El script de datos de demo carga 5 edificios y 2 inspecciones del 5/11 sin error de SQL, y se ve en Secretaría › Semáforo. Fuera de alcance, sin tocar: docs/pruebas/hu-04-.../RF-02-entrega.sh también falla (2 verificaciones, el peso del RT c; y por TLS contra https://localhost:8050), con y sin datos de demo; queda para otra tarea. Mínimo necesario agregado: RF-07-entrega.sh, el corredor que pide el estándar de entrega, y la guía visual de los datos de demo. Detalle en docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-07-entrega.md.
 - Estimado: 4h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

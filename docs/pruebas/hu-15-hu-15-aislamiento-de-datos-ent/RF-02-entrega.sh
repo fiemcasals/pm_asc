@@ -38,6 +38,8 @@ sql "insert into usuarios (usuario, nombre, rol, eca, password_hash) values
   ('h15e-eca-sin','ECA sin asignar','eca',null,'$HASH'),
   ('h15e-rt','RT','rt_calle',null,'$HASH'),
   ('h15e-firmante','Firmante','firmante',null,'$HASH')" >/dev/null
+# Ingresar con un usuario que no existe suma intentos fallidos y a los 5 bloquea la cuenta 15 minutos: antes se revisa que estén los datos de demo.
+[ "$(docker exec "${DB_CONTAINER:-mant-asc-db}" psql -U ascensores -d ascensores -tAc "select count(*) from usuarios where usuario in ('demo.admin','demo.secretaria')" 2>/dev/null | tr -d '\r')" = "2" ] || { echo "  ❌ faltan los datos de demo (o no hay docker): corré antes bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh"; exit 2; }
 PTE="$(login h15e-eca-pte)"; MAI="$(login h15e-eca-mai)"; SIN="$(login h15e-eca-sin)"; RT="$(login h15e-rt)"; FIR="$(login h15e-firmante)"
 SEC="$(login demo.secretaria)"; ADM="$(login demo.admin)"
 for t in "$PTE" "$MAI" "$SIN" "$RT" "$FIR" "$SEC" "$ADM"; do

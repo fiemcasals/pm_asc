@@ -44,7 +44,9 @@ HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("De
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.secretaria','Secretaria Demo','secretaria','$HASH')" >/dev/null
 sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('demo.admin','Administrador Demo','administrador','$HASH')" >/dev/null
 # Desde HU-02 RF-05 la terna toma el teléfono y el email del RT nuevo: un RT sin contacto no puede recibir un edificio.
-for rt in rt.ana rt.beto rt.carla rt.diego; do sql "insert into usuarios (usuario, nombre, rol, password_hash, telefono, email) values ('$rt','$rt','rt_calle','sin-login','11 4444-${rt#rt.}','$rt@demo.com')" >/dev/null; done
+# Los RT entran con la misma clave de demostración: el checklist es sólo del RT (HU-06 RF-06), así que la inspección del 5/11 la carga
+# con su propia sesión el RT del edificio.
+for rt in rt.ana rt.beto rt.carla rt.diego; do sql "insert into usuarios (usuario, nombre, rol, password_hash, telefono, email) values ('$rt','$rt','rt_calle','$HASH','11 4444-${rt#rt.}','$rt@demo.com')" >/dev/null; done
 
 # Con el RLS estricto (HU-15 RNF-03) crear edificios y roles pide sesión: se ingresa como la Secretaría demo.
 CLAVE="Demo-Clave-2026"
@@ -52,6 +54,7 @@ printf '{"usuario":"demo.secretaria","password":"%s"}' "$CLAVE" > "$TMP/login.js
 "${CURL[@]}" -o "$TMP/login-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
 TOKEN="$(json "$TMP/login-resp.json" 'b.accessToken')"
 [ -n "$TOKEN" ] && [ "$TOKEN" != "undefined" ] || { echo "No se pudo ingresar como demo.secretaria (¿DATABASE_APP_PASSWORD y AUTH_JWT_SECRET definidas?)"; exit 1; }
+CURL_BASE=("${CURL[@]}")
 CURL+=(-H "Authorization: Bearer $TOKEN")
 
 edificio() { # edificio <nombre> <direccion> <lat> <lon|""> <rt> [inspeccionar]
@@ -63,11 +66,17 @@ edificio() { # edificio <nombre> <direccion> <lat> <lon|""> <rt> [inspeccionar]
   printf '{"rtCalle":{"nombre":"%s","telefono":"11 5555-0000"},"firmante":{"nombre":"Firmante Demo","email":"f@demo.com"},"eca":{"nombre":"ECA Demo","email":"e@demo.com"}}' "$5" > "$TMP/ro.json"
   "${CURL[@]}" -o /dev/null -X PUT -H 'Content-Type: application/json' -d @"$TMP/ro.json" "$BASE_URL/api/consorcios/$ID/roles"
   if [ "${6:-}" = "inspeccionar" ]; then
+    printf '{"usuario":"%s","password":"%s"}' "$5" "$CLAVE" > "$TMP/login-rt.json"
+    "${CURL_BASE[@]}" -o "$TMP/login-rt-resp.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login-rt.json" "$BASE_URL/api/auth/login"
+    TOKEN_RT="$(json "$TMP/login-rt-resp.json" 'b.accessToken')"
+    [ -n "$TOKEN_RT" ] && [ "$TOKEN_RT" != "undefined" ] || { echo "No se pudo ingresar como $5 para cargar la inspección de $1"; exit 1; }
     for n in 0 1; do
       MAQ="$(json "$TMP/r.json" "b.maquinas[$n].id")"
       printf '{"consorcioId":"%s","maquinaId":"%s","referenciaAgc":"M%s","tipoMaquina":"traccion","estadoEquipo":"en_uso","datos":{}}' "$ID" "$MAQ" "$((n+1))" > "$TMP/i.json"
-      "${CURL[@]}" -o "$TMP/ir.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/i.json" "$BASE_URL/api/checklist/inspecciones"
-      sql "update inspecciones_checklist set created_at='2026-11-05T10:00:00-03:00' where id='$(json "$TMP/ir.json" 'b.id')'" >/dev/null
+      "${CURL_BASE[@]}" -H "Authorization: Bearer $TOKEN_RT" -o "$TMP/ir.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/i.json" "$BASE_URL/api/checklist/inspecciones"
+      INSP="$(json "$TMP/ir.json" 'b.id')"
+      [ -n "$INSP" ] && [ "$INSP" != "undefined" ] || { echo "No se pudo cargar la inspección de $1: $(head -c 300 "$TMP/ir.json")"; exit 1; }
+      sql "update inspecciones_checklist set created_at='2026-11-05T10:00:00-03:00' where id='$INSP'" >/dev/null
     done
   fi
   echo "  $1 → RT $5$([ "${6:-}" = "inspeccionar" ] && echo " (inspeccionado el 5/11)")"

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-19T14:17:43.304Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T14:18:08.483Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -976,7 +976,13 @@ Hasta ahora el conector con Meta y Twilio solo se probó contra un receptor fals
 
 **Condiciones de aprobación**
 
-_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._
+1. Hay un entorno de prueba de WhatsApp activo (el sandbox de Twilio o el número de prueba de Meta Cloud API) con el celular de German autorizado como destinatario.
+2. Las credenciales del proveedor están solo en el .env local, que git ignora, y en ningún archivo del repositorio: buscar el token con git grep no encuentra nada.
+3. GET /api/whatsapp/estado responde configurado true y el proveedor elegido, y no incluye ninguna credencial.
+4. Al apretar «Aprobar y enviar» sobre un aviso de falla crítica de prueba en la bandeja de Secretaría, el WhatsApp llega al celular de German en menos de 5 segundos, con el edificio, el equipo, el estado y el enlace al informe.
+5. El enlace del mensaje abre el informe en el celular sin pedir contraseña.
+6. El envío figura en la bandeja de Secretaría y en GET /api/whatsapp/historial con el id de mensaje que devolvió el proveedor.
+7. Queda anotado en un documento bajo docs/ lo que se observó en el celular (qué llegó, cuánto tardó, qué mostró el enlace) y lo que no funcionó.
 
 ## RO-03: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso
 
@@ -986,4 +992,9 @@ Para que los avisos salgan en producción hace falta un número de WhatsApp Busi
 
 **Condiciones de aprobación**
 
-_Sin condiciones de aprobación cargadas: pedíselas al Project Manager o al Scrum Master antes de darlo por terminado._
+1. MAICON confirmó por escrito qué número de WhatsApp se usa como remitente y quién es la persona de guardia que recibe las alertas; los números no se guardan en el repositorio.
+2. En el panel del proveedor existe una cuenta de WhatsApp Business a nombre de MAICON con la verificación de empresa completa.
+3. La plantilla del aviso, con el texto que dejó la tarea de plantilla, figura como Aprobada en el panel del proveedor.
+4. Un envío de prueba desde ese número llega al celular de la persona de guardia de MAICON.
+5. Las credenciales de producción se cargan solo en las variables de entorno del servidor: ninguna en el repositorio.
+6. Queda un documento breve bajo docs/ con los pasos que se hicieron y a nombre de quién está la cuenta, sin credenciales ni números.

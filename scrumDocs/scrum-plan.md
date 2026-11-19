@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-19T12:31:30.743Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-19T12:31:42.449Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -128,6 +128,7 @@ Desarrollo completado y verificado. Remito técnico oficial generado en PDF con 
 - Estimado: 0h
 
 ### RF-07 — FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04
+Inicio: arreglo de los scripts de entrega desactualizados (HU-11, HU-15, HU-18) y del script de datos de demo de HU-04. Solo se tocan archivos bajo docs/pruebas/.
 - Estimado: 4h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

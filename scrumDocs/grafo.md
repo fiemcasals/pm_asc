@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-18T17:01:17.364Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-19T12:31:18.117Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -77,6 +77,7 @@ graph TD
     REQ_1794155774018["RF-04: Enviar las alertas por WhatsApp a través de un proveedor real"]
     REQ_1794493273993["RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría"]
     REQ_1794493274385["RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días"]
+    REQ_1795091473089["RF-07: FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]

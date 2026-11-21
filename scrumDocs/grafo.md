@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-21T13:13:58.079Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T13:14:13.374Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -63,6 +63,7 @@ graph TD
     REQ_1795010603476["RF-04: Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo"]
     REQ_1795263641124["RF-05: Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio"]
     REQ_1795263641491["RF-06: Retirar las máquinas de ejemplo de la vista de firma"]
+    REQ_1795266849123["RF-07: Que el informe cerrado por el RT cree la visita en el Portal Firmante"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]
@@ -189,6 +190,9 @@ graph TD
   REQ_1795010603476 --> REQ_1795263641124
   REQ_1795258625857 --> REQ_1795263641124
   REQ_1795263641124 --> REQ_1795263641491
+  REQ_1795263641124 --> REQ_1795266849123
+  REQ_1794494002445 --> REQ_1795266849123
+  REQ_1795258625857 --> REQ_1795266849123
   REQ_1791910395959 --> REQ_1791910396167
   REQ_1791910396167 --> REQ_1791910396255
   REQ_1791910396255 --> REQ_1791910396649

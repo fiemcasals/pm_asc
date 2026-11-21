@@ -1,5 +1,12 @@
 import { WhatsAppProviderConfig } from '../config';
-import { WhatsAppTransport, WhatsAppTransportResponse } from './whatsapp.types';
+import {
+  MENSAJE_PLANTILLA_FALTANTE_META,
+  MENSAJE_PLANTILLA_FALTANTE_TWILIO,
+  PayloadAvisoWhatsApp,
+  VARIABLES_PLANTILLA_AVISO,
+  WhatsAppTransport,
+  WhatsAppTransportResponse,
+} from './whatsapp.types';
 
 export type FetchLike = (
   input: string,
@@ -54,22 +61,33 @@ export class WhatsAppProviderTransport implements WhatsAppTransport {
     this.proveedor = config.proveedor;
   }
 
+  plantillaFaltante(): string | null {
+    if (this.config.proveedor === 'meta') {
+      return this.config.templateName ? null : MENSAJE_PLANTILLA_FALTANTE_META;
+    }
+    return this.config.contentSid ? null : MENSAJE_PLANTILLA_FALTANTE_TWILIO;
+  }
+
   async postMessage(
     _url: string,
     payload: unknown,
     _headers: Record<string, string>,
   ): Promise<WhatsAppTransportResponse> {
-    const { to, text } = (payload ?? {}) as { to?: string; text?: string };
+    const { to, parametros } = (payload ?? {}) as Partial<PayloadAvisoWhatsApp>;
     const destino = (to ?? '').trim();
-    const mensaje = text ?? '';
+    const valores = parametros ?? [];
+
+    // Defensa en profundidad: el conector ya corta antes, pero este transporte nunca cae a texto libre.
+    const faltante = this.plantillaFaltante();
+    if (faltante) return { status: 400, errorDetail: faltante };
 
     if (this.config.proveedor === 'meta') {
-      return this.enviarMeta(destino, mensaje);
+      return this.enviarMeta(destino, valores);
     }
-    return this.enviarTwilio(destino, mensaje);
+    return this.enviarTwilio(destino, valores);
   }
 
-  private async enviarMeta(destino: string, mensaje: string): Promise<WhatsAppTransportResponse> {
+  private async enviarMeta(destino: string, parametros: string[]): Promise<WhatsAppTransportResponse> {
     const cfg = this.config as Extract<WhatsAppProviderConfig, { proveedor: 'meta' }>;
     const endpoint = `${cfg.baseUrl}/${cfg.apiVersion}/${encodeURIComponent(cfg.phoneNumberId)}/messages`;
     // Meta Cloud API espera dígitos en formato E.164 sin el signo '+'.
@@ -85,10 +103,11 @@ export class WhatsAppProviderTransport implements WhatsAppTransport {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
         to: toDigits,
-        type: 'text',
-        text: {
-          preview_url: true,
-          body: mensaje,
+        type: 'template',
+        template: {
+          name: cfg.templateName,
+          language: { code: cfg.templateLang },
+          components: [{ type: 'body', parameters: parametros.map((text) => ({ type: 'text', text })) }],
         },
       }),
     });
@@ -114,7 +133,7 @@ export class WhatsAppProviderTransport implements WhatsAppTransport {
     };
   }
 
-  private async enviarTwilio(destino: string, mensaje: string): Promise<WhatsAppTransportResponse> {
+  private async enviarTwilio(destino: string, parametros: string[]): Promise<WhatsAppTransportResponse> {
     const cfg = this.config as Extract<WhatsAppProviderConfig, { proveedor: 'twilio' }>;
     const endpoint = `${cfg.baseUrl}/2010-04-01/Accounts/${encodeURIComponent(cfg.accountSid)}/Messages.json`;
     const auth = Buffer.from(`${cfg.accountSid}:${cfg.authToken}`).toString('base64');
@@ -122,7 +141,11 @@ export class WhatsAppProviderTransport implements WhatsAppTransport {
     const params = new URLSearchParams({
       From: normalizarNumeroTwilio(cfg.fromNumber),
       To: normalizarNumeroTwilio(destino),
-      Body: mensaje,
+      ContentSid: cfg.contentSid,
+      // Las variables de una plantilla de Twilio se numeran desde 1, en el orden de VARIABLES_PLANTILLA_AVISO.
+      ContentVariables: JSON.stringify(
+        Object.fromEntries(VARIABLES_PLANTILLA_AVISO.map((_, i) => [String(i + 1), parametros[i] ?? ''])),
+      ),
     });
 
     const res = await this.fetchFn(endpoint, {

@@ -972,4 +972,41 @@ export const MIGRATIONS: Migration[] = [
         ADD COLUMN IF NOT EXISTS estado_agc text;
     `,
   },
+  {
+    id: '033_firma_visitas',
+    sql: `
+      -- HU-08 RF-05: las visitas, firmas AGC y rechazos del Portal Firmante, y los avisos de plazo vencido, sobreviven a un reinicio de la API.
+      -- Una visita por máquina y mes. «maquina_id» es el identificador de la vista de firma (no una clave foránea: también hay máquinas de ejemplo).
+      CREATE TABLE firma_visitas (
+        maquina_id     text NOT NULL,
+        mes            text NOT NULL CHECK (mes ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+        estado         text NOT NULL CHECK (estado IN ('Recorrida', 'Pendiente de Visita', 'Advertencia')),
+        visita         jsonb NOT NULL CHECK (jsonb_typeof(visita) = 'object'),
+        actualizado_en timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (maquina_id, mes)
+      );
+      -- Un solo aviso de plazo vencido por visita: la base impide generarlo dos veces.
+      CREATE TABLE firma_avisos_plazo (
+        visita_id     text PRIMARY KEY,
+        maquina_id    text NOT NULL,
+        codigo_agc    text NOT NULL,
+        edificio      text NOT NULL,
+        fecha_informe timestamptz NOT NULL,
+        dias_habiles  integer NOT NULL CHECK (dias_habiles > 0),
+        fecha         timestamptz NOT NULL
+      );
+      ALTER TABLE firma_visitas ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_firma_visitas_admin_secretaria ON firma_visitas;
+      CREATE POLICY rls_firma_visitas_admin_secretaria ON firma_visitas
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      ALTER TABLE firma_avisos_plazo ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_firma_avisos_plazo_admin_secretaria ON firma_avisos_plazo;
+      CREATE POLICY rls_firma_avisos_plazo_admin_secretaria ON firma_avisos_plazo
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Los avisos ya generados no se editan ni se borran desde la aplicación.
+      REVOKE UPDATE, DELETE ON firma_avisos_plazo FROM ascensores_app;
+    `,
+  },
 ];

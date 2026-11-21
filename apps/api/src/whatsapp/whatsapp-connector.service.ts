@@ -5,9 +5,12 @@ import { WhatsAppFormatterService } from './whatsapp-formatter.service';
 import { extraerErrorProveedor, WhatsAppProviderTransport } from './whatsapp-provider.transport';
 import {
   MENSAJE_TELEFONO_ECA_FALTANTE,
+  PayloadAvisoWhatsApp,
   MENSAJE_WHATSAPP_NO_CONFIGURADO,
   MensajeAlertaWhatsAppInput,
+  EventoEstadoProveedor,
   RegistroEnvioWhatsApp,
+  ResultadoEventoProveedor,
   WhatsAppEnvioResult,
   WhatsAppTransport,
 } from './whatsapp.types';
@@ -21,6 +24,14 @@ export interface ContextoEnvioWhatsApp {
   aprobadoPor?: string | null;
   aprobadoEn?: string | null;
 }
+
+/** Lo que se sabe de un mensaje a medida que el proveedor avisa: el estado nunca retrocede. */
+const ORDEN_ESTADO: Partial<Record<RegistroEnvioWhatsApp['estadoEntrega'], number>> = {
+  aceptado: 0,
+  enviado: 1,
+  entregado: 2,
+  leido: 3,
+};
 
 class RechazoProveedorError extends Error {
   constructor(
@@ -127,7 +138,28 @@ export class WhatsAppConnectorService {
       return resultado;
     }
 
+    // Una alerta que inicia el sistema solo puede salir como plantilla aprobada: sin ella no sale nada (HU-11 RF-08).
+    const plantillaFaltante = this.transport.plantillaFaltante?.() ?? null;
+    if (plantillaFaltante) {
+      this.logger.warn(`Envío WhatsApp cancelado (${contexto.origen ?? 'manual'}): ${plantillaFaltante}`);
+      const resultado: WhatsAppEnvioResult = {
+        ok: false,
+        idMensaje: '',
+        telefonoDestino: telefono,
+        mensajeFormateado,
+        intentos: 0,
+        timestampEnvio: new Date().toISOString(),
+        tiempoRespuestaMs: Date.now() - inicioMs,
+        estadoEntrega: 'no_configurado',
+        proveedor: this.transport.proveedor ?? 'custom',
+        error: plantillaFaltante,
+      };
+      this.registrarIntento(resultado, contexto);
+      return resultado;
+    }
+
     const proveedor = this.transport.proveedor ?? 'custom';
+    const parametros = this.formatter.parametrosPlantilla(input);
     let intento = 0;
     let ultimoError: Error | null = null;
 
@@ -136,7 +168,7 @@ export class WhatsAppConnectorService {
       try {
         const res = await this.transport.postMessage(
           'whatsapp-provider://messages',
-          { to: telefono, text: mensajeFormateado },
+          { to: telefono, text: mensajeFormateado, parametros } satisfies PayloadAvisoWhatsApp,
           {},
         );
 
@@ -154,7 +186,8 @@ export class WhatsAppConnectorService {
             intentos: intento,
             timestampEnvio: new Date().toISOString(),
             tiempoRespuestaMs: Date.now() - inicioMs,
-            estadoEntrega: 'entregado',
+            // El proveedor recibió el pedido: eso todavía no es que el mensaje haya llegado (HU-11 RF-09).
+            estadoEntrega: 'aceptado',
             proveedor,
           };
           this.registrarIntento(resultado, contexto);
@@ -201,6 +234,37 @@ export class WhatsAppConnectorService {
     };
     this.registrarIntento(fallo, contexto);
     return fallo;
+  }
+
+  /**
+   * Aplica un aviso de estado del proveedor al registro con ese id de mensaje (HU-11 RF-09).
+   * - El estado nunca retrocede: un `delivered` después de un `read`, o el mismo aviso dos veces, no cambia nada.
+   * - `failed` sólo vale mientras el mensaje no se entregó; después de entregado o leído se ignora.
+   * - Un id que el sistema no conoce se informa como `desconocido` y no crea nada.
+   */
+  registrarEventoProveedor(idMensaje: string, evento: EventoEstadoProveedor): ResultadoEventoProveedor {
+    const id = idMensaje.trim();
+    const registro = id ? this.historial.find((h) => h.idMensaje === id) : undefined;
+    if (!registro) return 'desconocido';
+
+    const actual = ORDEN_ESTADO[registro.estadoEntrega];
+    if (actual === undefined) return 'sin_cambio'; // fallido o un estado que no es de un envío aceptado
+
+    if (evento.estado === 'fallido') {
+      if (actual >= ORDEN_ESTADO.entregado!) return 'sin_cambio';
+      const detalle = [evento.codigoError ? `código ${evento.codigoError}` : '', evento.mensajeError ?? ''].filter(Boolean).join(' · ');
+      registro.estadoEntrega = 'fallido';
+      registro.ok = false;
+      registro.envioRealizado = false;
+      registro.estado = 'no_realizado';
+      registro.motivo = `El proveedor informó que el mensaje no se entregó${detalle ? `: ${detalle}` : ''}`;
+      registro.errorProveedor = { codigo: evento.codigoError, mensaje: evento.mensajeError };
+    } else {
+      if (ORDEN_ESTADO[evento.estado]! <= actual) return 'sin_cambio';
+      registro.estadoEntrega = evento.estado;
+    }
+    registro.estadoActualizadoEn = evento.fecha ?? new Date().toISOString();
+    return 'actualizado';
   }
 
   private registrarIntento(res: WhatsAppEnvioResult, ctx: ContextoEnvioWhatsApp): void {

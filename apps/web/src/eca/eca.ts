@@ -210,7 +210,7 @@ export interface MensajeAlertaWhatsAppInput {
   fechaDeteccion?: string;
 }
 
-export type EstadoEntregaWhatsApp = 'entregado' | 'enviado' | 'fallido' | 'no_configurado';
+export type EstadoEntregaWhatsApp = 'aceptado' | 'enviado' | 'entregado' | 'leido' | 'fallido' | 'no_configurado';
 
 export interface WhatsAppEnvioResult {
   ok: boolean;

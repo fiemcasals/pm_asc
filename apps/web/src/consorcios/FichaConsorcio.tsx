@@ -14,7 +14,7 @@ import {
   TipoMaquina,
   VisitaFallidaRegistro,
 } from './consorcios';
-import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
+import { MapaEdificios } from '../mapa/MapaEdificios';
 import { HorariosEdificioEditor } from '../horarios/HorariosEdificioEditor';
 
 interface FichaConsorcioProps {
@@ -333,7 +333,7 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
 
               <div>
                 <span className="field-label">Punto Geográfico PostGIS (clic en mapa para fijar o mover)</span>
-                <MapaUbicacionConsorcio
+                <MapaEdificios
                   ubicacion={ubicacionEdit}
                   editable
                   onCambiarUbicacion={setUbicacionEdit}
@@ -427,7 +427,7 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
                       {ubicacionActual.latitud}, {ubicacionActual.longitud}
                     </span>
                   </div>
-                  <MapaUbicacionConsorcio ubicacion={ubicacionActual} testId="mapa-lectura-ficha" />
+                  <MapaEdificios ubicacion={ubicacionActual} testId="mapa-lectura-ficha" />
                 </div>
               )}
             </div>

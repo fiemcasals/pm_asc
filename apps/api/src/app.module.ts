@@ -25,6 +25,7 @@ import { FallasCriticasController } from './fallas-criticas/fallas-criticas.cont
 import { FallasCriticasService } from './fallas-criticas/fallas-criticas.service';
 import { FirmanteController } from './firmante/firmante.controller';
 import { AsignacionesFirmanteService } from './firmante/asignaciones-firmante.service';
+import { FirmaRepository, PgFirmaRepository } from './firmante/firma.repository';
 import { FirmanteService } from './firmante/firmante.service';
 import { HealthController } from './health/health.controller';
 import { PgSemaforoRepository } from './semaforo/pg-semaforo.repository';
@@ -36,6 +37,8 @@ import { AvisosService } from './avisos/avisos.service';
 import { InformeAvisoController } from './avisos/informe-aviso.controller';
 import { PdfLegalFallaService } from './avisos/pdf-legal-falla.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
+import { WhatsAppWebhookController } from './whatsapp/whatsapp-webhook.controller';
+import { WhatsAppWebhookService } from './whatsapp/whatsapp-webhook.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
@@ -99,6 +102,7 @@ export class AppModule implements NestModule {
         FirmanteController,
         EcaController,
         WhatsAppController,
+        WhatsAppWebhookController,
         AvisosController,
         InformeAvisoController,
         VisitasFallidasController,
@@ -126,6 +130,7 @@ export class AppModule implements NestModule {
         { provide: ConsorciosRepository, useClass: PgConsorciosRepository },
         ImportadorAgcService,
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
+        { provide: FirmaRepository, useClass: PgFirmaRepository },
         FirmanteService,
         AsignacionesFirmanteService,
         ChecklistService,
@@ -134,6 +139,7 @@ export class AppModule implements NestModule {
         WhatsAppFormatterService,
         WhatsAppConnectorService,
         WhatsAppTriggerService,
+        WhatsAppWebhookService,
         PdfLegalFallaService,
         AvisosService,
         VisitasFallidasService,

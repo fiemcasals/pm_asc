@@ -11,7 +11,7 @@ export class ParadasController {
   /** El RT de Calle marca un equipo «Fuera de Servicio» o «Reparación Urgente» (por defecto, fuera de servicio): causa y al menos una foto. */
   @Post()
   @Roles('rt_calle', 'secretaria', 'administrador')
-  registrar(@Body() body: unknown, @UsuarioActual() usuario: UsuarioAutenticado): ReporteParada {
+  registrar(@Body() body: unknown, @UsuarioActual() usuario: UsuarioAutenticado): Promise<ReporteParada> {
     return this.service.registrar(body, usuario.usuario);
   }
 
@@ -26,7 +26,7 @@ export class ParadasController {
   @Post(':id/confirmar')
   @HttpCode(200)
   @Roles('rt_calle', 'secretaria', 'administrador', 'firmante', 'eca')
-  confirmar(@Param('id') id: string, @UsuarioActual() usuario: UsuarioAutenticado): ReporteParada {
+  confirmar(@Param('id') id: string, @UsuarioActual() usuario: UsuarioAutenticado): Promise<ReporteParada> {
     return this.service.resolver(id, 'confirmar', usuario);
   }
 
@@ -34,7 +34,7 @@ export class ParadasController {
   @Post(':id/rechazar')
   @HttpCode(200)
   @Roles('rt_calle', 'secretaria', 'administrador', 'firmante', 'eca')
-  rechazar(@Param('id') id: string, @Body() body: { motivo?: unknown } | undefined, @UsuarioActual() usuario: UsuarioAutenticado): ReporteParada {
+  rechazar(@Param('id') id: string, @Body() body: { motivo?: unknown } | undefined, @UsuarioActual() usuario: UsuarioAutenticado): Promise<ReporteParada> {
     return this.service.resolver(id, 'rechazar', usuario, body?.motivo);
   }
 

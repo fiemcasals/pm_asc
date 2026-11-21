@@ -31,6 +31,8 @@ export class FirmanteService implements OnApplicationBootstrap {
   private avisos: AvisoPlazoVencido[] = [];
   /** Lo que hay guardado de cada visita (`maquinaId|mes`), para aplicarlo a una máquina que todavía no existe al arrancar. */
   private guardadas = new Map<string, VisitaGuardada>();
+  /** Quienes quieren completar una máquina cuando se agrega (HU-17 RF-09: el estado guardado de sus reportes de parada). */
+  private readonly alAgregarMaquina: ((m: MaquinaAsignada) => void)[] = [];
   /** Escrituras en segundo plano (avisos de plazo) que todavía no terminaron. */
   private readonly enCurso = new Set<Promise<void>>();
 
@@ -55,6 +57,11 @@ export class FirmanteService implements OnApplicationBootstrap {
   /** Termina las escrituras en segundo plano (para las pruebas y el apagado). */
   async esperarGuardados(): Promise<void> {
     await Promise.allSettled([...this.enCurso]);
+  }
+
+  /** Registra una función que se llama con cada máquina que se agrega, y ya con las que existen. */
+  cuandoSeAgregueMaquina(fn: (m: MaquinaAsignada) => void): void {
+    this.alAgregarMaquina.push(fn);
   }
 
   /** Pone en la máquina la visita guardada de su mes, si la hay. */
@@ -376,6 +383,7 @@ export class FirmanteService implements OnApplicationBootstrap {
         };
         this.aplicarGuardada(m);
         this.maquinas.push(m);
+        for (const fn of this.alAgregarMaquina) fn(m);
       }
       m.codigoAGC = q.referenciaAgc;
       m.tipo = q.tipo;

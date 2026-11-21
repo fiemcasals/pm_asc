@@ -14,8 +14,8 @@ describe('Reporte de parada (HU-17 RF-03)', () => {
     service = new ParadasService(firmante);
   });
 
-  it('criterio 2: al guardar el equipo queda «Fuera de Servicio — Pendiente de confirmación» y se avisa a la Secretaría y al Firmante', () => {
-    const r = service.registrar({ maquinaId: MAQUINA, causa: '  Cabina trabada en el 3.º  ', fotos: [FOTO] }, 'rt1');
+  it('criterio 2: al guardar el equipo queda «Fuera de Servicio — Pendiente de confirmación» y se avisa a la Secretaría y al Firmante', async () => {
+    const r = await service.registrar({ maquinaId: MAQUINA, causa: '  Cabina trabada en el 3.º  ', fotos: [FOTO] }, 'rt1');
 
     expect(r).toMatchObject({
       maquinaId: MAQUINA,
@@ -36,10 +36,10 @@ describe('Reporte de parada (HU-17 RF-03)', () => {
     ['sin fotos', { maquinaId: MAQUINA, causa: 'x', fotos: [] }, 'foto'],
     ['fotos vacías', { maquinaId: MAQUINA, causa: 'x', fotos: ['', '  '] }, 'foto'],
     ['sin máquina', { causa: 'x', fotos: [FOTO] }, 'maquinaId'],
-  ])('criterio 1: %s → 400 y no cambia nada', (_n, cuerpo, campo) => {
-    expect(() => service.registrar(cuerpo, 'rt1')).toThrow(BadRequestException);
+  ])('criterio 1: %s → 400 y no cambia nada', async (_n, cuerpo, campo) => {
+    await expect(service.registrar(cuerpo, 'rt1')).rejects.toThrow(BadRequestException);
     try {
-      service.registrar(cuerpo, 'rt1');
+      await service.registrar(cuerpo, 'rt1');
     } catch (err) {
       expect(JSON.stringify((err as BadRequestException).getResponse())).toContain(campo);
     }
@@ -47,16 +47,16 @@ describe('Reporte de parada (HU-17 RF-03)', () => {
     expect(firmante.getMaquinas().find((m) => m.id === MAQUINA)?.estadoOperativo).not.toBe('Fuera de Servicio');
   });
 
-  it('una máquina que no existe → 404; un equipo con un reporte pendiente → 409', () => {
-    expect(() => service.registrar({ maquinaId: 'NO-EXISTE', causa: 'x', fotos: [FOTO] }, 'rt1')).toThrow(NotFoundException);
+  it('una máquina que no existe → 404; un equipo con un reporte pendiente → 409', async () => {
+    await expect(service.registrar({ maquinaId: 'NO-EXISTE', causa: 'x', fotos: [FOTO] }, 'rt1')).rejects.toThrow(NotFoundException);
 
-    service.registrar({ maquinaId: MAQUINA, causa: 'x', fotos: [FOTO] }, 'rt1');
-    expect(() => service.registrar({ maquinaId: MAQUINA, causa: 'otra vez', fotos: [FOTO] }, 'rt1')).toThrow(ConflictException);
+    await service.registrar({ maquinaId: MAQUINA, causa: 'x', fotos: [FOTO] }, 'rt1');
+    await expect(service.registrar({ maquinaId: MAQUINA, causa: 'otra vez', fotos: [FOTO] }, 'rt1')).rejects.toThrow(ConflictException);
     expect(service.listar()).toHaveLength(1);
   });
 
-  it('la lista no devuelve las imágenes, sólo cuántas hay', () => {
-    service.registrar({ maquinaId: MAQUINA, causa: 'x', fotos: [FOTO, FOTO] }, 'rt1');
+  it('la lista no devuelve las imágenes, sólo cuántas hay', async () => {
+    await service.registrar({ maquinaId: MAQUINA, causa: 'x', fotos: [FOTO, FOTO] }, 'rt1');
 
     expect(service.listar()[0].fotos).toBe(2);
     expect(JSON.stringify(service.listar())).not.toContain('base64');

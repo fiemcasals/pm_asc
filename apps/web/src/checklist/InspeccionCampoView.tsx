@@ -281,7 +281,10 @@ export function InspeccionCampoView({
   const guardarParada = async () => {
     setParadaError(null);
     setGuardandoParada(true);
-    const res = await enviarReporteParada(equipo.firmanteMaquinaId ?? equipo.maquinaId, borradorParada, fetchConSesion);
+    // El id se genera una sola vez por borrador: si el envío falla y se reintenta, la API reconoce el mismo reporte (HU-17 RF-09).
+    const conId = borradorParada.clientReportId ? borradorParada : { ...borradorParada, clientReportId: globalThis.crypto.randomUUID() };
+    if (conId !== borradorParada) setParadaPorEquipo((prev) => ({ ...prev, [equipo.maquinaId]: conId }));
+    const res = await enviarReporteParada(equipo.firmanteMaquinaId ?? equipo.maquinaId, conId, fetchConSesion);
     setGuardandoParada(false);
     if (res.ok) setParadaGuardada((prev) => ({ ...prev, [equipo.maquinaId]: res.reporte }));
     else setParadaError(res.error);

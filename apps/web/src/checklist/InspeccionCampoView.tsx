@@ -26,6 +26,7 @@ import {
   type FallaPisoRegistro,
 } from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
+import { hora } from '../fechas/formato';
 import { fetchConSesion } from '../auth/sesion';
 import { CierreInforme } from '../informe/CierreInforme';
 import { enviarReporteParada, puedeGuardarParada, usoRespondido, type BorradorParada } from './usoEquipo';
@@ -639,7 +640,7 @@ export function InspeccionCampoView({
               <strong>{foto.referenciaAgc} · {foto.solapaId}</strong>
               <span>{foto.itemEtiqueta} · {Math.max(1, Math.round(foto.sizeBytes / 1024))} KB</span>
               <time dateTime={foto.tomadaEn}>
-                {new Date(foto.tomadaEn).toLocaleTimeString('es-AR')}
+                {hora(foto.tomadaEn, { segundos: true })}
               </time>
               <button
                 type="button"
@@ -673,7 +674,7 @@ export function InspeccionCampoView({
           >
             {enLinea ? 'En línea' : 'Sin señal (offline)'} · IndexedDB{' '}
             {ultimaSyncIdb
-              ? `guardado ${new Date(ultimaSyncIdb).toLocaleTimeString('es-AR')}`
+              ? `guardado ${hora(ultimaSyncIdb, { segundos: true })}`
               : 'listo'}
           </span>
           {restauradaDesdeIdb && (

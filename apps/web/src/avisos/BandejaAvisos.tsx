@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { fechaHora } from '../fechas/formato';
 import { fetchConSesion } from '../auth/sesion';
 import {
   type AvisoFalla,
@@ -111,7 +112,7 @@ export function BandejaAvisos() {
           <li key={a.id} data-testid="aviso" data-estado={a.estado}>
             <strong>{a.equipo}</strong> — {a.direccion} ({a.consorcio})
             <br />
-            <span data-testid="aviso-estado">{a.estado}</span> · ECA: {a.eca} · {new Date(a.creadoEn).toLocaleString('es-AR')}
+            <span data-testid="aviso-estado">{a.estado}</span> · ECA: {a.eca} · {fechaHora(a.creadoEn)}
             <br />
             {a.detalle}{' '}
             <a href={a.enlaceInforme} target="_blank" rel="noopener noreferrer">
@@ -119,12 +120,12 @@ export function BandejaAvisos() {
             </a>
             {a.aprobadoPor && (
               <p data-testid="aviso-aprobacion">
-                Aprobado por {a.aprobadoPor} el {a.aprobadoEn ? new Date(a.aprobadoEn).toLocaleString('es-AR') : ''}
+                Aprobado por {a.aprobadoPor} el {fechaHora(a.aprobadoEn)}
               </p>
             )}
             {a.enlace && (
               <p data-testid="aviso-enlace">
-                Enlace del informe (sin contraseña, vence el {a.enlaceVenceEn ? new Date(a.enlaceVenceEn).toLocaleString('es-AR') : '—'}):{' '}
+                Enlace del informe (sin contraseña, vence el {fechaHora(a.enlaceVenceEn) || '—'}):{' '}
                 <a href={a.enlace} target="_blank" rel="noopener noreferrer">
                   abrir
                 </a>
@@ -145,7 +146,7 @@ export function BandejaAvisos() {
             {a.constanciaEmailLegal && (
               <p data-testid="aviso-constancia-email">
                 <strong>PDF Legal MAICON S.R.L. ({a.constanciaEmailLegal.estado}):</strong>{' '}
-                {a.constanciaEmailLegal.destino} · {new Date(a.constanciaEmailLegal.fecha).toLocaleString('es-AR')} ·{' '}
+                {a.constanciaEmailLegal.destino} · {fechaHora(a.constanciaEmailLegal.fecha)} ·{' '}
                 <code>{a.constanciaEmailLegal.archivoPdf}</code>
                 {a.constanciaEmailLegal.motivo ? ` — Motivo: ${a.constanciaEmailLegal.motivo}` : ''}
               </p>

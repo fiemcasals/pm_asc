@@ -24,6 +24,10 @@ export type WhatsAppProviderConfig =
       phoneNumberId: string;
       apiVersion: string;
       baseUrl: string;
+      /** Nombre de la plantilla aprobada en Meta (HU-11 RF-08). Vacío: no sale ningún aviso. */
+      templateName: string;
+      /** Idioma de la plantilla (HU-11 RF-08). */
+      templateLang: string;
     }
   | {
       proveedor: 'twilio';
@@ -31,6 +35,8 @@ export type WhatsAppProviderConfig =
       authToken: string;
       fromNumber: string;
       baseUrl: string;
+      /** ContentSid de la plantilla aprobada en Twilio (HU-11 RF-08). Vacío: no sale ningún aviso. */
+      contentSid: string;
     };
 
 /** Secretos con que se validan los avisos de estado de Meta y Twilio (HU-11 RF-09). Vacíos: se rechaza todo. */
@@ -163,6 +169,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         phoneNumberId: metaPhoneId,
         apiVersion: env.WHATSAPP_META_API_VERSION?.trim() || 'v21.0',
         baseUrl: (env.WHATSAPP_META_BASE_URL?.trim() || 'https://graph.facebook.com').replace(/\/+$/, ''),
+        templateName: env.WHATSAPP_META_TEMPLATE_NAME?.trim() ?? '',
+        templateLang: env.WHATSAPP_META_TEMPLATE_LANG?.trim() || 'es_AR',
       };
     }
   } else if (waProviderRaw === 'twilio' || (!waProviderRaw && twilioSid && twilioToken && twilioFrom)) {
@@ -173,6 +181,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         authToken: twilioToken,
         fromNumber: twilioFrom,
         baseUrl: (env.WHATSAPP_TWILIO_BASE_URL?.trim() || 'https://api.twilio.com').replace(/\/+$/, ''),
+        contentSid: env.WHATSAPP_TWILIO_CONTENT_SID?.trim() ?? '',
       };
     }
   }

@@ -1,6 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { fetchConSesion } from '../auth/sesion';
-import { type AvisoFalla, aprobarAviso, cargarAvisos, descargarPdfLegalAviso, etiquetaCanal, ordenarBandeja, puedeAprobar, reintentarEmailAviso } from './avisos';
+import {
+  type AvisoFalla,
+  type EstadoWhatsApp,
+  type RegistroEnvioWhatsApp,
+  aprobarAviso,
+  cargarAvisos,
+  cargarEstadoWhatsApp,
+  cargarHistorialWhatsApp,
+  cartelWhatsApp,
+  descargarPdfLegalAviso,
+  estadoRealDeEnvio,
+  etiquetaCanal,
+  ordenarBandeja,
+  puedeAprobar,
+  reintentarEmailAviso,
+} from './avisos';
 
 /**
  * Bandeja «Avisos a la ECA» de la Secretaría (HU-11 RF-05). Ninguna falla crítica manda WhatsApp ni correo sola: queda
@@ -10,9 +25,18 @@ export function BandejaAvisos() {
   const [avisos, setAvisos] = useState<AvisoFalla[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aprobando, setAprobando] = useState<string | null>(null);
+  // `undefined` es que todavía se está consultando; `null`, que no se pudo.
+  const [whatsapp, setWhatsapp] = useState<EstadoWhatsApp | null | undefined>(undefined);
+  const [registros, setRegistros] = useState<RegistroEnvioWhatsApp[] | null>(null);
 
   const recargar = useCallback(async () => {
-    const lista = await cargarAvisos(fetchConSesion);
+    const [lista, estadoWa, historial] = await Promise.all([
+      cargarAvisos(fetchConSesion),
+      cargarEstadoWhatsApp(fetchConSesion),
+      cargarHistorialWhatsApp(fetchConSesion),
+    ]);
+    setWhatsapp(estadoWa);
+    setRegistros(historial);
     if (lista === null) setError('No se pudo cargar la bandeja de avisos.');
     else {
       setError(null);
@@ -67,6 +91,14 @@ export function BandejaAvisos() {
       <p className="portal-desc">
         Los avisos de falla crítica no salen solos: revisá cada falla y aprobá el envío del WhatsApp y el correo a la ECA y al Firmante.
       </p>
+      {whatsapp !== undefined && (
+        <p className={`alert ${cartelWhatsApp(whatsapp).tipo === 'activo' ? 'alert-success' : 'alert-warning'}`} role="status" data-testid="cartel-whatsapp" data-tipo={cartelWhatsApp(whatsapp).tipo}>
+          {cartelWhatsApp(whatsapp).texto}
+        </p>
+      )}
+      <button type="button" className="btn btn-secondary" onClick={() => void recargar()} data-testid="avisos-actualizar">
+        Actualizar estados
+      </button>
       {error && (
         <p className="error" role="alert" data-testid="avisos-error">
           {error}
@@ -100,11 +132,14 @@ export function BandejaAvisos() {
             )}
             {a.envios.length > 0 && (
               <ul data-testid="aviso-envios">
-                {a.envios.map((e, i) => (
-                  <li key={`${e.canal}-${i}`}>
-                    {etiquetaCanal(e.canal)} ({e.destino}): {e.ok ? 'enviado' : `no salió — ${e.motivo ?? e.estado}`}
-                  </li>
-                ))}
+                {a.envios.map((e, i) => {
+                  const real = estadoRealDeEnvio(e, a.alertaId, registros);
+                  return (
+                    <li key={`${e.canal}-${i}`} data-testid="aviso-envio" data-estado-real={real?.tipo}>
+                      {etiquetaCanal(e.canal)} ({e.destino}): {real ? real.texto : e.ok ? 'enviado' : `no salió — ${e.motivo ?? e.estado}`}
+                    </li>
+                  );
+                })}
               </ul>
             )}
             {a.constanciaEmailLegal && (

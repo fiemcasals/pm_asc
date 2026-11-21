@@ -84,6 +84,10 @@ export interface MaquinaAsignada {
   rtCalle: string;
   firmanteId: string;
   firmanteUsername: string;
+  /** Email del Firmante de la terna: el Firmante entra con su usuario, que puede ser su nombre o su email (como el RT). */
+  firmanteEmail?: string | null;
+  /** HU-02 RF-06: el edificio de la base al que sigue esta máquina; su RT, Firmante y ECA son los de la terna vigente. */
+  consorcioId?: string;
   mes: string;
   estado: EstadoVisita;
   estadoOperativo?: EstadoOperativo;
@@ -151,4 +155,17 @@ export interface AvisoPlazoVencido {
 export interface BandejaSecretaria {
   rechazados: InformeRechazado[];
   avisosPlazo: AvisoPlazoVencido[];
+}
+
+/** Un edificio de la base con su terna vigente, tal como lo necesita la vista de firma (HU-02 RF-06). */
+export interface VistaTernaEdificio {
+  nombre: string;
+  direccion: string;
+  administracion: string | null;
+  maquinas: { id: string; referenciaAgc: string; descripcion: string | null; tipo: TipoMaquina }[];
+  terna: {
+    rtCalle: { nombre: string };
+    firmante: { nombre: string; email: string | null };
+    eca: { nombre: string };
+  };
 }

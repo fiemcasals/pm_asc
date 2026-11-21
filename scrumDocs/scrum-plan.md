@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:41:02.321Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:41:16.442Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -491,6 +491,7 @@ Disparo automático inmediato y visualización directa implementados:
 - Estimado: 3h
 
 ### RF-09 — Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio
+Tabla reportes_parada (migraci�n 036, client_report_id �nico, RLS, sin DELETE); carga al arrancar y repone el estado de cada m�quina (tambi�n las de terna, con FirmanteService.cuandoSeAgregueMaquina); guarda antes de responder y deshace si falla; clientReportId evita duplicados (la web lo genera por borrador). e2e 7/7, int 1/1, verify API 1243 web 616, int 196/196; RF-09-entrega.sh 11/11 con reinicio real. Depende de #103 y #104. PR #105.
 - Estimado: 4
 
 ### RF-05 — Fotos por anomalía

@@ -4,7 +4,7 @@ import type { PuntoGeografico } from '../consorcios/consorcios';
 import { MapaBase } from './MapaBase';
 import { temaDelDocumento, type TemaMapa } from './estilo';
 import { cargarMapLibre } from './maplibre';
-import { COLOR_PIN_POR_DEFECTO, a6Decimales, aGeoJSON, claveDeMarcadores, etiquetaAccesible, limitesDe, type MarcadorMapa } from './marcadores';
+import { COLOR_PIN_POR_DEFECTO, a6Decimales, aGeoJSON, anclaDeEtiqueta, claveDeMarcadores, etiquetaAccesible, limitesDe, type AnclaEtiqueta, type MarcadorMapa } from './marcadores';
 import './mapa.css';
 
 export type { MarcadorMapa } from './marcadores';
@@ -40,7 +40,12 @@ function instalarEtiquetas(mapa: MapaMapLibre, datos: ReturnType<typeof aGeoJSON
   const colores = COLORES_TEXTO[temaDelDocumento()];
   if (!mapa.getSource(FUENTE)) mapa.addSource(FUENTE, { type: 'geojson', data: datos as never });
   else (mapa.getSource(FUENTE) as GeoJSONSource).setData(datos as never);
-  if (mapa.getLayer(CAPA_ETIQUETAS)) return;
+  if (mapa.getLayer(CAPA_ETIQUETAS)) {
+    // Ya está: sólo se actualizan los colores si cambió el tema.
+    mapa.setPaintProperty(CAPA_ETIQUETAS, 'text-color', colores.texto);
+    mapa.setPaintProperty(CAPA_ETIQUETAS, 'text-halo-color', colores.halo);
+    return;
+  }
   mapa.addLayer({
     id: CAPA_ETIQUETAS,
     type: 'symbol',
@@ -49,8 +54,9 @@ function instalarEtiquetas(mapa: MapaMapLibre, datos: ReturnType<typeof aGeoJSON
       'text-field': ['get', 'etiqueta'],
       'text-font': ['Noto Sans Medium'],
       'text-size': 12,
-      'text-anchor': 'left',
-      'text-offset': [1.1, 0],
+      // El nombre va a la derecha del pin y pasa a la izquierda si ahí no entra (ver anclaDeEtiqueta).
+      'text-anchor': ['get', 'ancla'],
+      'text-offset': ['case', ['==', ['get', 'ancla'], 'left'], ['literal', [1.1, 0]], ['literal', [-1.1, 0]]],
       'text-allow-overlap': false,
       'text-optional': true,
       // Menor número, se coloca antes: si dos etiquetas se pisan, queda la de mayor prioridad.
@@ -86,7 +92,9 @@ export function MapaEdificios({
   const ultimo = useRef({ marcadores, ubicacion, editable, onCambiarUbicacion, onSeleccionarMarcador, marcadorSeleccionadoId });
   ultimo.current = { marcadores, ubicacion, editable, onCambiarUbicacion, onSeleccionarMarcador, marcadorSeleccionadoId };
 
-  const datos = useMemo(() => aGeoJSON(marcadores, marcadorSeleccionadoId), [marcadores, marcadorSeleccionadoId]);
+  // De qué lado del pin va cada nombre: depende de dónde cae el pin en pantalla, así que se recalcula al mover el mapa.
+  const [anclas, setAnclas] = useState<Record<string, AnclaEtiqueta>>({});
+  const datos = useMemo(() => aGeoJSON(marcadores, marcadorSeleccionadoId, anclas), [marcadores, marcadorSeleccionadoId, anclas]);
   const datosRef = useRef(datos);
   datosRef.current = datos;
 
@@ -99,6 +107,30 @@ export function MapaEdificios({
   useEffect(() => {
     if (mapa) instalarEtiquetas(mapa, datos);
   }, [mapa, datos]);
+
+  // Cada vez que el mapa se mueve, cada nombre va del lado del pin donde entra.
+  useEffect(() => {
+    if (!mapa) return;
+    const recalcular = () => {
+      const ancho = mapa.getContainer().clientWidth;
+      const nuevas: Record<string, AnclaEtiqueta> = {};
+      for (const m of ultimo.current.marcadores) {
+        const p = mapa.project([m.ubicacion.longitud, m.ubicacion.latitud]);
+        nuevas[m.id] = anclaDeEtiqueta(p.x, ancho, m.etiqueta);
+      }
+      setAnclas((viejas) => {
+        const ids = Object.keys(nuevas);
+        return ids.length === Object.keys(viejas).length && ids.every((id) => viejas[id] === nuevas[id]) ? viejas : nuevas;
+      });
+    };
+    recalcular();
+    mapa.on('moveend', recalcular);
+    mapa.on('resize', recalcular);
+    return () => {
+      mapa.off('moveend', recalcular);
+      mapa.off('resize', recalcular);
+    };
+  }, [mapa, marcadores]);
 
   // Tocar el mapa fija la ubicación (sólo en modo editable).
   useEffect(() => {
@@ -171,6 +203,8 @@ export function MapaEdificios({
       pines.clear();
       pinUbicacionRef.current?.remove();
       pinUbicacionRef.current = null;
+      // Un mapa nuevo (por ejemplo, al bajar el mapa para usarlo sin señal) arranca sin encuadre: hay que volver a encuadrar los edificios.
+      claveEncuadre.current = null;
     };
   }, [mapa]);
 
@@ -220,9 +254,29 @@ export function MapaEdificios({
     if (puntos.length === 1) {
       mapa.jumpTo({ center: [puntos[0].longitud, puntos[0].latitud], zoom: ZOOM_UN_EDIFICIO });
     } else {
-      mapa.fitBounds(limites, { padding: 56, maxZoom: 16, animate: false });
+      // La etiqueta sale a la derecha del pin: se deja más margen de ese lado para que el nombre no quede cortado en el borde.
+      const derecha = Math.min(170, Math.round(mapa.getContainer().clientWidth * 0.4));
+      mapa.fitBounds(limites, { padding: { top: 48, bottom: 48, left: 40, right: derecha }, maxZoom: 16, animate: false });
     }
   }, [mapa, marcadores, ubicacion]);
+
+  // Al cambiar el estilo (el tema claro u oscuro) MapLibre reemplaza las fuentes y las capas: la de las etiquetas se vuelve a poner.
+  useEffect(() => {
+    if (!mapa) return;
+    const asegurar = () => {
+      try {
+        if (!mapa.getSource(FUENTE) || !mapa.getLayer(CAPA_ETIQUETAS)) instalarEtiquetas(mapa, datosRef.current);
+      } catch {
+        // el estilo todavía se está cargando: se vuelve a intentar con el próximo cambio
+      }
+    };
+    mapa.on('styledata', asegurar);
+    mapa.on('idle', asegurar);
+    return () => {
+      mapa.off('styledata', asegurar);
+      mapa.off('idle', asegurar);
+    };
+  }, [mapa]);
 
   // Qué etiquetas quedaron a la vista: las pruebas lo leen del DOM sin tocar el canvas.
   useEffect(() => {

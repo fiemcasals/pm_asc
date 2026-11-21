@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   a6Decimales,
   aGeoJSON,
+  anchoEstimadoEtiqueta,
+  anclaDeEtiqueta,
   claveDeMarcadores,
   distanciaMetros,
   etiquetaAccesible,
@@ -122,5 +124,36 @@ describe('proyección sin distorsión (criterio 2)', () => {
 
     expect(proporcionReal).toBeCloseTo(0.92, 1);
     expect(proporcionDibujada / proporcionReal).toBeGreaterThan(2.4);
+  });
+});
+
+describe('anclaDeEtiqueta: el nombre no se corta en el borde (HU-16 RF-04, criterio 4)', () => {
+  it('con lugar a la derecha del pin, el nombre va a la derecha', () => {
+    expect(anclaDeEtiqueta(60, 317, 'DEMO Cabildo 1540')).toBe('left');
+  });
+
+  it('cerca del borde derecho, el nombre pasa a la izquierda del pin', () => {
+    expect(anclaDeEtiqueta(231, 317, 'DEMO Corrientes 100')).toBe('right');
+  });
+
+  it('el límite es justo: entra si cabe entero con el margen del pin', () => {
+    const texto = 'DEMO Cabildo 1540';
+    const necesario = 12 + anchoEstimadoEtiqueta(texto);
+    expect(anclaDeEtiqueta(317 - necesario, 317, texto)).toBe('left');
+    expect(anclaDeEtiqueta(317 - necesario + 1, 317, texto)).toBe('right');
+  });
+
+  it('si no entra de ningún lado, se queda del lado que tiene más lugar', () => {
+    expect(anclaDeEtiqueta(40, 120, 'Un nombre larguísimo de edificio de prueba')).toBe('left');
+    expect(anclaDeEtiqueta(90, 120, 'Un nombre larguísimo de edificio de prueba')).toBe('right');
+  });
+
+  it('el ancho estimado crece con el largo del nombre', () => {
+    expect(anchoEstimadoEtiqueta('DEMO Corrientes 100')).toBeGreaterThan(anchoEstimadoEtiqueta('DEMO Cabildo'));
+  });
+
+  it('aGeoJSON lleva la ancla de cada edificio, y «left» si todavía no se calculó', () => {
+    const geo = aGeoJSON([m('a', 'rojo'), m('b', 'verde')], null, { b: 'right' });
+    expect(geo.features.map((f) => f.properties.ancla)).toEqual(['left', 'right']);
   });
 });

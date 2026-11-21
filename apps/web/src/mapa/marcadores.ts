@@ -33,20 +33,47 @@ export function a6Decimales(punto: { lat: number; lng: number }): PuntoGeografic
   return { latitud: Number(punto.lat.toFixed(6)), longitud: Number(punto.lng.toFixed(6)) };
 }
 
+/** De qué lado del pin va el nombre: `left` es que el texto queda a la derecha del pin (MapLibre ancla el texto por su borde izquierdo). */
+export type AnclaEtiqueta = 'left' | 'right';
+
+const MARGEN_PIN_PX = 12;
+const PX_POR_LETRA = 6.8;
+
+/** Lo que ocupa el nombre en pantalla (tipografía de 12 px), a ojo: alcanza para decidir de qué lado entra. */
+export function anchoEstimadoEtiqueta(texto: string): number {
+  return Math.round(texto.length * PX_POR_LETRA) + 8;
+}
+
+/**
+ * El nombre va a la derecha del pin; si ahí no entra en el mapa (el pin está cerca del borde derecho), pasa a la izquierda, para que
+ * no quede cortado. Si no entra de ningún lado, se queda del lado que tiene más lugar.
+ * @param x posición del pin en píxeles desde el borde izquierdo del mapa.
+ */
+export function anclaDeEtiqueta(x: number, anchoDelMapa: number, texto: string): AnclaEtiqueta {
+  const necesario = MARGEN_PIN_PX + anchoEstimadoEtiqueta(texto);
+  const aLaDerecha = anchoDelMapa - x;
+  if (aLaDerecha >= necesario) return 'left';
+  return x > aLaDerecha ? 'right' : 'left';
+}
+
 export interface PuntoGeoJSON {
   type: 'Feature';
   geometry: { type: 'Point'; coordinates: [number, number] };
-  properties: { id: string; etiqueta: string; prioridad: number };
+  properties: { id: string; etiqueta: string; prioridad: number; ancla: AnclaEtiqueta };
 }
 
 /** Los edificios como puntos GeoJSON, que es lo que MapLibre usa para colocar las etiquetas. [longitud, latitud]. */
-export function aGeoJSON(marcadores: readonly MarcadorMapa[], seleccionadoId: string | null = null): { type: 'FeatureCollection'; features: PuntoGeoJSON[] } {
+export function aGeoJSON(
+  marcadores: readonly MarcadorMapa[],
+  seleccionadoId: string | null = null,
+  anclas: Readonly<Record<string, AnclaEtiqueta>> = {},
+): { type: 'FeatureCollection'; features: PuntoGeoJSON[] } {
   return {
     type: 'FeatureCollection',
     features: marcadores.map((m) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [m.ubicacion.longitud, m.ubicacion.latitud] },
-      properties: { id: m.id, etiqueta: m.etiqueta, prioridad: prioridadDeEtiqueta(m, m.id === seleccionadoId) },
+      properties: { id: m.id, etiqueta: m.etiqueta, prioridad: prioridadDeEtiqueta(m, m.id === seleccionadoId), ancla: anclas[m.id] ?? 'left' },
     })),
   };
 }

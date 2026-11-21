@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:09:53.235Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:10:11.863Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -427,7 +427,8 @@ Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494000545-motor-del-c
 - Estimado: 5h
 
 ### RF-06 — Retirar las máquinas de ejemplo de la vista de firma
-- Estimado: 4
+Re-estimada de 4 h a 14 h (21/11/2026). Las 5 m�quinas de ejemplo de FirmanteService.resetSeed (MAQ-CORRIENTES-M1/M2, MAQ-SANTAFE-M1/M2, MAQ-CALLAO-M1, firmante gonza) aparecen en 53 archivos: 29 pruebas de la API, 8 de la web y 16 scripts de entrega (HU-05, HU-06, HU-08, HU-10, HU-11). Desglose sugerido: 1) un ayudante de pruebas que cree edificios con terna y sus m�quinas, y pasar las pruebas de la API y la web a usarlo (~8 h); 2) quitar resetSeed y adaptar los scripts de entrega a los datos de demo (~6 h). Conviene partirla en dos Tareas.
+- Estimado: 14
 
 ### RF-08 — Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio
 - Estimado: 8

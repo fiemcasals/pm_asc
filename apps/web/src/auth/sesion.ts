@@ -25,6 +25,8 @@ export const MENSAJE_REVOCADA = 'Tu sesión fue cerrada por un Administrador. Vo
 export const CLAVE_PERFIL = 'mant_asc_sesion';
 /** Dónde el Mapa del RT guarda los últimos datos descargados para verlos sin conexión (HU-16 RF-05). Se borra al cerrar sesión. */
 export const CLAVE_MAPA_RT = 'mant_asc_mapa_rt';
+/** Dónde se guarda la última lista «Edificios pendientes de hoy» del RT, para verla sin conexión (HU-07 RF-07). Se borra al cerrar sesión. */
+export const CLAVE_RECORRIDO_RT = 'mant_asc_recorrido_rt';
 
 /**
  * El token de acceso vive sólo en memoria: si alguien copia el almacenamiento del celular,
@@ -283,6 +285,7 @@ function borrarPerfil(): void {
   try {
     globalThis.localStorage?.removeItem(CLAVE_PERFIL);
     globalThis.localStorage?.removeItem(CLAVE_MAPA_RT);
+    globalThis.localStorage?.removeItem(CLAVE_RECORRIDO_RT);
   } catch {
     // nada que borrar
   }

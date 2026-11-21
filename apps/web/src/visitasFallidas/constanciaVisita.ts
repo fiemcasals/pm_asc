@@ -1,3 +1,4 @@
+import { CLAVE_RECORRIDO_RT, SesionRevocadaError } from '../auth/sesion';
 import { type Ubicacion } from '../auth/ubicacion';
 
 /** Constancia de visita fallida del RT de Calle (HU-07 RF-06): lógica de la pantalla, sin React. */
@@ -63,15 +64,88 @@ export async function cargarCausas(enviar: Enviar): Promise<CausasVisita | null>
   }
 }
 
-/** Los edificios que el RT todavía tiene para visitar hoy (la API ya saca los bloqueados y los que tienen una visita fallida de hoy). */
-export async function cargarRecorrido(enviar: Enviar): Promise<EdificioRecorrido[] | null> {
+// ---- La lista sin conexión (HU-07 RF-07).
+
+/** La lista tal como se guardó en el celular la última vez que se pudo descargar, con el usuario dueño. */
+export interface RecorridoGuardado {
+  usuario: string;
+  edificios: EdificioRecorrido[];
+  /** Cuándo se descargó (ISO). */
+  descargadoEn: string;
+}
+
+/**
+ * Qué mostrar en «Edificios pendientes de hoy»:
+ * - `servidor`: la lista recién descargada;
+ * - `guardado`: sin conexión, la última lista descargada por este mismo usuario, con su hora;
+ * - `sin_conexion`: sin conexión y sin una lista guardada;
+ * - `error`: el servidor respondió con error (o la sesión se cortó): no se tapa con datos viejos.
+ */
+export type ResultadoRecorrido =
+  | { tipo: 'servidor'; edificios: EdificioRecorrido[] }
+  | { tipo: 'guardado'; edificios: EdificioRecorrido[]; descargadoEn: string }
+  | { tipo: 'sin_conexion' }
+  | { tipo: 'error' };
+
+type Almacen = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+const almacenDelNavegador = (): Almacen | undefined => globalThis.localStorage;
+
+/** Guarda la lista para verla sin conexión. Si el almacenamiento está lleno o bloqueado, se sigue sin guardar. */
+export function guardarRecorrido(g: RecorridoGuardado, almacen: Almacen | undefined = almacenDelNavegador()): void {
   try {
-    const res = await enviar('/api/recorrido');
-    if (!res.ok) return null;
-    return (await res.json()) as EdificioRecorrido[];
+    almacen?.setItem(CLAVE_RECORRIDO_RT, JSON.stringify(g));
+  } catch {
+    // sin lugar para guardar: la lista sigue funcionando con conexión
+  }
+}
+
+/** La última lista guardada por `usuario`, o `null` si no hay, está dañada o es de otra persona. */
+export function leerRecorridoGuardado(usuario: string | null, almacen: Almacen | undefined = almacenDelNavegador()): RecorridoGuardado | null {
+  if (!usuario) return null;
+  try {
+    const crudo = almacen?.getItem(CLAVE_RECORRIDO_RT);
+    const g = (crudo ? JSON.parse(crudo) : null) as Partial<RecorridoGuardado> | null;
+    const valido = g && g.usuario === usuario && Array.isArray(g.edificios) && typeof g.descargadoEn === 'string' && !Number.isNaN(Date.parse(g.descargadoEn));
+    return valido ? (g as RecorridoGuardado) : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Descarga la lista del RT y la guarda. Si el pedido ni siquiera llega al servidor (sin conexión), devuelve la última lista guardada por
+ * ese usuario y cuándo se bajó, o `sin_conexion` si no hay. Un error del servidor o de la sesión devuelve `error`, como el Mapa del RT.
+ */
+export async function cargarRecorridoConRespaldo(
+  enviar: Enviar,
+  usuario: string | null,
+  almacen: Almacen | undefined = almacenDelNavegador(),
+  ahora: () => Date = () => new Date(),
+): Promise<ResultadoRecorrido> {
+  let res: Response;
+  try {
+    res = await enviar('/api/recorrido');
+  } catch (err) {
+    if (err instanceof SesionRevocadaError) return { tipo: 'error' };
+    const g = leerRecorridoGuardado(usuario, almacen);
+    return g ? { tipo: 'guardado', edificios: g.edificios, descargadoEn: g.descargadoEn } : { tipo: 'sin_conexion' };
+  }
+  if (!res.ok) return { tipo: 'error' };
+  try {
+    const edificios = (await res.json()) as EdificioRecorrido[];
+    if (!Array.isArray(edificios)) return { tipo: 'error' };
+    if (usuario) guardarRecorrido({ usuario, edificios, descargadoEn: ahora().toISOString() }, almacen);
+    return { tipo: 'servidor', edificios };
+  } catch {
+    return { tipo: 'error' };
+  }
+}
+
+/** Saca un edificio de la lista guardada (cuando el RT guarda su constancia), sin cambiar la hora de la descarga. */
+export function sacarDelRecorridoGuardado(usuario: string | null, id: string, almacen: Almacen | undefined = almacenDelNavegador()): void {
+  const g = leerRecorridoGuardado(usuario, almacen);
+  if (g) guardarRecorrido({ ...g, edificios: g.edificios.filter((e) => e.id !== id) }, almacen);
 }
 
 export interface ConstanciaGuardada {

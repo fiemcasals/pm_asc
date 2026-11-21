@@ -1,26 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { fetchConSesion } from '../auth/sesion';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { fetchConSesion, leerPerfil } from '../auth/sesion';
+import { horaDeLosDatos } from '../rtmapa/mapaRt';
 import { ConstanciaVisitaFallida } from './ConstanciaVisitaFallida';
-import { type EdificioRecorrido, cargarRecorrido } from './constanciaVisita';
+import {
+  type EdificioRecorrido,
+  type ResultadoRecorrido,
+  cargarRecorridoConRespaldo,
+  sacarDelRecorridoGuardado,
+} from './constanciaVisita';
+
+type Estado = { tipo: 'cargando' } | ResultadoRecorrido;
 
 /**
  * Los edificios que el RT de Calle tiene pendientes hoy, cada uno con «No se pudo realizar la inspección» (HU-07 RF-06).
- * Al guardar la constancia, el edificio desaparece de la lista por ese día. (El mapa con pines llega con HU-16.)
+ * Al guardar la constancia, el edificio desaparece de la lista por ese día.
+ * Sin conexión muestra la última lista descargada con su hora, o un aviso con «Reintentar»; nunca se queda en «Cargando…» (HU-07 RF-07).
  */
 export function RecorridoRt() {
-  const [edificios, setEdificios] = useState<EdificioRecorrido[] | null>(null);
+  const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' });
   const [abierto, setAbierto] = useState<EdificioRecorrido | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const montado = useRef(true);
+  const usuario = leerPerfil()?.usuario ?? null;
+
+  const cargar = useCallback(async () => {
+    setEstado({ tipo: 'cargando' });
+    const r = await cargarRecorridoConRespaldo(fetchConSesion, usuario);
+    if (montado.current) setEstado(r);
+  }, [usuario]);
 
   useEffect(() => {
-    let activo = true;
-    void cargarRecorrido(fetchConSesion).then((r) => activo && setEdificios(r));
+    montado.current = true;
+    void cargar();
+    // Al volver la señal, la lista se actualiza sola.
+    const alVolverLaRed = () => void cargar();
+    globalThis.addEventListener?.('online', alVolverLaRed);
     return () => {
-      activo = false;
+      montado.current = false;
+      globalThis.removeEventListener?.('online', alVolverLaRed);
     };
-  }, []);
+  }, [cargar]);
 
-  const sacar = (id: string) => setEdificios((lista) => (lista ?? []).filter((e) => e.id !== id));
+  const edificios = estado.tipo === 'servidor' || estado.tipo === 'guardado' ? estado.edificios : null;
+
+  const sacar = (id: string) => {
+    sacarDelRecorridoGuardado(usuario, id);
+    setEstado((e) => (e.tipo === 'servidor' || e.tipo === 'guardado' ? { ...e, edificios: e.edificios.filter((x) => x.id !== id) } : e));
+  };
 
   if (abierto) {
     return (
@@ -41,15 +67,39 @@ export function RecorridoRt() {
     );
   }
 
+  const reintentar = (
+    <button type="button" className="btn btn-secondary btn-sm" onClick={() => void cargar()} data-testid="recorrido-reintentar">
+      Reintentar
+    </button>
+  );
+
   return (
-    <section className="recorrido-rt" aria-labelledby="recorrido-titulo" data-testid="recorrido-rt">
+    <section className="recorrido-rt" aria-labelledby="recorrido-titulo" data-testid="recorrido-rt" data-estado={estado.tipo}>
       <h3 id="recorrido-titulo">Edificios pendientes de hoy</h3>
       {aviso && (
         <p role="status" data-testid="recorrido-aviso">
           {aviso}
         </p>
       )}
-      {edificios === null && <p className="portal-desc">Cargando tus edificios…</p>}
+      {estado.tipo === 'cargando' && <p className="portal-desc">Cargando tus edificios…</p>}
+      {estado.tipo === 'sin_conexion' && (
+        <div className="alert alert-warning" role="status" data-testid="recorrido-sin-conexion">
+          <p>Sin conexión: no se pudo cargar la lista de tus edificios. Conectate a una red y apretá «Reintentar».</p>
+          {reintentar}
+        </div>
+      )}
+      {estado.tipo === 'error' && (
+        <div className="alert alert-warning" role="alert" data-testid="recorrido-error">
+          <p>No se pudo cargar la lista de tus edificios. Probá de nuevo en un momento.</p>
+          {reintentar}
+        </div>
+      )}
+      {estado.tipo === 'guardado' && (
+        <div className="alert alert-warning" role="status" data-testid="recorrido-guardado">
+          <p>Sin conexión: es la lista descargada a {horaDeLosDatos(estado.descargadoEn)}.</p>
+          {reintentar}
+        </div>
+      )}
       {edificios?.length === 0 && <p className="portal-desc">No tenés edificios pendientes por hoy.</p>}
       <ul className="recorrido-lista">
         {edificios?.map((e) => (

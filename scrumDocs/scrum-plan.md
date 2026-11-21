@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:01:41.623Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:01:53.868Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -253,6 +253,7 @@ PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-d
 - Estimado: 6
 
 ### RF-13 — Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp
+@Roles(secretaria, administrador) en GET /api/whatsapp/historial: 401 sin sesi�n, 403 RT/Firmante/ECA, 200 Secretar�a/Administrador. e2e nueva 8/8, API 1216/1216; scripts RF-03/04/05/06/09/10 actualizados y en verde. Queda fuera: enviar-alerta y trigger-alerta-critica siguen p�blicos. PR #101.
 - Estimado: 2
 
 ### RF-14 — Que el estado general de un aviso refleje un envío de WhatsApp que falla después

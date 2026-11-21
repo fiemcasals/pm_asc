@@ -26,4 +26,9 @@ export interface ReporteParada {
   resueltoPor?: string;
   resueltoEn?: string;
   motivoRechazo?: string;
+  /** Id que genera el celular para el reporte: si lo reintenta (por ejemplo después de un corte), no se duplica (HU-17 RF-09). */
+  clientReportId?: string;
+  /** Cuándo una nueva inspección del RT devolvió el equipo a «Normal» después de este reporte confirmado (HU-17 RF-09). */
+  normalizadoEn?: string;
+  normalizadoPor?: string;
 }

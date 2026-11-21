@@ -1059,4 +1059,28 @@ export const MIGRATIONS: Migration[] = [
       REVOKE DELETE ON avisos_falla FROM ascensores_app;
     `,
   },
+  {
+    id: '036_reportes_parada',
+    sql: `
+      -- HU-17 RF-09: los reportes de parada (Fuera de Servicio / Reparación Urgente) que carga el RT sobreviven a un reinicio de la API.
+      -- «client_report_id» es el id que genera el celular: un reintento del mismo reporte no se duplica.
+      CREATE TABLE reportes_parada (
+        id                text PRIMARY KEY,
+        maquina_id        text NOT NULL,
+        client_report_id  text UNIQUE,
+        confirmacion      text NOT NULL CHECK (confirmacion IN ('Pendiente de confirmación', 'Confirmado', 'Rechazado')),
+        reporte           jsonb NOT NULL CHECK (jsonb_typeof(reporte) = 'object'),
+        fecha             timestamptz NOT NULL,
+        actualizado_en    timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX reportes_parada_maquina ON reportes_parada (maquina_id, fecha);
+      ALTER TABLE reportes_parada ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_reportes_parada_admin_secretaria ON reportes_parada;
+      CREATE POLICY rls_reportes_parada_admin_secretaria ON reportes_parada
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Un reporte no se borra desde la aplicación: es la constancia de que el equipo estuvo parado.
+      REVOKE DELETE ON reportes_parada FROM ascensores_app;
+    `,
+  },
 ];

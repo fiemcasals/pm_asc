@@ -1,6 +1,8 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirmanteService } from '../firmante/firmante.service';
+import { MaquinaAsignada } from '../firmante/firmante.types';
+import { ParadasRepository } from './paradas.repository';
 import { ESTADOS_ANORMALES, EstadoAnormal, ReporteParada } from './paradas.types';
 
 const MAX_CAUSA = 1000;
@@ -9,17 +11,74 @@ const MAX_FOTOS = 10;
 /**
  * Estado anormal de los equipos (HU-17 RF-03 y HU-06 RF-05): el RT de Calle marca «Fuera de Servicio» o «Reparación Urgente» con la
  * causa y fotos, el equipo queda «Pendiente de confirmación» y se avisa a la Secretaría y al Firmante; sólo el Firmante asignado lo
- * confirma o lo rechaza; y el equipo vuelve a «Normal» sólo con una nueva inspección del RT con al menos una foto. Quedan en memoria,
- * igual que las máquinas de FirmanteService de las que cuelgan.
+ * confirma o lo rechaza; y el equipo vuelve a «Normal» sólo con una nueva inspección del RT con al menos una foto.
+ *
+ * HU-17 RF-09: los reportes se guardan en PostgreSQL (si hay repositorio) y se cargan al arrancar; con ellos se le vuelve a poner a
+ * cada máquina el estado que le corresponde, para que la ECA, la Secretaría y el Firmante lo sigan viendo después de un reinicio.
  */
 @Injectable()
 export class ParadasService {
   private readonly reportes: ReporteParada[] = [];
+  private readonly logger = new Logger(ParadasService.name);
+  /** Escrituras al repositorio en orden: una versión vieja de un reporte nunca pisa a una nueva. */
+  private cola: Promise<void> = Promise.resolve();
 
-  constructor(private readonly firmante: FirmanteService) {}
+  constructor(
+    private readonly firmante: FirmanteService,
+    @Optional() private readonly repo?: ParadasRepository,
+  ) {
+    // Una máquina que aparece después (las de los edificios con terna) recibe el estado de sus reportes.
+    this.firmante.cuandoSeAgregueMaquina((m) => this.aplicarEstado(m));
+  }
 
-  registrar(body: unknown, reportadoPor: string): ReporteParada {
+  /** HU-17 RF-09: carga los reportes guardados y le vuelve a poner a cada máquina el estado que corresponde. */
+  async onApplicationBootstrap(): Promise<void> {
+    if (!this.repo) return;
+    try {
+      const guardados = await this.repo.leer();
+      const ids = new Set(this.reportes.map((r) => r.id));
+      this.reportes.unshift(...guardados.filter((r) => !ids.has(r.id)));
+      for (const m of this.firmante.getMaquinas()) this.aplicarEstado(m);
+    } catch (err) {
+      this.logger.error(`No se pudieron cargar los reportes de parada guardados: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /** Termina las escrituras pendientes (para las pruebas y el apagado). */
+  async esperarGuardados(): Promise<void> {
+    await this.cola;
+  }
+
+  /** Guarda el reporte y espera: un reporte o una decisión sólo se dan por hechos si quedaron guardados. */
+  private async guardar(r: ReporteParada): Promise<void> {
+    if (!this.repo) return;
+    const copia = structuredClone(r);
+    const escritura = this.cola.then(() => this.repo!.guardar(copia));
+    this.cola = escritura.catch(() => undefined);
+    await escritura;
+  }
+
+  /** El estado que le corresponde a la máquina según su último reporte (si tiene). */
+  private aplicarEstado(m: MaquinaAsignada): void {
+    const ultimo = [...this.reportes].reverse().find((r) => r.maquinaId === m.id);
+    if (!ultimo) return;
+    if (ultimo.confirmacion === 'Pendiente de confirmación' || (ultimo.confirmacion === 'Confirmado' && !ultimo.normalizadoEn)) {
+      m.estadoOperativo = ultimo.estadoMarcado;
+      m.confirmacionEstado = ultimo.confirmacion;
+    } else {
+      m.estadoOperativo = 'Normal';
+      m.confirmacionEstado = ultimo.confirmacion === 'Rechazado' ? 'Rechazado' : undefined;
+    }
+  }
+
+  async registrar(body: unknown, reportadoPor: string): Promise<ReporteParada> {
     const b = (body ?? {}) as Record<string, unknown>;
+    // HU-17 RF-09: el reintento del mismo reporte desde el celular devuelve el que ya estaba, sin duplicarlo.
+    const clientReportId = typeof b.clientReportId === 'string' ? b.clientReportId.trim().slice(0, 100) : '';
+    if (clientReportId) {
+      const yaRecibido = this.reportes.find((r) => r.clientReportId === clientReportId);
+      if (yaRecibido) return structuredClone(yaRecibido);
+    }
     const errores: string[] = [];
     const maquinaId = typeof b.maquinaId === 'string' ? b.maquinaId.trim() : '';
     const causa = typeof b.causa === 'string' ? b.causa.trim() : '';
@@ -55,7 +114,16 @@ export class ParadasService {
       reportadoPor,
       fecha: new Date().toISOString(),
       avisadoA: ['secretaria', `firmante:${maquina.firmanteUsername}`],
+      ...(clientReportId ? { clientReportId } : {}),
     };
+    try {
+      await this.guardar(reporte);
+    } catch (err) {
+      maquina.estadoOperativo = 'Normal';
+      maquina.confirmacionEstado = undefined;
+      this.logger.error(`No se pudo guardar el reporte de parada: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    }
     this.reportes.push(reporte);
     return structuredClone(reporte);
   }
@@ -72,7 +140,7 @@ export class ParadasService {
    * (lo ven la ficha de la máquina y el portal de la ECA); rechazar devuelve el equipo a «Normal». Otro rol, o un Firmante de otro
    * edificio, recibe 403.
    */
-  resolver(id: string, decision: 'confirmar' | 'rechazar', usuario: { usuario: string; rol: string }, motivo?: unknown): ReporteParada {
+  async resolver(id: string, decision: 'confirmar' | 'rechazar', usuario: { usuario: string; rol: string }, motivo?: unknown): Promise<ReporteParada> {
     const reporte = this.reportes.find((r) => r.id === id);
     if (!reporte) throw new NotFoundException(`No existe el reporte ${id}`);
     if (usuario.rol !== 'firmante' || this.firmanteDe(reporte.maquinaId) !== usuario.usuario.toLowerCase()) {
@@ -83,6 +151,7 @@ export class ParadasService {
     if (decision === 'rechazar' && !motivoLimpio) throw new BadRequestException({ message: 'Datos inválidos', errores: ['motivo es obligatorio al rechazar'] });
 
     const maquina = this.firmante.getMaquinas().find((m) => m.id === reporte.maquinaId)!;
+    const antes = { reporte: structuredClone(reporte), estadoOperativo: maquina.estadoOperativo, confirmacionEstado: maquina.confirmacionEstado };
     reporte.resueltoPor = usuario.usuario;
     reporte.resueltoEn = new Date().toISOString();
     if (decision === 'confirmar') {
@@ -96,13 +165,23 @@ export class ParadasService {
       maquina.confirmacionEstado = 'Rechazado';
       maquina.estadoOperativo = 'Normal';
     }
+    try {
+      await this.guardar(reporte);
+    } catch (err) {
+      // Si no quedó guardada, la decisión no se da por hecha: el reporte y el equipo vuelven a como estaban y se puede reintentar.
+      Object.assign(reporte, antes.reporte);
+      for (const k of ['resueltoPor', 'resueltoEn', 'motivoRechazo'] as const) if (!(k in antes.reporte)) delete reporte[k];
+      maquina.estadoOperativo = antes.estadoOperativo;
+      maquina.confirmacionEstado = antes.confirmacionEstado;
+      throw err;
+    }
     return structuredClone(reporte);
   }
 
   /**
    * HU-06 RF-05: el equipo vuelve a «Normal» sólo con una nueva inspección del RT con al menos una foto; sin foto responde 400.
    */
-  normalizar(maquinaId: string, body: unknown, reportadoPor: string): { maquinaId: string; estadoOperativo: 'Normal'; reportadoPor: string; fotos: number } {
+  async normalizar(maquinaId: string, body: unknown, reportadoPor: string): Promise<{ maquinaId: string; estadoOperativo: 'Normal'; reportadoPor: string; fotos: number }> {
     const b = (body ?? {}) as Record<string, unknown>;
     const fotos = Array.isArray(b.fotos) ? b.fotos.filter((f) => typeof f === 'string' && f.trim() !== '') : [];
     if (fotos.length === 0) {
@@ -116,6 +195,13 @@ export class ParadasService {
     if ((maquina.estadoOperativo ?? 'Normal') === 'Normal') throw new ConflictException('Este equipo ya está en estado Normal.');
     maquina.estadoOperativo = 'Normal';
     maquina.confirmacionEstado = undefined;
+    // El último reporte confirmado queda marcado como normalizado: así, después de un reinicio, el equipo sigue «Normal».
+    const confirmado = [...this.reportes].reverse().find((r) => r.maquinaId === maquinaId && r.confirmacion === 'Confirmado' && !r.normalizadoEn);
+    if (confirmado) {
+      confirmado.normalizadoEn = new Date().toISOString();
+      confirmado.normalizadoPor = reportadoPor;
+      await this.guardar(confirmado);
+    }
     return { maquinaId, estadoOperativo: 'Normal', reportadoPor, fotos: fotos.length };
   }
 

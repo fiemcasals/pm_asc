@@ -9,6 +9,8 @@ export interface BorradorParada {
   causa: string;
   /** Fotos adjuntas (data URL). */
   fotos: readonly string[];
+  /** Id del reporte que genera el celular: si se reintenta, la API no lo duplica (HU-17 RF-09). */
+  clientReportId?: string;
 }
 
 /** «Guardar Reporte de Parada» se habilita sólo con una causa escrita y al menos una foto (HU-17 RF-03, criterio 1). */
@@ -40,7 +42,7 @@ export async function enviarReporteParada(
     const res = await enviar('/api/paradas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ maquinaId, causa: borrador.causa.trim(), fotos: borrador.fotos }),
+      body: JSON.stringify({ maquinaId, causa: borrador.causa.trim(), fotos: borrador.fotos, ...(borrador.clientReportId ? { clientReportId: borrador.clientReportId } : {}) }),
     });
     const json = (await res.json()) as { message?: string; errores?: string[] } & ReporteParadaGuardado;
     if (!res.ok) return { ok: false, error: json.errores?.join(' · ') || json.message || `No se pudo guardar el reporte (error ${res.status})` };

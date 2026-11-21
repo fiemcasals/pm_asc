@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-21T18:03:48.623Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T18:25:47.392Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -55,6 +55,7 @@ graph TD
     REQ_1794493275499["RF-04: Recargo del 45 % una sola vez por máquina no inspeccionada"]
     REQ_1794493275712["RF-05: Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas"]
     REQ_1794494000358["RF-06: Pantalla de constancia de visita fallida en el celular del RT"]
+    REQ_1795285543235["RF-07: FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión"]
   end
   subgraph US_1791560829306["HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC"]
     REQ_1791910395959["RF-01: API de Máquinas Asignadas y Autorización de Firma AGC"]
@@ -97,6 +98,7 @@ graph TD
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]
     REQ_1794488168014["RF-02: FIX: Corregir contraste de textos y contenedores en Modo Oscuro"]
+    REQ_1795285543504["RF-03: FIX: Mostrar las horas en formato de 24 horas en toda la app"]
   end
   subgraph US_1794486885243["HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios"]
     REQ_1794486918510["RF-01: Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados"]

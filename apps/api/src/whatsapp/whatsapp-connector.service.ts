@@ -84,6 +84,13 @@ export class WhatsAppConnectorService {
     return lista.map((h) => structuredClone(h));
   }
 
+  /** El registro de un envío por el id de mensaje del proveedor (wamid o SM), con su estado actual; undefined si no existe. */
+  registroDeMensaje(idMensaje: string): RegistroEnvioWhatsApp | undefined {
+    const id = idMensaje.trim();
+    const registro = id ? this.historial.find((h) => h.idMensaje === id) : undefined;
+    return registro ? structuredClone(registro) : undefined;
+  }
+
   /**
    * Envía el mensaje formal al proveedor de WhatsApp configurado con reintentos ante fallas transitorias.
    * - Sin teléfono de destino cargado: no realiza el envío e informa el motivo (HU-11 RF-04).

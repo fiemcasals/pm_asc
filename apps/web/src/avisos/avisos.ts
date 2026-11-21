@@ -8,6 +8,8 @@ export interface EnvioAviso {
   ok: boolean;
   estado: string;
   motivo?: string;
+  /** Id del mensaje del proveedor: identifica el registro exacto del historial (HU-11 RF-14). */
+  idMensaje?: string;
   fecha: string;
   archivoPdf?: string;
   pdfSha256?: string;
@@ -97,6 +99,8 @@ export async function cargarEstadoWhatsApp(enviar: Enviar): Promise<EstadoWhatsA
 /** Un envío del historial de WhatsApp, tal como lo confirma el proveedor (HU-11 RF-09). */
 export interface RegistroEnvioWhatsApp {
   alertaId?: string;
+  /** Id del mensaje del proveedor (wamid o SM); vacío si no salió. */
+  idMensaje?: string;
   telefonoDestino: string;
   estadoEntrega: 'aceptado' | 'enviado' | 'entregado' | 'leido' | 'fallido' | 'no_configurado' | 'sin_telefono';
   motivo?: string;
@@ -126,14 +130,17 @@ export interface EstadoRealEnvio {
  * después de reiniciar la API): ahí la pantalla muestra lo que guardó el aviso.
  */
 export function estadoRealDeEnvio(
-  envio: Pick<EnvioAviso, 'canal' | 'destino'>,
+  envio: Pick<EnvioAviso, 'canal' | 'destino' | 'idMensaje'>,
   alertaId: string,
   registros: readonly RegistroEnvioWhatsApp[] | null,
 ): EstadoRealEnvio | null {
   if (envio.canal === 'email_eca' || !registros) return null;
-  const registro = registros
-    .filter((r) => r.alertaId === alertaId && r.telefonoDestino === envio.destino)
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
+  // Con el id de mensaje se toma su registro exacto: después de un reintento, el envío que falló sigue mostrando su fallo (HU-11 RF-14).
+  const registro = envio.idMensaje
+    ? registros.find((r) => r.idMensaje === envio.idMensaje)
+    : registros
+        .filter((r) => r.alertaId === alertaId && r.telefonoDestino === envio.destino)
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
   if (!registro) return null;
 
   switch (registro.estadoEntrega) {

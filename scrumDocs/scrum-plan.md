@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T05:24:54.203Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T05:25:17.410Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -219,7 +219,7 @@ PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-d
 - Estimado: 3h
 
 ### RF-05 — Usar el mapa nuevo en las pantallas y retirar el dibujo anterior
-Inicio de desarrollo de la tarea
+PR #94, apilado sobre #93 (base: la rama de RF-04): mergear primero RF-04. La ficha del edificio (lectura y edición), el alta de consorcio, Secretaría (vista de mapa y Monitoreo), el Semáforo y el Mapa del RT usan MapaEdificios, y se borró MapaUbicacionConsorcio: 0 referencias a él ni a las avenidas dibujadas a mano en apps/web/src. El Mapa del RT guarda los últimos datos y, sin red, los muestra con un cartel con la hora; un error del servidor o una sesión revocada no se tapan, y al cerrar sesión se borran. El Semáforo conserva colores, leyenda y nota; sin geolocalización nueva. mapaRtGuardado.test.ts 13/13, verify API 1143 y web 578, test:int 188, RF-05-entrega.sh 15/15 y carga sin fallos. Guía visual con 15 capturas de Playwright. Mínimo necesario fuera de lo pedido: se cambió la dirección de ejemplo de tarjeta.test.ts para que la búsqueda de «Av. Rivadavia» dé vacía, y auth/sesion.ts borra los datos guardados al cerrar sesión. La ficha del edificio no entra en 360 px (ya era más ancha que el celular antes). Los datos del RT quedan en localStorage sin cifrar hasta cerrar sesión. No probado en un celular físico.
 - Estimado: 8h
 
 ### RF-04 — Horarios de atención por edificio editables por la Secretaría

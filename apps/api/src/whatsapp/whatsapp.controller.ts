@@ -8,6 +8,7 @@ import {
   Query,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { Roles } from '../auth/roles.guard';
 import { WhatsAppConnectorService } from './whatsapp-connector.service';
 import { WhatsAppFormatterService } from './whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp-trigger.service';
@@ -88,7 +89,12 @@ export class WhatsAppController {
     };
   }
 
+  /**
+   * El historial de envíos trae teléfonos y textos de los avisos: sólo la Secretaría y el Administrador (HU-11 RF-13).
+   * Sin sesión responde 401; con otro rol, 403.
+   */
   @Get('historial')
+  @Roles('secretaria', 'administrador')
   getHistorial(
     @Query('alertaId') alertaId?: string,
   ): { total: number; registros: RegistroEnvioWhatsApp[] } {

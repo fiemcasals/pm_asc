@@ -1,6 +1,6 @@
 import { fetchConSesion } from '../auth/sesion';
 import type { ConsorcioMapaItem, FetchResult } from '../consorcios/consorcios';
-import type { MarcadorMapa } from '../consorcios/MapaUbicacionConsorcio';
+import type { MarcadorMapa } from '../mapa/marcadores';
 
 export type ColorSemaforo = 'verde' | 'amarillo' | 'rojo';
 export type EstadoEdificio = 'inspeccionado' | 'pendiente';

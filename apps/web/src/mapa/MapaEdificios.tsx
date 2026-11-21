@@ -67,8 +67,8 @@ function instalarEtiquetas(mapa: MapaMapLibre, datos: ReturnType<typeof aGeoJSON
 }
 
 /**
- * El mapa de edificios (HU-16 RF-04): MapLibre sobre el mapa base de CABA propio. Recibe los mismos datos que el dibujo anterior
- * (`MapaUbicacionConsorcio`) para poder cambiarlo pantalla por pantalla. Los pines se ubican por latitud y longitud reales; el mapa
+ * El mapa de edificios (HU-16 RF-04): MapLibre sobre el mapa base de CABA propio. Lo usan la ficha del edificio, el alta de consorcio,
+ * Secretaría, el Semáforo y el Mapa del RT. Los pines se ubican por latitud y longitud reales; el mapa
  * se acerca, se aleja y se desplaza; al abrirse encuadra todos los edificios; y los nombres que se pisan se ocultan (rojos primero)
  * y reaparecen al acercar.
  */

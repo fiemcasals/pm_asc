@@ -12,7 +12,7 @@ import {
 import { FichaConsorcio } from './FichaConsorcio';
 import { FormularioConsorcio } from './FormularioConsorcio';
 import { ImportadorExcelAgc } from './ImportadorExcelAgc';
-import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
+import { MapaEdificios } from '../mapa/MapaEdificios';
 import { SemaforoView } from '../semaforo/SemaforoView';
 import { BandejaAvisos } from '../avisos/BandejaAvisos';
 import { TableroMonitoreo } from '../backoffice/TableroMonitoreo';
@@ -142,7 +142,7 @@ function EdificiosPanel({ consorcioInicialId }: EdificiosPanelProps) {
               Excluidos sin ubicación: {Math.max(0, consorcios.length - consorciosMapa.length)}
             </span>
           </div>
-          <MapaUbicacionConsorcio
+          <MapaEdificios
             ubicacion={null}
             marcadores={consorciosMapa.map((c) => ({
               id: c.id,
@@ -270,7 +270,7 @@ function MonitoreoGeneral() {
   }, []);
   return (
     <div data-testid="monitoreo-general">
-      <MapaUbicacionConsorcio
+      <MapaEdificios
         ubicacion={null}
         marcadores={edificios.map((c) => ({ id: c.id, etiqueta: c.nombre, subtitulo: c.direccion, ubicacion: c.ubicacion }))}
         testId="mapa-monitoreo"

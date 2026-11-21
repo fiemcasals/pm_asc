@@ -5,7 +5,7 @@ import {
 
 // HU-16 RF-02: tarjeta del edificio, llamar, cómo llegar y presencia a 30 m.
 const PUNTO = { latitud: -34.6118, longitud: -58.396 };
-const edificio = { ubicacion: PUNTO, direccion: 'Av. Rivadavia 1234, CABA' };
+const edificio = { ubicacion: PUNTO, direccion: 'Av. Corrientes 1234, CABA' };
 const gps = (dLat: number, precision = 6) => ({ motivo: 'inicio-inspeccion' as const, latitud: PUNTO.latitud + dLat, longitud: PUNTO.longitud, precision, tomadaEn: '2026-11-17T13:00:00.000Z' });
 const respuesta = (status: number, cuerpo: unknown) => ({ ok: status < 400, status, json: async () => cuerpo }) as Response;
 const MALA = { foto: null, justificacion: '' };
@@ -31,7 +31,7 @@ describe('enlaceComoLlegar (criterio 1: abre Google Maps con destino en el edifi
     expect(enlaceComoLlegar(edificio)).toBe('https://www.google.com/maps/dir/?api=1&destination=-34.6118%2C-58.396&travelmode=driving');
   });
   it('sin punto usa la dirección, codificada', () => {
-    expect(enlaceComoLlegar({ ubicacion: null, direccion: 'Av. Rivadavia 1234, CABA' })).toBe('https://www.google.com/maps/dir/?api=1&destination=Av.%20Rivadavia%201234%2C%20CABA&travelmode=driving');
+    expect(enlaceComoLlegar({ ubicacion: null, direccion: 'Av. Corrientes 1234, CABA' })).toBe('https://www.google.com/maps/dir/?api=1&destination=Av.%20Corrientes%201234%2C%20CABA&travelmode=driving');
   });
 });
 

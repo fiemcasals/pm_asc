@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T04:40:36.804Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T04:40:54.258Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -174,7 +174,7 @@ PR #23 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/23). Commit
 - Estimado: 4h
 
 ### RF-10 — Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío
-Inicio de desarrollo de la tarea
+PR #92 contra dev. La bandeja de avisos muestra un cartel con el estado de WhatsApp («WhatsApp activo: Meta» / «…: Twilio» / «WhatsApp no configurado…» / «No se pudo consultar el estado»), sin credenciales ni teléfonos, y por cada envío el estado que confirmó el proveedor (Aceptado, Enviado, Entregado, Leído o Falló con motivo y código). avisos.test.ts 26/26, verify API 1143/1143 y web 555, test:int 188/188, RF-10-entrega.sh 7/7 combinada con RF-09 y carga 100 sin fallos. Guía visual con 9 capturas de Playwright. Mínimo necesario fuera de lo pedido: botón «Actualizar estados», porque los estados cambian cuando el proveedor avisa. Depende de HU-11/RF-09: mergearla antes. El estado general del aviso queda «Enviado» aunque el proveedor avise después una falla. La pantalla se verificó con Playwright, no con una prueba automática del componente.
 - Estimado: 4h
 
 ### RF-04 — Componente de mapa con pines por estado, zoom y nombres que no se pisan

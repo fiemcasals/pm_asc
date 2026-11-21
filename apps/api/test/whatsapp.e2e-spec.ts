@@ -111,7 +111,7 @@ describe('WhatsAppController (e2e - HU-11 / RF-01, RF-02, RF-03)', () => {
         .expect(201);
 
       expect(res.body).toHaveProperty('ok', true);
-      expect(res.body).toHaveProperty('estadoEntrega', 'entregado');
+      expect(res.body).toHaveProperty('estadoEntrega', 'aceptado');
       expect(res.body).toHaveProperty('telefonoDestino', '+5491155667788');
       expect(res.body.idMensaje).toContain('WA-MSG-');
       expect(res.body).toHaveProperty('intentos', 1);

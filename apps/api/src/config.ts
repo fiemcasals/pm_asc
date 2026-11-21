@@ -33,6 +33,18 @@ export type WhatsAppProviderConfig =
       baseUrl: string;
     };
 
+/** Secretos con que se validan los avisos de estado de Meta y Twilio (HU-11 RF-09). Vacíos: se rechaza todo. */
+export interface WhatsAppWebhookConfig {
+  /** Token que Meta repite al verificar la suscripción (WHATSAPP_META_VERIFY_TOKEN). */
+  metaVerifyToken: string;
+  /** Secreto de la app de Meta con que firma cada aviso (WHATSAPP_META_APP_SECRET). */
+  metaAppSecret: string;
+  /** El Auth Token de Twilio, que también firma sus avisos (WHATSAPP_TWILIO_AUTH_TOKEN). */
+  twilioAuthToken: string;
+  /** URL pública exacta que Twilio tiene registrada: entra en la firma. */
+  twilioWebhookUrl: string;
+}
+
 export interface AppConfig {
   nodeEnv: string;
   port: number;
@@ -47,6 +59,8 @@ export interface AppConfig {
   smtp: SmtpConfig | null;
   /** null si no hay proveedor real de WhatsApp configurado en variables de entorno (HU-11 RF-04). */
   whatsapp: WhatsAppProviderConfig | null;
+  /** Secretos para validar los avisos de estado de los mensajes de WhatsApp (HU-11 RF-09). */
+  whatsappWebhook: WhatsAppWebhookConfig;
   /** Feriados (AAAA-MM-DD) que cuentan como cerrado; null = la lista provisoria de src/horarios/feriados.ts (HU-01 RF-04). */
   feriados: string[] | null;
   /** Precisión del GPS (radio de error, en metros) por encima de la cual se pide «Sin buena señal GPS» (HU-16 RF-02). */
@@ -170,6 +184,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     appUrl: (env.APP_URL?.trim() || 'http://localhost:8050').replace(/\/+$/, ''),
     smtp,
     whatsapp,
+    whatsappWebhook: {
+      metaVerifyToken: env.WHATSAPP_META_VERIFY_TOKEN?.trim() ?? '',
+      metaAppSecret: env.WHATSAPP_META_APP_SECRET?.trim() ?? '',
+      twilioAuthToken: twilioToken,
+      twilioWebhookUrl:
+        env.WHATSAPP_TWILIO_WEBHOOK_URL?.trim() ||
+        `${(env.APP_URL?.trim() || 'http://localhost:8050').replace(/\/+$/, '')}/api/whatsapp/webhook/twilio`,
+    },
     feriados: feriadosDeEntorno(env.FERIADOS),
     gpsPrecisionMaxM: gpsPrecisionMax,
     canalFallasVigenciaMs: canalSeg * 1000,

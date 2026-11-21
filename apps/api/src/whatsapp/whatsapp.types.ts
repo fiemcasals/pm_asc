@@ -4,7 +4,29 @@ export const MENSAJE_WHATSAPP_NO_CONFIGURADO =
 export const MENSAJE_TELEFONO_ECA_FALTANTE =
   'No se realizó el envío: la ECA responsable del edificio no tiene un teléfono cargado en la terna de roles.';
 
-export type EstadoEntregaWhatsApp = 'entregado' | 'enviado' | 'fallido' | 'no_configurado' | 'sin_telefono';
+/**
+ * Estado de un envío. `aceptado` es que el proveedor recibió el pedido (respuesta 2xx): todavía no prueba que el
+ * mensaje haya llegado. `enviado`, `entregado` y `leido` los confirma el proveedor con sus avisos (HU-11 RF-09).
+ */
+export type EstadoEntregaWhatsApp =
+  | 'aceptado'
+  | 'enviado'
+  | 'entregado'
+  | 'leido'
+  | 'fallido'
+  | 'no_configurado'
+  | 'sin_telefono';
+
+/** Un aviso de estado del proveedor, ya traducido a los estados del sistema. */
+export interface EventoEstadoProveedor {
+  estado: 'enviado' | 'entregado' | 'leido' | 'fallido';
+  /** Cuándo lo informó el proveedor, si lo dice. */
+  fecha?: string;
+  codigoError?: string;
+  mensajeError?: string;
+}
+
+export type ResultadoEventoProveedor = 'actualizado' | 'sin_cambio' | 'desconocido';
 
 export interface MensajeAlertaWhatsAppInput {
   telefonoDestino?: string;
@@ -88,4 +110,8 @@ export interface RegistroEnvioWhatsApp {
   aprobadoEn?: string;
   duracionMs: number;
   timestamp: string;
+  /** Cuándo cambió el estado por última vez con un aviso del proveedor (HU-11 RF-09). */
+  estadoActualizadoEn?: string;
+  /** Código y mensaje de error que informó el proveedor cuando el mensaje falló. */
+  errorProveedor?: { codigo?: string; mensaje?: string };
 }

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T10:57:31.407Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T11:10:27.015Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -161,7 +161,7 @@ PR #88 contra dev. Mapa base de CABA propio que se dibuja sin conexión: archivo
 - Estimado: 12h
 
 ### RF-06 — Que reasignar o asignar la terna actualice la vista de firma de inmediato
-Inicio de desarrollo de la tarea
+PR contra dev. Las máquinas de los edificios con terna salen de la base y siguen a su RT de Calle, Firmante y ECA: al guardar o quitar la terna, al reasignar el RT desde el Semáforo, al editar o borrar el edificio y al arrancar la API. El Firmante anterior recibe 404 al autorizar o rechazar. firmante-terna.e2e-spec.ts 12/12, verify 1155, test:int 188, web 539, RF-06-entrega.sh 14/14 con PostgreSQL real; guía con 2 capturas de Playwright. Límites: las 5 máquinas de ejemplo siguen ahí y no se tocan (en la demo, Av. Santa Fe 3200 aparece dos veces); las visitas y firmas sobre máquinas creadas desde la base viven en memoria como las de ejemplo y se pierden al reiniciar; la demo no tiene cuentas de Firmante (el script crea dos de prueba y las borra); si sincronizar falla, la terna queda guardada y se corrige al siguiente cambio o al reiniciar.
 - Estimado: 4
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas

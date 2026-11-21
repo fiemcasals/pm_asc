@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-21T05:25:21.585Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T10:57:10.101Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -23,6 +23,7 @@ graph TD
     REQ_1794015939447["RNF-01: Leer todas las ternas en una sola consulta"]
     REQ_1794493275904["RF-04: Porcentajes de pago y abono configurables por máquina"]
     REQ_1794582637611["RF-05: Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar"]
+    REQ_1795258625857["RF-06: Que reasignar o asignar la terna actualice la vista de firma de inmediato"]
   end
   subgraph US_1791560828979["HU-04: HU-04: Semáforo de Control Mensual y Reasignación Operativa"]
     REQ_1791910395389["RF-01: Motor de Control Semafórico por Antigüedad de Visita"]

@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-21T11:10:45.620Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T12:20:48.048Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -15,6 +15,8 @@ graph TD
     REQ_1794493276677["RF-03: Importar el listado Excel de la AGC (máquinas, ubicaciones y estados)"]
     REQ_1794493276926["RF-04: Horarios de atención por edificio editables por la Secretaría"]
     REQ_1794493998460["RF-05: Datos operativos del edificio y del equipo para la calle"]
+    REQ_1795263643979["RF-06: Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px"]
+    REQ_1795263644577["RNF-03: Evitar que informes.e2e-spec falle de forma intermitente"]
   end
   subgraph US_1791560828789["HU-02: HU-02: Asignación de Roles Tripartitos por Edificio"]
     REQ_1791910395002["RF-01: API de Asignación Tripartita de Roles por Edificio"]
@@ -44,6 +46,7 @@ graph TD
     REQ_1794493275052["RF-05: Estado del ascensor: el RT lo marca y el Firmante lo confirma"]
     REQ_1795011668144["RF-06: RT con sesión: fallas críticas y checklist solo para quien corresponde"]
     REQ_1795013508652["RF-07: Canal en tiempo real de fallas críticas con sesión"]
+    REQ_1795263641766["RF-08: Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio"]
   end
   subgraph US_1791560829237["HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita"]
     REQ_1791910395756["RF-01: Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio"]
@@ -58,6 +61,8 @@ graph TD
     REQ_1791910396039["RF-02: UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría"]
     REQ_1794493276116["RF-03: Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles"]
     REQ_1795010603476["RF-04: Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo"]
+    REQ_1795263641124["RF-05: Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio"]
+    REQ_1795263641491["RF-06: Retirar las máquinas de ejemplo de la vista de firma"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]
@@ -83,6 +88,10 @@ graph TD
     REQ_1795097860369["RF-08: Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada"]
     REQ_1795097860589["RF-09: Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor"]
     REQ_1795097860686["RF-10: Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío"]
+    REQ_1795263642081["RF-11: Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio"]
+    REQ_1795263642415["RF-12: Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio"]
+    REQ_1795263642719["RF-13: Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp"]
+    REQ_1795263643018["RF-14: Que el estado general de un aviso refleje un envío de WhatsApp que falla después"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]
@@ -96,6 +105,7 @@ graph TD
     REQ_1794493998753["RF-01: API de autenticación y roles"]
     REQ_1794493998996["RF-02: Pantalla de ingreso"]
     REQ_1794493999191["RNF-01: Consentimiento de ubicación y revocación de sesiones"]
+    REQ_1795263644283["RF-03: Cargar en los datos de demo un Firmante y un usuario de ECA con sesión"]
   end
   subgraph US_1794493998112["HU-15: HU-15: Aislamiento de datos entre ECA"]
     REQ_1794493999440["RNF-01: Row Level Security por ECA"]
@@ -121,6 +131,8 @@ graph TD
     REQ_1794494001754["RF-07: Navegación por estaciones y sala compartida"]
     REQ_1794494001967["RNF-01: Visita en curso sin señal"]
     REQ_1794494002220["RF-08: Las Fallas Críticas del checklist llegan a la Secretaría"]
+    REQ_1795263643334["RF-09: Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio"]
+    REQ_1795263643622["RF-10: Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio"]
   end
   subgraph US_1794493998373["HU-18: HU-18: Cierre, firma y envío del informe"]
     REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
@@ -139,6 +151,7 @@ graph TD
   REQ_1791909582859 --> REQ_1794493276677
   REQ_1791910394885 --> REQ_1794493276926
   REQ_1791910394885 --> REQ_1794493998460
+  REQ_1791910394885 --> REQ_1795263643979
   REQ_1791909582859 --> REQ_1791910395002
   REQ_1791910395002 --> REQ_1791910395101
   REQ_1791910394885 --> REQ_1791910395101
@@ -160,6 +173,8 @@ graph TD
   REQ_1791910396411 --> REQ_1794493274550
   REQ_1794493274550 --> REQ_1794493274814
   REQ_1794493274550 --> REQ_1794493275052
+  REQ_1795263641124 --> REQ_1795263641766
+  REQ_1795011668144 --> REQ_1795263641766
   REQ_1791910395565 --> REQ_1791910395756
   REQ_1791910395756 --> REQ_1791910395872
   REQ_1791910395676 --> REQ_1791910395872
@@ -171,6 +186,9 @@ graph TD
   REQ_1791910395002 --> REQ_1791910395959
   REQ_1791910395959 --> REQ_1791910396039
   REQ_1791910396039 --> REQ_1794493276116
+  REQ_1795010603476 --> REQ_1795263641124
+  REQ_1795258625857 --> REQ_1795263641124
+  REQ_1795263641124 --> REQ_1795263641491
   REQ_1791910395959 --> REQ_1791910396167
   REQ_1791910396167 --> REQ_1791910396255
   REQ_1791910396255 --> REQ_1791910396649
@@ -191,6 +209,13 @@ graph TD
   REQ_1791910396553 --> REQ_1794493273993
   REQ_1794493273993 --> REQ_1794493274385
   REQ_1795097860589 --> REQ_1795097860686
+  REQ_1794493273993 --> REQ_1795263642081
+  REQ_1794493274385 --> REQ_1795263642081
+  REQ_1795097860589 --> REQ_1795263642415
+  REQ_1795097860686 --> REQ_1795263642415
+  REQ_1795097860686 --> REQ_1795263642719
+  REQ_1795097860589 --> REQ_1795263643018
+  REQ_1795097860686 --> REQ_1795263643018
   REQ_1794486918351 --> REQ_1794488168014
   REQ_1791560828605 --> REQ_1794493998753
   REQ_1794493998753 --> REQ_1794493998996
@@ -227,6 +252,9 @@ graph TD
   REQ_1794494001295 --> REQ_1794494001967
   REQ_1794494001043 --> REQ_1794494002220
   REQ_1794493274814 --> REQ_1794494002220
+  REQ_1795263641124 --> REQ_1795263643334
+  REQ_1794494000869 --> REQ_1795263643334
+  REQ_1794494000700 --> REQ_1795263643622
   REQ_1794494001754 --> REQ_1794494002445
   REQ_1794494000869 --> REQ_1794494002445
   REQ_1794494002445 --> REQ_1794494002697

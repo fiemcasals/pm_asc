@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T12:20:41.166Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T12:20:42.443Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -23,7 +23,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 15 | RF-09 | Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor | HU-11 | — | — | Hecho | germanG | — | — |
 | 16 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
 | 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | Hecho ✓ dev | germanG | — | — |
-| 18 | RF-05 | Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio | HU-08 | — | — | Hacer | Sin asignar | — | — |
+| 18 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | Hacer | Sin asignar | — | — |
 | 19 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 20 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 21 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -68,34 +68,38 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 60 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 61 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | tested ✓ | gonza | RF-01 | — |
 | 62 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | tested ✓ | germanG | RF-01 | — |
-| 63 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
-| 64 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
-| 65 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
-| 66 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
-| 67 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
-| 68 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
-| 69 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
-| 70 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 71 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
-| 72 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
-| 73 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 74 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 75 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
-| 76 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 77 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 78 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
-| 79 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
-| 80 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 81 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
-| 82 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 83 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
-| 84 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 85 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
-| 86 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, RF-01, RF-01 | — |
-| 87 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
-| 88 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
-| 89 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
-| 90 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
+| 63 | RF-05 | Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio | HU-08 | — | — | Hacer | germanG | RF-04, RF-06 | — |
+| 64 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
+| 65 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
+| 66 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
+| 67 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
+| 68 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
+| 69 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
+| 70 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Hacer | germanG | RF-05 | — |
+| 71 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | Hacer | germanG | RF-05, RF-06 | — |
+| 72 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
+| 73 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
+| 74 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
+| 75 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
+| 76 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 77 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 78 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
+| 79 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 80 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
+| 81 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
+| 82 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
+| 83 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 84 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
+| 85 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 86 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
+| 87 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 88 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
+| 89 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, RF-01, RF-01 | — |
+| 90 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
+| 91 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
+| 92 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
+| 93 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
+| 94 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | Hacer | germanG | RF-05, RF-06 | — |
 
 ## Detalle
 
@@ -161,7 +165,7 @@ PR #91 contra dev. Entradas públicas GET/POST /api/whatsapp/webhook/meta y POST
 PR #88 contra dev. Mapa base de CABA propio que se dibuja sin conexión: archivo PMTiles de CABA (10,67 MB, zoom 0 a 15, 533 mosaicos, build 20261118 de Protomaps) generado con `npm run mapa:generar` (script propio en Node que lee la compilación por pedidos de rango; no va a git); tipografías (OFL) e íconos (MIT) propios en apps/web/public/mapa (0,87 MB); MapaBase con MapLibre (zoom, límites en CABA, tema claro y oscuro, controles en castellano, atribución de OpenStreetMap y Protomaps); botón «Descargar mapa para usar sin señal» con avance y cancelar, que guarda el archivo en la caché del navegador, avisa de versiones nuevas y reemplaza la anterior recién cuando la nueva terminó de bajar y es un PMTiles válido; la PWA guarda el worker de MapLibre, las tipografías y los íconos (29 entradas, 3,6 MiB) y no el archivo de CABA; panel «Mapa de CABA para usar sin señal» en Estado del sistema. Pruebas: npm run verify con tipos OK, API 1143 y web 539 (24 nuevos); RF-03-entrega.sh 11 de 11, --carga 100 con 0 fallidos y --regenerar de punta a punta; con la app compilada y Playwright, con la red cortada y la página recargada el mapa se dibuja completo con calles y nombres hasta el zoom 15,93; sin red y sin mapa guardado, el aviso «Mapa sin descargar: conectate a una red para bajarlo»; al volver la red se dibuja solo; versión nueva → «Actualizar el mapa»; tema claro y oscuro; celular de 360 px; los 42 pedidos al abrir, acercar y descargar el mapa fueron todos a la propia app. Cambio respecto de lo planeado: la condición 1 decía «con pmtiles extract»; en este entorno no se pudo bajar y ejecutar esa herramienta, así que el generador es un script propio y se reescribió la condición sin nombrarla (PM). Límites: solo se probó en Chromium, no en un Android real; el archivo del mapa no está en git y hay que generarlo al clonar y al desplegar. Los pines (RF-04) y el cambio de las 5 pantallas (RF-05) quedan para las tareas siguientes. Detalle en docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-03-entrega.md y guía con capturas de Playwright en RF-03-mapa-sin-conexion.md.
 - Estimado: 12h
 
-### RF-05 — Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio
+### RF-12 — Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio
 - Estimado: 0h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
@@ -351,6 +355,9 @@ Implementacion completa de HU-06 RF-02 a nombre de gonza (PR #81 contra dev). Pd
 ### RF-03 — Lista de Fallas Críticas definida por el cliente
 - Estimado: 3h
 
+### RF-05 — Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio
+- Estimado: 12
+
 ### RF-04 — Recargo del 45 % una sola vez por máquina no inspeccionada
 - Estimado: 3h
 
@@ -381,6 +388,12 @@ Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494000545-motor-del-c
 - 5 tests desarrollo marcados Aprobado; 5 integracion en Pendiente.
 - Nota: PATCH status=pr_open rechazado por Scrum API con 400 "No podés pedir el merge de una Tarea sin condiciones de aprobación (campo acceptanceCriteria)" pese a que acceptanceCriteria tiene 5 ítems y 10 tests generados.
 - Estimado: 5h
+
+### RF-06 — Retirar las máquinas de ejemplo de la vista de firma
+- Estimado: 4
+
+### RF-08 — Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio
+- Estimado: 8
 
 ### RF-06 — Pantalla de constancia de visita fallida en el celular del RT
 - Estimado: 4h
@@ -482,3 +495,6 @@ Implementacion completa de HU-11 RF-04 a nombre de gonza (PR #83 contra dev). Wh
 
 ### RF-06 — Link del aviso de WhatsApp sin contraseña y válido por 7 días
 - Estimado: 3h
+
+### RF-11 — Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio
+- Estimado: 8

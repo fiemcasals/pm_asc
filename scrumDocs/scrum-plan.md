@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T15:14:46.757Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T17:51:59.174Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -19,10 +19,10 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 11 | RF-07 | Canal en tiempo real de fallas críticas con sesión | HU-06 | — | — | tested ✓ | germanG | — | — |
 | 12 | RF-07 | FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04 | HU-11 | — | — | tested ✓ | germanG | — | — |
 | 13 | RF-04 | [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert | HU-04 | — | — | tested ✓ | germanG | — | — |
-| 14 | RF-08 | Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada | HU-11 | — | — | Hecho | germanG | — | — |
+| 14 | RF-08 | Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada | HU-11 | — | — | Hecho ✓ dev | germanG | — | — |
 | 15 | RF-09 | Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor | HU-11 | — | — | Hecho | germanG | — | — |
 | 16 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
-| 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | testing | germanG | — | — |
+| 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | tested ✓ | germanG | — | — |
 | 18 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | Hecho | dev-ma-2 | — | — |
 | 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | dev-ma-2 | — | — |
 | 20 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -68,7 +68,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 60 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 61 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
 | 62 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | tested ✓ | germanG | RF-01 | — |
-| 63 | RF-06 | Que reasignar o asignar la terna actualice la vista de firma de inmediato | HU-02 | — | — | testing | germanG | RF-03, RF-05 | — |
+| 63 | RF-06 | Que reasignar o asignar la terna actualice la vista de firma de inmediato | HU-02 | — | — | tested ✓ | germanG | RF-03, RF-05 | — |
 | 64 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
 | 65 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 66 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | tested ✓ | gonza | RF-01 | — |

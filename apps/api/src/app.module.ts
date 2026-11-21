@@ -38,6 +38,7 @@ import { InformeAvisoController } from './avisos/informe-aviso.controller';
 import { PdfLegalFallaService } from './avisos/pdf-legal-falla.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
 import { HistorialWhatsAppRepository, PgHistorialWhatsAppRepository } from './whatsapp/historial-whatsapp.repository';
+import { AvisosRepository, PgAvisosRepository } from './avisos/avisos.repository';
 import { WhatsAppWebhookController } from './whatsapp/whatsapp-webhook.controller';
 import { WhatsAppWebhookService } from './whatsapp/whatsapp-webhook.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
@@ -133,6 +134,7 @@ export class AppModule implements NestModule {
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         { provide: FirmaRepository, useClass: PgFirmaRepository },
         { provide: HistorialWhatsAppRepository, useClass: PgHistorialWhatsAppRepository },
+        { provide: AvisosRepository, useClass: PgAvisosRepository },
         FirmanteService,
         AsignacionesFirmanteService,
         ChecklistService,

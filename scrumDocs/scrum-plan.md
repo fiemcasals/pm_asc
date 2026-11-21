@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T05:24:12.603Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T05:24:54.203Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -178,7 +178,7 @@ PR #92 contra dev. La bandeja de avisos muestra un cartel con el estado de Whats
 - Estimado: 4h
 
 ### RF-04 — Componente de mapa con pines por estado, zoom y nombres que no se pisan
-Inicio de desarrollo de la tarea
+PR #93 contra dev. MapaEdificios (MapLibre) sobre el mapa base propio, con el mismo contrato de datos que el dibujo anterior: pines por latitud y longitud reales (error de 0,11 % a 0,52 % en el navegador), zoom y desplazamiento, encuadre de todos los edificios, nombres que no se pisan (rojos primero, y a la izquierda del pin si a la derecha no entran), pines accesibles con teclado, tema claro y oscuro, modo editable con 6 decimales y pin arrastrable, y celular de 360 px sin conexión. marcadores.test.ts 26/26, verify API 1143 y web 565, test:int 188, build OK, RF-04-entrega.sh 7/7. Guía visual con 6 capturas de Playwright. Mínimo necesario fuera de lo pedido: el tipo MarcadorMapa pasó a mapa/marcadores.ts y el componente viejo lo reexporta. Al probar en el navegador aparecieron y se corrigieron 3 defectos: nombres sin dibujar en tema claro, edificios sin reencuadrar al bajar el mapa, y nombres cortados en el borde derecho. No se probó el pellizco con dos dedos ni un celular físico. Nada usa el componente hasta HU-16/RF-05: mergear antes.
 - Estimado: 12h
 
 ### RF-02 — UI de Secretaría: Carga y Ficha de Edificios y Máquinas

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-21T12:20:43.667Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T12:20:46.525Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -58,6 +58,17 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Cada equipo guarda su tipo: tracción, hidráulico o montavehículos.
 4. Dos o más equipos del mismo edificio pueden compartir una sala de máquinas, y la ficha muestra cuáles la comparten.
 
+### RF-06: Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px (Funcional)
+
+La ficha del edificio y el alta de consorcio tienen una grilla de 340 + 736 px y no entran en un celular de 360 px: se desborda hacia la derecha y el mapa queda cortado. Ya pasaba antes de la mejora del mapa.
+
+**Condiciones de aprobación**
+
+- 1. Dada una pantalla de 360 px de ancho, cuando se abre la ficha de un edificio (lectura y edición), entonces no hay desplazamiento horizontal y el mapa se ve completo.
+- 2. Dada una pantalla de 360 px de ancho, cuando se abre el alta de nuevo consorcio, entonces todos los campos, el mapa y los botones entran sin desplazarse hacia los costados.
+- 3. En escritorio las dos pantallas se ven como antes.
+- 4. La guía visual tiene capturas de Playwright de las dos pantallas en 360 px y en escritorio.
+
 ### RNF-01: Rechazar con 400 los textos que la base no puede guardar (carácter NUL) (No funcional)
 
 Traducir a HTTP 400 los errores de PostgreSQL por texto con codificación inválida (carácter NUL, SQLSTATE 22021 y 22P05) en cualquier endpoint, en lugar de 500. Hallazgo de QA de HU-01 RF-01.
@@ -77,6 +88,15 @@ npm run test:int falla de forma intermitente: en 3 de 6 corridas cayó el criter
 
 1. Cinco corridas seguidas de npm run test:int terminan con todos los tests en verde
 2. La corrida deja las tablas consorcios y maquinas con la misma cantidad de filas que antes de empezar
+
+### RNF-03: Evitar que informes.e2e-spec falle de forma intermitente (No funcional)
+
+En una corrida completa, informes.e2e-spec falló una vez sin repetirse al volver a correr. Un test que a veces falla le quita valor a toda la corrida. Esta Tarea encuentra la causa y la corrige.
+
+**Condiciones de aprobación**
+
+- 1. Dada la suite completa de la API, cuando se corre 10 veces seguidas, entonces informes.e2e-spec pasa las 10 veces.
+- 2. La causa de la falla intermitente queda escrita en la entrega y corregida en el código o en la prueba, no tapada con reintentos.
 
 ## HU-02: HU-02: Asignación de Roles Tripartitos por Edificio
 
@@ -800,6 +820,17 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Con credenciales inválidas muestra el error y no navega.
 4. En un celular de 360 px de ancho la pantalla se usa sin desplazamiento horizontal.
 5. Una sesión ya iniciada sigue disponible sin señal hasta que el RT cierra sesión.
+
+### RF-03: Cargar en los datos de demo un Firmante y un usuario de ECA con sesión (Funcional)
+
+Los datos de demostración tienen Secretaría, Administrador y cuatro RT, pero ningún Firmante ni usuario de ECA: para probar esos portales con sesión hay que crear las cuentas a mano. Esta Tarea las suma al script de datos de demo.
+
+**Condiciones de aprobación**
+
+- 1. Dado el script de datos de demo, cuando se corre, entonces existen un Firmante y un usuario de ECA que ingresan con la clave de demo.
+- 2. Dado el Firmante de demo, cuando abre el Portal Firmante, entonces ve las máquinas de los edificios cuya terna lo nombra, y no las de otros.
+- 3. Dado el usuario de ECA de demo, cuando abre el Portal ECA, entonces ve solo los edificios de su ECA.
+- 4. Dado que el script se corre dos veces, entonces no duplica ni falla.
 
 ### RNF-01: Consentimiento de ubicación y revocación de sesiones (No funcional)
 

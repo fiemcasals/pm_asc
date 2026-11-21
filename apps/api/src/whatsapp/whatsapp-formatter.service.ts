@@ -1,8 +1,36 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MensajeAlertaWhatsAppInput } from './whatsapp.types';
 
+/** Largo máximo de un parámetro de plantilla. */
+export const LARGO_MAXIMO_PARAMETRO = 1024;
+
+/** Deja un valor listo para ser parámetro de una plantilla: Meta rechaza saltos de línea, tabulaciones y más de 4 espacios seguidos (HU-11 RF-08). */
+export function limpiarParametroPlantilla(valor: string): string {
+  return valor
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/ {5,}/g, ' ')
+    .trim()
+    .slice(0, LARGO_MAXIMO_PARAMETRO)
+    .trim();
+}
+
 @Injectable()
 export class WhatsAppFormatterService {
+  /**
+   * Los 5 valores de la plantilla del aviso, en este orden: edificio, equipo, estado, detalle y enlace del
+   * informe. Valida lo mismo que el texto formal. Sin enlace, la variable lleva un guion: Meta no admite vacías.
+   */
+  parametrosPlantilla(input: MensajeAlertaWhatsAppInput): string[] {
+    this.formatearAlerta(input);
+    return [
+      input.consorcio,
+      input.equipo,
+      input.estado,
+      input.detalle,
+      input.remitoUrl && input.remitoUrl.trim() ? input.remitoUrl : '-',
+    ].map(limpiarParametroPlantilla);
+  }
+
   /**
    * Formatea un mensaje formal de alerta crítica con plantilla institucional MAICON S.R.L.
    * Requiere estrictamente: nombreEca, consorcio, estado, equipo y detalle.

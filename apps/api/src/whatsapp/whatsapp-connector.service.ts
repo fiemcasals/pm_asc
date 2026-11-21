@@ -5,6 +5,7 @@ import { WhatsAppFormatterService } from './whatsapp-formatter.service';
 import { extraerErrorProveedor, WhatsAppProviderTransport } from './whatsapp-provider.transport';
 import {
   MENSAJE_TELEFONO_ECA_FALTANTE,
+  PayloadAvisoWhatsApp,
   MENSAJE_WHATSAPP_NO_CONFIGURADO,
   MensajeAlertaWhatsAppInput,
   RegistroEnvioWhatsApp,
@@ -127,7 +128,28 @@ export class WhatsAppConnectorService {
       return resultado;
     }
 
+    // Una alerta que inicia el sistema solo puede salir como plantilla aprobada: sin ella no sale nada (HU-11 RF-08).
+    const plantillaFaltante = this.transport.plantillaFaltante?.() ?? null;
+    if (plantillaFaltante) {
+      this.logger.warn(`Envío WhatsApp cancelado (${contexto.origen ?? 'manual'}): ${plantillaFaltante}`);
+      const resultado: WhatsAppEnvioResult = {
+        ok: false,
+        idMensaje: '',
+        telefonoDestino: telefono,
+        mensajeFormateado,
+        intentos: 0,
+        timestampEnvio: new Date().toISOString(),
+        tiempoRespuestaMs: Date.now() - inicioMs,
+        estadoEntrega: 'no_configurado',
+        proveedor: this.transport.proveedor ?? 'custom',
+        error: plantillaFaltante,
+      };
+      this.registrarIntento(resultado, contexto);
+      return resultado;
+    }
+
     const proveedor = this.transport.proveedor ?? 'custom';
+    const parametros = this.formatter.parametrosPlantilla(input);
     let intento = 0;
     let ultimoError: Error | null = null;
 
@@ -136,7 +158,7 @@ export class WhatsAppConnectorService {
       try {
         const res = await this.transport.postMessage(
           'whatsapp-provider://messages',
-          { to: telefono, text: mensajeFormateado },
+          { to: telefono, text: mensajeFormateado, parametros } satisfies PayloadAvisoWhatsApp,
           {},
         );
 

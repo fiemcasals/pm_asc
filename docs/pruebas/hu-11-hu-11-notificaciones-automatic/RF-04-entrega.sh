@@ -80,6 +80,7 @@ WHATSAPP_META_ACCESS_TOKEN="env-only-token-rf04" \
 WHATSAPP_META_PHONE_NUMBER_ID="9988776655" \
 WHATSAPP_META_API_VERSION="v21.0" \
 WHATSAPP_META_BASE_URL="http://127.0.0.1:${MOCK_PORT}" \
+WHATSAPP_META_TEMPLATE_NAME="alerta_falla_critica" \
 node "$REPO_ROOT/apps/api/dist/main.js" > "$TMP/api.log" 2>&1 &
 API_PID=$!
 

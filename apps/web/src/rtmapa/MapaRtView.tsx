@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchConSesion } from '../auth/sesion';
-import { MapaUbicacionConsorcio, type MarcadorMapa } from '../consorcios/MapaUbicacionConsorcio';
+import { MapaEdificios, type MarcadorMapa } from '../mapa/MapaEdificios';
 import { ConstanciaVisitaFallida } from '../visitasFallidas/ConstanciaVisitaFallida';
 import { COLOR_HEX, LEYENDA, ahoraCorregido, colorDePin, desfaseDeReloj, encabezadoRt } from './colorPin';
-import { type EdificioMapaRt, type MapaRt, REFRESCO_MS, cargarMapaRt } from './mapaRt';
+import { type EdificioMapaRt, type MapaRt, REFRESCO_MS, cargarMapaRtConRespaldo, horaDeLosDatos } from './mapaRt';
 import { TarjetaEdificio } from './TarjetaEdificio';
 
 // Nombre legible de cada color (para el subtítulo del pin y la tarjeta).
@@ -22,6 +22,8 @@ interface Props {
  */
 export function MapaRtView({ nombreSesion, onIniciarInspeccion }: Props) {
   const [mapa, setMapa] = useState<MapaRt | null>(null);
+  // Si no hay conexión se muestran los últimos datos guardados, y se dice de qué hora son.
+  const [guardadoEn, setGuardadoEn] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [desfase, setDesfase] = useState(0);
   const [ahora, setAhora] = useState(() => new Date());
@@ -29,16 +31,25 @@ export function MapaRtView({ nombreSesion, onIniciarInspeccion }: Props) {
   const [constanciaDe, setConstanciaDe] = useState<EdificioMapaRt | null>(null);
 
   const cargar = useCallback(async () => {
-    const m = await cargarMapaRt(fetchConSesion);
-    if (!m) return setError(true);
+    const r = await cargarMapaRtConRespaldo(fetchConSesion);
+    if (!r) return setError(true);
     setError(false);
-    setMapa(m);
-    setDesfase(desfaseDeReloj(m.ahora, Date.now()));
+    setMapa(r.mapa);
+    setGuardadoEn(r.origen === 'guardado' ? r.descargadoEn : null);
+    // Con datos guardados la hora del servidor es vieja: el reloj del celular manda.
+    setDesfase(r.origen === 'servidor' ? desfaseDeReloj(r.mapa.ahora, Date.now()) : 0);
   }, []);
 
   useEffect(() => {
     void cargar();
   }, [cargar]);
+
+  // Al volver la conexión se bajan los datos de nuevo.
+  useEffect(() => {
+    if (!guardadoEn) return;
+    window.addEventListener('online', cargar);
+    return () => window.removeEventListener('online', cargar);
+  }, [guardadoEn, cargar]);
 
   useEffect(() => {
     const t = setInterval(() => setAhora(ahoraCorregido(Date.now(), desfase)), REFRESCO_MS);
@@ -88,9 +99,15 @@ export function MapaRtView({ nombreSesion, onIniciarInspeccion }: Props) {
       )}
       {mapa && (
         <>
-          <MapaUbicacionConsorcio
+          {guardadoEn && (
+            <p className="alert alert-warning" role="status" data-testid="rt-datos-guardados">
+              Sin conexión: los edificios son los últimos datos descargados, de {horaDeLosDatos(guardadoEn)}.
+            </p>
+          )}
+          <MapaEdificios
             ubicacion={null}
             marcadores={marcadores}
+            descarga
             testId="mapa-rt-pines"
             onSeleccionarMarcador={setSeleccionadoId}
             marcadorSeleccionadoId={seleccionadoId}

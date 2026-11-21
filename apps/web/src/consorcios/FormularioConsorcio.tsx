@@ -10,7 +10,7 @@ import {
   TIPOS_MAQUINA,
   TipoMaquina,
 } from './consorcios';
-import { MapaUbicacionConsorcio } from './MapaUbicacionConsorcio';
+import { MapaEdificios } from '../mapa/MapaEdificios';
 
 interface FormularioConsorcioProps {
   onConsorcioCreado: (nuevo: Consorcio) => void;
@@ -304,7 +304,7 @@ export function FormularioConsorcio({ onConsorcioCreado, onCancelar }: Formulari
 
         <div className="form-field" style={{ marginTop: '12px' }}>
           <span className="field-label">Ubicación Geográfica en Mapa (PostGIS)</span>
-          <MapaUbicacionConsorcio
+          <MapaEdificios
             ubicacion={ubicacion}
             editable
             onCambiarUbicacion={setUbicacion}

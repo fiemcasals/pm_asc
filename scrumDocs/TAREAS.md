@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-21T13:13:56.385Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T13:14:11.793Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -492,6 +492,19 @@ FirmanteService todavía arranca con 5 máquinas de ejemplo (Av. Corrientes 1234
 - 2. Dada una base sin ningún edificio con terna, cuando se abre el Portal Firmante, entonces se ve un mensaje de lista vacía y no un error.
 - 3. Los scripts de entrega y las pruebas que usaban las máquinas de ejemplo usan los datos de demo de la base y siguen en verde.
 - 4. Los Portales Firmante y ECA y el Monitoreo muestran los datos de demo reales (DEMO …) sin duplicados por dirección.
+
+### RF-07: Que el informe cerrado por el RT cree la visita en el Portal Firmante (Funcional)
+
+Hoy el informe que el RT cierra en el celular (HU-18) se guarda en la base pero no llega al Portal Firmante: las visitas que el Firmante ve y firma son las de las máquinas de ejemplo, y ninguna parte del sistema crea la visita de una máquina de un edificio con terna. Esta Tarea conecta los dos: al cerrarse el informe, cada equipo del informe pasa a ser la visita de su máquina en el mes (con sus fotos, la firma del encargado o el cierre «Sin firma»), usando FirmanteService.registrarVisita de HU-08 RF-05.
+
+**Condiciones de aprobación**
+
+- 1. Dado un RT que cierra el informe de una visita a un edificio con terna, cuando el informe queda guardado, entonces cada máquina del informe aparece en el Portal Firmante del Firmante de la terna como «Recorrida», con la visita, las fotos obligatorias y la firma del encargado.
+- 2. Dado un informe cerrado «Sin firma», cuando se abre el Portal Firmante, entonces la visita figura para revisión y no se puede autorizar hasta que tenga la firma del encargado o se resuelva.
+- 3. Dado un equipo del informe que quedó fuera de servicio o con visita fallida, cuando se abre el Portal Firmante, entonces la máquina figura con el estado que corresponde («Advertencia» o «Pendiente de Visita») y no como recorrida.
+- 4. Dado el mismo informe reenviado por el celular (mismo clientReportId), cuando llega de nuevo, entonces no se duplica la visita ni se pisa una firma ya autorizada.
+- 5. Dada una visita creada desde un informe, cuando se reinicia la API, entonces sigue en el Portal Firmante con su firma o su rechazo (usa lo guardado de HU-08 RF-05).
+- 6. Las pruebas existentes de informes y del Portal Firmante siguen en verde, y una prueba de integración con la base real cierra un informe y comprueba los criterios 1 y 5.
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 

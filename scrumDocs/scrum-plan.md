@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T10:57:05.913Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T10:57:31.407Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -23,7 +23,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 15 | RF-09 | Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor | HU-11 | — | — | Hecho | germanG | — | — |
 | 16 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
 | 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | Hecho ✓ dev | germanG | — | — |
-| 18 | RF-06 | Que reasignar o asignar la terna actualice la vista de firma de inmediato | HU-02 | — | — | Hacer | Sin asignar | — | — |
+| 18 | RF-06 | Que reasignar o asignar la terna actualice la vista de firma de inmediato | HU-02 | — | — | Haciendo | germanG | — | — |
 | 19 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 20 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 21 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -161,7 +161,8 @@ PR #88 contra dev. Mapa base de CABA propio que se dibuja sin conexión: archivo
 - Estimado: 12h
 
 ### RF-06 — Que reasignar o asignar la terna actualice la vista de firma de inmediato
-- Estimado: 0h
+Inicio de desarrollo de la tarea
+- Estimado: 4
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
 Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia AGC única por edificio, borrado en cascada) y endpoints POST, GET, GET :id, PUT y DELETE en /api/consorcios. Mínimo necesario agregado: sistema de migraciones (SQL plano, aplicado al arrancar la API, tabla schema_migrations), porque RO-01 lo dejó asignado a esta tarea; GET (listado) y PUT/DELETE porque la descripción pide CRUD. Pruebas: npm run verify 36/36 en API (21 nuevos) y 4/4 en web; test:int 7/7 contra PostGIS real; script de entrega 5/5; carga 200 recorridos, 0 fallidos, p95 320 ms. 2 tests de desarrollo aprobados con evidencia; 2 de integración preparados para QA. Afuera: la ECA (HU-02), autenticación, paginación del listado y ubicación geográfica. Consorcio y edificio se modelaron como una sola entidad. PR: https://github.com/fiemcasals/pm_asc/pull/3

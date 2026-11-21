@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T17:51:59.174Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T17:52:08.114Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 22 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
 | 23 | RF-01 | Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso | RO-03 | — | — | Hacer | germanG | RF-08 | — |
-| 24 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | Hecho | germanG | RF-09 | — |
+| 24 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | Hecho ✓ dev | germanG | RF-09 | — |
 | 25 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | Hecho | germanG | RF-03 | — |
 | 26 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 27 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |

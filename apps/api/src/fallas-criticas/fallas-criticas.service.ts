@@ -1,4 +1,5 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { FallasCriticasRepository } from './fallas-criticas.repository';
 import { randomUUID } from 'node:crypto';
 import { Observable, Subject, filter } from 'rxjs';
 import { obtenerFallasCriticasDefinidas } from '../checklist/checklist.config';
@@ -67,7 +68,46 @@ export class FallasCriticasService {
   private readonly eventos = new Subject<EventoFallaCritica>();
   private readonly aperturas = new Subject<EventoAperturaFalla>();
 
-  constructor(private readonly firmanteService: FirmanteService) {}
+  private readonly logger = new Logger(FallasCriticasService.name);
+  /** Escrituras al repositorio en orden: una versión vieja de un informe nunca pisa a una nueva. */
+  private cola: Promise<void> = Promise.resolve();
+
+  /** Sin repositorio (pruebas aisladas) los informes quedan en memoria, como antes. */
+  constructor(
+    private readonly firmanteService: FirmanteService,
+    @Optional() private readonly repo?: FallasCriticasRepository,
+  ) {}
+
+  /**
+   * HU-06 RF-08: al arrancar, carga los informes guardados (con su clientReportId y quién abrió cada alerta). No vuelve a emitir sus
+   * eventos: lo que ya se avisó no se avisa de nuevo (los avisos se guardan aparte, HU-11 RF-11).
+   */
+  async onApplicationBootstrap(): Promise<void> {
+    if (!this.repo) return;
+    try {
+      for (const informe of await this.repo.leer()) {
+        if (this.informes.has(informe.id)) continue;
+        this.informes.set(informe.id, informe);
+        if (informe.clientReportId && !this.informesPorClientId.has(informe.clientReportId)) this.informesPorClientId.set(informe.clientReportId, informe);
+      }
+    } catch (err) {
+      this.logger.error(`No se pudieron cargar los informes de falla guardados: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /** Termina las escrituras pendientes (para las pruebas y el apagado). */
+  async esperarGuardados(): Promise<void> {
+    await this.cola;
+  }
+
+  /** Guarda una copia del informe en orden y en segundo plano. Si la base no responde, lo deja registrado y el informe sigue en memoria. */
+  private guardar(informe: InformeFalla): void {
+    if (!this.repo) return;
+    const copia = structuredClone(informe);
+    this.cola = this.cola
+      .then(() => this.repo!.guardar(copia))
+      .catch((err) => this.logger.error(`No se pudo guardar el informe ${copia.id}: ${err instanceof Error ? err.message : String(err)}`));
+  }
 
   /** Flujo de eventos de falla crítica. Cada suscriptor recibe sólo los posteriores a suscribirse. */
   eventos$(): Observable<EventoFallaCritica> {
@@ -124,6 +164,7 @@ export class FallasCriticasService {
     if (informe.abiertaPor) return { abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn!, primera: false };
     informe.abiertaPor = usuario.usuario;
     informe.abiertaEn = new Date().toISOString();
+    this.guardar(informe);
     this.aperturas.next({ tipo: 'falla-abierta', informeId: id, abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn });
     return { abiertaPor: informe.abiertaPor, abiertaEn: informe.abiertaEn, primera: true };
   }
@@ -202,6 +243,7 @@ export class FallasCriticasService {
     if (input.clientReportId) {
       this.informesPorClientId.set(input.clientReportId, informe);
     }
+    this.guardar(informe);
 
     const eventoEmitido = fallasCriticas.length > 0;
     if (eventoEmitido) {

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:02:01.393Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:02:04.054Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -43,7 +43,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 35 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
 | 36 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | Hacer | germanG | RF-09, RF-10 | — |
 | 37 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | Hecho | dev-ma-2 | RF-10 | — |
-| 38 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | Hacer | dev-ma-2 | RF-09, RF-10 | — |
+| 38 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | Haciendo | dev-ma-2 | RF-09, RF-10 | — |
 | 39 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
 | 40 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 41 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |

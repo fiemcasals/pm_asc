@@ -15,6 +15,7 @@ import {
 import { InspeccionCampoView } from './checklist/InspeccionCampoView';
 import { ColaInformesAviso } from './informe/ColaInformesAviso';
 import { RecorridoRt } from './visitasFallidas/RecorridoRt';
+import { PanelMapaSinConexion } from './mapa/PanelMapaSinConexion';
 import { MapaRtView } from './rtmapa/MapaRtView';
 import { type EdificioMapaRt } from './rtmapa/mapaRt';
 import { type EdificioInspeccion, equiposDeFicha } from './checklist/navegacion';
@@ -563,6 +564,8 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
                   <p className="neo-bento-sub">Rama experimental local `GONZA`</p>
                 </article>
               </div>
+
+              <PanelMapaSinConexion />
             </section>
           )}
         </main>

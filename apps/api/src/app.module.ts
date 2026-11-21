@@ -24,6 +24,7 @@ import { RemitoPdfService } from './eca/remito-pdf.service';
 import { FallasCriticasController } from './fallas-criticas/fallas-criticas.controller';
 import { FallasCriticasService } from './fallas-criticas/fallas-criticas.service';
 import { FirmanteController } from './firmante/firmante.controller';
+import { AsignacionesFirmanteService } from './firmante/asignaciones-firmante.service';
 import { FirmanteService } from './firmante/firmante.service';
 import { HealthController } from './health/health.controller';
 import { PgSemaforoRepository } from './semaforo/pg-semaforo.repository';
@@ -126,6 +127,7 @@ export class AppModule implements NestModule {
         ImportadorAgcService,
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         FirmanteService,
+        AsignacionesFirmanteService,
         ChecklistService,
         EcaService,
         RemitoPdfService,

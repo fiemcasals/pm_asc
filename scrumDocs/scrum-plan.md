@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:58:16.187Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:58:26.940Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -280,6 +280,7 @@ Pruebas ejecutadas tras ultimo cambio:
 - Estimado: 4h
 
 ### RF-06 — Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px
+Grillas con minmax(0, 1fr), fieldset min-width 0, filas de m�quinas y formularios que se acomodan; tablas y solapas con desplazamiento propio. 360 px: ficha, edici�n y alta sin desplazamiento lateral y con el mapa completo; escritorio igual (y corrige un desborde previo de 75 px en la edici�n). RF-06-capturas.cjs 7/7, verify API 1222 web 616. PR #106.
 - Estimado: 6
 
 ### RF-02 — UI de Secretaría: Pestaña de Asignación de Roles de Trabajo

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T20:07:19.802Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T20:15:20.490Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -83,7 +83,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 75 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
 | 76 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
 | 77 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Hacer | germanG | RF-05 | — |
-| 78 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | Haciendo | dev-ma-2 | RF-05, RF-06 | — |
+| 78 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | Hecho | dev-ma-2 | RF-05, RF-06 | — |
 | 79 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
 | 80 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 81 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
@@ -433,6 +433,7 @@ Re-estimada de 4 h a 14 h (21/11/2026). Las 5 m�quinas de ejemplo de FirmanteS
 - Estimado: 14
 
 ### RF-08 — Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio
+Tabla informes_falla (migraci�n 037, client_report_id �nico, RLS, sin DELETE); carga al arrancar sin volver a emitir eventos; guarda en orden; el reintento no duplica ni avisa. Estado del ascensor por HU-17 RF-09. e2e 7/7, int 1/1, verify API 1250 web 616, int 197/197; RF-08-entrega.sh 12/12 con reinicio real. Depende de #103, #104 y #105. PR #108.
 - Estimado: 8
 
 ### RF-06 — Pantalla de constancia de visita fallida en el celular del RT

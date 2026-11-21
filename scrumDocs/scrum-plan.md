@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T03:57:38.718Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T04:03:53.978Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -19,7 +19,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 11 | RF-07 | Canal en tiempo real de fallas críticas con sesión | HU-06 | — | — | tested ✓ | germanG | — | — |
 | 12 | RF-07 | FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04 | HU-11 | — | — | tested ✓ | germanG | — | — |
 | 13 | RF-04 | [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert | HU-04 | — | — | tested ✓ | germanG | — | — |
-| 14 | RF-08 | Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada | HU-11 | — | — | Hacer | germanG | — | — |
+| 14 | RF-08 | Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada | HU-11 | — | — | Haciendo | germanG | — | — |
 | 15 | RF-09 | Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor | HU-11 | — | — | Hacer | germanG | — | — |
 | 16 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
 | 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | Hecho ✓ dev | germanG | — | — |
@@ -145,6 +145,7 @@ PR #87 contra dev. Se arregló docs/pruebas/hu-04-.../RF-02-entrega.sh (que fall
 - Estimado: 1h
 
 ### RF-08 — Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada
+Inicio de desarrollo de la tarea
 - Estimado: 4h
 
 ### RF-09 — Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor

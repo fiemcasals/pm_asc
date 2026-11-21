@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fechaHora } from '../fechas/formato';
 import { fetchConSesion } from '../auth/sesion';
 import { tomarUbicacion, type Ubicacion } from '../auth/ubicacion';
 import { comprimirFotoAnomalia } from '../checklist/fotos';
@@ -116,7 +117,7 @@ export function ConstanciaVisitaFallida({ edificio, onGuardada, onCancelar, onYa
             : errorGps ?? 'Tomando la ubicación…'}
         </dd>
         <dt>Hora del dispositivo</dt>
-        <dd data-testid="constancia-hora">{ahora.toLocaleString('es-AR')}</dd>
+        <dd data-testid="constancia-hora">{fechaHora(ahora, { segundos: true })}</dd>
       </dl>
       <p className="portal-desc">La ubicación y la hora las toma el celular y no se pueden cambiar. La hora del servidor se agrega al guardar.</p>
 

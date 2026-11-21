@@ -14,6 +14,7 @@ import {
   TipoMaquina,
   VisitaFallidaRegistro,
 } from './consorcios';
+import { fechaHora } from '../fechas/formato';
 import { MapaEdificios } from '../mapa/MapaEdificios';
 import { HorariosEdificioEditor } from '../horarios/HorariosEdificioEditor';
 
@@ -841,7 +842,7 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
         <div className="ficha-meta">
           <small>
             Fecha de registro:{' '}
-            {createdAt ? new Date(createdAt).toLocaleString('es-AR') : 'Recién creado'}
+            {fechaHora(createdAt) || 'Recién creado'}
           </small>
         </div>
       </div>

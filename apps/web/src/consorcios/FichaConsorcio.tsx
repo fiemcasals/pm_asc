@@ -346,7 +346,7 @@ export function FichaConsorcio({ consorcio, onCerrar, onConsorcioActualizado }: 
                 <span className="field-label">Tipo de Equipo y Sala Compartida por Máquina</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
                   {maquinasEdit.map((m, idx) => (
-                    <div key={m.referenciaAgc} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: '8px', alignItems: 'center' }}>
+                    <div key={m.referenciaAgc} className="ficha-maquina-edit" style={{ display: 'grid', gridTemplateColumns: '80px minmax(0, 1fr) minmax(0, 1fr)', gap: '8px', alignItems: 'center' }}>
                       <span className="agc-code">{m.referenciaAgc}</span>
                       <select
                         className="field-input"

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T12:57:34.929Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T13:13:44.051Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -378,7 +378,7 @@ Implementacion completa de HU-06 RF-02 a nombre de gonza (PR #81 contra dev). Pd
 - Estimado: 3h
 
 ### RF-05 — Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio
-Inicio de desarrollo de la tarea
+PR contra dev. Las visitas, firmas AGC, rechazos y avisos de plazo del Portal Firmante se guardan en PostgreSQL (firma_visitas y firma_avisos_plazo, con RLS) y se cargan al arrancar. La firma y el rechazo solo se dan por hechos si quedaron guardados (si no, 500 y se deshace). e2e 11/11, int 3/3 con PostgreSQL real, verify 1166, test:int 191, RF-05-entrega.sh con reinicio real de la API 5/5 y 6/6; guía con 1 captura de Playwright. Hallazgo: ninguna parte del sistema crea la visita de una máquina de un edificio con terna (el informe cerrado por el RT no llega al Portal Firmante): hay que conectarlos en otra Tarea. Límites: los datos de HU-06 RF-08 (alerta crítica y estado operativo) siguen en memoria; el rechazo y los avisos no tienen pantalla web; la visita se guarda como JSON; las 5 máquinas de ejemplo siguen hasta HU-08 RF-06.
 - Estimado: 12
 
 ### RF-04 — Recargo del 45 % una sola vez por máquina no inspeccionada

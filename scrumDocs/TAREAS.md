@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-21T05:25:20.209Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T10:57:08.799Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -130,6 +130,20 @@ Hoy, al reasignar un edificio en rojo, la terna del RT nuevo queda sin teléfono
 2. Al reasignar un edificio, la terna queda con el teléfono y el email del RT nuevo y no con los del anterior.
 3. Si el RT nuevo no tiene teléfono ni email cargados, la reasignación responde 409 con un mensaje que lo dice y no cambia nada.
 4. Un edificio nunca queda con un RT de Calle sin ningún dato de contacto después de reasignarlo.
+
+### RF-06: Que reasignar o asignar la terna actualice la vista de firma de inmediato (Funcional)
+
+HU-02 pide que, al reasignar un RT de Calle o un Firmante, se actualice inmediatamente la vista de ruteo y de firma de los usuarios afectados. La vista de ruteo (Mapa del RT) ya lee la terna de la base, pero la vista de firma (Portal Firmante) y las pantallas que cuelgan de las mismas máquinas (Portal ECA, Monitoreo, avisos, paradas) leen máquinas fijas en memoria de FirmanteService, sin relación con los edificios reales ni con su terna. Esta Tarea hace que las máquinas de los edificios con terna asignada salgan de la base y que su RT, Firmante y ECA sean siempre los de la terna vigente: se actualiza al guardar la terna, al quitarla, al reasignar un RT desde el Semáforo, al editar o borrar el edificio y al arrancar la API.
+
+**Condiciones de aprobación**
+
+- 1. Dado un edificio con terna asignada, cuando el Firmante de la terna abre el Portal Firmante, entonces ve las máquinas de ese edificio (de la base) y no las de otro Firmante.
+- 2. Dado un edificio con terna, cuando la Secretaría cambia el Firmante en Asignación de Roles, entonces el Firmante anterior deja de ver sus máquinas y el nuevo las ve en su siguiente consulta, sin reiniciar nada.
+- 3. Dado un edificio en rojo, cuando la Secretaría confirma la reasignación del RT de Calle desde el Semáforo, entonces el RT de calle que figura en el Portal Firmante, el Portal ECA y el Monitoreo para las máquinas de ese edificio es el nuevo.
+- 4. Dado un edificio al que se le quita la terna o que se elimina, cuando se consulta el Portal Firmante, entonces sus máquinas ya no aparecen a nombre del Firmante anterior.
+- 5. Un Firmante solo puede autorizar o rechazar informes de las máquinas de sus edificios según la terna vigente: con la terna cambiada, el anterior recibe el mismo 404 que ante una máquina ajena.
+- 6. Al reiniciar la API, las máquinas de los edificios con terna vuelven a salir de la base con la terna vigente.
+- 7. Las pruebas existentes de las pantallas de firma, ECA, Monitoreo y Semáforo siguen en verde, y hay pruebas nuevas de cada criterio.
 
 ### RNF-01: Leer todas las ternas en una sola consulta (No funcional)
 

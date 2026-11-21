@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { APP_CONFIG, AppConfig } from '../config';
+import { HistorialWhatsAppRepository } from './historial-whatsapp.repository';
 import { WhatsAppFormatterService } from './whatsapp-formatter.service';
 import { extraerErrorProveedor, WhatsAppProviderTransport } from './whatsapp-provider.transport';
 import {
@@ -47,10 +48,14 @@ export class WhatsAppConnectorService {
   private readonly logger = new Logger(WhatsAppConnectorService.name);
   private transport?: WhatsAppTransport;
   private readonly historial: RegistroEnvioWhatsApp[] = [];
+  /** Escrituras al repositorio en orden: cada registro se guarda después del anterior, así una versión vieja nunca pisa a una nueva. */
+  private cola: Promise<void> = Promise.resolve();
 
+  /** Sin repositorio (pruebas aisladas) el historial queda en memoria, como antes. */
   constructor(
     private readonly formatter: WhatsAppFormatterService,
     @Optional() @Inject(APP_CONFIG) config?: AppConfig,
+    @Optional() private readonly repo?: HistorialWhatsAppRepository,
   ) {
     if (config?.whatsapp) {
       this.transport = new WhatsAppProviderTransport(config.whatsapp);
@@ -63,6 +68,36 @@ export class WhatsAppConnectorService {
    */
   setTransport(customTransport: WhatsAppTransport | undefined): void {
     this.transport = customTransport;
+  }
+
+  /**
+   * HU-11 RF-12: al arrancar, carga el historial guardado. Lo que ya se registró en memoria antes de terminar de cargar (un envío muy
+   * temprano) se conserva y va después de lo guardado.
+   */
+  async onApplicationBootstrap(): Promise<void> {
+    if (!this.repo) return;
+    try {
+      const guardados = await this.repo.leer();
+      const nuevos = this.historial.splice(0, this.historial.length);
+      const ids = new Set(nuevos.map((r) => r.id));
+      this.historial.push(...guardados.filter((r) => !ids.has(r.id)), ...nuevos);
+    } catch (err) {
+      this.logger.error(`No se pudo cargar el historial de WhatsApp guardado: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /** Termina las escrituras pendientes del historial (para las pruebas y el apagado). */
+  async esperarGuardados(): Promise<void> {
+    await this.cola;
+  }
+
+  /** Guarda una copia del registro en segundo plano y en orden. Si la base no responde, lo deja registrado y el envío sigue. */
+  private guardar(registro: RegistroEnvioWhatsApp): void {
+    if (!this.repo) return;
+    const copia = structuredClone(registro);
+    this.cola = this.cola
+      .then(() => this.repo!.guardar(copia))
+      .catch((err) => this.logger.error(`No se pudo guardar el envío ${copia.id} en el historial: ${err instanceof Error ? err.message : String(err)}`));
   }
 
   /** Indica si existe un proveedor/transporte de mensajería activo. */
@@ -271,11 +306,12 @@ export class WhatsAppConnectorService {
       registro.estadoEntrega = evento.estado;
     }
     registro.estadoActualizadoEn = evento.fecha ?? new Date().toISOString();
+    this.guardar(registro);
     return 'actualizado';
   }
 
   private registrarIntento(res: WhatsAppEnvioResult, ctx: ContextoEnvioWhatsApp): void {
-    this.historial.push({
+    const registro: RegistroEnvioWhatsApp = {
       id: `WA-REG-${randomUUID()}`,
       origen: ctx.origen ?? 'manual',
       alertaId: ctx.alertaId,
@@ -291,6 +327,8 @@ export class WhatsAppConnectorService {
       ...(ctx.aprobadoPor ? { aprobadoPor: ctx.aprobadoPor, aprobadoEn: ctx.aprobadoEn ?? undefined } : {}),
       duracionMs: res.tiempoRespuestaMs,
       timestamp: res.timestampEnvio,
-    });
+    };
+    this.historial.push(registro);
+    this.guardar(registro);
   }
 }

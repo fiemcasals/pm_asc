@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T04:41:09.765Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T04:45:30.273Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -37,7 +37,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 29 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 30 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
 | 31 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
-| 32 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | Hacer | germanG | RF-04 | — |
+| 32 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | Haciendo | germanG | RF-04 | — |
 | 33 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 34 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
 | 35 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
@@ -219,6 +219,7 @@ PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-d
 - Estimado: 3h
 
 ### RF-05 — Usar el mapa nuevo en las pantallas y retirar el dibujo anterior
+Inicio de desarrollo de la tarea
 - Estimado: 8h
 
 ### RF-04 — Horarios de atención por edificio editables por la Secretaría

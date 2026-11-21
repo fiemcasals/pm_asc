@@ -1097,17 +1097,17 @@ dd {
   padding-top: 8px;
 }
 
-/* Layout Master-Detail */
+/* Layout Master-Detail. minmax(0, 1fr): la columna no se estira por una tabla ancha (HU-01 RF-06). */
 .secretaria-layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
 
 @media (max-width: 800px) {
   .secretaria-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2630,4 +2630,79 @@ dd {
   color: #991b1b;
   font-size: 0.9rem;
   font-weight: 500;
+}
+
+/* HU-01 RF-06: la ficha del edificio y el alta de consorcio entran en un celular de 360 px, sin desplazar la página hacia los costados.
+   Las tablas anchas (máquinas, facturación) se desplazan dentro de su propia caja (.table-responsive). */
+.secretaria-layout > *,
+.consorcios-list-card,
+.ficha-tecnica-wrapper,
+.consorcio-form-card {
+  min-width: 0;
+}
+.nav-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.nav-tabs > .tab-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .consorcio-form-card,
+  .ficha-tecnica-wrapper,
+  .consorcios-list-card {
+    padding: 14px;
+  }
+  .ficha-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ficha-header > * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+/* Las filas de máquinas (alta y edición de la ficha) se acomodan en celular. Un fieldset, por defecto, no se achica por debajo de su contenido. */
+.fieldset-section {
+  min-width: 0;
+}
+.ficha-maquina-edit .field-input,
+.maquina-grid-row .field-input {
+  min-width: 0;
+  width: 100%;
+}
+.maquina-grid-row > * {
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .fieldset-section {
+    padding: 12px;
+  }
+  .maquina-grid-row {
+    flex-wrap: wrap;
+  }
+  .maquina-grid-row .field-wide {
+    flex: 1 1 100%;
+  }
+  .ficha-maquina-edit {
+    grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+}
+/* Las grillas de formulario no se estiran por el ancho mínimo de un campo (en escritorio, la edición de la ficha se salía 75 px). */
+.form-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.form-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.form-field > .field-input {
+  min-width: 0;
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .form-grid-2,
+  .form-grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

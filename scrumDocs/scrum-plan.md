@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T18:32:12.146Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T18:32:18.620Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -26,7 +26,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 18 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | dev-ma-2 | — | — |
 | 20 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | Hacer | Sin asignar | — | — |
-| 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | Hacer | dev-ma-2 | — | — |
+| 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | Haciendo | dev-ma-2 | — | — |
 | 22 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 23 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 24 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |

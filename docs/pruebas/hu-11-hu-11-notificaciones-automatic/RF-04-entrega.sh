@@ -172,7 +172,7 @@ else
   fail "rechazo → $CODE_RECH $(cat "$TMP/res_rech.json")"
 fi
 
-curl -s -o "$TMP/hist.json" "$BASE_URL/api/whatsapp/historial"
+curl -s -o "$TMP/hist.json" -H "Authorization: Bearer $TOKEN_ADMIN" "$BASE_URL/api/whatsapp/historial"
 if [ "$(json "$TMP/hist.json" 'b.registros.some(r=>r.estadoEntrega==="fallido" && String(r.motivo).includes("131030"))')" = "true" ]; then
   pass "el envío rechazado quedó registrado como fallido en GET /api/whatsapp/historial"
 else

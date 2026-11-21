@@ -78,7 +78,7 @@ pagina "$RUTA"; A="$(cat "$TMP/p.html")"; pagina "$RUTA2"; B="$(cat "$TMP/p.html
 { echo "$B" | grep -q "Otro edificio distinto" && ! echo "$B" | grep -q "Pulsador trabado" && ! echo "$B" | grep -q "Corrientes"; } && pass "el segundo enlace no muestra el primero" || fail "el segundo enlace mezcla datos"
 
 echo "5. El token no queda en el historial de WhatsApp (que no pide sesión)"
-curl -s "$BASE_URL/api/whatsapp/historial?alertaId=$ID" > "$TMP/hist.json"
+curl -s -H "Authorization: Bearer $SEC" "$BASE_URL/api/whatsapp/historial?alertaId=$ID" > "$TMP/hist.json"
 ! grep -q "$TOKEN" "$TMP/hist.json" && pass "el historial público no contiene el token" || fail "el token aparece en el historial público"
 
 echo; echo "Resultado: $OK ok, $KO con error"

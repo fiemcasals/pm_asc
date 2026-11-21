@@ -31,7 +31,14 @@ fail() { echo "  ❌ $1"; KO=$((KO+1)); }
 omit() { echo "  ⏭️  $1"; OMITIDOS=$((OMITIDOS+1)); }
 json() { node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(eval(process.argv[2]))' "$1" "$2"; }
 
+# Desde HU-11 RF-13 el historial de envíos pide la sesión de la Secretaría: el script crea una Secretaría temporal y la borra al terminar.
+DB_CONTAINER="${DB_CONTAINER:-mant-asc-db}"
+SEC_USUARIO="qa.rf10.secretaria"
+sql() { docker exec "$DB_CONTAINER" psql -U ascensores -d ascensores -tAc "$1"; }
+
 limpiar() {
+  sql "delete from usuarios where usuario='$SEC_USUARIO'" >/dev/null 2>&1 || true
+  sql "delete from intentos_login where usuario='$SEC_USUARIO'" >/dev/null 2>&1 || true
   for p in "${PIDS[@]:-}"; do [ -n "$p" ] && kill "$p" >/dev/null 2>&1 || true; done
   rm -rf "$TMP"
 }
@@ -48,6 +55,14 @@ fi
 if (cd "$REPO_ROOT/apps/web" && npx tsc --noEmit > "$TMP/tsc.log" 2>&1); then pass "la web compila sin errores de tipos"; else fail "errores de tipos: $(head -3 "$TMP/tsc.log")"; fi
 
 (cd "$REPO_ROOT" && npm run build --workspace=@mant-asc/api >/dev/null) || { echo "No compiló la API"; exit 1; }
+HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Clave-QA-2026",4))')"
+sql "delete from usuarios where usuario='$SEC_USUARIO'" >/dev/null
+sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$SEC_USUARIO','Secretaría QA','secretaria','$HASH')" >/dev/null || { echo "No pude crear la Secretaría temporal (¿npm run db:up?)"; exit 1; }
+token_de() { # token_de <puerto> → token de la Secretaría temporal en esa API
+  printf '{"usuario":"%s","password":"Clave-QA-2026"}' "$SEC_USUARIO" > "$TMP/login.json"
+  curl -s -o "$TMP/login-r.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "http://127.0.0.1:$1/api/auth/login"
+  json "$TMP/login-r.json" 'b.accessToken||""'
+}
 
 # Receptor que hace de Meta: acepta cada envío con un id propio.
 cat > "$TMP/mock.js" <<'JS'
@@ -77,6 +92,13 @@ levantar_api "$PUERTO_META" WHATSAPP_PROVIDER=meta WHATSAPP_META_ACCESS_TOKEN=to
   WHATSAPP_META_BASE_URL="http://127.0.0.1:${MOCK_PORT}" WHATSAPP_META_TEMPLATE_NAME=alerta_falla_critica \
   WHATSAPP_META_APP_SECRET=secret-rf10 WHATSAPP_META_VERIFY_TOKEN=verify-rf10 || exit 1
 
+declare -A TOKENS
+for p in "$PUERTO_SIN" "$PUERTO_META"; do
+  TOKENS[$p]="$(token_de "$p")"
+  [ -n "${TOKENS[$p]}" ] || { echo "No pude ingresar como Secretaría en la API del puerto $p"; exit 1; }
+done
+tok() { echo "${TOKENS[$1]}"; }
+
 echo "2. Lo que dice el cartel: GET /api/whatsapp/estado (Criterio 1)"
 curl -s -o "$TMP/sin.json" "http://127.0.0.1:$PUERTO_SIN/api/whatsapp/estado"
 [ "$(json "$TMP/sin.json" 'b.configurado+"|"+b.proveedor')" = "false|null" ] && pass "sin proveedor: configurado=false → el cartel dice «WhatsApp no configurado…»" || fail "estado sin proveedor: $(cat "$TMP/sin.json")"
@@ -93,7 +115,7 @@ cat > "$TMP/aviso.json" <<'JSON'
 JSON
 curl -s -o "$TMP/env.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/aviso.json" "http://127.0.0.1:$PUERTO_META/api/whatsapp/enviar-alerta"
 ID_MSG="$(json "$TMP/env.json" 'b.idMensaje')"
-curl -s -o "$TMP/hist.json" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial"
+curl -s -o "$TMP/hist.json" -H "Authorization: Bearer $(tok $PUERTO_META)" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial"
 if [ "$(json "$TMP/hist.json" 'Array.isArray(b.registros) && b.registros.every(r=>"telefonoDestino" in r && "estadoEntrega" in r && "timestamp" in r)')" = "true" ]; then
   pass "el historial trae, por envío, el teléfono, el estado y la hora (lo que la bandeja cruza con cada aviso)"
 else
@@ -108,7 +130,7 @@ else
   firmar() { printf '%s' "$1" > "$TMP/c.json"; node -e 'const c=require("crypto");console.log("sha256="+c.createHmac("sha256","secret-rf10").update(require("fs").readFileSync(process.argv[1])).digest("hex"))' "$TMP/c.json"; }
   aviso_meta() { local cuerpo; cuerpo="$(printf '{"entry":[{"changes":[{"value":{"statuses":[{"id":"%s","status":"%s"}]}}]}]}' "$1" "$2")"; \
     curl -s -o /dev/null -X POST -H 'Content-Type: application/json' -H "X-Hub-Signature-256: $(firmar "$cuerpo")" --data-binary @"$TMP/c.json" "http://127.0.0.1:$PUERTO_META/api/whatsapp/webhook/meta"; }
-  estado_de() { curl -s -o "$TMP/hist.json" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial"; node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log((b.registros.find(r=>r.idMensaje===process.argv[2])||{}).estadoEntrega)' "$TMP/hist.json" "$1"; }
+  estado_de() { curl -s -o "$TMP/hist.json" -H "Authorization: Bearer $(tok $PUERTO_META)" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial"; node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log((b.registros.find(r=>r.idMensaje===process.argv[2])||{}).estadoEntrega)' "$TMP/hist.json" "$1"; }
   E0="$(estado_de "$ID_MSG")"; aviso_meta "$ID_MSG" delivered; E1="$(estado_de "$ID_MSG")"; aviso_meta "$ID_MSG" read; E2="$(estado_de "$ID_MSG")"
   [ "$E0|$E1|$E2" = "aceptado|entregado|leido" ] && pass "el historial pasa de aceptado a entregado y a leído (la bandeja lo muestra como «Aceptado…», «Entregado» y «Leído»)" || fail "estados: $E0|$E1|$E2"
 fi
@@ -120,7 +142,7 @@ if [ "$CARGA" -gt 0 ]; then
   for _ in $(seq 1 "$CARGA"); do
     T0="$(node -e 'console.log(Date.now())')"
     C1="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PUERTO_META/api/whatsapp/estado")"
-    C2="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial")"
+    C2="$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $(tok $PUERTO_META)" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial")"
     DT=$(( $(node -e 'console.log(Date.now())') - T0 ))
     TOTAL_MS=$((TOTAL_MS + DT)); [ "$DT" -gt "$MAX_MS" ] && MAX_MS="$DT"
     { [ "$C1" != "200" ] || [ "$C2" != "200" ]; } && FALLOS=$((FALLOS + 1))

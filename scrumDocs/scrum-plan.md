@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T04:16:31.280Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T04:17:00.457Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -145,7 +145,7 @@ PR #87 contra dev. Se arregló docs/pruebas/hu-04-.../RF-02-entrega.sh (que fall
 - Estimado: 1h
 
 ### RF-08 — Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada
-Inicio de desarrollo de la tarea
+PR #90 contra dev. Los avisos de WhatsApp salen como plantilla: Meta type "template" con nombre, idioma y 5 parámetros; Twilio ContentSid y ContentVariables, sin Body. Sin plantilla configurada no sale nada (no_configurado). Parámetros sin saltos de línea, tabulaciones ni tandas de más de 4 espacios, hasta 1024 caracteres. whatsapp-proveedor.e2e-spec 16/16, verify API 1154/1154, test:int 188/188, RF-08-entrega.sh 6/6 y carga 200 sin fallos (promedio 121 ms). Mínimo necesario fuera de lo pedido: las pruebas de RF-04 y su script cargan ahora la plantilla en su entorno. No se probó contra Meta ni Twilio reales: lo cubren RO-02 y RO-03.
 - Estimado: 4h
 
 ### RF-09 — Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor

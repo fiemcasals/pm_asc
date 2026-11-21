@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConsorcioMapaItem, fetchConsorciosMapa } from '../consorcios/consorcios';
-import { MapaUbicacionConsorcio } from '../consorcios/MapaUbicacionConsorcio';
+import { MapaEdificios } from '../mapa/MapaEdificios';
 import {
   COLORES_SEMAFORO,
   ORDEN_COLORES,
@@ -276,7 +276,7 @@ export function SemaforoView() {
           <Leyenda />
 
           <div className="semaforo-mapa" data-testid="contenedor-mapa-semaforo">
-            <MapaUbicacionConsorcio
+            <MapaEdificios
               ubicacion={null}
               marcadores={marcadores}
               testId="mapa-semaforo"

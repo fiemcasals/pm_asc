@@ -37,6 +37,8 @@ import { AvisosService } from './avisos/avisos.service';
 import { InformeAvisoController } from './avisos/informe-aviso.controller';
 import { PdfLegalFallaService } from './avisos/pdf-legal-falla.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
+import { WhatsAppWebhookController } from './whatsapp/whatsapp-webhook.controller';
+import { WhatsAppWebhookService } from './whatsapp/whatsapp-webhook.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
 import { WhatsAppTriggerService } from './whatsapp/whatsapp-trigger.service';
 import { WhatsAppController } from './whatsapp/whatsapp.controller';
@@ -100,6 +102,7 @@ export class AppModule implements NestModule {
         FirmanteController,
         EcaController,
         WhatsAppController,
+        WhatsAppWebhookController,
         AvisosController,
         InformeAvisoController,
         VisitasFallidasController,
@@ -136,6 +139,7 @@ export class AppModule implements NestModule {
         WhatsAppFormatterService,
         WhatsAppConnectorService,
         WhatsAppTriggerService,
+        WhatsAppWebhookService,
         PdfLegalFallaService,
         AvisosService,
         VisitasFallidasService,

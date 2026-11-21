@@ -92,7 +92,7 @@ describe('HU-11 RF-04 · Proveedor real de WhatsApp (Meta Cloud API / Twilio) y 
 
       expect(res.body).toMatchObject({
         ok: true,
-        estadoEntrega: 'entregado',
+        estadoEntrega: 'aceptado',
         proveedor: 'meta',
         idMensaje: 'wamid.HBgMNTQ5MTE2NjY2Nzc3Nw==',
         telefonoDestino: '+5491166667777',

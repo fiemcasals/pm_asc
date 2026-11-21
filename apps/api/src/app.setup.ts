@@ -15,7 +15,13 @@ import { TextoInvalidoFilter } from './database/database-error.filter';
 export function configureApp(app: INestApplication, config: AppConfig): void {
   app.setGlobalPrefix('api');
   // El informe de la visita lleva fotos y la firma: el límite por defecto (100 KB) no alcanza.
-  (app as NestExpressApplication).useBodyParser?.('json', { limit: LIMITE_CUERPO });
+  // Los avisos de Meta se firman sobre el cuerpo sin modificar: se guarda tal cual llegó, sólo para esa ruta (HU-11 RF-09).
+  (app as NestExpressApplication).useBodyParser?.('json', {
+    limit: LIMITE_CUERPO,
+    verify: (req: { url?: string; rawBody?: Buffer }, _res: unknown, buf: Buffer) => {
+      if (req.url?.includes('/whatsapp/webhook/meta')) req.rawBody = buf;
+    },
+  });
 
   if (config.corsOrigins.length > 0) {
     app.enableCors({

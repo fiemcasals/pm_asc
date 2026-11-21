@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T21:39:11.383Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T21:42:49.337Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -25,8 +25,8 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | tested ✓ | germanG | — | — |
 | 18 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | dev-ma-2 | — | — |
-| 20 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | Hecho ✓ dev | dev-ma-2 | — | — |
-| 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | Hecho ✓ dev | dev-ma-2 | — | — |
+| 20 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | testing | dev-ma-2 | — | — |
+| 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | testing | dev-ma-2 | — | — |
 | 22 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 23 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 24 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -41,13 +41,13 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 33 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 34 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
 | 35 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
-| 36 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | Hecho ✓ dev | dev-ma-2 | RF-09, RF-10 | — |
-| 37 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | Hecho ✓ dev | dev-ma-2 | RF-10 | — |
-| 38 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | Hecho ✓ dev | dev-ma-2 | RF-09, RF-10 | — |
+| 36 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | testing | dev-ma-2 | RF-09, RF-10 | — |
+| 37 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | testing | dev-ma-2 | RF-10 | — |
+| 38 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | testing | dev-ma-2 | RF-09, RF-10 | — |
 | 39 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
 | 40 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 41 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
-| 42 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | Hecho ✓ dev | dev-ma-2 | RF-02 | — |
+| 42 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | testing | dev-ma-2 | RF-02 | — |
 | 43 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 44 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 45 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
@@ -83,7 +83,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 75 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
 | 76 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
 | 77 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Hacer | germanG | RF-05 | — |
-| 78 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | Hecho ✓ dev | dev-ma-2 | RF-05, RF-06 | — |
+| 78 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | testing | dev-ma-2 | RF-05, RF-06 | — |
 | 79 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
 | 80 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
 | 81 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
@@ -92,10 +92,10 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 84 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 85 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
 | 86 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 87 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | Hecho | dev-ma-2 | RF-02 | — |
+| 87 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | testing | dev-ma-2 | RF-02 | — |
 | 88 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
 | 89 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
-| 90 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | Hecho ✓ dev | dev-ma-2 | RF-05, RF-03 | — |
+| 90 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | testing | dev-ma-2 | RF-05, RF-03 | — |
 | 91 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
 | 92 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 93 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
@@ -109,7 +109,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 101 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
 | 102 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | Bloqueada | dev-ma-2 | RF-05, RF-01, RF-06 | — |
 | 103 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
-| 104 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | Hecho ✓ dev | dev-ma-2 | RF-05, RF-06 | — |
+| 104 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | testing | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle
 

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-21T11:10:43.847Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T12:20:43.667Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -325,6 +325,18 @@ El canal de eventos de fallas críticas (GET /api/fallas-criticas/eventos, Serve
 4. El canal se cierra solo pasado un tiempo (5 minutos) para volver a validar la sesión; el panel lo reabre renovando la sesión, y si la sesión fue revocada no lo reabre.
 5. El panel de Secretaría y el del Firmante escuchan el canal con la sesión (sin EventSource), muestran las alertas como antes y se reconectan solos, con espera creciente, si se corta la conexión.
 
+### RF-08: Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio (Funcional)
+
+Los informes de falla crítica que carga el RT (y su idempotencia por clientId), la alerta crítica de la máquina y el estado que el RT marca y el Firmante confirma están en memoria: un reinicio de la API los borra y la alerta desaparece del Portal ECA y de la Secretaría. Esta Tarea los guarda en la base.
+
+**Condiciones de aprobación**
+
+- 1. Dado un informe de falla crítica enviado por el RT, cuando se reinicia la API, entonces el informe y la alerta de la máquina siguen visibles para la Secretaría, el Firmante y la ECA que corresponden.
+- 2. Dado un informe ya recibido con su clientId, cuando el celular lo reintenta después de un reinicio, entonces no se duplica ni se vuelve a avisar.
+- 3. Dado un estado de ascensor marcado por el RT y confirmado o rechazado por el Firmante, cuando se reinicia la API, entonces el estado y la confirmación se mantienen.
+- 4. Un RT solo ve sus informes y la ECA solo los de sus edificios, igual que antes del cambio.
+- 5. Las pruebas existentes de fallas críticas y del canal en tiempo real siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 a 3.
+
 ## HU-07: HU-07: Protocolo de Visitas Fallidas y Recargo de Tercera Visita
 
 ### RF-01: Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio (Funcional)
@@ -436,6 +448,30 @@ Hoy las rutas del Firmante (máquinas, autorizar y rechazar) no piden sesión: c
 3. La Secretaría y el Administrador ven las máquinas de todos los Firmantes pero no autorizan ni rechazan (403); el RT y la ECA reciben 403 en todo.
 4. La autorización y el rechazo quedan a nombre del usuario de la sesión.
 5. La web funciona con la sesión: el Firmante ve, autoriza y rechaza lo suyo; la Secretaría ve todo sin esos botones.
+
+### RF-05: Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio (Funcional)
+
+Hoy las visitas, las firmas AGC, los rechazos y los avisos de plazo vencido del Portal Firmante viven en memoria de FirmanteService: cada reinicio de la API los borra, y con ellos lo que ven el Portal ECA, el Monitoreo y los avisos, que leen las mismas máquinas. Es un riesgo legal (una firma AGC autorizada se pierde). Esta Tarea las guarda en la base, con RLS por Firmante como el resto de los datos.
+
+**Condiciones de aprobación**
+
+- 1. Dada una visita registrada y una firma AGC autorizada por el Firmante, cuando se reinicia la API, entonces el Portal Firmante muestra la misma visita con la misma firma: fecha, protocolo AGC y quién la autorizó.
+- 2. Dado un informe rechazado con su motivo, cuando se reinicia la API, entonces sigue rechazado, con el motivo, quién lo rechazó y la fecha, y sigue en la bandeja de la Secretaría.
+- 3. Dado un aviso de plazo de 5 días hábiles vencido, cuando se reinicia la API, entonces el aviso no se pierde ni se genera de nuevo.
+- 4. Dados dos Firmantes, cuando cualquiera consulta o firma después del reinicio, entonces cada uno ve y firma solo lo suyo, igual que antes.
+- 5. El Portal ECA, el Monitoreo, las fallas críticas y las paradas siguen mostrando las mismas máquinas y estados, y las pruebas existentes de esas pantallas siguen en verde.
+- 6. Una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 a 3.
+
+### RF-06: Retirar las máquinas de ejemplo de la vista de firma (Funcional)
+
+FirmanteService todavía arranca con 5 máquinas de ejemplo (Av. Corrientes 1234, Callao 850, Santa Fe 3200) que no existen en la base. Con las máquinas y las visitas guardadas en la base, los ejemplos sobran y confunden (en la demo, «Av. Santa Fe 3200» aparece dos veces). Esta Tarea los retira.
+
+**Condiciones de aprobación**
+
+- 1. Dada una API recién iniciada con edificios con terna, cuando se abre el Portal Firmante como Secretaría, entonces solo aparecen máquinas de esos edificios.
+- 2. Dada una base sin ningún edificio con terna, cuando se abre el Portal Firmante, entonces se ve un mensaje de lista vacía y no un error.
+- 3. Los scripts de entrega y las pruebas que usaban las máquinas de ejemplo usan los datos de demo de la base y siguen en verde.
+- 4. Los Portales Firmante y ECA y el Monitoreo muestran los datos de demo reales (DEMO …) sin duplicados por dirección.
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 
@@ -653,6 +689,48 @@ El API ya informa si hay un proveedor de WhatsApp activo (GET /api/whatsapp/esta
 3. Cada aviso muestra el estado de su envío con lo que confirmó el proveedor: Enviado, Entregado, Leído o Falló con el motivo que informó.
 4. Si GET /api/whatsapp/estado no responde, el cartel dice que no se pudo consultar el estado y la bandeja sigue usable.
 5. Las pruebas de la web cubren los tres estados del cartel (no configurado, Meta y Twilio) y el caso en que no se puede consultar, y la guía visual tiene capturas sacadas con Playwright de la bandeja con y sin WhatsApp activo.
+
+### RF-11: Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio (Funcional)
+
+Los avisos de falla crítica (pendientes de revisión, aprobados, con sus envíos) y los enlaces sin contraseña válidos 7 días están en memoria de AvisosService. Un reinicio borra los avisos que la Secretaría todavía no revisó y deja sin efecto los enlaces que ya llegaron por WhatsApp. Esta Tarea los guarda en la base.
+
+**Condiciones de aprobación**
+
+- 1. Dado un aviso «Pendiente de revisión», cuando se reinicia la API, entonces sigue pendiente en la bandeja de la Secretaría y se puede aprobar.
+- 2. Dado un enlace de aviso enviado por WhatsApp, cuando se reinicia la API, entonces el enlace sigue abriendo el informe y vence a los 7 días de creado, no del reinicio.
+- 3. Dado un aviso ya aprobado y enviado, cuando se reinicia la API, entonces no se vuelve a enviar y conserva el estado de cada envío.
+- 4. Las pruebas existentes de avisos y del enlace siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 a 3.
+
+### RF-12: Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio (Funcional)
+
+El historial de envíos de WhatsApp y su estado real (aceptado, enviado, entregado, leído, fallido) vive en memoria de WhatsAppConnectorService. Con un reinicio se pierde, y los avisos del proveedor (webhook) que llegan después no encuentran el envío al que corresponden. Esta Tarea lo guarda en la base.
+
+**Condiciones de aprobación**
+
+- 1. Dado un envío con su estado, cuando se reinicia la API, entonces la bandeja de avisos sigue mostrando el envío y su estado real.
+- 2. Dado un envío «Aceptado» antes del reinicio, cuando el proveedor avisa después que fue entregado o leído, entonces el estado se actualiza en el envío correcto.
+- 3. Un aviso viejo del proveedor no hace retroceder el estado de un envío (aceptado → enviado → entregado → leído; fallido se mantiene), antes y después del reinicio.
+- 4. Las pruebas existentes de WhatsApp siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 y 2.
+
+### RF-13: Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp (Funcional)
+
+GET /api/whatsapp/historial es público y devuelve los teléfonos de los destinatarios. Solo la Secretaría y el Administrador lo necesitan (la bandeja de avisos).
+
+**Condiciones de aprobación**
+
+- 1. Dado un pedido sin sesión, cuando se consulta el historial de WhatsApp, entonces responde 401.
+- 2. Dado un usuario RT de Calle, Firmante o ECA, cuando consulta el historial, entonces responde 403.
+- 3. Dada la Secretaría o el Administrador, cuando consultan el historial, entonces responde 200 y la bandeja de avisos sigue mostrando los envíos.
+
+### RF-14: Que el estado general de un aviso refleje un envío de WhatsApp que falla después (Funcional)
+
+Un aviso que ya figura «Enviado» sigue diciéndolo aunque WhatsApp informe después que alguno de sus envíos falló; el motivo solo se ve en la lista de envíos. La Secretaría debería enterarse sin abrir cada aviso.
+
+**Condiciones de aprobación**
+
+- 1. Dado un aviso «Enviado» con un envío que el proveedor informa luego como fallido, cuando la Secretaría abre la bandeja, entonces el aviso muestra que falló un envío y ofrece «Reintentar envío».
+- 2. Dado ese aviso, cuando el reintento sale bien, entonces el aviso vuelve a figurar «Enviado» y el historial conserva el fallo anterior.
+- 3. Un aviso con todos sus envíos entregados o leídos sigue figurando «Enviado», y las pruebas existentes de la bandeja siguen en verde.
 
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 
@@ -959,6 +1037,27 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 1. Al guardar una solapa con una opción crítica, se registra el informe de Falla Crítica con el edificio, el equipo, las fallas y sus fotos.
 2. La Secretaría y el Firmante reciben la alerta como define HU-06.
 3. Sin señal, el informe queda en el celular y se envía al volver la conexión, una sola vez.
+
+### RF-09: Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio (Funcional)
+
+Los reportes de parada que el RT carga cuando un equipo está fuera de servicio viven en memoria de ParadasService y se pierden al reiniciar la API. Esta Tarea los guarda en la base.
+
+**Condiciones de aprobación**
+
+- 1. Dado un reporte de parada cargado por el RT, cuando se reinicia la API, entonces el reporte sigue visible para el Firmante, la Secretaría y la ECA que corresponden.
+- 2. Dado un reporte ya recibido, cuando el celular lo reintenta después del reinicio, entonces no se duplica.
+- 3. Las pruebas existentes de paradas siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 y 2.
+
+### RF-10: Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio (Funcional)
+
+La pantalla de Inspección Técnica usa un edificio fijo («Edificio demo Av. Callao 450») con un selector provisorio, a la espera de integrar el inicio de visita. Esta Tarea la conecta: el RT inicia la visita en un edificio y la inspección trabaja sobre las máquinas de ese edificio.
+
+**Condiciones de aprobación**
+
+- 1. Dado un RT que inició la visita en un edificio, cuando abre Inspección Técnica, entonces ve las máquinas de ese edificio y no un edificio de demo.
+- 2. Dado un RT sin visita iniciada, cuando abre Inspección Técnica, entonces ve un mensaje que le explica cómo iniciarla.
+- 3. El selector provisorio y el edificio de demo ya no existen en la pantalla.
+- 4. El borrador sin señal sigue funcionando por edificio y máquina, y las pruebas existentes del checklist siguen en verde.
 
 ### RNF-01: Visita en curso sin señal (No funcional)
 

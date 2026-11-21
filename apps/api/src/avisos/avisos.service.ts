@@ -158,11 +158,14 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
 
   /** El estado del aviso de una alerta o informe, o null si no tiene aviso todavía. */
   estadoDe(alertaId: string): AvisoFalla['estado'] | null {
-    return this.avisos.get(alertaId)?.estado ?? null;
+    const aviso = this.avisos.get(alertaId);
+    if (aviso) this.sincronizarConProveedor(aviso);
+    return aviso?.estado ?? null;
   }
 
   listar(estado?: string): AvisoFalla[] {
     const todos = [...this.avisos.values()].sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+    for (const aviso of todos) this.sincronizarConProveedor(aviso);
     return structuredClone(estado ? todos.filter((a) => a.estado === estado) : todos);
   }
 
@@ -212,7 +215,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     for (const [canal, telefono, nombre] of whatsappA) {
       if (yaSalio(canal)) continue;
       const r = await this.whatsapp.enviarMensajeAlerta(mensaje(telefono, nombre), 3, 50, contexto);
-      aviso.envios.push({ canal, destino: r.telefonoDestino, ok: r.ok, estado: r.estadoEntrega, ...(r.error ? { motivo: r.error } : {}), fecha: r.timestampEnvio });
+      aviso.envios.push({ canal, destino: r.telefonoDestino, ok: r.ok, estado: r.estadoEntrega, ...(r.error ? { motivo: r.error } : {}), ...(r.idMensaje ? { idMensaje: r.idMensaje } : {}), fecha: r.timestampEnvio });
     }
 
     if (!yaSalio('email_eca')) {
@@ -426,6 +429,27 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
   private buscar(id: string): AvisoFalla {
     const aviso = [...this.avisos.values()].find((a) => a.id === id || a.alertaId === id);
     if (!aviso) throw new NotFoundException('Aviso no encontrado');
+    this.sincronizarConProveedor(aviso);
     return aviso;
+  }
+
+  /**
+   * HU-11 RF-14: un WhatsApp que salió bien («aceptado» por el proveedor) puede fallar después, cuando el proveedor avisa que no lo
+   * entregó (HU-11 RF-09). Ese envío pasa a fallido y, si el aviso figuraba «Enviado», vuelve a «Falló el envío»: la Secretaría lo ve en
+   * la bandeja sin abrir cada aviso y puede reintentar, que vuelve a mandar sólo lo que no salió. Un envío entregado o leído no cambia.
+   */
+  private sincronizarConProveedor(aviso: AvisoFalla): void {
+    let fallo = false;
+    for (const envio of aviso.envios) {
+      if (!envio.ok || !envio.idMensaje || envio.canal === 'email_eca') continue;
+      const registro = this.whatsapp.registroDeMensaje(envio.idMensaje);
+      if (registro?.estadoEntrega !== 'fallido') continue;
+      envio.ok = false;
+      envio.estado = 'fallido';
+      envio.motivo = registro.motivo ?? 'El proveedor informó que el mensaje no se entregó';
+      envio.falloInformadoEn = registro.estadoActualizadoEn ?? new Date().toISOString();
+      fallo = true;
+    }
+    if (fallo && aviso.estado === 'Enviado') aviso.estado = 'Falló el envío';
   }
 }

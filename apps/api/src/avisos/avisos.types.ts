@@ -11,6 +11,10 @@ export interface EnvioAviso {
   estado: string;
   motivo?: string;
   fecha: string;
+  /** Id del mensaje que devolvió el proveedor de WhatsApp (wamid o SM): con él se sigue el estado real del envío (HU-11 RF-14). */
+  idMensaje?: string;
+  /** Cuándo el proveedor informó que este envío, ya aceptado, no se entregó (HU-11 RF-14). */
+  falloInformadoEn?: string;
   /** Archivo PDF legal adjunto cuando el canal es `email_eca`. */
   archivoPdf?: string;
   pdfSha256?: string;

@@ -28,7 +28,14 @@ pass() { echo "  ✅ $1"; OK=$((OK+1)); }
 fail() { echo "  ❌ $1"; KO=$((KO+1)); }
 json() { node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log(eval(process.argv[2]))' "$1" "$2"; }
 
+# Desde HU-11 RF-13 el historial de envíos pide la sesión de la Secretaría: el script crea una Secretaría temporal y la borra al terminar.
+DB_CONTAINER="${DB_CONTAINER:-mant-asc-db}"
+SEC_USUARIO="qa.rf09.secretaria"
+sql() { docker exec "$DB_CONTAINER" psql -U ascensores -d ascensores -tAc "$1"; }
+
 limpiar() {
+  sql "delete from usuarios where usuario='$SEC_USUARIO'" >/dev/null 2>&1 || true
+  sql "delete from intentos_login where usuario='$SEC_USUARIO'" >/dev/null 2>&1 || true
   for p in "${PIDS[@]:-}"; do [ -n "$p" ] && kill "$p" >/dev/null 2>&1 || true; done
   rm -rf "$TMP"
 }
@@ -66,6 +73,14 @@ if (tipo === 'meta') {
 JS
 
 (cd "$REPO_ROOT" && npm run build --workspace=@mant-asc/api >/dev/null) || { echo "No compiló la API"; exit 1; }
+HASH="$(cd "$REPO_ROOT" && node -e 'console.log(require("bcryptjs").hashSync("Clave-QA-2026",4))')"
+sql "delete from usuarios where usuario='$SEC_USUARIO'" >/dev/null
+sql "insert into usuarios (usuario, nombre, rol, password_hash) values ('$SEC_USUARIO','Secretaría QA','secretaria','$HASH')" >/dev/null || { echo "No pude crear la Secretaría temporal (¿npm run db:up?)"; exit 1; }
+token_de() { # token_de <puerto> → token de la Secretaría temporal en esa API
+  printf '{"usuario":"%s","password":"Clave-QA-2026"}' "$SEC_USUARIO" > "$TMP/login.json"
+  curl -s -o "$TMP/login-r.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "http://127.0.0.1:$1/api/auth/login"
+  json "$TMP/login-r.json" 'b.accessToken||""'
+}
 
 levantar_api() { # levantar_api <puerto> VAR=valor ...
   local puerto="$1"; shift
@@ -86,6 +101,13 @@ levantar_api "$PUERTO_TWILIO" WHATSAPP_PROVIDER=twilio WHATSAPP_TWILIO_ACCOUNT_S
   WHATSAPP_TWILIO_FROM=whatsapp:+14155238886 WHATSAPP_TWILIO_BASE_URL="$URL_MOCK" WHATSAPP_TWILIO_CONTENT_SID=HXrf09 \
   WHATSAPP_TWILIO_WEBHOOK_URL="$URL_TWILIO" || exit 1
 
+declare -A TOKENS
+for p in "$PUERTO_META" "$PUERTO_TWILIO"; do
+  TOKENS[$p]="$(token_de "$p")"
+  [ -n "${TOKENS[$p]}" ] || { echo "No pude ingresar como Secretaría en la API del puerto $p"; exit 1; }
+done
+tok() { echo "${TOKENS[$1]}"; }
+
 cat > "$TMP/aviso.json" <<'JSON'
 {"telefonoDestino":"+54 9 11 6666-7777","nombreEca":"MAICON Mantenimiento","consorcio":"Av. Corrientes 1234","equipo":"M1","estado":"Fuera de Servicio","detalle":"Cabina trabada"}
 JSON
@@ -95,10 +117,10 @@ enviar() { # enviar <puerto> → imprime el id de mensaje que devolvió el prove
   json "$TMP/env.json" 'b.idMensaje'
 }
 estado_de() { # estado_de <puerto> <id>
-  curl -s -o "$TMP/hist.json" "http://127.0.0.1:$1/api/whatsapp/historial"
+  curl -s -o "$TMP/hist.json" -H "Authorization: Bearer $(tok $1)" "http://127.0.0.1:$1/api/whatsapp/historial"
   node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const r=b.registros.find(x=>x.idMensaje===process.argv[2]);console.log(r?r.estadoEntrega:"(no está)")' "$TMP/hist.json" "$2"
 }
-total_de() { curl -s -o "$TMP/hist.json" "http://127.0.0.1:$1/api/whatsapp/historial"; json "$TMP/hist.json" 'b.total'; }
+total_de() { curl -s -o "$TMP/hist.json" -H "Authorization: Bearer $(tok $1)" "http://127.0.0.1:$1/api/whatsapp/historial"; json "$TMP/hist.json" 'b.total'; }
 meta_post() { # meta_post <id> <status> [auto|none|firma] [extra]  → imprime el código HTTP
   printf '{"entry":[{"changes":[{"value":{"statuses":[{"id":"%s","status":"%s","timestamp":"1790000000"%s}]}}]}]}' "$1" "$2" "${4:-}" > "$TMP/meta.json"
   local firma="${3:-auto}"
@@ -145,7 +167,7 @@ meta_post "$ID_M" read >/dev/null; meta_post "$ID_M" read >/dev/null
 echo "5. Un mensaje que falla queda «fallido» con el error del proveedor (Criterio 4)"
 ID_F="$(enviar "$PUERTO_META")"
 meta_post "$ID_F" failed auto ',"errors":[{"code":131026,"title":"Message undeliverable","message":"Message undeliverable","error_data":{"details":"Receiver is incapable of receiving this message"}}]' >/dev/null
-curl -s -o "$TMP/hist.json" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial"
+curl -s -o "$TMP/hist.json" -H "Authorization: Bearer $(tok $PUERTO_META)" "http://127.0.0.1:$PUERTO_META/api/whatsapp/historial"
 if [ "$(json "$TMP/hist.json" 'JSON.stringify(b.registros.filter(x=>x.idMensaje==="'"$ID_F"'").map(x=>[x.estadoEntrega,x.ok,x.errorProveedor.codigo]))')" = '[["fallido",false,"131026"]]' ]; then
   pass "fallido, ok=false y código 131026 del proveedor"
 else

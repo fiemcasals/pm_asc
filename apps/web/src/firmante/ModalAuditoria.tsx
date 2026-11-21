@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { fechaHora } from '../fechas/formato';
 import {
   type MaquinaAsignada,
   obtenerMotivoBloqueo,
@@ -74,7 +75,7 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar, puedeFirmar = tr
               </div>
               <div>
                 <strong>Fecha de Visita:</strong>{' '}
-                {visita?.fecha ? new Date(visita.fecha).toLocaleString('es-AR') : 'No realizada'}
+                {fechaHora(visita?.fecha) || 'No realizada'}
               </div>
             </div>
 
@@ -173,7 +174,7 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar, puedeFirmar = tr
               <br />
               <small>
                 Protocolo: <code>{visita.protocoloAGC}</code> · Autorizado por {visita.autorizadoPor} el{' '}
-                {visita.fechaAutorizacion && new Date(visita.fechaAutorizacion).toLocaleString('es-AR')}
+                {fechaHora(visita.fechaAutorizacion, { segundos: true })}
               </small>
             </div>
           )}

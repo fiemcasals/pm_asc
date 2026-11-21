@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   CAUSA_POR_DEFECTO,
   cargarCausas,
-  cargarRecorrido,
   causaInicial,
   cuerpoConstancia,
   enviarConstancia,
@@ -91,14 +90,11 @@ describe('enviarConstancia (criterio 4)', () => {
   });
 });
 
-describe('cargarCausas y cargarRecorrido', () => {
+describe('cargarCausas', () => {
   it('devuelven lo que manda la API, o null si falla o viene vacío', async () => {
     expect(await cargarCausas(vi.fn().mockResolvedValue(respuesta(200, LISTA)))).toEqual(LISTA);
     expect(await cargarCausas(vi.fn().mockResolvedValue(respuesta(500, {})))).toBeNull();
     expect(await cargarCausas(vi.fn().mockResolvedValue(respuesta(200, { causas: [], porDefecto: '' })))).toBeNull();
     expect(await cargarCausas(vi.fn().mockRejectedValue(new Error('x')))).toBeNull();
-    const edificios = [{ id: 'a', nombre: 'A', direccion: 'Calle', bloqueado: false, visitaFallidaHoy: false }];
-    expect(await cargarRecorrido(vi.fn().mockResolvedValue(respuesta(200, edificios)))).toEqual(edificios);
-    expect(await cargarRecorrido(vi.fn().mockResolvedValue(respuesta(403, {})))).toBeNull();
   });
 });

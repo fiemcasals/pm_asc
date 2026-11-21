@@ -37,6 +37,10 @@ import { AvisosService } from './avisos/avisos.service';
 import { InformeAvisoController } from './avisos/informe-aviso.controller';
 import { PdfLegalFallaService } from './avisos/pdf-legal-falla.service';
 import { WhatsAppConnectorService } from './whatsapp/whatsapp-connector.service';
+import { HistorialWhatsAppRepository, PgHistorialWhatsAppRepository } from './whatsapp/historial-whatsapp.repository';
+import { AvisosRepository, PgAvisosRepository } from './avisos/avisos.repository';
+import { ParadasRepository, PgParadasRepository } from './paradas/paradas.repository';
+import { FallasCriticasRepository, PgFallasCriticasRepository } from './fallas-criticas/fallas-criticas.repository';
 import { WhatsAppWebhookController } from './whatsapp/whatsapp-webhook.controller';
 import { WhatsAppWebhookService } from './whatsapp/whatsapp-webhook.service';
 import { WhatsAppFormatterService } from './whatsapp/whatsapp-formatter.service';
@@ -131,6 +135,10 @@ export class AppModule implements NestModule {
         ImportadorAgcService,
         { provide: VisitasFallidasRepository, useClass: PgVisitasFallidasRepository },
         { provide: FirmaRepository, useClass: PgFirmaRepository },
+        { provide: HistorialWhatsAppRepository, useClass: PgHistorialWhatsAppRepository },
+        { provide: AvisosRepository, useClass: PgAvisosRepository },
+        { provide: ParadasRepository, useClass: PgParadasRepository },
+        { provide: FallasCriticasRepository, useClass: PgFallasCriticasRepository },
         FirmanteService,
         AsignacionesFirmanteService,
         ChecklistService,

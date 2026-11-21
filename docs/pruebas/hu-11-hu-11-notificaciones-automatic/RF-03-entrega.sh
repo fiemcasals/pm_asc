@@ -107,7 +107,7 @@ else
 fi
 
 echo "   Verificando que no salió nada: GET /api/whatsapp/historial?alertaId=$ALERTA"
-"${CURL[@]}" -o "$TMP/hist0.json" "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA"
+"${CURL[@]}" -o "$TMP/hist0.json" -H "Authorization: Bearer $SEC" "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA"
 total0="$(json "$TMP/hist0.json" 'b.total')"
 if [ "$total0" = "0" ]; then pass "Historial sin envíos antes de la aprobación (total=$total0)"; else fail "Historial con envíos sin aprobación (total='$total0')"; fi
 
@@ -116,7 +116,7 @@ code4="$("${CURL[@]}" -o "$TMP/apr.json" -w '%{http_code}' -X POST -H "Authoriza
 if [ "$code4" = "201" ]; then pass "La Secretaría aprueba el aviso → HTTP $code4"; else fail "Aprobar → HTTP $code4 $(head -c 200 "$TMP/apr.json")"; fi
 
 echo "   Verificando el registro: GET /api/whatsapp/historial?alertaId=$ALERTA"
-"${CURL[@]}" -o "$TMP/hist1.json" "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA"
+"${CURL[@]}" -o "$TMP/hist1.json" -H "Authorization: Bearer $SEC" "$BASE_URL/api/whatsapp/historial?alertaId=$ALERTA"
 total1="$(json "$TMP/hist1.json" 'b.total')"
 sinSalir="$(json "$TMP/hist1.json" 'b.registros.length>0&&b.registros.every(r=>r.estado==="no_realizado"&&r.estadoEntrega==="no_configurado")')"
 entregados="$(json "$TMP/hist1.json" 'b.registros.filter(r=>r.estadoEntrega==="entregado"||r.estado==="entregado").length')"

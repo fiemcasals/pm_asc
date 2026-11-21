@@ -83,7 +83,7 @@ describe('Enlace del aviso sin contraseña y válido por 7 días (HU-11 RF-06)',
     expect(e1).not.toBe(e2);
   });
 
-  it('el enlace lo ve la Secretaría en la bandeja, pero no queda en el historial de WhatsApp (que no pide sesión)', async () => {
+  it('el enlace lo ve la Secretaría en la bandeja, pero no queda en el historial de WhatsApp', async () => {
     const id = await informar();
     const enlace = await enlaceDe(id);
     const token = enlace.split('/').pop()!;
@@ -91,8 +91,10 @@ describe('Enlace del aviso sin contraseña y válido por 7 días (HU-11 RF-06)',
     const bandeja = await http().get('/api/avisos').set('Authorization', `Bearer ${tokenSecretaria}`);
     expect(bandeja.body.find((a: { alertaId: string }) => a.alertaId === id).enlace).toContain(token);
     expect(JSON.stringify(whatsapp.getHistorialEnvios(id))).not.toContain(token);
-    const publico = await http().get('/api/whatsapp/historial').query({ alertaId: id }); // sin sesión
-    expect(JSON.stringify(publico.body)).not.toContain(token);
+    // Desde HU-11 RF-13 el historial pide la sesión de la Secretaría; ni siquiera ella ve ahí el enlace.
+    await http().get('/api/whatsapp/historial').query({ alertaId: id }).expect(401);
+    const historial = await http().get('/api/whatsapp/historial').query({ alertaId: id }).set('Authorization', `Bearer ${tokenSecretaria}`).expect(200);
+    expect(JSON.stringify(historial.body)).not.toContain(token);
   });
 
   it.each([

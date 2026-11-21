@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { fechaHora as formatearFechaHora, hora as formatearHora } from '../fechas/formato';
 import {
   descargarRemitoTecnico,
   enviarAlertaWhatsApp,
@@ -89,7 +90,7 @@ export function AccionesAlertaCritica({
           <div>
             <strong>Acuse de Recibo Legal Registrado:</strong>
             <div className="acuse-meta-texto">
-              Fecha y Hora: {new Date(acuse.fechaHora).toLocaleString('es-AR')} | Usuario:{' '}
+              Fecha y Hora: {formatearFechaHora(acuse.fechaHora, { segundos: true })} | Usuario:{' '}
               {acuse.usuario} ({maquina.eca})
             </div>
           </div>
@@ -191,7 +192,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = tru
 
         setNotificacion({
           tipo: 'ok',
-          texto: `Remito técnico oficial (PDF) descargado. Acuse legal registrado para ${m.eca} a las ${new Date(fechaHora).toLocaleTimeString('es-AR')}.`,
+          texto: `Remito técnico oficial (PDF) descargado. Acuse legal registrado para ${m.eca} a las ${formatearHora(fechaHora, { segundos: true })}.`,
         });
       } else {
         setNotificacion({
@@ -336,7 +337,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = tru
                 </div>
                 {alerta?.fechaDeteccion && (
                   <div className="alerta-fecha">
-                    🕒 Detección: {new Date(alerta.fechaDeteccion).toLocaleString('es-AR')}
+                    🕒 Detección: {formatearFechaHora(alerta.fechaDeteccion)}
                   </div>
                 )}
 

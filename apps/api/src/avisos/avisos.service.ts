@@ -1,6 +1,7 @@
-import { ConflictException, Inject, Injectable, NotFoundException, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Subscription } from 'rxjs';
+import { AvisosRepository } from './avisos.repository';
 import { Mailer } from '../auth/mailer';
 import { APP_CONFIG, AppConfig } from '../config';
 import { ConsorciosRepository } from '../consorcios/consorcios.repository';
@@ -26,7 +27,7 @@ interface Interno {
  * Avisos de falla crítica con revisión previa (HU-11 RF-05). Al registrarse una falla crítica el aviso queda «Pendiente de revisión»
  * y no sale ningún WhatsApp ni correo; la Secretaría lo aprueba y recién entonces se envía a la ECA y al Firmante del edificio.
  *
- * Los avisos quedan en memoria, igual que los informes de fallas críticas de los que salen.
+ * Desde HU-11 RF-11 los avisos se guardan en PostgreSQL (si hay repositorio) y se cargan al arrancar.
  */
 @Injectable()
 export class AvisosService implements OnModuleInit, OnModuleDestroy {
@@ -37,6 +38,9 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
   private suscripcion?: Subscription;
 
   private readonly pdfService: PdfLegalFallaService;
+  private readonly logger = new Logger(AvisosService.name);
+  /** Escrituras al repositorio en orden: una versión vieja de un aviso nunca pisa a una nueva. */
+  private cola: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly fallas: FallasCriticasService,
@@ -45,6 +49,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     @Optional() @Inject(APP_CONFIG) config?: AppConfig,
     @Optional() pdfLegal?: PdfLegalFallaService,
     @Optional() private readonly consorcios?: ConsorciosRepository,
+    @Optional() private readonly repo?: AvisosRepository,
   ) {
     this.appUrl = config?.appUrl ?? 'http://localhost:8050';
     this.pdfService = pdfLegal ?? new PdfLegalFallaService();
@@ -52,6 +57,42 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     this.suscripcion = this.fallas.eventos$().subscribe((evento) => this.crearDesdeEvento(evento));
+  }
+
+  /**
+   * HU-11 RF-11: al arrancar, carga los avisos guardados con su enlace. Un aviso que ya se creó en memoria antes de terminar de cargar
+   * (una falla registrada muy temprano) se conserva.
+   */
+  async onApplicationBootstrap(): Promise<void> {
+    if (!this.repo) return;
+    try {
+      for (const g of await this.repo.leer()) {
+        const alertaId = g.aviso.alertaId;
+        if (this.avisos.has(alertaId)) continue;
+        this.avisos.set(alertaId, g.aviso);
+        this.internos.set(alertaId, { vista: g.vista, ...(g.token ? { token: g.token } : {}), ...(g.emitidoEn !== undefined ? { emitidoEn: g.emitidoEn } : {}) });
+        if (g.token) this.porToken.set(g.token, alertaId);
+      }
+    } catch (err) {
+      this.logger.error(`No se pudieron cargar los avisos guardados: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /** Termina las escrituras pendientes de los avisos (para las pruebas y el apagado). */
+  async esperarGuardados(): Promise<void> {
+    await this.cola;
+  }
+
+  /** Guarda una copia del aviso y su enlace, en orden y en segundo plano. Si la base no responde, lo deja registrado y sigue. */
+  private guardar(alertaId: string): void {
+    if (!this.repo) return;
+    const aviso = this.avisos.get(alertaId);
+    const interno = this.internos.get(alertaId);
+    if (!aviso || !interno) return;
+    const copia = structuredClone({ aviso, vista: interno.vista, ...(interno.token ? { token: interno.token } : {}), ...(interno.emitidoEn !== undefined ? { emitidoEn: interno.emitidoEn } : {}) });
+    this.cola = this.cola
+      .then(() => this.repo!.guardar(copia))
+      .catch((err) => this.logger.error(`No se pudo guardar el aviso ${alertaId}: ${err instanceof Error ? err.message : String(err)}`));
   }
 
   onModuleDestroy(): void {
@@ -97,6 +138,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
         fotografias: informe.fotografias,
       },
     });
+    this.guardar(e.informeId);
     return aviso;
   }
 
@@ -140,6 +182,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
         fotografias: alerta.fotografiaCabinaTrabada ? [alerta.fotografiaCabinaTrabada] : [],
       },
     });
+    this.guardar(alerta.id);
     return aviso;
   }
 
@@ -158,11 +201,14 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
 
   /** El estado del aviso de una alerta o informe, o null si no tiene aviso todavía. */
   estadoDe(alertaId: string): AvisoFalla['estado'] | null {
-    return this.avisos.get(alertaId)?.estado ?? null;
+    const aviso = this.avisos.get(alertaId);
+    if (aviso) this.sincronizarConProveedor(aviso);
+    return aviso?.estado ?? null;
   }
 
   listar(estado?: string): AvisoFalla[] {
     const todos = [...this.avisos.values()].sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+    for (const aviso of todos) this.sincronizarConProveedor(aviso);
     return structuredClone(estado ? todos.filter((a) => a.estado === estado) : todos);
   }
 
@@ -212,7 +258,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     for (const [canal, telefono, nombre] of whatsappA) {
       if (yaSalio(canal)) continue;
       const r = await this.whatsapp.enviarMensajeAlerta(mensaje(telefono, nombre), 3, 50, contexto);
-      aviso.envios.push({ canal, destino: r.telefonoDestino, ok: r.ok, estado: r.estadoEntrega, ...(r.error ? { motivo: r.error } : {}), fecha: r.timestampEnvio });
+      aviso.envios.push({ canal, destino: r.telefonoDestino, ok: r.ok, estado: r.estadoEntrega, ...(r.error ? { motivo: r.error } : {}), ...(r.idMensaje ? { idMensaje: r.idMensaje } : {}), fecha: r.timestampEnvio });
     }
 
     if (!yaSalio('email_eca')) {
@@ -223,6 +269,8 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     const whatsappOk = whatsappA.every(([canal]) => yaSalio(canal));
     const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
     aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
+    this.guardar(aviso.alertaId);
+    await this.esperarGuardados();
     return structuredClone(aviso);
   }
 
@@ -271,6 +319,8 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     );
     const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
     aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
+    this.guardar(aviso.alertaId);
+    await this.esperarGuardados();
     return structuredClone(aviso);
   }
 
@@ -426,6 +476,28 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
   private buscar(id: string): AvisoFalla {
     const aviso = [...this.avisos.values()].find((a) => a.id === id || a.alertaId === id);
     if (!aviso) throw new NotFoundException('Aviso no encontrado');
+    this.sincronizarConProveedor(aviso);
     return aviso;
+  }
+
+  /**
+   * HU-11 RF-14: un WhatsApp que salió bien («aceptado» por el proveedor) puede fallar después, cuando el proveedor avisa que no lo
+   * entregó (HU-11 RF-09). Ese envío pasa a fallido y, si el aviso figuraba «Enviado», vuelve a «Falló el envío»: la Secretaría lo ve en
+   * la bandeja sin abrir cada aviso y puede reintentar, que vuelve a mandar sólo lo que no salió. Un envío entregado o leído no cambia.
+   */
+  private sincronizarConProveedor(aviso: AvisoFalla): void {
+    let fallo = false;
+    for (const envio of aviso.envios) {
+      if (!envio.ok || !envio.idMensaje || envio.canal === 'email_eca') continue;
+      const registro = this.whatsapp.registroDeMensaje(envio.idMensaje);
+      if (registro?.estadoEntrega !== 'fallido') continue;
+      envio.ok = false;
+      envio.estado = 'fallido';
+      envio.motivo = registro.motivo ?? 'El proveedor informó que el mensaje no se entregó';
+      envio.falloInformadoEn = registro.estadoActualizadoEn ?? new Date().toISOString();
+      fallo = true;
+    }
+    if (fallo && aviso.estado === 'Enviado') aviso.estado = 'Falló el envío';
+    if (fallo) this.guardar(aviso.alertaId);
   }
 }

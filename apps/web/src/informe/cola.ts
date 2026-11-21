@@ -5,6 +5,7 @@ import {
   type InformeVisitaEncolado,
 } from '../checklist/offlineStore';
 import { type CuerpoInforme, type InformeCerrado } from './consolidacion';
+import { fechaHora } from '../fechas/formato';
 
 /**
  * Cola de sincronización de los informes cerrados (HU-18 RNF-02): lógica de la pantalla, sin React.
@@ -256,7 +257,7 @@ export async function descartarRechazado(almacen: AlmacenCola, clientReportId: s
 // ---- Qué mostrar.
 /** «17/11, 13:59» (24 horas): el formato de 12 horas de es-AR no dice si es de mañana o de tarde y se presta a confusión. */
 export function fechaCorta(iso: string): string {
-  return new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+  return fechaHora(iso, { anio: false });
 }
 
 /** Las fallas críticas del celular que todavía no se mandaron (HU-06 RF-06): «1 falla crítica sin enviar», «N fallas críticas sin enviar». */

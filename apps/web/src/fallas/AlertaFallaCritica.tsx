@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fechaHora } from '../fechas/formato';
 import { fetchConSesion } from '../auth/sesion';
 import {
   REPETICION_ALARMA_MS,
@@ -129,12 +130,12 @@ export function AlertaFallaCritica({ rol = 'secretaria', usuario }: { rol?: 'sec
       ))}
       <p className="falla-toast-meta">
         Informó: {actual.inspector} · ECA: {actual.eca} ·{' '}
-        {new Date(actual.registradoEn).toLocaleString('es-AR')}
+        {fechaHora(actual.registradoEn)}
       </p>
       {(actual.abiertaPor || abiertas.has(actual.informeId)) && (
         <p className="falla-toast-meta" data-testid="alerta-falla-abierta-por">
           {actual.abiertaPor ? `Abierta por ${actual.abiertaPor}` : 'Alerta abierta'}
-          {actual.abiertaEn ? ` el ${new Date(actual.abiertaEn).toLocaleString('es-AR')}` : ''}
+          {actual.abiertaEn ? ` el ${fechaHora(actual.abiertaEn)}` : ''}
         </p>
       )}
       <div className="falla-toast-acciones">

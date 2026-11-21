@@ -26,11 +26,11 @@ import {
   type FallaPisoRegistro,
 } from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
+import { hora } from '../fechas/formato';
 import { fetchConSesion } from '../auth/sesion';
 import { CierreInforme } from '../informe/CierreInforme';
 import { enviarReporteParada, puedeGuardarParada, usoRespondido, type BorradorParada } from './usoEquipo';
 import {
-  EQUIPOS_EDIFICIO_DEMO,
   type EdificioInspeccion,
   aplicarRespuestaConSalaCompartida,
   obtenerSiguienteSolapa,
@@ -49,14 +49,50 @@ import {
   sincronizarColaFallasCriticas,
 } from './fallasCriticasChecklist';
 
-const EQUIPOS_DEMO = EQUIPOS_EDIFICIO_DEMO;
-
+/**
+ * La Inspección Técnica trabaja sobre el edificio cuya visita inició el RT desde el Mapa del RT (HU-17 RF-10). Sin visita iniciada, o
+ * si no se pudieron traer los equipos del edificio, explica qué hacer en lugar de mostrar un edificio de demostración.
+ */
 export function InspeccionCampoView({
   inspectorNombre = 'RT de Calle',
   edificio,
-}: { inspectorNombre?: string; edificio?: EdificioInspeccion } = {}) {
-  // Los equipos y los pisos son los del edificio que se está inspeccionando; sin edificio (demostración) se usan los de ejemplo.
-  const EQUIPOS = edificio && edificio.equipos.length > 0 ? edificio.equipos : EQUIPOS_DEMO;
+  onIrAlMapa,
+}: { inspectorNombre?: string; edificio?: EdificioInspeccion; onIrAlMapa?: () => void } = {}) {
+  if (!edificio || edificio.equipos.length === 0) {
+    return (
+      <section className="portal-inspeccion" aria-labelledby="inspeccion-titulo" data-testid="inspeccion-sin-visita">
+        <div className="portal-header inspeccion-header">
+          <div>
+            <h2 id="inspeccion-titulo" className="portal-title">
+              Inspección Técnica por Solapas
+            </h2>
+            {!edificio ? (
+              <p className="portal-desc" data-testid="inspeccion-sin-visita-texto">
+                Todavía no iniciaste una visita. Para inspeccionar, abrí el <strong>Mapa del RT</strong>, tocá el edificio y apretá{' '}
+                <strong>Iniciar inspección</strong> estando en el lugar: la inspección se abre con los equipos de ese edificio.
+              </p>
+            ) : (
+              <p className="portal-desc" data-testid="inspeccion-sin-equipos-texto">
+                No se pudieron traer los equipos de <strong>{edificio.nombre ?? 'este edificio'}</strong>: puede ser que la ficha no tenga
+                máquinas cargadas o que no haya señal. Volvé al Mapa del RT e iniciá la visita de nuevo cuando tengas conexión.
+              </p>
+            )}
+          </div>
+        </div>
+        {onIrAlMapa && (
+          <button type="button" className="btn btn-primary" onClick={onIrAlMapa} data-testid="inspeccion-ir-al-mapa">
+            Ir al Mapa del RT
+          </button>
+        )}
+      </section>
+    );
+  }
+  return <InspeccionDeEdificio inspectorNombre={inspectorNombre} edificio={edificio} />;
+}
+
+function InspeccionDeEdificio({ inspectorNombre, edificio }: { inspectorNombre: string; edificio: EdificioInspeccion }) {
+  // Los equipos y los pisos son los del edificio cuya visita inició el RT.
+  const EQUIPOS = edificio.equipos;
   const [equipoId, setEquipoId] = useState<string>(EQUIPOS[0].maquinaId);
   const [tipoOverride, setTipoOverride] = useState<Record<string, TipoMaquinaChecklist>>({});
   const [estadoPorEquipo, setEstadoPorEquipo] = useState<Record<string, EstadoEquipoUso>>({});
@@ -125,6 +161,8 @@ export function InspeccionCampoView({
     void cargarVisitaEnCurso()
       .then((snap) => {
         if (!activo || !snap) return;
+        // HU-17 RF-10: un borrador de otro edificio (o de una máquina que este edificio no tiene) no se mezcla con esta visita.
+        if ((snap.consorcioId ?? null) !== (edificio.consorcioId ?? null) || !EQUIPOS.some((e) => e.maquinaId === snap.equipoId)) return;
         setEquipoId(snap.equipoId);
         setSolapaActiva(snap.solapaActiva);
         setTipoOverride(snap.tipoOverride ?? {});
@@ -152,6 +190,7 @@ export function InspeccionCampoView({
   useEffect(() => {
     if (!hidratadoRef.current) return;
     void guardarVisitaEnCurso({
+      ...(edificio.consorcioId ? { consorcioId: edificio.consorcioId } : {}),
       equipoId,
       solapaActiva,
       tipoOverride,
@@ -183,6 +222,7 @@ export function InspeccionCampoView({
     setFotoError(null);
     try {
       await guardarVisitaEnCurso({
+        ...(edificio.consorcioId ? { consorcioId: edificio.consorcioId } : {}),
         equipoId,
         solapaActiva,
         tipoOverride,
@@ -280,7 +320,10 @@ export function InspeccionCampoView({
   const guardarParada = async () => {
     setParadaError(null);
     setGuardandoParada(true);
-    const res = await enviarReporteParada(equipo.firmanteMaquinaId ?? equipo.maquinaId, borradorParada, fetchConSesion);
+    // El id se genera una sola vez por borrador: si el envío falla y se reintenta, la API reconoce el mismo reporte (HU-17 RF-09).
+    const conId = borradorParada.clientReportId ? borradorParada : { ...borradorParada, clientReportId: globalThis.crypto.randomUUID() };
+    if (conId !== borradorParada) setParadaPorEquipo((prev) => ({ ...prev, [equipo.maquinaId]: conId }));
+    const res = await enviarReporteParada(equipo.firmanteMaquinaId ?? equipo.maquinaId, conId, fetchConSesion);
     setGuardandoParada(false);
     if (res.ok) setParadaGuardada((prev) => ({ ...prev, [equipo.maquinaId]: res.reporte }));
     else setParadaError(res.error);
@@ -639,7 +682,7 @@ export function InspeccionCampoView({
               <strong>{foto.referenciaAgc} · {foto.solapaId}</strong>
               <span>{foto.itemEtiqueta} · {Math.max(1, Math.round(foto.sizeBytes / 1024))} KB</span>
               <time dateTime={foto.tomadaEn}>
-                {new Date(foto.tomadaEn).toLocaleTimeString('es-AR')}
+                {hora(foto.tomadaEn, { segundos: true })}
               </time>
               <button
                 type="button"
@@ -663,7 +706,8 @@ export function InspeccionCampoView({
             Inspección Técnica por Solapas
           </h2>
           <p className="portal-desc">
-            Edificio demo Av. Callao 450 · Selector provisorio hasta integrar inicio de visita (HU-17 RF-02).
+            <span data-testid="inspeccion-edificio">{edificio.nombre ?? 'Edificio'}</span> · visita iniciada desde el Mapa del RT ·{' '}
+            {EQUIPOS.length} {EQUIPOS.length === 1 ? 'equipo' : 'equipos'}
           </p>
         </div>
         <div className="inspeccion-offline-bar">
@@ -673,7 +717,7 @@ export function InspeccionCampoView({
           >
             {enLinea ? 'En línea' : 'Sin señal (offline)'} · IndexedDB{' '}
             {ultimaSyncIdb
-              ? `guardado ${new Date(ultimaSyncIdb).toLocaleTimeString('es-AR')}`
+              ? `guardado ${hora(ultimaSyncIdb, { segundos: true })}`
               : 'listo'}
           </span>
           {restauradaDesdeIdb && (
@@ -720,7 +764,7 @@ export function InspeccionCampoView({
             >
               {EQUIPOS.map((eq) => (
                 <option key={eq.maquinaId} value={eq.maquinaId}>
-                  {eq.referenciaAgc} · {eq.descripcion}
+                  {eq.referenciaAgc}{eq.descripcion ? ` · ${eq.descripcion}` : ''}
                 </option>
               ))}
             </select>

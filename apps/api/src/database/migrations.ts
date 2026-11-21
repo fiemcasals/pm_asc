@@ -1009,4 +1009,101 @@ export const MIGRATIONS: Migration[] = [
       REVOKE UPDATE, DELETE ON firma_avisos_plazo FROM ascensores_app;
     `,
   },
+  {
+    id: '034_whatsapp_envios',
+    sql: `
+      -- HU-11 RF-12: el historial de envíos de WhatsApp sobrevive a un reinicio de la API. Un registro por intento de envío; los avisos de
+      -- estado del proveedor (RF-09) lo actualizan, y se buscan por el id de mensaje (wamid de Meta o SM de Twilio).
+      CREATE TABLE whatsapp_envios (
+        id             text PRIMARY KEY,
+        id_mensaje     text,
+        alerta_id      text,
+        estado_entrega text NOT NULL,
+        registro       jsonb NOT NULL CHECK (jsonb_typeof(registro) = 'object'),
+        creado_en      timestamptz NOT NULL,
+        actualizado_en timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX whatsapp_envios_id_mensaje ON whatsapp_envios (id_mensaje) WHERE id_mensaje IS NOT NULL;
+      CREATE INDEX whatsapp_envios_alerta ON whatsapp_envios (alerta_id);
+      ALTER TABLE whatsapp_envios ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_whatsapp_envios_admin_secretaria ON whatsapp_envios;
+      CREATE POLICY rls_whatsapp_envios_admin_secretaria ON whatsapp_envios
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Los envíos no se borran desde la aplicación: el historial es la constancia de lo que salió.
+      REVOKE DELETE ON whatsapp_envios FROM ascensores_app;
+    `,
+  },
+  {
+    id: '035_avisos_falla',
+    sql: `
+      -- HU-11 RF-11: los avisos de falla crítica de la bandeja (pendientes, aprobados, enviados) sobreviven a un reinicio de la API, con el
+      -- enlace sin contraseña que viaja en el WhatsApp: el token y cuándo se emitió (vence a los 7 días de emitido, no del reinicio).
+      CREATE TABLE avisos_falla (
+        alerta_id      text PRIMARY KEY,
+        aviso_id       text NOT NULL UNIQUE,
+        estado         text NOT NULL CHECK (estado IN ('Pendiente de revisión', 'Enviado', 'Falló el envío')),
+        aviso          jsonb NOT NULL CHECK (jsonb_typeof(aviso) = 'object'),
+        vista          jsonb NOT NULL CHECK (jsonb_typeof(vista) = 'object'),
+        token          text UNIQUE,
+        emitido_en     timestamptz,
+        creado_en      timestamptz NOT NULL,
+        actualizado_en timestamptz NOT NULL DEFAULT now()
+      );
+      ALTER TABLE avisos_falla ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_avisos_falla_admin_secretaria ON avisos_falla;
+      CREATE POLICY rls_avisos_falla_admin_secretaria ON avisos_falla
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Un aviso no se borra desde la aplicación: es la constancia de lo que se avisó y a quién.
+      REVOKE DELETE ON avisos_falla FROM ascensores_app;
+    `,
+  },
+  {
+    id: '036_reportes_parada',
+    sql: `
+      -- HU-17 RF-09: los reportes de parada (Fuera de Servicio / Reparación Urgente) que carga el RT sobreviven a un reinicio de la API.
+      -- «client_report_id» es el id que genera el celular: un reintento del mismo reporte no se duplica.
+      CREATE TABLE reportes_parada (
+        id                text PRIMARY KEY,
+        maquina_id        text NOT NULL,
+        client_report_id  text UNIQUE,
+        confirmacion      text NOT NULL CHECK (confirmacion IN ('Pendiente de confirmación', 'Confirmado', 'Rechazado')),
+        reporte           jsonb NOT NULL CHECK (jsonb_typeof(reporte) = 'object'),
+        fecha             timestamptz NOT NULL,
+        actualizado_en    timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX reportes_parada_maquina ON reportes_parada (maquina_id, fecha);
+      ALTER TABLE reportes_parada ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_reportes_parada_admin_secretaria ON reportes_parada;
+      CREATE POLICY rls_reportes_parada_admin_secretaria ON reportes_parada
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Un reporte no se borra desde la aplicación: es la constancia de que el equipo estuvo parado.
+      REVOKE DELETE ON reportes_parada FROM ascensores_app;
+    `,
+  },
+  {
+    id: '037_informes_falla',
+    sql: `
+      -- HU-06 RF-08: los informes de falla crítica que carga el RT sobreviven a un reinicio de la API, con su clientReportId (el reintento
+      -- del celular no se duplica ni vuelve a avisar) y quién abrió la alerta primero.
+      CREATE TABLE informes_falla (
+        id                text PRIMARY KEY,
+        client_report_id  text UNIQUE,
+        maquina_id        text NOT NULL,
+        informe           jsonb NOT NULL CHECK (jsonb_typeof(informe) = 'object'),
+        registrado_en     timestamptz NOT NULL,
+        actualizado_en    timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX informes_falla_maquina ON informes_falla (maquina_id, registrado_en);
+      ALTER TABLE informes_falla ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_informes_falla_admin_secretaria ON informes_falla;
+      CREATE POLICY rls_informes_falla_admin_secretaria ON informes_falla
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Un informe de falla no se borra desde la aplicación: es la constancia de lo que encontró el RT.
+      REVOKE DELETE ON informes_falla FROM ascensores_app;
+    `,
+  },
 ];

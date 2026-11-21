@@ -220,3 +220,29 @@ describe('estadoRealDeEnvio: el estado que confirmó el proveedor (HU-11 RF-10)'
     expect(estadoRealDeEnvio({ canal: 'email_eca', destino: '+5491166667777' }, 'ALT-1', [registro({})])).toBeNull();
   });
 });
+
+describe('estadoRealDeEnvio con el id de mensaje (HU-11 RF-14)', () => {
+  const registro = (r: Partial<RegistroEnvioWhatsApp>): RegistroEnvioWhatsApp => ({
+    alertaId: 'ALT-1',
+    telefonoDestino: '+5491166667777',
+    estadoEntrega: 'aceptado',
+    timestamp: '2026-11-20T10:00:00.000Z',
+    ...r,
+  });
+  const fallido = registro({ idMensaje: 'wamid.1', estadoEntrega: 'fallido', errorProveedor: { codigo: '131026', mensaje: 'Message undeliverable' } });
+  const reintento = registro({ idMensaje: 'wamid.2', estadoEntrega: 'entregado', timestamp: '2026-11-20T11:00:00.000Z' });
+
+  it('después de reintentar, el envío que falló sigue mostrando su fallo y el reintento su entrega', () => {
+    const base = { canal: 'whatsapp_eca' as const, destino: '+5491166667777' };
+    expect(estadoRealDeEnvio({ ...base, idMensaje: 'wamid.1' }, 'ALT-1', [fallido, reintento])).toEqual({ tipo: 'fallo', texto: 'Falló: Message undeliverable (código 131026)' });
+    expect(estadoRealDeEnvio({ ...base, idMensaje: 'wamid.2' }, 'ALT-1', [fallido, reintento])).toEqual({ tipo: 'entregado', texto: 'Entregado' });
+  });
+
+  it('sin id de mensaje (envíos viejos) se sigue cruzando por alerta y teléfono, con el más reciente', () => {
+    expect(estadoRealDeEnvio({ canal: 'whatsapp_eca', destino: '+5491166667777' }, 'ALT-1', [fallido, reintento])).toEqual({ tipo: 'entregado', texto: 'Entregado' });
+  });
+
+  it('un id de mensaje que no está en el historial no muestra un estado ajeno', () => {
+    expect(estadoRealDeEnvio({ canal: 'whatsapp_eca', destino: '+5491166667777', idMensaje: 'wamid.9' }, 'ALT-1', [fallido, reintento])).toBeNull();
+  });
+});

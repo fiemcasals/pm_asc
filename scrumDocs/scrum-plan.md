@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:41:26.713Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:58:16.187Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -47,7 +47,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 39 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
 | 40 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 41 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
-| 42 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | Haciendo | dev-ma-2 | RF-02 | — |
+| 42 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | Hecho | dev-ma-2 | RF-02 | — |
 | 43 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
 | 44 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 45 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |

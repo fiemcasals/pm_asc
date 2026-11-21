@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:09:38.119Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:09:53.235Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -257,6 +257,7 @@ PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-d
 - Estimado: 2
 
 ### RF-14 — Que el estado general de un aviso refleje un envío de WhatsApp que falla después
+Cada env�o guarda el idMensaje; al leer la bandeja se cruza con el historial y un fallo informado por el proveedor deja el aviso en �Fall� el env�o� con Reintentar; el reintento manda s�lo lo que fall� y conserva el fallo. Web cruza por idMensaje. e2e 6/6, web 29/29, verify API 1214 y web 598, RF-14-entrega.sh 14/14 con carga 10. PR #102.
 - Estimado: 4
 
 ### RF-05 — Usar el mapa nuevo en las pantallas y retirar el dibujo anterior

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T15:01:58.794Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T15:02:24.764Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -174,6 +174,7 @@ PR #88 contra dev. Mapa base de CABA propio que se dibuja sin conexión: archivo
 - Estimado: 12h
 
 ### RF-03 — Cargar en los datos de demo un Firmante y un usuario de ECA con sesión
+Datos de demo con demo.firmante y demo.eca; ternas repartidas entre dos Firmantes y dos ECA; segunda corrida sin error; --limpiar borra por la API. RF-03-entrega.sh 10/10. Regresión de 36 scripts: 11 fallan igual que con el script anterior (preexistente, ver entrega).
 - Estimado: 3
 
 ### RNF-03 — Evitar que informes.e2e-spec falle de forma intermitente

@@ -30,6 +30,8 @@ describe('Avisos de falla crítica contra PostgreSQL real (HU-11 RF-11)', () => 
     if (creados.length) {
       await pool.query('DELETE FROM avisos_falla WHERE alerta_id = ANY($1)', [creados]);
       await pool.query("DELETE FROM whatsapp_envios WHERE alerta_id = ANY($1)", [creados]);
+      // Desde HU-06 RF-08 los informes de falla también se guardan.
+      await pool.query("DELETE FROM informes_falla WHERE id = ANY($1)", [creados]);
     }
   };
 

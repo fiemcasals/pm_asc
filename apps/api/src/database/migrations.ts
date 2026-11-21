@@ -1083,4 +1083,27 @@ export const MIGRATIONS: Migration[] = [
       REVOKE DELETE ON reportes_parada FROM ascensores_app;
     `,
   },
+  {
+    id: '037_informes_falla',
+    sql: `
+      -- HU-06 RF-08: los informes de falla crítica que carga el RT sobreviven a un reinicio de la API, con su clientReportId (el reintento
+      -- del celular no se duplica ni vuelve a avisar) y quién abrió la alerta primero.
+      CREATE TABLE informes_falla (
+        id                text PRIMARY KEY,
+        client_report_id  text UNIQUE,
+        maquina_id        text NOT NULL,
+        informe           jsonb NOT NULL CHECK (jsonb_typeof(informe) = 'object'),
+        registrado_en     timestamptz NOT NULL,
+        actualizado_en    timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX informes_falla_maquina ON informes_falla (maquina_id, registrado_en);
+      ALTER TABLE informes_falla ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_informes_falla_admin_secretaria ON informes_falla;
+      CREATE POLICY rls_informes_falla_admin_secretaria ON informes_falla
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Un informe de falla no se borra desde la aplicación: es la constancia de lo que encontró el RT.
+      REVOKE DELETE ON informes_falla FROM ascensores_app;
+    `,
+  },
 ];

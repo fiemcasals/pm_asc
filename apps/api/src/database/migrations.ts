@@ -1009,4 +1009,29 @@ export const MIGRATIONS: Migration[] = [
       REVOKE UPDATE, DELETE ON firma_avisos_plazo FROM ascensores_app;
     `,
   },
+  {
+    id: '034_whatsapp_envios',
+    sql: `
+      -- HU-11 RF-12: el historial de envíos de WhatsApp sobrevive a un reinicio de la API. Un registro por intento de envío; los avisos de
+      -- estado del proveedor (RF-09) lo actualizan, y se buscan por el id de mensaje (wamid de Meta o SM de Twilio).
+      CREATE TABLE whatsapp_envios (
+        id             text PRIMARY KEY,
+        id_mensaje     text,
+        alerta_id      text,
+        estado_entrega text NOT NULL,
+        registro       jsonb NOT NULL CHECK (jsonb_typeof(registro) = 'object'),
+        creado_en      timestamptz NOT NULL,
+        actualizado_en timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX whatsapp_envios_id_mensaje ON whatsapp_envios (id_mensaje) WHERE id_mensaje IS NOT NULL;
+      CREATE INDEX whatsapp_envios_alerta ON whatsapp_envios (alerta_id);
+      ALTER TABLE whatsapp_envios ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_whatsapp_envios_admin_secretaria ON whatsapp_envios;
+      CREATE POLICY rls_whatsapp_envios_admin_secretaria ON whatsapp_envios
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Los envíos no se borran desde la aplicación: el historial es la constancia de lo que salió.
+      REVOKE DELETE ON whatsapp_envios FROM ascensores_app;
+    `,
+  },
 ];

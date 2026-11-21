@@ -22,6 +22,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { Roles } from '../auth/roles.guard';
+import { AsignacionesFirmanteService } from '../firmante/asignaciones-firmante.service';
 import { validarConsorcio } from './consorcio.validation';
 import { Consorcio, ConsorcioMapaItem, ConsorcioResumen } from './consorcio.types';
 import { ConsorciosRepository, ReferenciaAgcDuplicadaError, TernaCambioError } from './consorcios.repository';
@@ -70,6 +71,7 @@ export class ConsorciosController {
   constructor(
     private readonly consorcios: ConsorciosRepository,
     private readonly importadorAgc: ImportadorAgcService,
+    private readonly asignacionesFirmante: AsignacionesFirmanteService,
   ) {}
 
   /** Registra un consorcio con sus máquinas y referencias AGC. Devuelve la ficha creada. */
@@ -145,6 +147,7 @@ export class ConsorciosController {
     const datos = this.validar(cuerpo);
     const ficha = await this.conflictoComo409(() => this.consorcios.reemplazar(id, datos));
     if (!ficha) throw new NotFoundException('Consorcio no encontrado');
+    await this.asignacionesFirmante.sincronizarEdificio(id);
     return ficha;
   }
 
@@ -153,6 +156,7 @@ export class ConsorciosController {
   async eliminar(@Param('id') id: string): Promise<void> {
     exigirId(id);
     if (!(await this.consorcios.eliminar(id))) throw new NotFoundException('Consorcio no encontrado');
+    await this.asignacionesFirmante.sincronizarEdificio(id);
   }
 
   /** Terna del edificio con sus porcentajes operativos y datos de contacto. */
@@ -180,6 +184,8 @@ export class ConsorciosController {
     try {
       const roles = await this.consorcios.asignarRoles(id, resultado.valor, esperado);
       if (!roles) throw new NotFoundException('Consorcio no encontrado');
+      // HU-02 RF-06: la vista de firma sigue a la terna recién guardada.
+      await this.asignacionesFirmante.sincronizarEdificio(id);
       return roles;
     } catch (err) {
       if (err instanceof TernaCambioError) {
@@ -198,6 +204,7 @@ export class ConsorciosController {
   async quitarRoles(@Param('id') id: string): Promise<void> {
     exigirId(id);
     if (!(await this.consorcios.quitarRoles(id))) throw new NotFoundException('Consorcio o asignación no encontrada');
+    await this.asignacionesFirmante.sincronizarEdificio(id);
   }
 
   private validar(cuerpo: unknown) {

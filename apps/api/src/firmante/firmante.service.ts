@@ -9,6 +9,7 @@ import {
   MaquinaAsignada,
   RechazarInformeDto,
   RechazarInformeResponse,
+  VistaTernaEdificio,
 } from './firmante.types';
 
 @Injectable()
@@ -235,9 +236,13 @@ export class FirmanteService {
     return this.maquinas;
   }
 
-  /** ¿La máquina es de este Firmante? Por su usuario de login (que no distingue mayúsculas, como el login). */
+  /**
+   * ¿La máquina es de este Firmante? Por su usuario de login (que no distingue mayúsculas, como el login). El usuario puede ser el
+   * nombre con que la terna nombra al Firmante o su email.
+   */
   private esDelFirmante(m: MaquinaAsignada, firmante: string): boolean {
-    return m.firmanteUsername.trim().toLowerCase() === firmante.trim().toLowerCase();
+    const quien = firmante.trim().toLowerCase();
+    return m.firmanteUsername.trim().toLowerCase() === quien || (m.firmanteEmail ?? '').trim().toLowerCase() === quien;
   }
 
   async getMaquinasDelMes(
@@ -246,12 +251,61 @@ export class FirmanteService {
   ): Promise<MaquinaAsignada[]> {
     return this.maquinas.filter((m) => {
       const matchFirmante =
-        !firmanteIdOrUsername ||
-        m.firmanteId === firmanteIdOrUsername ||
-        m.firmanteUsername.toLowerCase() === firmanteIdOrUsername.toLowerCase();
+        !firmanteIdOrUsername || m.firmanteId === firmanteIdOrUsername || this.esDelFirmante(m, firmanteIdOrUsername);
       const matchMes = !mes || m.mes === mes;
       return matchFirmante && matchMes;
     });
+  }
+
+  /**
+   * HU-02 RF-06: hace que las máquinas de un edificio de la base sigan a su terna. `vista` es el edificio con su terna vigente;
+   * `null` si el edificio ya no existe o no tiene terna.
+   * - Con terna: por cada máquina del edificio hay una máquina en la vista de firma, con el RT de Calle, el Firmante y la ECA de
+   *   la terna. Las que no estaban se crean pendientes de visita. Las máquinas de ejemplo (que no vienen de la base) no se tocan.
+   * - Sin terna: las máquinas del edificio se quitan.
+   * Lo que ya pasó en una máquina (visita, alerta) no se pierde al resincronizar. Es idempotente.
+   */
+  aplicarTernaDeEdificio(consorcioId: string, vista: VistaTernaEdificio | null): void {
+    if (!vista) {
+      this.maquinas = this.maquinas.filter((m) => m.consorcioId !== consorcioId);
+      return;
+    }
+    const edificio = { id: consorcioId, direccion: vista.direccion, administracion: vista.administracion ?? '', consorcio: vista.nombre };
+    const mes = new Date().toISOString().slice(0, 7);
+    const ids = new Set(vista.maquinas.map((q) => `MAQ-${consorcioId}-${q.id}`));
+    // Las máquinas que se dieron de baja en el edificio salen de la vista de firma.
+    this.maquinas = this.maquinas.filter((m) => m.consorcioId !== consorcioId || ids.has(m.id));
+    for (const q of vista.maquinas) {
+      const id = `MAQ-${consorcioId}-${q.id}`;
+      const nombre = q.descripcion ? `${q.referenciaAgc}: ${q.descripcion}` : q.referenciaAgc;
+      let m = this.maquinas.find((x) => x.id === id);
+      if (!m) {
+        m = {
+          id,
+          codigoAGC: q.referenciaAgc,
+          nombre,
+          edificio,
+          eca: '',
+          rtCalle: '',
+          firmanteId: '',
+          firmanteUsername: '',
+          consorcioId,
+          mes,
+          estado: 'Pendiente de Visita',
+          visita: null,
+        };
+        this.maquinas.push(m);
+      }
+      m.codigoAGC = q.referenciaAgc;
+      m.tipo = q.tipo;
+      m.nombre = nombre;
+      m.edificio = edificio;
+      m.rtCalle = vista.terna.rtCalle.nombre;
+      m.firmanteUsername = vista.terna.firmante.nombre;
+      m.firmanteId = vista.terna.firmante.nombre;
+      m.firmanteEmail = vista.terna.firmante.email;
+      m.eca = vista.terna.eca.nombre;
+    }
   }
 
   /**

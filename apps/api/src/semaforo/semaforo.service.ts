@@ -1,3 +1,4 @@
+import { AsignacionesFirmanteService } from '../firmante/asignaciones-firmante.service';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { RELOJ, Reloj } from '../auth/auth.types';
 import { esElRt, sugerirRt } from './reasignacion.logic';
@@ -26,6 +27,7 @@ export class SemaforoService {
   constructor(
     private readonly repositorio: SemaforoRepository,
     @Inject(RELOJ) private readonly reloj: Reloj,
+    private readonly asignacionesFirmante: AsignacionesFirmanteService,
   ) {}
 
   /** `fecha` (AAAA-MM-DD) es opcional: sin ella se usa el día de hoy en hora de Buenos Aires. */
@@ -109,6 +111,8 @@ export class SemaforoService {
           : 'El edificio no tiene RT de Calle asignado: asignale la terna antes de reasignarlo.',
       );
     }
+    // HU-02 RF-06: el RT nuevo ya figura en la vista de firma, el Portal ECA y el Monitoreo.
+    await this.asignacionesFirmante.sincronizarEdificio(consorcioId);
     return resultado.registro;
   }
 

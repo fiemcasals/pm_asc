@@ -121,7 +121,7 @@ describe('WhatsApp Module (HU-11 / RF-01, RF-02, RF-03)', () => {
       const res = await connector.enviarMensajeAlerta(alerta);
 
       expect(res.ok).toBe(true);
-      expect(res.estadoEntrega).toBe('entregado');
+      expect(res.estadoEntrega).toBe('aceptado');
       expect(res.telefonoDestino).toBe('+5491199887766');
       expect(res.idMensaje).toContain('WA-MSG-');
       expect(res.intentos).toBe(1);
@@ -146,7 +146,7 @@ describe('WhatsApp Module (HU-11 / RF-01, RF-02, RF-03)', () => {
       expect(res.ok).toBe(true);
       expect(res.intentos).toBe(3);
       expect(llamadas).toBe(3);
-      expect(res.estadoEntrega).toBe('entregado');
+      expect(res.estadoEntrega).toBe('aceptado');
     });
 
     it('maneja fallas persistentes agotando reintentos y registrando fallo', async () => {
@@ -223,7 +223,7 @@ describe('WhatsApp Module (HU-11 / RF-01, RF-02, RF-03)', () => {
       expect(res.ok).toBe(true);
       expect(res.envioRealizado).toBe(true);
       expect(res.estado).toBe('realizado');
-      expect(res.estadoEntrega).toBe('entregado');
+      expect(res.estadoEntrega).toBe('aceptado');
       expect(res.menorA5Segundos).toBe(true);
       expect(res.duracionMs).toBeLessThan(5000);
       expect(res.idMensaje).toContain('WA-MSG-');

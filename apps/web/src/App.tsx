@@ -18,7 +18,7 @@ import { RecorridoRt } from './visitasFallidas/RecorridoRt';
 import { PanelMapaSinConexion } from './mapa/PanelMapaSinConexion';
 import { MapaRtView } from './rtmapa/MapaRtView';
 import { type EdificioMapaRt } from './rtmapa/mapaRt';
-import { type EdificioInspeccion, equiposDeFicha } from './checklist/navegacion';
+import { type EdificioInspeccion, equiposDeFicha, guardarEdificioEnInspeccion, leerEdificioEnInspeccion } from './checklist/navegacion';
 import { cargarVisitaEnCurso, tieneProgresoVisita } from './checklist/offlineStore';
 import { puedeSalir } from './consorcios/roles';
 import { SecretariaView } from './consorcios/SecretariaView';
@@ -235,7 +235,8 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   );
   const [health, setHealth] = useState<HealthState | null>(null);
   // El edificio cuya inspección inició el RT desde el mapa (HU-16 RF-02): la pantalla de inspección usa sus equipos y sus pisos.
-  const [edificioEnInspeccion, setEdificioEnInspeccion] = useState<EdificioInspeccion | null>(null);
+  // Se guarda en el celular (HU-17 RF-10): si se recarga la página sin señal, la inspección sigue en el mismo edificio.
+  const [edificioEnInspeccion, setEdificioEnInspeccion] = useState<EdificioInspeccion | null>(() => (esRt ? leerEdificioEnInspeccion(usuario.usuario) : null));
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [consorcioBuscadoId, setConsorcioBuscadoId] = useState<string | null>(null);
@@ -287,11 +288,13 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
         pisos = ficha.pisos ?? null;
       }
     } catch {
-      // Sin conexión: se abre la inspección igual, con los datos de demostración.
+      // Sin conexión: la inspección explica que no se pudieron traer los equipos (HU-17 RF-10), nunca usa un edificio de demostración.
     }
-    setEdificioEnInspeccion(equipos.length > 0 ? { consorcioId: e.id, nombre: e.nombre, equipos, pisos } : null);
+    const enInspeccion: EdificioInspeccion = { consorcioId: e.id, nombre: e.nombre, equipos, pisos };
+    setEdificioEnInspeccion(enInspeccion);
+    if (equipos.length > 0) guardarEdificioEnInspeccion(usuario.usuario, enInspeccion);
     setVista('inspeccion');
-  }, []);
+  }, [usuario.usuario]);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -484,7 +487,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               rol={usuario.rol}
             />
           )}
-          {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} edificio={edificioEnInspeccion ?? undefined} />}
+          {vista === 'inspeccion' && <InspeccionCampoView inspectorNombre={usuario.nombre} edificio={edificioEnInspeccion ?? undefined} onIrAlMapa={esRt ? () => setVista('rt') : undefined} />}
           {vista === 'eca' && <PortalEca usuario={usuario} />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />

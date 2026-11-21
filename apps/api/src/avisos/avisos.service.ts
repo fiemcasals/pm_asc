@@ -1,6 +1,7 @@
-import { ConflictException, Inject, Injectable, NotFoundException, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Subscription } from 'rxjs';
+import { AvisosRepository } from './avisos.repository';
 import { Mailer } from '../auth/mailer';
 import { APP_CONFIG, AppConfig } from '../config';
 import { ConsorciosRepository } from '../consorcios/consorcios.repository';
@@ -26,7 +27,7 @@ interface Interno {
  * Avisos de falla crítica con revisión previa (HU-11 RF-05). Al registrarse una falla crítica el aviso queda «Pendiente de revisión»
  * y no sale ningún WhatsApp ni correo; la Secretaría lo aprueba y recién entonces se envía a la ECA y al Firmante del edificio.
  *
- * Los avisos quedan en memoria, igual que los informes de fallas críticas de los que salen.
+ * Desde HU-11 RF-11 los avisos se guardan en PostgreSQL (si hay repositorio) y se cargan al arrancar.
  */
 @Injectable()
 export class AvisosService implements OnModuleInit, OnModuleDestroy {
@@ -37,6 +38,9 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
   private suscripcion?: Subscription;
 
   private readonly pdfService: PdfLegalFallaService;
+  private readonly logger = new Logger(AvisosService.name);
+  /** Escrituras al repositorio en orden: una versión vieja de un aviso nunca pisa a una nueva. */
+  private cola: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly fallas: FallasCriticasService,
@@ -45,6 +49,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     @Optional() @Inject(APP_CONFIG) config?: AppConfig,
     @Optional() pdfLegal?: PdfLegalFallaService,
     @Optional() private readonly consorcios?: ConsorciosRepository,
+    @Optional() private readonly repo?: AvisosRepository,
   ) {
     this.appUrl = config?.appUrl ?? 'http://localhost:8050';
     this.pdfService = pdfLegal ?? new PdfLegalFallaService();
@@ -52,6 +57,42 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     this.suscripcion = this.fallas.eventos$().subscribe((evento) => this.crearDesdeEvento(evento));
+  }
+
+  /**
+   * HU-11 RF-11: al arrancar, carga los avisos guardados con su enlace. Un aviso que ya se creó en memoria antes de terminar de cargar
+   * (una falla registrada muy temprano) se conserva.
+   */
+  async onApplicationBootstrap(): Promise<void> {
+    if (!this.repo) return;
+    try {
+      for (const g of await this.repo.leer()) {
+        const alertaId = g.aviso.alertaId;
+        if (this.avisos.has(alertaId)) continue;
+        this.avisos.set(alertaId, g.aviso);
+        this.internos.set(alertaId, { vista: g.vista, ...(g.token ? { token: g.token } : {}), ...(g.emitidoEn !== undefined ? { emitidoEn: g.emitidoEn } : {}) });
+        if (g.token) this.porToken.set(g.token, alertaId);
+      }
+    } catch (err) {
+      this.logger.error(`No se pudieron cargar los avisos guardados: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /** Termina las escrituras pendientes de los avisos (para las pruebas y el apagado). */
+  async esperarGuardados(): Promise<void> {
+    await this.cola;
+  }
+
+  /** Guarda una copia del aviso y su enlace, en orden y en segundo plano. Si la base no responde, lo deja registrado y sigue. */
+  private guardar(alertaId: string): void {
+    if (!this.repo) return;
+    const aviso = this.avisos.get(alertaId);
+    const interno = this.internos.get(alertaId);
+    if (!aviso || !interno) return;
+    const copia = structuredClone({ aviso, vista: interno.vista, ...(interno.token ? { token: interno.token } : {}), ...(interno.emitidoEn !== undefined ? { emitidoEn: interno.emitidoEn } : {}) });
+    this.cola = this.cola
+      .then(() => this.repo!.guardar(copia))
+      .catch((err) => this.logger.error(`No se pudo guardar el aviso ${alertaId}: ${err instanceof Error ? err.message : String(err)}`));
   }
 
   onModuleDestroy(): void {
@@ -97,6 +138,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
         fotografias: informe.fotografias,
       },
     });
+    this.guardar(e.informeId);
     return aviso;
   }
 
@@ -140,6 +182,7 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
         fotografias: alerta.fotografiaCabinaTrabada ? [alerta.fotografiaCabinaTrabada] : [],
       },
     });
+    this.guardar(alerta.id);
     return aviso;
   }
 
@@ -226,6 +269,8 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     const whatsappOk = whatsappA.every(([canal]) => yaSalio(canal));
     const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
     aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
+    this.guardar(aviso.alertaId);
+    await this.esperarGuardados();
     return structuredClone(aviso);
   }
 
@@ -274,6 +319,8 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
     );
     const emailFallo = aviso.constanciaEmailLegal?.estado === 'Envío fallido';
     aviso.estado = whatsappOk && !emailFallo ? 'Enviado' : 'Falló el envío';
+    this.guardar(aviso.alertaId);
+    await this.esperarGuardados();
     return structuredClone(aviso);
   }
 
@@ -451,5 +498,6 @@ export class AvisosService implements OnModuleInit, OnModuleDestroy {
       fallo = true;
     }
     if (fallo && aviso.estado === 'Enviado') aviso.estado = 'Falló el envío';
+    if (fallo) this.guardar(aviso.alertaId);
   }
 }

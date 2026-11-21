@@ -1034,4 +1034,29 @@ export const MIGRATIONS: Migration[] = [
       REVOKE DELETE ON whatsapp_envios FROM ascensores_app;
     `,
   },
+  {
+    id: '035_avisos_falla',
+    sql: `
+      -- HU-11 RF-11: los avisos de falla crítica de la bandeja (pendientes, aprobados, enviados) sobreviven a un reinicio de la API, con el
+      -- enlace sin contraseña que viaja en el WhatsApp: el token y cuándo se emitió (vence a los 7 días de emitido, no del reinicio).
+      CREATE TABLE avisos_falla (
+        alerta_id      text PRIMARY KEY,
+        aviso_id       text NOT NULL UNIQUE,
+        estado         text NOT NULL CHECK (estado IN ('Pendiente de revisión', 'Enviado', 'Falló el envío')),
+        aviso          jsonb NOT NULL CHECK (jsonb_typeof(aviso) = 'object'),
+        vista          jsonb NOT NULL CHECK (jsonb_typeof(vista) = 'object'),
+        token          text UNIQUE,
+        emitido_en     timestamptz,
+        creado_en      timestamptz NOT NULL,
+        actualizado_en timestamptz NOT NULL DEFAULT now()
+      );
+      ALTER TABLE avisos_falla ENABLE ROW LEVEL SECURITY;
+      DROP POLICY IF EXISTS rls_avisos_falla_admin_secretaria ON avisos_falla;
+      CREATE POLICY rls_avisos_falla_admin_secretaria ON avisos_falla
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+      -- Un aviso no se borra desde la aplicación: es la constancia de lo que se avisó y a quién.
+      REVOKE DELETE ON avisos_falla FROM ascensores_app;
+    `,
+  },
 ];

@@ -20,6 +20,7 @@ import { InMemoryPagosRepository, PagosRepository } from '../src/pagos/pagos.rep
 import { ConsorciosRepository, TernaCambioError } from '../src/consorcios/consorcios.repository';
 import { FirmaRepository, InMemoryFirmaRepository } from '../src/firmante/firma.repository';
 import { HistorialWhatsAppRepository, InMemoryHistorialWhatsAppRepository } from '../src/whatsapp/historial-whatsapp.repository';
+import { AvisosRepository, InMemoryAvisosRepository } from '../src/avisos/avisos.repository';
 import { DetalleImportacionAgc, FilaAgcValidada, ResultadoPersistenciaAgc } from '../src/consorcios/importador-agc.types';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
@@ -395,6 +396,7 @@ export async function createTestApp(
   informes: InformesRepository = new InMemoryInformesRepository(),
   firma: FirmaRepository = new InMemoryFirmaRepository(),
   historialWhatsApp: HistorialWhatsAppRepository = new InMemoryHistorialWhatsAppRepository(),
+  avisosRepo: AvisosRepository = new InMemoryAvisosRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   // Por defecto las pruebas no exigen el día de separación entre visitas fallidas (HU-07 RF-05): lo piden explícitamente las que lo prueban.
   const config = loadConfig({ VISITAS_FALLIDAS_MIN_DIAS: '0', ...env });
@@ -429,6 +431,8 @@ export async function createTestApp(
     .useValue(firma)
     .overrideProvider(HistorialWhatsAppRepository)
     .useValue(historialWhatsApp)
+    .overrideProvider(AvisosRepository)
+    .useValue(avisosRepo)
     .overrideProvider(Mailer)
     .useValue(mailer)
     .compile();

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-21T18:03:47.313Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-21T18:25:46.008Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -425,6 +425,19 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. El registro guarda coordenadas, precisión del GPS, hora del dispositivo y hora del servidor, y ninguna se puede editar.
 4. Al guardar, el contador de advertencias del edificio suma 1 y el pin desaparece del mapa del RT por ese día; un segundo intento el mismo día se rechaza con el motivo.
 
+### RF-07: FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión (Funcional)
+
+En el celular del RT, sin señal, el mapa muestra los pines con los últimos datos descargados (HU-16 RF-05), pero la lista «Edificios pendientes de hoy» (RecorridoRt) queda para siempre en «Cargando tus edificios…». La causa: cargarRecorrido (visitasFallidas/constanciaVisita.ts) devuelve null cuando falla el pedido a /api/recorrido, y null es también el estado «cargando», así que la pantalla no distingue un error de una carga en curso. Se encontró en QA de HU-16 RF-05 sobre testing (4413966), con rt.beto en 360 px y la red cortada.
+
+**Condiciones de aprobación**
+
+- 1. Dado el RT sin conexión y sin una lista guardada, cuando abre el Mapa del RT, entonces la lista deja de decir «Cargando tus edificios…» y muestra un aviso claro de que no se pudo cargar por falta de conexión, con un botón «Reintentar».
+- 2. Dado el RT que ya cargó la lista con conexión, cuando pierde la señal y vuelve a abrir la pantalla, entonces ve la última lista descargada y un cartel con la hora de esos datos, igual que los pines del mapa.
+- 3. Dado que vuelve la conexión, cuando el RT aprieta «Reintentar» (o se recarga la pantalla), entonces la lista se actualiza desde /api/recorrido sin cerrar sesión.
+- 4. Dado un error del servidor (respuesta no 2xx) con conexión, entonces se muestra el aviso de error con «Reintentar», no «Cargando…».
+- 5. La lista guardada es solo la del RT que inició sesión: al cerrar sesión se borra y otro usuario en el mismo celular no la ve.
+- 6. Las pruebas de la web cubren cargando, error sin conexión, error del servidor y lista guardada; npm run verify sigue en verde, y una prueba con Playwright en 360 px y la red cortada comprueba los criterios 1 y 2.
+
 ## HU-08: HU-08: Panel de Liquidación Rápida y Autorización de Firma AGC
 
 ### RF-01: API de Máquinas Asignadas y Autorización de Firma AGC (Funcional)
@@ -785,6 +798,18 @@ Corregir en styles.css los fondos claros heredados (.audit-grid en ModalAuditori
 
 1. En Portal Firmante (ModalAuditoria), el bloque '1. Estado de la Inspección' (.audit-grid) muestra fondo oscuro (--card-subtle) y texto legible de alto contraste (--text / --muted) en modo oscuro sin fondo blanco.
 2. En Secretaría (FichaConsorcio), las cajas '--surface-sunken' (formulario de visita fallida y fila total de facturación), el cartel de bloqueo por tercera visita y los indicadores de recargo del 45% muestran colores contrastados en modo oscuro.
+
+### RF-03: FIX: Mostrar las horas en formato de 24 horas en toda la app (Funcional)
+
+La web formatea fechas y horas con toLocaleString('es-AR') sin indicar el ciclo horario. En Chrome eso escribe las 15:15 como «21/11/2026, 03:15:00», sin a. m. ni p. m., así que una alerta de la tarde parece de la madrugada. Hay 23 usos en 9 archivos: avisos/BandejaAvisos.tsx (4), consorcios/FichaConsorcio.tsx (7), eca/AlertasCriticas.tsx (3), checklist/InspeccionCampoView.tsx (2), fallas/AlertaFallaCritica.tsx (2), firmante/ModalAuditoria.tsx (2), informe/cola.ts (1), mapa/descarga.ts (1) y visitasFallidas/ConstanciaVisitaFallida.tsx (1). backoffice/monitoreo.ts ya lo hace bien con hourCycle 'h23' y la zona America/Argentina/Buenos_Aires. Se encontró en QA de HU-11 RF-10 sobre testing (4413966).
+
+**Condiciones de aprobación**
+
+- 1. Dada una fecha con hora de la tarde (por ejemplo 15:15 de Buenos Aires), cuando se muestra en cualquier pantalla de la app, entonces se lee «15:15» y nunca «03:15» sin a. m./p. m.
+- 2. Todas las fechas con hora de la web salen de una única función de formato compartida, con hourCycle 'h23' y la zona America/Argentina/Buenos_Aires; en apps/web/src no queda ningún toLocaleString o toLocaleTimeString con hora que no la use.
+- 3. Las fechas sin hora no cambian.
+- 4. Una prueba de la función de formato cubre la mañana, la tarde, la medianoche (00:xx) y un navegador en otra zona horaria; npm run verify sigue en verde.
+- 5. Una captura con Playwright de la bandeja de avisos y de la ficha del edificio muestra una hora de la tarde en formato de 24 horas.
 
 ## HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios
 

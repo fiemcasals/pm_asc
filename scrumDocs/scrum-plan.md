@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T20:05:38.535Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T20:06:35.399Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -92,7 +92,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 84 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
 | 85 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
 | 86 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 87 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | Haciendo | dev-ma-2 | RF-02 | — |
+| 87 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | Hecho | dev-ma-2 | RF-02 | — |
 | 88 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
 | 89 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
 | 90 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | Hecho | dev-ma-2 | RF-05, RF-03 | — |
@@ -478,6 +478,7 @@ Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494001043-pantalla-de
 - Estimado: 5h
 
 ### RF-10 — Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio
+Sin visita: mensaje y bot�n al Mapa del RT; con visita: el edificio y sus equipos; sin edificio de demo ni selector provisorio. El edificio en inspecci�n se guarda por usuario y el borrador IDB guarda su consorcioId. RF-10-navegador.cjs 6/6 (360 px, con y sin se�al), web 621, API 1222. PR #107.
 - Estimado: 6
 
 ### RF-02 — Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo

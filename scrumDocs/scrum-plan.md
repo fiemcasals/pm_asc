@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T18:51:20.569Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T18:51:39.985Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -183,6 +183,7 @@ Datos de demo con demo.firmante y demo.eca; ternas repartidas entre dos Firmante
 - Estimado: 3
 
 ### RF-07 — FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión
+La lista distingue servidor, guardada (con hora), sin conexi�n y error del servidor; se guarda con su usuario y se borra al cerrar sesi�n; se actualiza sola al volver la red. recorridoSinConexion.test.ts 11/11, web 606/606, API 1208/1208, RF-07-navegador.cjs 12/12 (Playwright 360 px). PR #100.
 - Estimado: 3
 
 ### RF-03 — FIX: Mostrar las horas en formato de 24 horas en toda la app

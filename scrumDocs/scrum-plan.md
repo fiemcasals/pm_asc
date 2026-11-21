@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T14:50:32.582Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T14:52:02.707Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -23,7 +23,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 15 | RF-09 | Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor | HU-11 | — | — | Hecho | germanG | — | — |
 | 16 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
 | 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | testing | germanG | — | — |
-| 18 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | Hacer | germanG | — | — |
+| 18 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | Hacer | dev-ma-2 | — | — |
 | 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Hacer | germanG | — | — |
 | 20 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 21 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |

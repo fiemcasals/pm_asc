@@ -55,6 +55,106 @@ const ETIQUETA_CANAL: Record<EnvioAviso['canal'], string> = {
 
 export const etiquetaCanal = (canal: EnvioAviso['canal']): string => ETIQUETA_CANAL[canal];
 
+/** Lo que informa GET /api/whatsapp/estado: sólo si hay proveedor y cuál, nunca credenciales (HU-11 RF-10). */
+export interface EstadoWhatsApp {
+  configurado: boolean;
+  proveedor: 'meta' | 'twilio' | 'custom' | null;
+}
+
+export interface CartelWhatsApp {
+  tipo: 'activo' | 'no_configurado' | 'sin_estado';
+  texto: string;
+}
+
+export const TEXTO_WHATSAPP_NO_CONFIGURADO = 'WhatsApp no configurado: los avisos aprobados no salen por WhatsApp';
+export const TEXTO_WHATSAPP_SIN_ESTADO = 'No se pudo consultar el estado de WhatsApp. Podés aprobar los avisos igual: el resultado de cada envío figura abajo.';
+
+const NOMBRE_PROVEEDOR: Record<NonNullable<EstadoWhatsApp['proveedor']>, string> = {
+  meta: 'Meta',
+  twilio: 'Twilio',
+  custom: 'proveedor propio',
+};
+
+/** El cartel de arriba de la bandeja. `null` es que no se pudo consultar el estado. No lleva credenciales ni teléfonos. */
+export function cartelWhatsApp(estado: EstadoWhatsApp | null): CartelWhatsApp {
+  if (estado === null) return { tipo: 'sin_estado', texto: TEXTO_WHATSAPP_SIN_ESTADO };
+  if (!estado.configurado || estado.proveedor === null) return { tipo: 'no_configurado', texto: TEXTO_WHATSAPP_NO_CONFIGURADO };
+  return { tipo: 'activo', texto: `WhatsApp activo: ${NOMBRE_PROVEEDOR[estado.proveedor]}` };
+}
+
+export async function cargarEstadoWhatsApp(enviar: Enviar): Promise<EstadoWhatsApp | null> {
+  try {
+    const res = await enviar('/api/whatsapp/estado');
+    if (!res.ok) return null;
+    const json = (await res.json()) as Partial<EstadoWhatsApp> | null;
+    if (!json || typeof json.configurado !== 'boolean') return null;
+    return { configurado: json.configurado, proveedor: json.proveedor ?? null };
+  } catch {
+    return null;
+  }
+}
+
+/** Un envío del historial de WhatsApp, tal como lo confirma el proveedor (HU-11 RF-09). */
+export interface RegistroEnvioWhatsApp {
+  alertaId?: string;
+  telefonoDestino: string;
+  estadoEntrega: 'aceptado' | 'enviado' | 'entregado' | 'leido' | 'fallido' | 'no_configurado' | 'sin_telefono';
+  motivo?: string;
+  errorProveedor?: { codigo?: string; mensaje?: string };
+  timestamp: string;
+}
+
+export async function cargarHistorialWhatsApp(enviar: Enviar): Promise<RegistroEnvioWhatsApp[] | null> {
+  try {
+    const res = await enviar('/api/whatsapp/historial');
+    if (!res.ok) return null;
+    const json = (await res.json()) as { registros?: RegistroEnvioWhatsApp[] } | null;
+    return Array.isArray(json?.registros) ? json.registros : null;
+  } catch {
+    return null;
+  }
+}
+
+export interface EstadoRealEnvio {
+  tipo: 'aceptado' | 'enviado' | 'entregado' | 'leido' | 'fallo' | 'no_salio';
+  texto: string;
+}
+
+/**
+ * El estado de un envío de WhatsApp con lo que confirmó el proveedor: Enviado, Entregado, Leído o Falló con el motivo
+ * que informó (HU-11 RF-10). Devuelve `null` si no es un WhatsApp o si el historial no tiene ese envío (por ejemplo,
+ * después de reiniciar la API): ahí la pantalla muestra lo que guardó el aviso.
+ */
+export function estadoRealDeEnvio(
+  envio: Pick<EnvioAviso, 'canal' | 'destino'>,
+  alertaId: string,
+  registros: readonly RegistroEnvioWhatsApp[] | null,
+): EstadoRealEnvio | null {
+  if (envio.canal === 'email_eca' || !registros) return null;
+  const registro = registros
+    .filter((r) => r.alertaId === alertaId && r.telefonoDestino === envio.destino)
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
+  if (!registro) return null;
+
+  switch (registro.estadoEntrega) {
+    case 'aceptado':
+      return { tipo: 'aceptado', texto: 'Aceptado por WhatsApp: todavía sin confirmación de entrega' };
+    case 'enviado':
+      return { tipo: 'enviado', texto: 'Enviado' };
+    case 'entregado':
+      return { tipo: 'entregado', texto: 'Entregado' };
+    case 'leido':
+      return { tipo: 'leido', texto: 'Leído' };
+    case 'fallido': {
+      const codigo = registro.errorProveedor?.codigo ? ` (código ${registro.errorProveedor.codigo})` : '';
+      const motivo = registro.errorProveedor?.mensaje ?? registro.motivo ?? 'el proveedor no informó el motivo';
+      return { tipo: 'fallo', texto: `Falló: ${motivo}${codigo}` };
+    }
+    default:
+      return { tipo: 'no_salio', texto: `No salió: ${registro.motivo ?? registro.estadoEntrega}` };
+  }
+}
+
 /** «Aprobar y enviar» está disponible mientras el aviso espera revisión o si falló y hay que reintentar. */
 export function puedeAprobar(a: AvisoFalla): boolean {
   return a.estado === 'Pendiente de revisión' || a.estado === 'Falló el envío';

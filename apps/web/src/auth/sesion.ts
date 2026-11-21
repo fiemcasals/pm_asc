@@ -27,8 +27,6 @@ export const CLAVE_PERFIL = 'mant_asc_sesion';
 export const CLAVE_MAPA_RT = 'mant_asc_mapa_rt';
 /** Dónde se guarda la última lista «Edificios pendientes de hoy» del RT, para verla sin conexión (HU-07 RF-07). Se borra al cerrar sesión. */
 export const CLAVE_RECORRIDO_RT = 'mant_asc_recorrido_rt';
-/** El edificio cuya visita inició el RT, para que la Inspección Técnica lo siga mostrando tras recargar sin señal (HU-17 RF-10). Se borra al cerrar sesión. */
-export const CLAVE_INSPECCION_RT = 'mant_asc_inspeccion_rt';
 
 /**
  * El token de acceso vive sólo en memoria: si alguien copia el almacenamiento del celular,
@@ -288,7 +286,6 @@ function borrarPerfil(): void {
     globalThis.localStorage?.removeItem(CLAVE_PERFIL);
     globalThis.localStorage?.removeItem(CLAVE_MAPA_RT);
     globalThis.localStorage?.removeItem(CLAVE_RECORRIDO_RT);
-    globalThis.localStorage?.removeItem(CLAVE_INSPECCION_RT);
   } catch {
     // nada que borrar
   }

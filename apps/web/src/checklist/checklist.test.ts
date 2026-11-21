@@ -182,41 +182,11 @@ describe('Fallas por piso en Accesos (HU-17 RF-06)', () => {
 });
 
 import {
+  EQUIPOS_EDIFICIO_DEMO,
   aplicarRespuestaConSalaCompartida,
   obtenerSiguienteSolapa,
   obtenerSolapaAnterior,
-  type EquipoInspeccion,
 } from './navegacion';
-
-/** Equipos de un edificio de prueba (antes eran los de la pantalla de demostración; HU-17 RF-10 los sacó de la app). */
-const EQUIPOS_EDIFICIO_DEMO: readonly EquipoInspeccion[] = [
-  {
-    maquinaId: 'demo-m1',
-    firmanteMaquinaId: 'MAQ-CALLAO-M1',
-    referenciaAgc: 'M1',
-    descripcion: 'Principal Tracción',
-    tipo: 'traccion',
-    salaCompartidaId: 'sala-principal',
-    salaCompartidaNombre: 'Sala Principal',
-  },
-  {
-    maquinaId: 'demo-m2',
-    firmanteMaquinaId: 'MAQ-CORRIENTES-M1',
-    referenciaAgc: 'M2',
-    descripcion: 'Servicio Hidráulico',
-    tipo: 'hidraulico',
-    salaCompartidaId: 'sala-principal',
-    salaCompartidaNombre: 'Sala Principal',
-  },
-  {
-    maquinaId: 'demo-m3',
-    firmanteMaquinaId: 'MAQ-CORRIENTES-M2',
-    referenciaAgc: 'M3',
-    descripcion: 'Montavehículos',
-    tipo: 'montavehiculos',
-    salaCompartidaId: null,
-  },
-];
 
 describe('Navegación por estaciones y sala compartida (HU-17 RF-07)', () => {
   it('sincroniza respuestas de entorno entre equipos de una misma sala compartida sin tocar salas independientes', () => {

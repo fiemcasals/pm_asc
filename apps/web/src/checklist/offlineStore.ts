@@ -20,8 +20,6 @@ export const VISITA_ACTUAL_KEY = 'visita-actual';
 
 export interface VisitaEnCursoSnapshot {
   id: string;
-  /** El edificio de la visita (HU-17 RF-10): el borrador sólo se restaura en ese edificio. */
-  consorcioId?: string;
   equipoId: string;
   solapaActiva: SolapaId;
   tipoOverride: Record<string, TipoMaquinaChecklist>;

@@ -1,4 +1,3 @@
-import { CLAVE_INSPECCION_RT } from '../auth/sesion';
 import {
   type ChecklistMotorConfig,
   type ChecklistSolapaConfig,
@@ -17,7 +16,7 @@ export interface EquipoInspeccion {
   salaCompartidaNombre?: string;
 }
 
-/** Lo que la pantalla de inspección necesita saber del edificio cuya visita inició el RT: sus equipos y sus pisos (HU-17 RF-10). */
+/** Lo que la pantalla de inspección necesita saber del edificio: sus equipos y sus pisos. Sin esto usa los datos de demostración. */
 export interface EdificioInspeccion {
   consorcioId?: string;
   nombre?: string;
@@ -49,6 +48,34 @@ export function equiposDeFicha(maquinas: readonly MaquinaDeFicha[]): EquipoInspe
   }));
 }
 
+export const EQUIPOS_EDIFICIO_DEMO: readonly EquipoInspeccion[] = [
+  {
+    maquinaId: 'demo-m1',
+    firmanteMaquinaId: 'MAQ-CALLAO-M1',
+    referenciaAgc: 'M1',
+    descripcion: 'Principal Tracción',
+    tipo: 'traccion',
+    salaCompartidaId: 'sala-principal',
+    salaCompartidaNombre: 'Sala Principal',
+  },
+  {
+    maquinaId: 'demo-m2',
+    firmanteMaquinaId: 'MAQ-CORRIENTES-M1',
+    referenciaAgc: 'M2',
+    descripcion: 'Servicio Hidráulico',
+    tipo: 'hidraulico',
+    salaCompartidaId: 'sala-principal',
+    salaCompartidaNombre: 'Sala Principal',
+  },
+  {
+    maquinaId: 'demo-m3',
+    firmanteMaquinaId: 'MAQ-CORRIENTES-M2',
+    referenciaAgc: 'M3',
+    descripcion: 'Montavehículos',
+    tipo: 'montavehiculos',
+    salaCompartidaId: null,
+  },
+];
 
 export function esItemEntornoSala(
   config: ChecklistMotorConfig,
@@ -136,26 +163,4 @@ export function obtenerSolapaAnterior(
   const idx = solapas.findIndex((s) => s.id === solapaActivaId);
   if (idx <= 0) return null;
   return solapas[idx - 1];
-}
-
-type Almacen = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
-
-/** Guarda el edificio cuya visita inició el RT (HU-17 RF-10). Si no hay lugar para guardar, la inspección sigue igual. */
-export function guardarEdificioEnInspeccion(usuario: string, edificio: EdificioInspeccion | null, almacen: Almacen | undefined = globalThis.localStorage): void {
-  try {
-    if (edificio) almacen?.setItem(CLAVE_INSPECCION_RT, JSON.stringify({ usuario, edificio }));
-    else almacen?.removeItem(CLAVE_INSPECCION_RT);
-  } catch {
-    // almacenamiento lleno o bloqueado
-  }
-}
-
-/** El edificio en inspección guardado por ese usuario, o null (otro usuario, nada guardado o dato dañado). */
-export function leerEdificioEnInspeccion(usuario: string, almacen: Almacen | undefined = globalThis.localStorage): EdificioInspeccion | null {
-  try {
-    const g = JSON.parse(almacen?.getItem(CLAVE_INSPECCION_RT) ?? 'null') as { usuario?: string; edificio?: EdificioInspeccion } | null;
-    return g && g.usuario === usuario && g.edificio && Array.isArray(g.edificio.equipos) ? g.edificio : null;
-  } catch {
-    return null;
-  }
 }

@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:13:54.034Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:21:12.652Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -41,7 +41,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 33 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 34 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
 | 35 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
-| 36 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | Haciendo | dev-ma-2 | RF-09, RF-10 | — |
+| 36 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | Hecho | dev-ma-2 | RF-09, RF-10 | — |
 | 37 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | Hecho ✓ dev | dev-ma-2 | RF-10 | — |
 | 38 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | Hecho ✓ dev | dev-ma-2 | RF-09, RF-10 | — |
 | 39 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |

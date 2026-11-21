@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T04:27:39.027Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T04:27:58.801Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -149,7 +149,7 @@ PR #90 contra dev. Los avisos de WhatsApp salen como plantilla: Meta type "templ
 - Estimado: 4h
 
 ### RF-09 — Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor
-Inicio de desarrollo de la tarea
+PR #91 contra dev. Entradas públicas GET/POST /api/whatsapp/webhook/meta y POST /api/whatsapp/webhook/twilio con validación de firma (HMAC-SHA256 sobre el cuerpo sin modificar; HMAC-SHA1 de la URL pública y los parámetros). Firma inválida o sin secreto: 401 sin cambios. El historial distingue aceptado, enviado, entregado, leido y fallido (con código y mensaje del proveedor); nunca retrocede y los repetidos no hacen nada. Un mensaje desconocido responde 200 sin crear nada. Un envío 2xx figura aceptado, no entregado. whatsapp-webhook.e2e-spec 31/31, verify API 1174/1174, test:int 188/188, RF-09-entrega.sh 13/13 y carga 100 sin fallos. Mínimo necesario fuera de lo pedido: se capturó el cuerpo sin modificar solo para la ruta de Meta en app.setup.ts, y se ajustaron las pruebas de RF-03 y RF-04 que esperaban entregado ante un 2xx. No probado con Meta ni Twilio reales. El historial sigue en memoria.
 - Estimado: 8h
 
 ### RF-01 — Probar el envío real de WhatsApp con el celular de German

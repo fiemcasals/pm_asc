@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T12:56:44.260Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T12:57:34.929Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -73,7 +73,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 65 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
 | 66 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | tested ✓ | gonza | RF-01 | — |
 | 67 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | tested ✓ | germanG | RF-01 | — |
-| 68 | RF-05 | Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio | HU-08 | — | — | Hacer | germanG | RF-04, RF-06 | — |
+| 68 | RF-05 | Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio | HU-08 | — | — | Haciendo | germanG | RF-04, RF-06 | — |
 | 69 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
 | 70 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
 | 71 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
@@ -378,6 +378,7 @@ Implementacion completa de HU-06 RF-02 a nombre de gonza (PR #81 contra dev). Pd
 - Estimado: 3h
 
 ### RF-05 — Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio
+Inicio de desarrollo de la tarea
 - Estimado: 12
 
 ### RF-04 — Recargo del 45 % una sola vez por máquina no inspeccionada

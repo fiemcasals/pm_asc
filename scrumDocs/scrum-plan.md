@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:21:12.652Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:21:26.628Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -250,6 +250,7 @@ PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-d
 - Estimado: 3h
 
 ### RF-12 — Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio
+Tabla whatsapp_envios (migraci�n 034, RLS Secretar�a/Admin, sin DELETE); HistorialWhatsAppRepository memoria/Pg; el conector carga al arrancar y guarda en orden y en segundo plano. e2e 7/7, int 2/2, verify API 1229 web 616, int 193/193; RF-12-entrega.sh --carga 50 10/10 con reinicio real. L�mite: los avisos de la bandeja son RF-11. PR #103.
 - Estimado: 6
 
 ### RF-13 — Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp

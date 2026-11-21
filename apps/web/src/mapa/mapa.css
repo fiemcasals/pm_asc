@@ -114,3 +114,94 @@
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* Mapa de edificios (HU-16 RF-04): pines, mensaje de mapa vacío y pie de edición. */
+
+.mapa-edificios {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.mapa-edificios__lienzo {
+  position: relative;
+}
+
+.mapa-edificios__vacio {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-sunken) 88%, transparent);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.mapa-edificios__pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* El pin es un círculo de 18 px; el área para tocarlo es más grande (38 px) para usarlo con el dedo. */
+.mapa-pin {
+  display: block;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--pin, #0f766e);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+
+.mapa-pin::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+}
+
+button.mapa-pin {
+  cursor: pointer;
+}
+
+.mapa-pin:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.mapa-pin--elegido {
+  box-shadow: 0 0 0 3px #0f172a, 0 0 0 5px #ffffff;
+}
+
+:root[data-theme='dark'] .mapa-pin--elegido {
+  box-shadow: 0 0 0 3px #f8fafc, 0 0 0 5px #0b0b0e;
+}
+
+.mapa-pin--ubicacion {
+  width: 22px;
+  height: 22px;
+  background: #dc2626;
+  box-shadow: 0 0 0 7px rgba(220, 38, 38, 0.25), 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.mapa-edificios .maplibregl-marker.maplibregl-marker-draggable,
+.mapa-edificios .maplibregl-marker:has(.mapa-pin--ubicacion) {
+  cursor: grab;
+}

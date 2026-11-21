@@ -1,16 +1,10 @@
 import React from 'react';
 import { PuntoGeografico } from './consorcios';
 
-export interface MarcadorMapa {
-  id: string;
-  etiqueta: string;
-  subtitulo?: string;
-  ubicacion: PuntoGeografico;
-  /** Color del pin (por defecto, verde azulado). El semáforo lo usa para pintar cada edificio según su estado. */
-  color?: string;
-  /** Nombre del color, para leerlo sin mirar el pin (accesibilidad y pruebas). */
-  colorNombre?: string;
-}
+import type { MarcadorMapa } from '../mapa/marcadores';
+
+// El contrato de datos vive en mapa/marcadores.ts (lo comparte con MapaEdificios, el reemplazo de este dibujo).
+export type { MarcadorMapa };
 
 interface MapaUbicacionConsorcioProps {
   ubicacion: PuntoGeografico | null;

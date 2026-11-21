@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-21T19:30:05.552Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-21T19:30:21.173Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -545,4 +545,5 @@ Implementacion completa de HU-11 RF-04 a nombre de gonza (PR #83 contra dev). Wh
 - Estimado: 3h
 
 ### RF-11 — Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio
+Tabla avisos_falla (migraci�n 035, RLS Secretar�a/Admin, sin DELETE); AvisosRepository memoria/Pg; carga al arrancar; aprobar/reintentar esperan el guardado; el enlace vence a los 7 d�as de emitido. e2e 7/7, int 2/2, verify API 1236 web 616, int 195/195; RF-11-entrega.sh 10/10 con reinicio real. Depende de RF-12 (PR #103), incluido en la rama. PR #104.
 - Estimado: 8

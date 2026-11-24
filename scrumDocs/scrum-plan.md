@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T00:38:51.811Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T00:39:05.871Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -27,15 +27,15 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | dev-ma-2 | — | — |
 | 20 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 22 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | Hacer | Sin asignar | — | — |
-| 23 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | Hacer | Sin asignar | — | — |
-| 24 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | Hacer | Sin asignar | — | — |
-| 25 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 26 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 27 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
-| 28 | RF-01 | Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso | RO-03 | — | — | Hacer | germanG | RF-08 | — |
-| 29 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | tested ✓ | germanG | RF-09 | — |
-| 30 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
+| 22 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | Haciendo | germanG | — | — |
+| 23 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | Hacer | Sin asignar | — | — |
+| 24 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 25 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 26 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
+| 27 | RF-01 | Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso | RO-03 | — | — | Hacer | germanG | RF-08 | — |
+| 28 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | tested ✓ | germanG | RF-09 | — |
+| 29 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
+| 30 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | Hacer | Sin asignar | RF-11 | — |
 | 31 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 32 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 33 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -196,9 +196,6 @@ Funci�n compartida fechas/formato.ts (24 horas, hora de Buenos Aires) usada po
 ### RF-11 — Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso
 - Estimado: 8h
 
-### RF-02 — El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso
-- Estimado: 6h
-
 ### RF-08 — El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción
 - Estimado: 4h
 
@@ -223,6 +220,9 @@ PR #92 contra dev. La bandeja de avisos muestra un cartel con el estado de Whats
 ### RF-04 — Componente de mapa con pines por estado, zoom y nombres que no se pisan
 PR #93 contra dev. MapaEdificios (MapLibre) sobre el mapa base propio, con el mismo contrato de datos que el dibujo anterior: pines por latitud y longitud reales (error de 0,11 % a 0,52 % en el navegador), zoom y desplazamiento, encuadre de todos los edificios, nombres que no se pisan (rojos primero, y a la izquierda del pin si a la derecha no entran), pines accesibles con teclado, tema claro y oscuro, modo editable con 6 decimales y pin arrastrable, y celular de 360 px sin conexión. marcadores.test.ts 26/26, verify API 1143 y web 565, test:int 188, build OK, RF-04-entrega.sh 7/7. Guía visual con 6 capturas de Playwright. Mínimo necesario fuera de lo pedido: el tipo MarcadorMapa pasó a mapa/marcadores.ts y el componente viejo lo reexporta. Al probar en el navegador aparecieron y se corrigieron 3 defectos: nombres sin dibujar en tema claro, edificios sin reencuadrar al bajar el mapa, y nombres cortados en el borde derecho. No se probó el pellizco con dos dedos ni un celular físico. Nada usa el componente hasta HU-16/RF-05: mergear antes.
 - Estimado: 12h
+
+### RF-02 — El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso
+- Estimado: 6h
 
 ### RF-02 — UI de Secretaría: Carga y Ficha de Edificios y Máquinas
 PR #7 abierto contra dev. Implementados FormularioConsorcio con grilla dinamica, FichaConsorcio, SecretariaView (layout Master-Detail) y 6 tests Vitest en verde.

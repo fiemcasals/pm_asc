@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T01:26:00.581Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T01:26:38.674Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -223,6 +223,7 @@ PR #93 contra dev. MapaEdificios (MapLibre) sobre el mapa base propio, con el mi
 - Estimado: 12h
 
 ### RF-02 — El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso
+PR #110 contra dev. POST /api/informes-visita exige las fotos obligatorias de cada equipo en uso: el frente de cabina y botonera (obligatoria:frente) y, si es de tracción o montavehículos, los cables (obligatoria:cables); el hidráulico lleva sólo la del frente y un equipo fuera de servicio no las necesita. Si falta alguna, o no es una imagen en data URL (jpeg, png o webp) de hasta 2 MB, responde 400 «Datos inválidos» con un mensaje por foto que nombra el equipo y la foto, y no guarda nada. Las fotos viajan en `fotos` del equipo, así que ya quedan dentro del contenido sellado (SHA-256): no cambió el cálculo del hash y alterar una por fuera de la API se detecta en la verificación. La regla se aplica sólo al cerrar: los informes anteriores se siguen leyendo, listando y verificando. Se actualizaron los datos de prueba de la API y los scripts de entrega de HU-18 (RF-01, RNF-01, RNF-02), que armaban informes sin fotos. Pruebas: npm run verify con tipos bien, API 1278/1278 (28 nuevas) y web 621/621; test:int de informes contra PostgreSQL real 23/23 (3 nuevas); RF-02-entrega.sh 23 ok y con --carga 50, 50 informes válidos y 50 rechazados sin respuestas inesperadas (válidos p95 62 ms, rechazados p95 14 ms); los scripts viejos de HU-18 siguen en verde (RF-01 24, RNF-01 18, RNF-02 15). Límites: se mergea después de HU-17 RF-11 (PR #109); con sólo este cambio en dev la pantalla actual del RT no hace sacar las fotos y no podría cerrar informes; la decisión es de German (23/11/2026) y falta confirmarla con MAICON; la API controla que haya una imagen, no que sea del frente o de los cables. Es una tarea de API: no cambia ninguna pantalla, así que la guía es un recorrido por la API sin capturas. Detalle en docs/pruebas/hu-18-hu-18-cierre-firma-y-envio-del/RF-02-entrega.md y RF-02-fotos-obligatorias-del-informe.md.
 - Estimado: 6h
 
 ### RF-02 — UI de Secretaría: Carga y Ficha de Edificios y Máquinas

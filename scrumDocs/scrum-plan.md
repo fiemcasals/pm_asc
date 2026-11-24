@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T12:26:21.878Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T12:31:34.996Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -111,7 +111,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 103 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
 | 104 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | Hacer | germanG | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
 | 105 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
-| 106 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Haciendo | germanG | RF-05, RF-07 | — |
+| 106 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Hacer | germanG | RF-05, RF-07 | — |
 | 107 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle
@@ -561,7 +561,7 @@ Pausada el 24/11/2026: se trabaja primero RF-06 por decisión del responsable de
 - Estimado: 3h
 
 ### RF-06 — Retirar las máquinas de ejemplo de la vista de firma
-Inicio de desarrollo de RF-06: retirar las máquinas de ejemplo de FirmanteService. Se avanza antes que RF-07 (de la que depende) por decisión del responsable del proyecto: lo que se pruebe de RF-06 se apoya en RF-07 sin verificar y QA no lo certifica antes que a RF-07.
+Pausada el 24/11/2026 antes de escribir código, por decisión del responsable del proyecto: se hace primero RF-07, de la que depende. Hallazgos de la lectura del código en la rama dev (9ce89df): (1) 29 scripts de entrega de 8 Historias (HU-05, 06, 08, 10, 11, 12, 15 y 17) usan las máquinas del seed. (2) 8 de ellos (HU-10 RF-03 a RF-07, HU-11 RF-04 y RF-06, HU-15 RF-02) necesitan una alertaCritica, y en toda la API sólo la crea el seed de FirmanteService.resetSeed (3 alertas: ALT-CP-001, ALT-MAICON-001 y ALT-MAICON-002); la recepción real de fallas críticas (fallas-criticas.service.ts) no la genera. (3) Los de HU-08 (RF-01, 03, 04, 05 y 08) necesitan visitas «Recorrida»: registrarVisita no tiene llamadores en producción hasta RF-07. Falta una tarjeta que conecte la falla crítica real con la alerta de la máquina; sin ella el criterio 3 no se puede cumplir para esos 8 scripts. La rama está abierta y sin commits propios. --- Nota previa (21/11/2026): Re-estimada de 4 h a 14 h (21/11/2026). Las 5 máquinas de ejemplo de FirmanteService.resetSeed (MAQ-CORRIENTES-M1/M2, MAQ-SANTAFE-M1/M2, MAQ-CALLAO-M1, firmante gonza) aparecen en 53 archivos: 29 pruebas de la API, 8 de la web y 16 scripts de entrega (HU-05, HU-06, HU-08, HU-10, HU-11). Desglose sugerido: 1) un ayudante de pruebas que cree edificios con terna y sus máquinas, y pasar las pruebas de la API y la web a usarlo (~8 h); 2) quitar resetSeed y adaptar los scripts de entrega a los datos de demo (~6 h). Conviene partirla en dos Tareas.
 - Estimado: 14
 
 ### RF-11 — Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio

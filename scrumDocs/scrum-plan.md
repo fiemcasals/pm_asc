@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T01:02:39.902Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T01:03:27.902Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -194,6 +194,7 @@ Funci�n compartida fechas/formato.ts (24 horas, hora de Buenos Aires) usada po
 - Estimado: 2
 
 ### RF-11 — Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso
+PR #109 contra dev. En cada equipo en uso el RT saca la foto del frente de cabina y botonera y, si el equipo es de tracción o montavehículos, la de cables de tracción, aunque no haya fallas; el hidráulico lleva sólo la del frente y un equipo fuera de servicio no las pide. Cada foto se comprime a 500 KB o menos (una de 4,9 MB quedó en 373 KB), queda con equipo, nombre y hora, se ve en miniatura y se puede quitar o volver a sacar. «Consolidar Informe y Proceder a Firma» sigue deshabilitado sin ellas y el pendiente dice qué foto falta, una línea por equipo. Se guardan sin señal con el borrador (recargando sin señal siguen) y viajan en `fotos` de cada equipo con las claves obligatoria:frente y obligatoria:cables, dentro del contenido sellado del informe; no cambia ningún contrato de la API. Pruebas: npm run verify con tipos bien, API 1250 y web 642 (21 nuevas); RF-11-entrega.sh 7 de 7 y con --carga 20, 20 fotos de 4,9 MB sin fallas (promedio 2,7 s, p95 3,2 s); Playwright a 360 px con rt.beto, 20 comprobaciones y 7 capturas resaltadas. Límites: la decisión es de German (23/11/2026) y falta confirmarla con MAICON; la API todavía no las exige (HU-18 RF-02, que va después de este merge) y el Portal Firmante no pide cables a un hidráulico en HU-08 RF-08; sin probar con la cámara real de un Android (las fotos de la prueba son imágenes dibujadas). Detalle en docs/pruebas/hu-17-hu-17-inspeccion-tecnica-por-s/RF-11-entrega.md y guía con capturas en RF-11-fotos-obligatorias.md.
 - Estimado: 8h
 
 ### RF-08 — El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción

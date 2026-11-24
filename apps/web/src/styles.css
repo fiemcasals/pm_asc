@@ -2376,6 +2376,32 @@ dd {
   font-size: 0.8rem;
 }
 
+/* ── HU-17 RF-11: fotos obligatorias del equipo (frente de cabina y cables) ── */
+.checklist-fotos-obligatorias {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.checklist-fotos-obligatorias h3,
+.checklist-fotos-obligatorias p {
+  margin: 0;
+}
+
+.checklist-fotos-obligatorias-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.checklist-foto-lista {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
 /* ── HU-17 RF-06: Fallas por Piso en Accesos ── */
 .checklist-fallas-piso-box {
   display: flex;

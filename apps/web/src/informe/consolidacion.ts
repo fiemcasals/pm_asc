@@ -1,5 +1,6 @@
 import { obtenerChecklistParaTipo, type EstadoEquipoUso, type TipoMaquinaChecklist } from '../checklist/checklist.config';
 import { esSolapaCompleta, type FotosPorEquipo, type ObservacionesChecklist, type RespuestasChecklist } from '../checklist/checklist.logic';
+import { etiquetasDeFaltantes, fotosObligatoriasFaltantes, fotosParaElInforme } from '../checklist/fotosObligatorias';
 import { type EquipoInspeccion } from '../checklist/navegacion';
 
 /** Consolidación del informe y firma del encargado (HU-18 RF-01): lógica de la pantalla, sin React. */
@@ -44,7 +45,12 @@ export function puedeConsolidar(equipos: readonly EquipoInspeccion[], v: EstadoV
     const respuestas = v.respuestasPorEquipo[e.maquinaId] ?? {};
     const fotos = v.fotosPorEquipo[e.maquinaId] ?? {};
     const incompletas = obtenerChecklistParaTipo(tipo).solapas.filter((s) => !esSolapaCompleta(s, respuestas[s.id] ?? {}, fotos, estado));
-    if (incompletas.length > 0) pendientes.push({ equipo: e.referenciaAgc, motivo: `faltan completar: ${incompletas.map((s) => s.nombre).join(', ')}` });
+    // HU-17 RF-11: además de las solapas, un equipo en uso lleva la foto del frente y, si tiene cables de tracción, la de cables.
+    const sinFoto = fotosObligatoriasFaltantes(tipo, estado, fotos);
+    const motivos: string[] = [];
+    if (incompletas.length > 0) motivos.push(`faltan completar: ${incompletas.map((s) => s.nombre).join(', ')}`);
+    if (sinFoto.length > 0) motivos.push(`falta la foto de ${etiquetasDeFaltantes(sinFoto)}`);
+    if (motivos.length > 0) pendientes.push({ equipo: e.referenciaAgc, motivo: motivos.join(' · ') });
   }
   return { puede: equipos.length > 0 && pendientes.length === 0, pendientes };
 }
@@ -140,15 +146,18 @@ export function armarInforme(
     clientReportId,
     consorcioId,
     horaDispositivo: ahora.toISOString(),
-    equipos: equipos.map((e) => ({
-      maquinaId: e.maquinaId,
-      referenciaAgc: e.referenciaAgc,
-      tipo: v.tipoOverride[e.maquinaId] ?? e.tipo,
-      estadoEquipo: v.estadoPorEquipo[e.maquinaId] ?? 'en_uso',
-      respuestas: v.respuestasPorEquipo[e.maquinaId] ?? {},
-      observaciones: v.obsPorEquipo[e.maquinaId] ?? {},
-      fotos: v.fotosPorEquipo[e.maquinaId] ?? {},
-    })),
+    equipos: equipos.map((e) => {
+      const tipo = v.tipoOverride[e.maquinaId] ?? e.tipo;
+      return {
+        maquinaId: e.maquinaId,
+        referenciaAgc: e.referenciaAgc,
+        tipo,
+        estadoEquipo: v.estadoPorEquipo[e.maquinaId] ?? 'en_uso',
+        respuestas: v.respuestasPorEquipo[e.maquinaId] ?? {},
+        observaciones: v.obsPorEquipo[e.maquinaId] ?? {},
+        fotos: fotosParaElInforme(tipo, v.fotosPorEquipo[e.maquinaId] ?? {}),
+      };
+    }),
   };
   if ('firma' in cierre) {
     const d = cierre.firma.datos;

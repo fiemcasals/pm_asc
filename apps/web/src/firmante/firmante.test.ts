@@ -5,6 +5,7 @@ import {
   type MaquinaAsignada,
   obtenerMotivoBloqueo,
   puedeAutorizar,
+  requiereFotoDeCables,
 } from './firmante';
 
 const mockMaquinaRecorridaValida: MaquinaAsignada = {
@@ -204,6 +205,58 @@ describe('Reglas de negocio del Firmante (HU-08 / RF-02)', () => {
       const res = await autorizarFirmaMaquina('MAQ-4', fakeFetch);
       expect(res.ok).toBe(false);
       expect(res.error).toContain('faltan fotos obligatorias');
+    });
+  });
+
+  // HU-08 RF-08: la foto de cables sólo se exige a los equipos con cables de tracción; la del frente, siempre.
+  describe('un equipo hidráulico no lleva foto de cables (HU-08 RF-08)', () => {
+    const FRENTE = 'https://fotos.local/frente.jpg';
+    const conTipo = (tipo: MaquinaAsignada['tipo'], fotos: { cables?: string | null; frente: string } | null): MaquinaAsignada => ({
+      ...mockMaquinaRecorridaValida,
+      tipo,
+      visita: { ...mockMaquinaRecorridaValida.visita!, fotosObligatorias: fotos },
+    });
+
+    it('requiereFotoDeCables: sólo el hidráulico no la necesita; sin tipo se toma como de tracción', () => {
+      expect(requiereFotoDeCables({ tipo: 'hidraulico' })).toBe(false);
+      expect(requiereFotoDeCables({ tipo: 'traccion' })).toBe(true);
+      expect(requiereFotoDeCables({ tipo: 'montavehiculos' })).toBe(true);
+      expect(requiereFotoDeCables({})).toBe(true);
+    });
+
+    it('criterio 1: un hidráulico con la foto del frente y la firma se puede autorizar aunque no tenga foto de cables', () => {
+      for (const cables of [undefined, null, '']) {
+        const m = conTipo('hidraulico', { frente: FRENTE, cables });
+
+        expect(puedeAutorizar(m)).toBe(true);
+        expect(obtenerMotivoBloqueo(m)).toBeNull();
+      }
+    });
+
+    it('criterio 2: tracción, montavehículos y una máquina sin tipo, sin foto de cables, siguen bloqueadas como hoy', () => {
+      for (const tipo of ['traccion', 'montavehiculos', undefined] as const) {
+        const m = conTipo(tipo, { frente: FRENTE });
+
+        expect(puedeAutorizar(m)).toBe(false);
+        expect(obtenerMotivoBloqueo(m)).toBe('Falta foto obligatoria de cables');
+      }
+    });
+
+    it('criterio 3: sin la foto del frente se bloquea siempre, también un hidráulico, y el motivo no habla de cables', () => {
+      const hidraulico = conTipo('hidraulico', { cables: 'https://fotos.local/cables.jpg', frente: '' });
+      expect(puedeAutorizar(hidraulico)).toBe(false);
+      expect(obtenerMotivoBloqueo(hidraulico)).toBe('Falta foto obligatoria de frente de cabina');
+
+      const sinNada = conTipo('hidraulico', null);
+      expect(puedeAutorizar(sinNada)).toBe(false);
+      expect(obtenerMotivoBloqueo(sinNada)).toBe('Falta foto obligatoria de frente de cabina');
+    });
+
+    it('un hidráulico sin la firma del encargado sigue bloqueado', () => {
+      const m = conTipo('hidraulico', { frente: FRENTE });
+      m.visita!.firmaEncargado = null;
+
+      expect(puedeAutorizar(m)).toBe(false);
     });
   });
 });

@@ -18,7 +18,7 @@ loadEnvFileInto(process.env);
 const PREFIJO = 'RF05-int';
 // Las máquinas de ejemplo son del Firmante «gonza»: el usuario de la sesión tiene que llamarse así.
 const FIRMANTE = 'gonza';
-const MAQUINAS = ['MAQ-CORRIENTES-M1', 'MAQ-SANTAFE-M1', 'MAQ-SANTAFE-M2', 'MAQ-CALLAO-M1'];
+const MAQUINAS = ['MAQ-CORRIENTES-M1', 'MAQ-CORRIENTES-M2', 'MAQ-SANTAFE-M1', 'MAQ-SANTAFE-M2', 'MAQ-CALLAO-M1'];
 
 describe('Visitas, firmas y avisos del Portal Firmante contra PostgreSQL real (HU-08 RF-05)', () => {
   let app: INestApplication;
@@ -128,5 +128,20 @@ describe('Visitas, firmas y avisos del Portal Firmante contra PostgreSQL real (H
   it('una firma ya guardada no se puede firmar de nuevo después de reiniciar (409 en el rechazo)', async () => {
     const res = await comoFirmante(http().post('/api/firmante/rechazar')).send({ maquinaId: 'MAQ-CORRIENTES-M1', motivo: 'tarde' });
     expect(res.status).toBe(409);
+  });
+
+  // HU-08 RF-08: un equipo hidráulico no lleva foto de cables; con la del frente y la firma del encargado se autoriza, también después de reiniciar.
+  it('un hidráulico con la foto del frente y sin la de cables se guarda, se autoriza y sigue autorizado después de reiniciar (HU-08 RF-08)', async () => {
+    await app.get(FirmanteService).registrarVisita('MAQ-CORRIENTES-M2', {
+      id: 'VIS-RF08-INT', fecha: '2026-11-20T10:00:00.000Z', inspector: 'rt', estado: 'Recorrida', fotosObligatorias: { frente: 'https://fotos.test/frente.jpg' },
+      firmaEncargado: 'data:image/svg+xml;base64,PHN2Zy8+', nombreEncargado: 'Carlos Rodríguez (Encargado)', autorizada: false,
+    });
+    await reiniciar();
+    expect(await visitaDe('MAQ-CORRIENTES-M2')).toMatchObject({ id: 'VIS-RF08-INT', autorizada: false, fotosObligatorias: { frente: 'https://fotos.test/frente.jpg' } });
+
+    const firmada = await comoFirmante(http().post('/api/firmante/autorizar')).send({ maquinaId: 'MAQ-CORRIENTES-M2' }).expect(200);
+    await reiniciar();
+
+    expect(await visitaDe('MAQ-CORRIENTES-M2')).toMatchObject({ autorizada: true, autorizadoPor: FIRMANTE, protocoloAGC: firmada.body.autorizacion.protocoloAGC });
   });
 });

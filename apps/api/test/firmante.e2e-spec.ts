@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { InMemoryUsuariosRepository } from '../src/auth/usuarios.repository';
+import { FirmanteService } from '../src/firmante/firmante.service';
 import { createTestApp } from './create-test-app';
 import { NombreSesion, bearer, crearSesiones } from './sesiones-e2e';
 
@@ -104,6 +105,36 @@ describe('API Firmante (HU-08 / RF-01)', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.message).toContain('fotos obligatorias de cables y frente');
+    });
+
+    // HU-08 RF-08: la foto de cables sólo se exige a los equipos con cables de tracción; la del frente, siempre.
+    describe('un equipo hidráulico no lleva foto de cables (HU-08 RF-08)', () => {
+      const dejarRecorrida = async (fotos: Record<string, string> | null) => {
+        await app.get(FirmanteService).registrarVisita('MAQ-CORRIENTES-M2', {
+          id: 'VIS-HIDRAULICO', fecha: '2026-11-20T10:00:00.000Z', inspector: 'rt', estado: 'Recorrida', fotosObligatorias: fotos as never,
+          firmaEncargado: 'data:image/svg+xml;base64,PHN2Zy8+', nombreEncargado: 'Carlos Rodríguez (Encargado)', autorizada: false,
+        });
+      };
+
+      it('con la foto del frente y la firma del encargado se autoriza (200) sin foto de cables', async () => {
+        await dejarRecorrida({ frente: 'https://fotos.test/frente.jpg' });
+
+        const res = await api().post('/api/firmante/autorizar').send({ maquinaId: 'MAQ-CORRIENTES-M2' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.autorizacion.autorizada).toBe(true);
+        const lista = await api().get('/api/firmante/maquinas');
+        expect(lista.body.find((m: any) => m.id === 'MAQ-CORRIENTES-M2').tipo).toBe('hidraulico');
+      });
+
+      it('sin la foto del frente se rechaza (400) y el mensaje dice que un hidráulico no lleva cables', async () => {
+        await dejarRecorrida({});
+
+        const res = await api().post('/api/firmante/autorizar').send({ maquinaId: 'MAQ-CORRIENTES-M2' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toContain('foto obligatoria del frente de cabina (un equipo hidráulico no lleva foto de cables)');
+      });
     });
 
     it('rechaza con 400 si falta la firma del encargado en el informe', async () => {

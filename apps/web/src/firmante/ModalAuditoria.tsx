@@ -4,6 +4,7 @@ import {
   type MaquinaAsignada,
   obtenerMotivoBloqueo,
   puedeAutorizar,
+  requiereFotoDeCables,
 } from './firmante';
 
 interface ModalAuditoriaProps {
@@ -21,6 +22,8 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar, puedeFirmar = tr
   const habilitado = puedeAutorizar(maquina);
   const motivoBloqueo = obtenerMotivoBloqueo(maquina);
   const visita = maquina.visita;
+  // HU-08 RF-08: un hidráulico no tiene cables de tracción, así que no lleva foto de cables.
+  const llevaCables = requiereFotoDeCables(maquina);
 
   const handleAutorizar = async () => {
     if (!habilitado || autorizando) return;
@@ -95,9 +98,11 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar, puedeFirmar = tr
                 <div className="photo-header">
                   <span>Cables de Tracción</span>
                   {visita?.fotosObligatorias?.cables ? (
-                    <span className="badge badge-recorrida">✓ Presente</span>
+                    <span className="badge badge-recorrida" data-testid="foto-cables-estado">✓ Presente</span>
+                  ) : !llevaCables ? (
+                    <span className="badge badge-no-aplica" data-testid="foto-cables-estado">No aplica (equipo hidráulico)</span>
                   ) : (
-                    <span className="badge badge-advertencia">✗ Falta</span>
+                    <span className="badge badge-advertencia" data-testid="foto-cables-estado">✗ Falta</span>
                   )}
                 </div>
                 <div className="photo-preview">
@@ -107,6 +112,8 @@ export function ModalAuditoria({ maquina, onClose, onAutorizar, puedeFirmar = tr
                       alt="Cables de tracción del ascensor"
                       className="photo-img"
                     />
+                  ) : !llevaCables ? (
+                    <div className="photo-placeholder">Un equipo hidráulico no tiene cables de tracción: no lleva esta foto</div>
                   ) : (
                     <div className="photo-placeholder">Sin captura de cables</div>
                   )}

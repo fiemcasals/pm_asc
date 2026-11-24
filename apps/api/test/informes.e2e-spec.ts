@@ -5,6 +5,7 @@ import { Rol } from '../src/auth/auth.types';
 import { InMemoryUsuariosRepository } from '../src/auth/usuarios.repository';
 import { InMemoryInformesRepository } from '../src/informes/informes.repository';
 import { createTestApp, fakeDatabase, MailerDePrueba } from './create-test-app';
+import { fotosObligatorias } from './fotos-obligatorias';
 
 // HU-18 RF-01 por HTTP, con roles reales: cerrar el informe con la firma del encargado o «Sin firma».
 const PASSWORD = 'Clave-Segura-2026';
@@ -42,7 +43,7 @@ describe('Informe consolidado de la visita: firma y «Sin firma» (HU-18 RF-01)'
   });
 
   const http = () => request(app.getHttpServer());
-  const equipo = (extra: Record<string, unknown> = {}) => ({ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: { sala_maquinas: { item1: 'ok' } }, observaciones: {}, fotos: {}, ...extra });
+  const equipo = (extra: Record<string, unknown> = {}) => ({ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: { sala_maquinas: { item1: 'ok' } }, observaciones: {}, fotos: fotosObligatorias(), ...extra });
   const firma = (extra: Record<string, unknown> = {}) => ({ nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', dni: '12.345.678', imagen: PNG, trazos: [TRAZO], ...extra });
   const informe = (extra: Record<string, unknown> = {}) => ({ consorcioId: EDIFICIO, horaDispositivo: new Date().toISOString(), equipos: [equipo()], firma: firma(), ...extra });
   const cerrar = (cuerpo: unknown, rol = 'rt_calle') => http().post('/api/informes-visita').set('Authorization', `Bearer ${tokens[rol]}`).send(cuerpo as object);
@@ -91,10 +92,55 @@ describe('Informe consolidado de la visita: firma y «Sin firma» (HU-18 RF-01)'
     expect((await cerrar(informe({ firma: undefined }))).status).toBe(400);
   });
 
+  // HU-18 RF-02: cada equipo en uso trae la foto del frente de cabina y, si tiene cables de tracción, la de cables.
+  describe('fotos obligatorias de cada equipo en uso (HU-18 RF-02)', () => {
+    it('sin ninguna foto → 400 que nombra el equipo y la foto que falta, y no guarda nada', async () => {
+      const res = await cerrar(informe({ equipos: [equipo({ fotos: {} })] }));
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe('Datos inválidos');
+      expect(res.body.errores).toEqual([
+        expect.stringContaining('El equipo M1 (equipos[0]) no trae la foto de frente de cabina y botonera (obligatoria:frente)'),
+        expect.stringContaining('no trae la foto de cables de tracción (obligatoria:cables)'),
+      ]);
+      expect(repo.informes).toHaveLength(0);
+      expect((await ver('secretaria')).body).toEqual([]);
+    });
+
+    it('un equipo de tracción con el frente pero sin cables → 400; uno hidráulico con sólo el frente → 201', async () => {
+      const frente = { 'obligatoria:frente': { dataUrl: JPG } };
+
+      const traccion = await cerrar(informe({ equipos: [equipo({ fotos: frente })] }));
+      expect(traccion.status).toBe(400);
+      expect(traccion.body.errores).toEqual([expect.stringContaining('cables de tracción')]);
+
+      const hidraulico = await cerrar(informe({ equipos: [equipo({ tipo: 'hidraulico', fotos: frente })] }));
+      expect(hidraulico.status).toBe(201);
+    });
+
+    it('una foto que no es una imagen → 400 que dice cuál; un equipo fuera de servicio sin fotos → 201', async () => {
+      const mala = await cerrar(informe({ equipos: [equipo({ tipo: 'hidraulico', fotos: { 'obligatoria:frente': { dataUrl: 'no-soy-una-foto' } } })] }));
+      expect(mala.status).toBe(400);
+      expect(mala.body.errores).toEqual([expect.stringContaining('la foto de frente de cabina y botonera (obligatoria:frente) tiene que ser una imagen')]);
+
+      const fuera = await cerrar(informe({ equipos: [equipo({ estadoEquipo: 'fuera_de_servicio', fotos: {} })] }));
+      expect(fuera.status).toBe(201);
+    });
+
+    it('el informe cerrado devuelve las fotos obligatorias tal como llegaron y su sello las incluye', async () => {
+      const res = await cerrar(informe());
+
+      expect(res.status).toBe(201);
+      expect(Object.keys(res.body.equipos[0].fotos).sort()).toEqual(['obligatoria:cables', 'obligatoria:frente']);
+      expect(res.body.hashSha256).toMatch(/^[0-9a-f]{64}$/);
+      expect((await http().post(`/api/informes-visita/${res.body.id}/verificar`).set('Authorization', `Bearer ${tokens.secretaria}`)).body).toMatchObject({ coincide: true });
+    });
+  });
+
   it('acepta un informe con fotos que superan los 100 KB (el límite del cuerpo se subió a 25 MB)', async () => {
     const fotoGrande = `data:image/jpeg;base64,${'A'.repeat(600_000)}`;
 
-    const res = await cerrar(informe({ equipos: [equipo({ fotos: { a: { dataUrl: fotoGrande }, b: { dataUrl: fotoGrande } } })] }));
+    const res = await cerrar(informe({ equipos: [equipo({ fotos: { ...fotosObligatorias(), a: { dataUrl: fotoGrande }, b: { dataUrl: fotoGrande } } })] }));
 
     expect(res.status).toBe(201);
     expect(repo.informes[0].equipos[0].fotos).toHaveProperty('b');

@@ -50,9 +50,10 @@ informe() { # informe <clientReportId|-> → $TMP/i.json
   node -e '
     const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgGAWjgAIAAAUAAXlFbpoAAAAASUVORK5CYII=";
     const foto = "data:image/jpeg;base64," + Buffer.alloc(60000, 7).toString("base64");
+    const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD";
     const trazo = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8]);
     const c = { consorcioId: process.argv[1], horaDispositivo: new Date().toISOString(),
-      equipos: [{ maquinaId: "m1", referenciaAgc: "M1", tipo: "traccion", estadoEquipo: "en_uso", respuestas: { cabina: { a: "ok" } }, observaciones: { cabina: "Golpe en la puerta" }, fotos: { f1: { dataUrl: foto } } }],
+      equipos: [{ maquinaId: "m1", referenciaAgc: "M1", tipo: "traccion", estadoEquipo: "en_uso", respuestas: { cabina: { a: "ok" } }, observaciones: { cabina: "Golpe en la puerta" }, fotos: { f1: { dataUrl: foto }, "obligatoria:frente": { dataUrl: JPG }, "obligatoria:cables": { dataUrl: JPG } } }],
       firma: { nombre: "Carlos", apellido: "Rodriguez", caracter: "Encargado", imagen: PNG, trazos: [trazo] } };
     if (process.argv[2] !== "-") c.clientReportId = process.argv[2];
     process.stdout.write(JSON.stringify(c));

@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
 import {
   CARACTERES_FIRMANTE,
+  CLAVE_FOTO_OBLIGATORIA,
   CLIENT_REPORT_ID,
   ContenidoSellado,
   ESTADOS_EQUIPO,
+  ETIQUETA_FOTO_OBLIGATORIA,
   EquipoInforme,
   FirmaInforme,
+  FotoObligatoria,
   InformeNuevo,
   InformeVisita,
   MAX_MOTIVO,
@@ -90,6 +93,34 @@ function validarSinFirma(s: unknown, errores: string[]): SinFirmaInforme | null 
   return errores.length > 0 ? null : { motivo, foto };
 }
 
+/**
+ * Qué fotos obligatorias lleva un equipo: el hidráulico no tiene cables de tracción, sólo la del frente; tracción y montavehículos llevan las
+ * dos. Un equipo fuera de servicio no las necesita (ya lleva su reporte de parada con fotos).
+ */
+export function fotosObligatoriasDelEquipo(tipo: EquipoInforme['tipo'], estado: EquipoInforme['estadoEquipo']): FotoObligatoria[] {
+  if (estado === 'fuera_de_servicio') return [];
+  return tipo === 'hidraulico' ? ['frente'] : ['frente', 'cables'];
+}
+
+/** Controla que cada foto obligatoria del equipo esté y sea una imagen (data URL jpeg, png o webp) de hasta 2 MB. */
+function validarFotosObligatorias(e: Record<string, unknown>, donde: string, referenciaAgc: string, errores: string[]): void {
+  if (!esObjeto(e.fotos)) return; // ya se informó que `fotos` no es un objeto
+  if (!(TIPOS_EQUIPO as readonly string[]).includes(e.tipo as string) || !(ESTADOS_EQUIPO as readonly string[]).includes(e.estadoEquipo as string)) return;
+  const equipo = `El equipo ${referenciaAgc || donde} (${donde})`;
+  for (const id of fotosObligatoriasDelEquipo(e.tipo as EquipoInforme['tipo'], e.estadoEquipo as EquipoInforme['estadoEquipo'])) {
+    const clave = CLAVE_FOTO_OBLIGATORIA[id];
+    const foto = e.fotos[clave];
+    if (foto === undefined || foto === null) {
+      errores.push(`${equipo} no trae la foto de ${ETIQUETA_FOTO_OBLIGATORIA[id]} (${clave}): se saca en cada equipo en uso, aunque no haya fallas`);
+      continue;
+    }
+    const dataUrl = esObjeto(foto) && typeof foto.dataUrl === 'string' ? foto.dataUrl : '';
+    if (!DATA_IMAGEN.test(dataUrl) || dataUrl.length > MAX_FOTO) {
+      errores.push(`${equipo}: la foto de ${ETIQUETA_FOTO_OBLIGATORIA[id]} (${clave}) tiene que ser una imagen en data URL (jpeg, png o webp) de hasta 2 MB`);
+    }
+  }
+}
+
 function validarEquipo(e: unknown, i: number, errores: string[]): EquipoInforme | null {
   const donde = `equipos[${i}]`;
   if (!esObjeto(e)) {
@@ -105,6 +136,7 @@ function validarEquipo(e: unknown, i: number, errores: string[]): EquipoInforme 
   for (const campo of ['respuestas', 'observaciones', 'fotos'] as const) {
     if (!esObjeto(e[campo])) errores.push(`${donde}.${campo} tiene que ser un objeto`);
   }
+  validarFotosObligatorias(e, donde, referenciaAgc, errores);
   return {
     maquinaId, referenciaAgc, tipo: e.tipo as EquipoInforme['tipo'], estadoEquipo: e.estadoEquipo as EquipoInforme['estadoEquipo'],
     respuestas: esObjeto(e.respuestas) ? (e.respuestas as EquipoInforme['respuestas']) : {},

@@ -5,6 +5,16 @@ export type CaracterFirmante = (typeof CARACTERES_FIRMANTE)[number];
 export const TIPOS_EQUIPO = ['traccion', 'hidraulico', 'montavehiculos'] as const;
 export const ESTADOS_EQUIPO = ['en_uso', 'fuera_de_servicio'] as const;
 
+/**
+ * Fotos que lleva cada equipo en uso aunque no haya fallas (HU-17 RF-11, HU-18 RF-02; decisión de producto del 23/11/2026): el frente de cabina
+ * y botonera y, si tiene cables de tracción, los cables. Viajan en `fotos` del equipo con estas claves reservadas, así que quedan dentro del
+ * contenido sellado del informe.
+ */
+export const FOTOS_OBLIGATORIAS = ['frente', 'cables'] as const;
+export type FotoObligatoria = (typeof FOTOS_OBLIGATORIAS)[number];
+export const CLAVE_FOTO_OBLIGATORIA: Record<FotoObligatoria, string> = { frente: 'obligatoria:frente', cables: 'obligatoria:cables' };
+export const ETIQUETA_FOTO_OBLIGATORIA: Record<FotoObligatoria, string> = { frente: 'frente de cabina y botonera', cables: 'cables de tracción' };
+
 export interface EquipoInforme {
   maquinaId: string;
   referenciaAgc: string;

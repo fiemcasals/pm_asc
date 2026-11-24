@@ -328,6 +328,13 @@ h1 {
   border: 1px solid #fca5a5;
 }
 
+/* HU-08 RF-08: una foto que no corresponde al equipo (un hidráulico no tiene cables de tracción). */
+.badge-no-aplica {
+  background: var(--card);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
 .badge-autorizada {
   background: #e0e7ff;
   color: #3730a3;

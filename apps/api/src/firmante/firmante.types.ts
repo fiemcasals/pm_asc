@@ -37,7 +37,8 @@ export interface AlertaCritica {
 }
 
 export interface FotosObligatorias {
-  cables: string;
+  /** Sólo los equipos con cables de tracción la llevan: un hidráulico no (HU-08 RF-08). */
+  cables?: string | null;
   frente: string;
 }
 
@@ -72,6 +73,14 @@ export interface EdificioConsorcio {
 
 /** Tipo de equipo (HU-06 RF-03): hay fallas críticas que sólo existen en las máquinas hidráulicas. Sin dato, se toma como de tracción. */
 export type TipoMaquina = 'traccion' | 'hidraulico' | 'montavehiculos';
+
+/**
+ * ¿La visita de esta máquina necesita la foto de los cables para autorizarse? Un hidráulico no tiene cables de tracción (HU-08 RF-08):
+ * sólo lleva la del frente. Tracción y montavehículos, o una máquina sin tipo cargado (se toma como de tracción), llevan las dos.
+ */
+export function requiereFotoDeCables(tipo?: TipoMaquina | null): boolean {
+  return tipo !== 'hidraulico';
+}
 
 export interface MaquinaAsignada {
   id: string;

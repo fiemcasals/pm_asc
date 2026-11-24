@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-21T21:42:50.630Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-24T00:38:31.511Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -66,6 +66,7 @@ Como Usuario Firmante (RT Legal) quiero acceder a una lista limpia de mis máqui
 - 1. Dado que el Usuario Firmante inicia sesión, cuando accede a su panel, entonces visualiza la lista vertical de sus máquinas con su estado (Recorrida, Pendiente de Visita, Advertencia).
 - 2. Dado un registro en estado Pendiente de Visita, cuando el usuario mira los controles, entonces el botón de autorizar se encuentra bloqueado.
 - 3. Dado un registro en estado Recorrida, cuando el firmante abre el informe, revisa las fotos obligatorias (cables, frente) y firma del encargado, entonces se habilita el botón Autorizar Firma AGC para dar conformidad legal.
+- 4. Dada una máquina hidráulica, que no tiene cables de tracción, cuando el firmante revisa el informe, entonces el Portal no le exige la foto de cables y autoriza con la del frente y la firma del encargado.
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 
@@ -163,6 +164,7 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Dada una sala de máquinas compartida, cuando se cargan los datos del entorno en un equipo, entonces se aplican a los demás de esa sala.
 4. Dado un equipo fuera de servicio, cuando se guarda el reporte de parada, entonces la Secretaría y el Firmante reciben el aviso y ese equipo queda resuelto sin afectar a los demás.
 5. Dado que no hay señal, cuando el RT trabaja, entonces no pierde nada de lo cargado, fotos incluidas.
+6. Dado un equipo en uso, cuando el RT lo releva, entonces saca la foto del frente de cabina y, si el equipo tiene cables de tracción, la de los cables, aunque no haya ninguna falla; sin ellas no puede consolidar el informe.
 
 ## HU-18: HU-18: Cierre, firma y envío del informe
 
@@ -177,3 +179,4 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Dado que no hay nadie para firmar, cuando el RT cierra "Sin firma" con motivo y foto, entonces el informe se envía marcado para que lo vean la Secretaría y el Firmante.
 4. Dado un informe cerrado, cuando alguien intenta modificarlo, entonces el sistema lo rechaza.
 5. Dado que no hay señal al cerrar, cuando vuelve la conexión con la app abierta, entonces el informe se envía sin duplicarse.
+6. Dado un informe cerrado, cuando se guarda, entonces cada equipo en uso trae la foto del frente de cabina (y la de cables si tiene cables de tracción) y esas fotos quedan selladas con el informe; sin ellas la API lo rechaza.

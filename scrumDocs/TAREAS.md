@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-24T13:29:57.636Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-24T13:41:53.939Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -533,6 +533,18 @@ El Portal Firmante exige dos fotos fijas, «cables» y «frente», para autoriza
 4. Dado el modal de auditoría de una máquina hidráulica, cuando el Firmante lo abre, entonces la tarjeta de cables dice «No aplica (equipo hidráulico)» y no «Falta», y el botón Autorizar se habilita con la foto del frente y la firma.
 5. Las pruebas del Portal Firmante (unitarias, e2e e integración con la base real) siguen en verde y se suman las del caso hidráulico.
 
+### RF-09: Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio (Funcional)
+
+Hallazgo de QA del 24/11/2026 sobre HU-08 RF-07 (rama testing, 6220a60). Al cerrarse un informe, InformesService.sincronizarConPortalFirmante busca la máquina de cada equipo primero en el edificio del informe y, si no la encuentra, entre TODAS las máquinas del Portal por id o por código AGC. Si el informe de un edificio A trae un equipo que A no tiene (un dato viejo del celular, una máquina dada de baja, un error del cliente), la visita termina en la máquina del mismo código de OTRO edificio. Reproducido por HTTP: un informe del edificio A con un equipo «M9» que A no tiene responde 201, y la máquina M9 del edificio B queda con la visita de ese informe (inspector, fotos y firma del informe de A). Con eso el Firmante de B ve fotos y firma de otro edificio y podría autorizarlas. Esta Tarea corrige sólo eso y no cambia lo demás que hizo RF-07. Decisión que se propone y puede cambiarse antes de tomarla: rechazar el informe con 400 en lugar de cerrarlo sin visita para ese equipo (criterio 3).
+
+**Condiciones de aprobación**
+
+1. Dado un informe de un edificio A con un equipo cuya máquina no pertenece a A, cuando se envía, entonces ninguna máquina de otro edificio cambia de estado ni recibe visita (se comprueba leyendo GET /api/firmante/maquinas de los Firmantes de A y de B antes y después).
+2. Dados dos edificios A y B con una máquina «M9» cada uno, cuando se cierra el informe de A con su propia «M9», entonces la visita queda sólo en la M9 de A y la M9 de B sigue sin cambios.
+3. Dado el informe del criterio 1, cuando la API responde, entonces rechaza con 400, nombra el equipo que no es del edificio y no guarda ningún informe (la fila no existe en la base).
+4. Los criterios 1 a 5 de HU-08 RF-07 siguen pasando: informe firmado → «Recorrida», «Sin firma» sin autorizar, equipo fuera de servicio fuera de «Recorrida», reenvío sin duplicar ni pisar una firma autorizada, y la visita sigue después de reiniciar la API.
+5. Hay una prueba automática por HTTP y otra contra PostgreSQL real que reproducen el caso «M9» del criterio 1 y fallan con el código actual de testing.
+
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 
 ### RF-01: API de Cobertura de Flota por Empresa Conservadora (Funcional)
@@ -629,6 +641,19 @@ El remito técnico en PDF usa los símbolos de advertencia y de tilde (y el tít
 2. Los estados se leen como palabras, «ATENCIÓN» y «OK», en lugar de los símbolos de advertencia y de tilde.
 3. Un título de alerta con emoji se imprime sin el emoji y sin dejar caracteres basura.
 4. El membrete, los datos del consorcio, el diagnóstico y el acuse siguen iguales, y las pruebas del ECA siguen en verde.
+
+### RF-08: Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA (Funcional)
+
+Hallazgo de QA del 24/11/2026 al medir HU-08 RF-06 (rama testing, 6220a60). En toda la API la alerta crítica de una máquina (alertaCritica, lo que leen el Portal ECA, el Monitoreo, los avisos y el disparo de WhatsApp) sólo la crea el seed de FirmanteService.resetSeed: ALT-CP-001, ALT-MAICON-001 y ALT-MAICON-002. Cuando el RT marca un equipo «Fuera de Servicio» o «Reparación Urgente» con POST /api/paradas (HU-17), la API sólo cambia estadoOperativo y confirmacionEstado de la máquina y guarda el reporte: no crea ninguna alerta. La recepción de una falla crítica (HU-06 RF-01) tampoco la crea. Mientras existía el seed, el Centro de Alertas de HU-10 se podía mostrar con alertas de ejemplo. Al retirarlo (HU-08 RF-06) no queda ningún camino real que las genere, y tres scripts de entrega que andaban empeoraron: HU-10 RF-04 pasó de 5 a 1 comprobación pasada, HU-11 RF-04 de 6 pasadas y 0 fallas a 5 y 1, y HU-15 RF-02 de 18 a 10 pasadas. Esta Tarea conecta el reporte de parada real con la alerta de la máquina. Es lo que HU-08 RF-06 necesita para poder cumplir su criterio 3.
+
+**Condiciones de aprobación**
+
+1. Dado un edificio con terna cuyo equipo el RT marca «Fuera de Servicio» o «Reparación Urgente» con su causa y sus fotos (POST /api/paradas), cuando la ECA de la terna abre el Portal ECA, entonces el Centro de Alertas muestra una alerta de ese equipo con el edificio, la máquina, el tipo, la fecha de detección y la causa, sin que exista ninguna máquina de ejemplo.
+2. Dada esa alerta, cuando la ECA descarga el remito y registra el acuse de recibo (HU-10 RF-02 y RF-03), entonces el acuse queda registrado con fecha y hora igual que con las alertas anteriores.
+3. Dada esa alerta, cuando otra ECA abre su Portal ECA, entonces no la ve.
+4. Dada esa alerta, cuando el RT normaliza el equipo (POST /api/paradas/maquinas/<id>/normalizar), entonces la alerta deja de figurar en el Portal ECA.
+5. Dada esa alerta, cuando se reinicia la API, entonces sigue figurando: sale de lo que ya se guarda en la base (los reportes de parada) y no de la memoria.
+6. Los scripts de entrega de HU-10 (RF-03 a RF-07), HU-11 (RF-04 y RF-06) y HU-15 (RF-02), que hoy dependen de ALT-CP-001, ALT-MAICON-001 y ALT-MAICON-002, crean su alerta por este camino y pasan sin las máquinas de ejemplo; la entrega informa cuántas comprobaciones pasan antes y después de cada script.
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 

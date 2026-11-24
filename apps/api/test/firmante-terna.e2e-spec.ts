@@ -147,15 +147,15 @@ describe('La terna de la base llega a la vista de firma (HU-02 RF-06)', () => {
     expect(suyas.every((m) => m.rtCalle === 'rt-nuevo')).toBe(true);
   });
 
-  it('las máquinas de ejemplo no se tocan al asignar una terna a un edificio con su misma dirección', async () => {
+  it('las máquinas de ejemplo se retiran al asignar una terna a un edificio real (HU-08 RF-06)', async () => {
     await arrancar();
     const id = await crearEdificio('Av. Callao 850, CABA', 'Consorcio Callao 850');
-    const antes = (await maquinasDe('secretaria1')).find((m) => m.id === 'MAQ-CALLAO-M1')!;
 
     await ponerTerna(id, terna('rt-viejo', 'pablo', 'ECA Nueva S.A.'));
 
     const todas = await maquinasDe('secretaria1');
-    expect(todas.find((m) => m.id === 'MAQ-CALLAO-M1')).toEqual(antes);
+    // HU-08 RF-06: la máquina de ejemplo de Callao ya no está (se retiraron los ejemplos) y no duplica
+    expect(todas.find((m) => m.id === 'MAQ-CALLAO-M1')).toBeUndefined();
     expect(todas.filter((m) => m.consorcioId === id)).toHaveLength(2);
   });
 

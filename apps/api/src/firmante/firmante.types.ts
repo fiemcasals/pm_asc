@@ -62,6 +62,10 @@ export interface VisitaInspeccion {
   fechaAutorizacion?: string | null;
   autorizadoPor?: string | null;
   protocoloAGC?: string | null;
+  /** HU-18 / HU-08 RF-07: el informe fue cerrado «Sin firma» y requiere revisión antes de autorizarse. */
+  requiereRevision?: boolean;
+  sinFirma?: boolean;
+  motivoSinFirma?: string | null;
 }
 
 export interface EdificioConsorcio {

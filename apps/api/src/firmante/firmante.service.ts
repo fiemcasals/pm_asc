@@ -76,7 +76,8 @@ export class FirmanteService implements OnApplicationBootstrap {
   /** Guarda la visita de la máquina. Si no se puede, quien llama decide si la operación sigue o se deshace. */
   private async guardarVisita(m: MaquinaAsignada): Promise<void> {
     if (!m.visita) return;
-    const g: VisitaGuardada = { maquinaId: m.id, mes: m.mes, estado: m.estado, visita: structuredClone(m.visita) };
+    const mes = m.visita.fecha ? m.visita.fecha.slice(0, 7) : m.mes;
+    const g: VisitaGuardada = { maquinaId: m.id, mes: mes || m.mes, estado: m.estado, visita: structuredClone(m.visita) };
     if (this.repo) await this.repo.guardarVisita(g);
     this.guardadas.set(`${g.maquinaId}|${g.mes}`, g);
   }
@@ -94,8 +95,17 @@ export class FirmanteService implements OnApplicationBootstrap {
    * Es el punto de entrada para que un informe cerrado llegue al Portal Firmante.
    */
   async registrarVisita(maquinaId: string, visita: VisitaInspeccion, estado: MaquinaAsignada['estado'] = 'Recorrida'): Promise<void> {
-    const m = this.maquinas.find((x) => x.id === maquinaId);
+    const m =
+      this.maquinas.find((x) => x.id === maquinaId) ??
+      this.maquinas.find(
+        (x) =>
+          x.id === `MAQ-${maquinaId}` ||
+          (x.codigoAGC && x.codigoAGC.toLowerCase() === maquinaId.toLowerCase()) ||
+          x.id.endsWith(`-${maquinaId}`),
+      );
     if (!m) throw new NotFoundException('Máquina no encontrada');
+    // HU-08 RF-07 Criterio 4: no se pisa una firma ya autorizada
+    if (m.visita?.autorizada) return;
     const previa = { visita: m.visita, estado: m.estado };
     m.visita = structuredClone(visita);
     m.estado = estado;
@@ -107,6 +117,11 @@ export class FirmanteService implements OnApplicationBootstrap {
       this.logger.error(`No se pudo guardar la visita de ${maquinaId}: ${err instanceof Error ? err.message : String(err)}`);
       throw new InternalServerErrorException('No se pudo guardar la visita: intentá de nuevo.');
     }
+  }
+
+  /** HU-08 RF-06: retira las máquinas de ejemplo de la vista de firma */
+  limpiarMaquinasDeEjemplo(): void {
+    this.maquinas = this.maquinas.filter((m) => Boolean(m.consorcioId));
   }
 
   resetSeed(): void {
@@ -358,6 +373,8 @@ export class FirmanteService implements OnApplicationBootstrap {
       this.maquinas = this.maquinas.filter((m) => m.consorcioId !== consorcioId);
       return;
     }
+    // HU-08 RF-06: al aplicar la terna de un edificio real, se retiran las máquinas de ejemplo de la vista de firma
+    this.limpiarMaquinasDeEjemplo();
     const edificio = { id: consorcioId, direccion: vista.direccion, administracion: vista.administracion ?? '', consorcio: vista.nombre };
     const mes = new Date().toISOString().slice(0, 7);
     const ids = new Set(vista.maquinas.map((q) => `MAQ-${consorcioId}-${q.id}`));

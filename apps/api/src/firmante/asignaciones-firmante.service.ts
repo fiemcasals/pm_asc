@@ -34,8 +34,13 @@ export class AsignacionesFirmanteService implements OnApplicationBootstrap {
   /** Todos los edificios con terna asignada. */
   async sincronizarTodos(): Promise<void> {
     const roles = await this.consorcios.listarRoles();
-    for (const r of roles) {
-      if (r.rtCalle && r.firmante && r.eca) await this.sincronizarEdificio(r.consorcioId);
+    const conTerna = roles.filter((r) => r.rtCalle && r.firmante && r.eca);
+    // HU-08 RF-06: en producción o desarrollo, o cuando hay edificios con terna, se retiran las máquinas de ejemplo.
+    if (process.env.NODE_ENV !== 'test' || conTerna.length > 0) {
+      this.firmante.limpiarMaquinasDeEjemplo();
+    }
+    for (const r of conTerna) {
+      await this.sincronizarEdificio(r.consorcioId);
     }
   }
 

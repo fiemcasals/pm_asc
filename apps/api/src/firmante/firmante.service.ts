@@ -76,7 +76,8 @@ export class FirmanteService implements OnApplicationBootstrap {
   /** Guarda la visita de la máquina. Si no se puede, quien llama decide si la operación sigue o se deshace. */
   private async guardarVisita(m: MaquinaAsignada): Promise<void> {
     if (!m.visita) return;
-    const g: VisitaGuardada = { maquinaId: m.id, mes: m.mes, estado: m.estado, visita: structuredClone(m.visita) };
+    const mes = m.visita.fecha ? m.visita.fecha.slice(0, 7) : m.mes;
+    const g: VisitaGuardada = { maquinaId: m.id, mes: mes || m.mes, estado: m.estado, visita: structuredClone(m.visita) };
     if (this.repo) await this.repo.guardarVisita(g);
     this.guardadas.set(`${g.maquinaId}|${g.mes}`, g);
   }
@@ -94,8 +95,17 @@ export class FirmanteService implements OnApplicationBootstrap {
    * Es el punto de entrada para que un informe cerrado llegue al Portal Firmante.
    */
   async registrarVisita(maquinaId: string, visita: VisitaInspeccion, estado: MaquinaAsignada['estado'] = 'Recorrida'): Promise<void> {
-    const m = this.maquinas.find((x) => x.id === maquinaId);
+    const m =
+      this.maquinas.find((x) => x.id === maquinaId) ??
+      this.maquinas.find(
+        (x) =>
+          x.id === `MAQ-${maquinaId}` ||
+          (x.codigoAGC && x.codigoAGC.toLowerCase() === maquinaId.toLowerCase()) ||
+          x.id.endsWith(`-${maquinaId}`),
+      );
     if (!m) throw new NotFoundException('Máquina no encontrada');
+    // HU-08 RF-07 Criterio 4: no se pisa una firma ya autorizada
+    if (m.visita?.autorizada) return;
     const previa = { visita: m.visita, estado: m.estado };
     m.visita = structuredClone(visita);
     m.estado = estado;

@@ -1,15 +1,22 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { aResumen, contenidoSellado, hashInforme, validarInforme } from './informes.logic';
 import { InformesRepository } from './informes.repository';
-import { AuditoriaInforme, InformeVisita, IntentoModificacion, ResumenInforme, ResultadoCierre, VERSION_HASH, VerificacionInforme } from './informes.types';
+import { AuditoriaInforme, CLAVE_FOTO_OBLIGATORIA, InformeVisita, IntentoModificacion, ResumenInforme, ResultadoCierre, VERSION_HASH, VerificacionInforme } from './informes.types';
+import { FirmanteService } from '../firmante/firmante.service';
+import { AsignacionesFirmanteService } from '../firmante/asignaciones-firmante.service';
+import { VisitaInspeccion } from '../firmante/firmante.types';
 
 export const MENSAJE_INFORME_CERRADO = 'El informe está cerrado: no se puede modificar ni borrar. El intento quedó registrado.';
 
 /** Informes consolidados de la visita, con la firma del encargado o «Sin firma», sellados con un hash al cerrarse (HU-18 RF-01 y RNF-01). */
 @Injectable()
 export class InformesService {
-  constructor(private readonly repo: InformesRepository) {}
+  constructor(
+    private readonly repo: InformesRepository,
+    @Optional() private readonly firmante?: FirmanteService,
+    @Optional() private readonly asignaciones?: AsignacionesFirmanteService,
+  ) {}
 
   /**
    * Cierra el informe de un edificio que el RT tiene asignado y lo **sella**: se calcula el SHA-256 de todo el contenido (equipos con sus
@@ -33,11 +40,115 @@ export class InformesService {
     if (!(await this.repo.existeEdificio(nuevo.consorcioId))) throw new NotFoundException('Edificio no encontrado');
     const base = { ...nuevo, id: randomUUID(), usuario, horaServidor: new Date().toISOString() };
     const guardado = await this.repo.guardar({ ...base, clientReportId, hashSha256: hashInforme(base), versionHash: VERSION_HASH });
-    if (guardado) return { informe: guardado, creado: true };
+    if (guardado) {
+      await this.sincronizarConPortalFirmante(guardado);
+      return { informe: guardado, creado: true };
+    }
     // Otro envío con el mismo identificador ganó la carrera: se devuelve ése.
     const ganador = clientReportId ? await this.repo.buscarPorClientId(clientReportId) : null;
     if (!ganador) throw new ConflictException('No se pudo cerrar el informe: probá de nuevo.');
     return this.respuestaDeReenvio(ganador, usuario);
+  }
+
+  /**
+   * HU-08 RF-07: cada equipo del informe cerrado pasa a ser la visita de su máquina en el Portal Firmante.
+   */
+  private async sincronizarConPortalFirmante(informe: InformeVisita): Promise<void> {
+    if (!this.firmante) return;
+    if (this.asignaciones) {
+      const maquinasEdif = this.firmante.getMaquinas().filter((m) => m.consorcioId === informe.consorcioId);
+      if (maquinasEdif.length === 0) {
+        await this.asignaciones.sincronizarEdificio(informe.consorcioId);
+      }
+    }
+
+    const firmaEncargado = informe.firma ? informe.firma.imagen : null;
+    const nombreEncargado = informe.firma
+      ? `${informe.firma.nombre} ${informe.firma.apellido}${informe.firma.caracter ? ` (${informe.firma.caracter})` : ''}`.trim()
+      : null;
+
+    for (const eq of informe.equipos) {
+      // Prioridad 1: máquinas del edificio del informe
+      const maquina =
+        this.firmante
+          .getMaquinas()
+          .find(
+            (m) =>
+              m.consorcioId === informe.consorcioId &&
+              (m.id === eq.maquinaId ||
+                m.id === `MAQ-${informe.consorcioId}-${eq.maquinaId}` ||
+                (m.codigoAGC && m.codigoAGC.toLowerCase() === eq.referenciaAgc.toLowerCase()) ||
+                m.id.endsWith(`-${eq.maquinaId}`)),
+          ) ??
+        this.firmante
+          .getMaquinas()
+          .find(
+            (m) =>
+              m.id === eq.maquinaId ||
+              (m.codigoAGC && m.codigoAGC.toLowerCase() === eq.referenciaAgc.toLowerCase()),
+          );
+      if (!maquina) continue;
+      // Criterio 4: no se pisa una firma ya autorizada
+      if (maquina.visita?.autorizada) continue;
+
+      const rawFrente =
+        (eq.fotos?.[CLAVE_FOTO_OBLIGATORIA.frente] as unknown) ??
+        (eq.fotos?.['obligatoria:frente'] as unknown);
+      const rawCables =
+        (eq.fotos?.[CLAVE_FOTO_OBLIGATORIA.cables] as unknown) ??
+        (eq.fotos?.['obligatoria:cables'] as unknown);
+
+      const fotoFrente =
+        typeof rawFrente === 'string'
+          ? rawFrente
+          : typeof (rawFrente as { dataUrl?: unknown })?.dataUrl === 'string'
+            ? ((rawFrente as { dataUrl: string }).dataUrl)
+            : '';
+      const fotoCables =
+        typeof rawCables === 'string'
+          ? rawCables
+          : typeof (rawCables as { dataUrl?: unknown })?.dataUrl === 'string'
+            ? ((rawCables as { dataUrl: string }).dataUrl)
+            : null;
+
+      const esFueraDeServicio = eq.estadoEquipo === 'fuera_de_servicio';
+
+      const visita: VisitaInspeccion = {
+        id: `VIS-${informe.id}-${eq.maquinaId}`,
+        fecha: informe.horaDispositivo || informe.horaServidor,
+        inspector: informe.usuario,
+        estado: esFueraDeServicio
+          ? maquina.estado === 'Advertencia'
+            ? 'Advertencia'
+            : 'Pendiente de Visita'
+          : 'Recorrida',
+        motivoAdvertencia: esFueraDeServicio
+          ? maquina.visita?.motivoAdvertencia || 'Equipo fuera de servicio reportado en inspección'
+          : undefined,
+        fotosObligatorias: {
+          frente: fotoFrente,
+          cables: fotoCables,
+        },
+        firmaEncargado,
+        nombreEncargado,
+        autorizada: false,
+        fechaAutorizacion: null,
+        autorizadoPor: null,
+        protocoloAGC: null,
+        requiereRevision: informe.requiereRevision ?? false,
+      };
+
+      if (esFueraDeServicio) {
+        maquina.estadoOperativo = 'Fuera de Servicio';
+        await this.firmante.registrarVisita(
+          maquina.id,
+          visita,
+          maquina.estado === 'Advertencia' ? 'Advertencia' : 'Pendiente de Visita',
+        );
+      } else {
+        await this.firmante.registrarVisita(maquina.id, visita, 'Recorrida');
+      }
+    }
   }
 
   private respuestaDeReenvio(previo: InformeVisita, usuario: string): ResultadoCierre {

@@ -334,4 +334,50 @@ describe('Informe consolidado de la visita contra PostgreSQL real (HU-18 RF-01)'
       expect(JSON.stringify(res.body)).not.toContain('otro.usuario');
     });
   });
+
+  describe('HU-08 RF-07: el informe cerrado crea la visita en el Portal Firmante (PostgreSQL real)', () => {
+    it('criterio 1: al cerrar el informe de un edificio con terna, el Firmante ve la máquina como Recorrida con sus fotos y firma', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+      expect(res.status).toBe(201);
+
+      const maquinas = (
+        await http().get('/api/firmante/maquinas').set('Authorization', `Bearer ${tokenFirmante}`).expect(200)
+      ).body as { id: string; codigoAGC: string; estado: string; consorcioId?: string; visita: { fotosObligatorias?: { frente: string }; firmaEncargado?: string } | null }[];
+
+      const m = maquinas.find((x) => x.consorcioId === edif.propio);
+      expect(m).toBeTruthy();
+      expect(m!.estado).toBe('Recorrida');
+      expect(m!.visita).toBeTruthy();
+      expect(m!.visita!.fotosObligatorias?.frente).toBeTruthy();
+      expect(m!.visita!.firmaEncargado).toBe(PNG);
+    });
+
+    it('criterio 5: la visita creada en PostgreSQL sobrevive al reinicio de la API', async () => {
+      const maquinas = (
+        await http().get('/api/firmante/maquinas').set('Authorization', `Bearer ${tokenFirmante}`).expect(200)
+      ).body as { id: string; codigoAGC: string; estado: string; consorcioId?: string; visita: { autorizada?: boolean; autorizadoPor?: string } | null }[];
+      const m = maquinas.find((x) => x.consorcioId === edif.propio);
+      expect(m).toBeTruthy();
+
+      const authRes = await http().post('/api/firmante/autorizar').set('Authorization', `Bearer ${tokenFirmante}`).send({ maquinaId: m!.id });
+      expect(authRes.status).toBe(200);
+
+      // Reinicio de la aplicación NestJS contra la misma base PostgreSQL
+      await app.close();
+      const config = loadConfig();
+      app = await NestFactory.create(AppModule.register(config), { logger: false });
+      configureApp(app, config);
+      await app.init();
+
+      // Verificar que la visita sigue en el Portal Firmante con la autorización intacta
+      const despues = (
+        await http().get('/api/firmante/maquinas').set('Authorization', `Bearer ${tokenFirmante}`).expect(200)
+      ).body as { id: string; codigoAGC: string; estado: string; consorcioId?: string; visita: { autorizada?: boolean; autorizadoPor?: string } | null }[];
+      const mPost = despues.find((x) => x.consorcioId === edif.propio);
+      expect(mPost).toBeTruthy();
+      expect(mPost!.estado).toBe('Recorrida');
+      expect(mPost!.visita?.autorizada).toBe(true);
+      expect(mPost!.visita?.autorizadoPor).toBe(`${P}-firmante`);
+    });
+  });
 });

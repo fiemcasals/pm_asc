@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { obtenerChecklistParaTipo, type TipoMaquinaChecklist } from '../checklist/checklist.config';
-import { type RespuestasChecklist } from '../checklist/checklist.logic';
+import { type FotosPorEquipo, type RespuestasChecklist } from '../checklist/checklist.logic';
 import { type EquipoInspeccion } from '../checklist/navegacion';
+import { claveFotoObligatoria, fotosObligatoriasDelTipo, nuevaFotoObligatoria } from '../checklist/fotosObligatorias';
 import { armarInforme, dniValido, enviarInforme, selloCorto, erroresFirmante, erroresSinFirma, firmaTrazada, puedeConsolidar, type EstadoVisita, type Punto } from './consolidacion';
 
 // HU-18 RF-01: consolidar el informe y firmar.
@@ -14,8 +15,16 @@ const respuestasCompletas = (tipo: TipoMaquinaChecklist): RespuestasChecklist =>
       Object.fromEntries(s.subgrupos.flatMap((g) => g.items.map((i) => [i.id, i.opciones.find((o) => !o.esFalla && !o.fotoObligatoria)!.id]))),
     ]),
   );
+/** Las fotos obligatorias de un equipo en uso del tipo dado (HU-17 RF-11): frente y, si tiene cables de tracción, cables. */
+const fotosObligatorias = (id: string, tipo: TipoMaquinaChecklist = 'traccion'): FotosPorEquipo =>
+  Object.fromEntries(fotosObligatoriasDelTipo(tipo).map((f) => [claveFotoObligatoria(f), nuevaFotoObligatoria(f, { maquinaId: id, referenciaAgc: id.toUpperCase() }, { dataUrl: 'data:image/jpeg;base64,AAAA', sizeBytes: 3 })]));
 const vacia = (extra: Partial<EstadoVisita> = {}): EstadoVisita => ({ estadoPorEquipo: {}, respuestasPorEquipo: {}, obsPorEquipo: {}, fotosPorEquipo: {}, tipoOverride: {}, ...extra });
-const completa = (ids: string[]): EstadoVisita => vacia({ estadoPorEquipo: Object.fromEntries(ids.map((i) => [i, 'en_uso'])), respuestasPorEquipo: Object.fromEntries(ids.map((i) => [i, respuestasCompletas('traccion')])) });
+const completa = (ids: string[]): EstadoVisita =>
+  vacia({
+    estadoPorEquipo: Object.fromEntries(ids.map((i) => [i, 'en_uso'])),
+    respuestasPorEquipo: Object.fromEntries(ids.map((i) => [i, respuestasCompletas('traccion')])),
+    fotosPorEquipo: Object.fromEntries(ids.map((i) => [i, fotosObligatorias(i)])),
+  });
 const TRAZO: Punto[] = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8]);
 
 describe('puedeConsolidar (criterio 1: sólo con todo completo o resuelto como fuera de servicio)', () => {
@@ -69,7 +78,7 @@ describe('puedeConsolidar (criterio 1: sólo con todo completo o resuelto como f
   });
 
   it('el tipo cambiado a mano (hidráulico) se evalúa con el checklist de ese tipo', () => {
-    const v = vacia({ estadoPorEquipo: { m1: 'en_uso' }, respuestasPorEquipo: { m1: respuestasCompletas('traccion') }, tipoOverride: { m1: 'hidraulico' } });
+    const v = vacia({ estadoPorEquipo: { m1: 'en_uso' }, respuestasPorEquipo: { m1: respuestasCompletas('traccion') }, fotosPorEquipo: { m1: fotosObligatorias('m1', 'hidraulico') }, tipoOverride: { m1: 'hidraulico' } });
 
     expect(puedeConsolidar([equipo('m1')], v).puede).toBe(false); // las respuestas de tracción no cubren el aceite de batea
     v.respuestasPorEquipo.m1 = respuestasCompletas('hidraulico');
@@ -179,6 +188,104 @@ describe('armarInforme y enviarInforme', () => {
     expect(ok).toHaveBeenCalledWith('/api/informes-visita', expect.objectContaining({ method: 'POST' }));
     expect(await enviarInforme(cuerpo, vi.fn().mockResolvedValue(respuesta(400, { message: 'Datos inválidos', errores: ['La firma está vacía'] })))).toEqual({ ok: false, error: 'La firma está vacía' });
     expect(await enviarInforme(cuerpo, vi.fn().mockRejectedValue(new Error('Sin conexión')))).toEqual({ ok: false, error: 'Sin conexión' });
+  });
+});
+
+// HU-17 RF-11: las fotos obligatorias del equipo (frente de cabina y, con cables de tracción, cables) se exigen para consolidar.
+describe('puedeConsolidar con las fotos obligatorias (HU-17 RF-11)', () => {
+  const FRENTE = claveFotoObligatoria('frente');
+  const CABLES = claveFotoObligatoria('cables');
+
+  it('un equipo en uso sin ninguna foto bloquea y dice qué fotos faltan', () => {
+    const v = completa(['m1']);
+    v.fotosPorEquipo.m1 = {};
+
+    expect(puedeConsolidar([equipo('m1')], v)).toEqual({
+      puede: false,
+      pendientes: [{ equipo: 'M1', motivo: 'falta la foto de frente de cabina y botonera y cables de tracción' }],
+    });
+  });
+
+  it('si sólo falta la de cables (o sólo la del frente), dice cuál', () => {
+    const v = completa(['m1']);
+    delete v.fotosPorEquipo.m1[CABLES];
+    expect(puedeConsolidar([equipo('m1')], v).pendientes).toEqual([{ equipo: 'M1', motivo: 'falta la foto de cables de tracción' }]);
+
+    v.fotosPorEquipo.m1 = fotosObligatorias('m1');
+    delete v.fotosPorEquipo.m1[FRENTE];
+    expect(puedeConsolidar([equipo('m1')], v).pendientes).toEqual([{ equipo: 'M1', motivo: 'falta la foto de frente de cabina y botonera' }]);
+  });
+
+  it('la foto de anomalía de otro ítem no reemplaza a las obligatorias', () => {
+    const v = completa(['m1']);
+    v.fotosPorEquipo.m1 = { 'cabina:puerta': { ...fotosObligatorias('m1')[FRENTE], itemId: 'puerta' } };
+
+    expect(puedeConsolidar([equipo('m1')], v).puede).toBe(false);
+  });
+
+  it('un equipo hidráulico sólo necesita la del frente: no tiene cables de tracción', () => {
+    const v = vacia({ estadoPorEquipo: { m1: 'en_uso' }, respuestasPorEquipo: { m1: respuestasCompletas('hidraulico') }, fotosPorEquipo: { m1: { [FRENTE]: fotosObligatorias('m1')[FRENTE] } } });
+
+    expect(puedeConsolidar([equipo('m1', 'hidraulico')], v)).toEqual({ puede: true, pendientes: [] });
+  });
+
+  it('un montavehículos lleva las dos, como uno de tracción', () => {
+    const v = vacia({ estadoPorEquipo: { m1: 'en_uso' }, respuestasPorEquipo: { m1: respuestasCompletas('montavehiculos') }, fotosPorEquipo: { m1: { [FRENTE]: fotosObligatorias('m1')[FRENTE] } } });
+
+    expect(puedeConsolidar([equipo('m1', 'montavehiculos')], v).pendientes).toEqual([{ equipo: 'M1', motivo: 'falta la foto de cables de tracción' }]);
+  });
+
+  it('un equipo fuera de servicio no las necesita; si vuelve a ponerse en uso, sí', () => {
+    const v = completa(['m1']);
+    v.estadoPorEquipo.m2 = 'fuera_de_servicio';
+    expect(puedeConsolidar([equipo('m1'), equipo('m2')], v).puede).toBe(true);
+
+    v.estadoPorEquipo.m2 = 'en_uso';
+    v.respuestasPorEquipo.m2 = respuestasCompletas('traccion');
+    expect(puedeConsolidar([equipo('m1'), equipo('m2')], v).pendientes).toEqual([{ equipo: 'M2', motivo: expect.stringMatching(/falta la foto/) }]);
+  });
+
+  it('cambiar el tipo a hidráulico deja de exigir la de cables', () => {
+    const v = completa(['m1']);
+    v.respuestasPorEquipo.m1 = respuestasCompletas('hidraulico');
+    delete v.fotosPorEquipo.m1[CABLES];
+    v.tipoOverride.m1 = 'hidraulico';
+
+    expect(puedeConsolidar([equipo('m1')], v).puede).toBe(true);
+  });
+
+  it('junto a una solapa incompleta, el motivo dice las dos cosas en una sola línea por equipo', () => {
+    const v = completa(['m1']);
+    delete v.respuestasPorEquipo.m1.fosa;
+    v.fotosPorEquipo.m1 = {};
+
+    const { pendientes } = puedeConsolidar([equipo('m1')], v);
+
+    expect(pendientes).toHaveLength(1);
+    expect(pendientes[0].motivo).toBe('faltan completar: Fosa · falta la foto de frente de cabina y botonera y cables de tracción');
+  });
+});
+
+describe('armarInforme con las fotos obligatorias (HU-17 RF-11)', () => {
+  const cierre = { sinFirma: { motivo: 'El encargado no está', foto: 'data:image/jpeg;base64,AAAA' } };
+
+  it('el informe lleva las fotos obligatorias de cada equipo con la clave reservada', () => {
+    const v = completa(['m1']);
+
+    const cuerpo = armarInforme('c1', [equipo('m1')], v, cierre);
+
+    expect(Object.keys(cuerpo.equipos[0].fotos).sort()).toEqual([claveFotoObligatoria('cables'), claveFotoObligatoria('frente')]);
+    expect(cuerpo.equipos[0].fotos[claveFotoObligatoria('frente')]).toMatchObject({ itemId: 'obligatoria:frente', maquinaId: 'm1', dataUrl: 'data:image/jpeg;base64,AAAA' });
+  });
+
+  it('si el RT sacó la de cables y después cambió el tipo a hidráulico, esa foto no viaja', () => {
+    const v = completa(['m1']);
+    v.tipoOverride.m1 = 'hidraulico';
+
+    const cuerpo = armarInforme('c1', [equipo('m1')], v, cierre);
+
+    expect(cuerpo.equipos[0].tipo).toBe('hidraulico');
+    expect(Object.keys(cuerpo.equipos[0].fotos)).toEqual([claveFotoObligatoria('frente')]);
   });
 });
 

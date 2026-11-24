@@ -26,6 +26,8 @@ import {
   type FallaPisoRegistro,
 } from './fallasPiso';
 import { comprimirFotoAnomalia, type FotoAnomalia } from './fotos';
+import { FotosObligatoriasEquipo } from './FotosObligatoriasEquipo';
+import { claveFotoObligatoria, nuevaFotoObligatoria, type FotoObligatoriaId } from './fotosObligatorias';
 import { hora } from '../fechas/formato';
 import { fetchConSesion } from '../auth/sesion';
 import { CierreInforme } from '../informe/CierreInforme';
@@ -485,6 +487,30 @@ function InspeccionDeEdificio({ inspectorNombre, edificio }: { inspectorNombre: 
     }
   };
 
+  /** HU-17 RF-11: la foto del frente (y la de cables) que se saca en cada equipo en uso, aunque no haya fallas. */
+  const handleAdjuntarFotoObligatoria = async (id: FotoObligatoriaId, file: File | null) => {
+    if (!file) return;
+    setFotoError(null);
+    try {
+      const imagen = await comprimirFotoAnomalia(file);
+      const foto = nuevaFotoObligatoria(id, equipo, imagen);
+      setFotosPorEquipo((prev) => ({
+        ...prev,
+        [equipo.maquinaId]: { ...(prev[equipo.maquinaId] ?? {}), [claveFotoObligatoria(id)]: foto },
+      }));
+    } catch (err) {
+      setFotoError(err instanceof Error ? err.message : 'Error al procesar fotografía');
+    }
+  };
+
+  const handleQuitarFotoObligatoria = (id: FotoObligatoriaId) => {
+    setFotosPorEquipo((prev) => {
+      const actual = { ...(prev[equipo.maquinaId] ?? {}) };
+      delete actual[claveFotoObligatoria(id)];
+      return { ...prev, [equipo.maquinaId]: actual };
+    });
+  };
+
   const renderExtraEnSolapa = (solapa: ChecklistSolapaConfig) => {
     if (solapa.id !== 'accesos') return null;
     const fotosEquipo = fotosPorEquipo[equipo.maquinaId] ?? {};
@@ -860,6 +886,16 @@ function InspeccionDeEdificio({ inspectorNombre, edificio }: { inspectorNombre: 
             </>
           )}
         </div>
+      )}
+
+      {respondido && estadoActual === 'en_uso' && (
+        <FotosObligatoriasEquipo
+          referenciaAgc={equipo.referenciaAgc}
+          tipo={tipoActual}
+          fotos={fotosPorEquipo[equipo.maquinaId] ?? {}}
+          onAdjuntar={(id, archivo) => void handleAdjuntarFotoObligatoria(id, archivo)}
+          onQuitar={handleQuitarFotoObligatoria}
+        />
       )}
 
       {respondido && (

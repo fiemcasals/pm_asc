@@ -119,6 +119,11 @@ export class FirmanteService implements OnApplicationBootstrap {
     }
   }
 
+  /** HU-08 RF-06: retira las máquinas de ejemplo de la vista de firma */
+  limpiarMaquinasDeEjemplo(): void {
+    this.maquinas = this.maquinas.filter((m) => Boolean(m.consorcioId));
+  }
+
   resetSeed(): void {
     this.avisos = [];
     this.guardadas = new Map();
@@ -368,6 +373,8 @@ export class FirmanteService implements OnApplicationBootstrap {
       this.maquinas = this.maquinas.filter((m) => m.consorcioId !== consorcioId);
       return;
     }
+    // HU-08 RF-06: al aplicar la terna de un edificio real, se retiran las máquinas de ejemplo de la vista de firma
+    this.limpiarMaquinasDeEjemplo();
     const edificio = { id: consorcioId, direccion: vista.direccion, administracion: vista.administracion ?? '', consorcio: vista.nombre };
     const mes = new Date().toISOString().slice(0, 7);
     const ids = new Set(vista.maquinas.map((q) => `MAQ-${consorcioId}-${q.id}`));

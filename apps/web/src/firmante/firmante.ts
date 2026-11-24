@@ -2,9 +2,12 @@ import { fetchConSesion } from '../auth/sesion';
 export type EstadoVisita = 'Recorrida' | 'Pendiente de Visita' | 'Advertencia';
 
 export interface FotosObligatorias {
-  cables: string;
+  /** Sólo los equipos con cables de tracción la llevan: un hidráulico no (HU-08 RF-08). */
+  cables?: string | null;
   frente: string;
 }
+
+export type TipoMaquina = 'traccion' | 'hidraulico' | 'montavehiculos';
 
 export interface VisitaInspeccion {
   id: string;
@@ -31,6 +34,8 @@ export interface EdificioConsorcio {
 export interface MaquinaAsignada {
   id: string;
   codigoAGC: string;
+  /** Sin dato, se toma como de tracción. */
+  tipo?: TipoMaquina;
   nombre: string;
   edificio: EdificioConsorcio;
   eca: string;
@@ -56,8 +61,16 @@ export interface AutorizarFirmaResponse {
 }
 
 /**
+ * ¿Esta máquina necesita la foto de los cables para autorizarse? Un hidráulico no tiene cables de tracción (HU-08 RF-08): sólo lleva la
+ * del frente. Tracción y montavehículos, o una máquina sin tipo cargado (se toma como de tracción), llevan las dos.
+ */
+export function requiereFotoDeCables(maquina: Pick<MaquinaAsignada, 'tipo'>): boolean {
+  return maquina.tipo !== 'hidraulico';
+}
+
+/**
  * Valida si una máquina está en condiciones técnicas y legales para ser autorizada ante AGC.
- * Criterio HU-08: Solo en estado Recorrida, con fotos obligatorias (cables, frente) y firma del encargado.
+ * Criterio HU-08: Solo en estado Recorrida, con fotos obligatorias (frente, y cables si el equipo los tiene) y firma del encargado.
  */
 export function puedeAutorizar(maquina: MaquinaAsignada): boolean {
   if (maquina.estado !== 'Recorrida' || !maquina.visita) {
@@ -65,7 +78,7 @@ export function puedeAutorizar(maquina: MaquinaAsignada): boolean {
   }
   const visita = maquina.visita;
   const tieneFotos =
-    Boolean(visita.fotosObligatorias?.cables?.trim()) &&
+    (!requiereFotoDeCables(maquina) || Boolean(visita.fotosObligatorias?.cables?.trim())) &&
     Boolean(visita.fotosObligatorias?.frente?.trim());
   const tieneFirma = Boolean(visita.firmaEncargado?.trim());
 
@@ -87,7 +100,7 @@ export function obtenerMotivoBloqueo(maquina: MaquinaAsignada): string | null {
   }
   if (maquina.estado === 'Recorrida' && maquina.visita) {
     const visita = maquina.visita;
-    const faltaCables = !visita.fotosObligatorias?.cables?.trim();
+    const faltaCables = requiereFotoDeCables(maquina) && !visita.fotosObligatorias?.cables?.trim();
     const faltaFrente = !visita.fotosObligatorias?.frente?.trim();
     if (faltaCables && faltaFrente) {
       return 'Faltan fotos obligatorias de cables y frente de cabina';

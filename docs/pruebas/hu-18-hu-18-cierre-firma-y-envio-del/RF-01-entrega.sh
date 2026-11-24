@@ -50,7 +50,7 @@ informe() {
     const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgGAWjgAIAAAUAAXlFbpoAAAAASUVORK5CYII=";
     const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD";
     const trazo = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8]);
-    const equipo = (id, ref) => ({ maquinaId: id, referenciaAgc: ref, tipo: "traccion", estadoEquipo: "en_uso", respuestas: { sala_maquinas: { entorno_iluminacion: "normal" } }, observaciones: {}, fotos: {} });
+    const equipo = (id, ref) => ({ maquinaId: id, referenciaAgc: ref, tipo: "traccion", estadoEquipo: "en_uso", respuestas: { sala_maquinas: { entorno_iluminacion: "normal" } }, observaciones: {}, fotos: { "obligatoria:frente": { dataUrl: JPG }, "obligatoria:cables": { dataUrl: JPG } } }); // HU-18 RF-02: cada equipo en uso trae el frente y los cables
     const firma = { nombre: "Carlos", apellido: "Rodriguez", caracter: "Encargado", dni: "12.345.678", imagen: PNG, trazos: [trazo] };
     for (const e of extra) { const [k, v] = e.split("="); if (v === "~") delete firma[k]; else firma[k] = v; }
     const c = { consorcioId: edif, horaDispositivo: new Date().toISOString(), equipos: [equipo("m1", "M1"), { ...equipo("m2", "M2"), estadoEquipo: "fuera_de_servicio" }] };

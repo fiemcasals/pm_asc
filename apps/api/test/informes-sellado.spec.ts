@@ -4,6 +4,7 @@ import { canonicalizar, contenidoSellado, hashInforme } from '../src/informes/in
 import { InMemoryInformesRepository } from '../src/informes/informes.repository';
 import { InformesService, MENSAJE_INFORME_CERRADO } from '../src/informes/informes.service';
 import { ContenidoSellado, VERSION_HASH } from '../src/informes/informes.types';
+import { fotosObligatorias } from './fotos-obligatorias';
 
 // HU-18 RNF-01: el sello del informe cerrado (SHA-256), la verificación y los intentos de modificarlo.
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgGAWjgAIAAAUAAXlFbpoAAAAASUVORK5CYII=';
@@ -12,7 +13,7 @@ const TRAZO = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8
 const sha = (texto: string) => createHash('sha256').update(texto, 'utf8').digest('hex');
 const cuerpo = (extra: Record<string, unknown> = {}) => ({
   consorcioId: 'c1', horaDispositivo: '2026-11-17T13:00:00.000Z',
-  equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: { cabina: { a: 'ok' } }, observaciones: { cabina: 'Sin novedades' }, fotos: { f1: { dataUrl: JPG } } }],
+  equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: { cabina: { a: 'ok' } }, observaciones: { cabina: 'Sin novedades' }, fotos: { f1: { dataUrl: JPG }, ...fotosObligatorias() } }],
   firma: { nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', imagen: PNG, trazos: [TRAZO] }, ...extra,
 });
 
@@ -36,7 +37,7 @@ describe('canonicalizar (criterio 1: el hash no depende del orden de las claves)
 describe('hashInforme (criterio 1: SHA-256 del contenido, la firma y las fotos)', () => {
   const base = (): ContenidoSellado => ({
     id: 'i1', consorcioId: 'c1', usuario: 'rt1', requiereRevision: false, horaDispositivo: '2026-11-17T13:00:00.000Z', horaServidor: '2026-11-17T13:00:05.000Z',
-    equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: { cabina: 'ok' }, fotos: { f1: { dataUrl: JPG } } }],
+    equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: { cabina: 'ok' }, fotos: { f1: { dataUrl: JPG }, ...fotosObligatorias() } }],
     firma: { nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', dni: null, imagen: PNG, trazos: [[[10, 10], [20, 20]]] }, sinFirma: null,
   });
 
@@ -59,6 +60,8 @@ describe('hashInforme (criterio 1: SHA-256 del contenido, la firma y las fotos)'
   });
   it.each([
     ['una foto', (c: ContenidoSellado) => { (c.equipos[0].fotos.f1 as { dataUrl: string }).dataUrl = JPG + 'A'; }],
+    ['la foto obligatoria del frente de cabina', (c: ContenidoSellado) => { (c.equipos[0].fotos['obligatoria:frente'] as { dataUrl: string }).dataUrl = JPG + 'A'; }],
+    ['la foto obligatoria de los cables', (c: ContenidoSellado) => { delete c.equipos[0].fotos['obligatoria:cables']; }],
     ['la imagen de la firma', (c: ContenidoSellado) => { c.firma!.imagen = PNG + 'A'; }],
     ['un trazo de la firma', (c: ContenidoSellado) => { c.firma!.trazos[0][0][0] = 11; }],
     ['el nombre del firmante', (c: ContenidoSellado) => { c.firma!.nombre = 'Carla'; }],
@@ -130,6 +133,28 @@ describe('InformesService: cerrar, verificar y rechazar modificaciones (HU-18 RN
 
       expect(b.hashSha256).not.toBe(a.hashSha256);
     });
+    it('las fotos obligatorias quedan dentro de lo sellado: cambiar la del frente cambia el sello, y el informe las conserva tal como llegaron', async () => {
+      const a = await service.crear(cuerpo(), 'rt1');
+      const otro = cuerpo();
+      (otro.equipos[0].fotos as Record<string, { dataUrl: string }>)['obligatoria:frente'].dataUrl = JPG + 'BBBB';
+      jest.setSystemTime(new Date('2026-11-17T13:00:05.000Z'));
+      const b = await service.crear(otro, 'rt1');
+
+      expect(b.hashSha256).not.toBe(a.hashSha256);
+      expect(Object.keys(a.equipos[0].fotos).sort()).toEqual(['f1', 'obligatoria:cables', 'obligatoria:frente']);
+      expect((a.equipos[0].fotos['obligatoria:frente'] as { dataUrl: string }).dataUrl).toBe(JPG);
+    });
+    it('un informe cerrado antes de HU-18 RF-02 (sin fotos obligatorias) se sigue leyendo, listando y verificando: la regla se aplica sólo al cerrar', async () => {
+      const i = await service.crear(cuerpo(), 'rt1');
+      const viejo = repo.informes[0];
+      delete viejo.equipos[0].fotos['obligatoria:frente'];
+      delete viejo.equipos[0].fotos['obligatoria:cables'];
+      viejo.hashSha256 = hashInforme(contenidoSellado(viejo)); // como si se hubiera sellado así, antes de la regla
+
+      expect(Object.keys((await service.obtener(i.id)).equipos[0].fotos)).toEqual(['f1']);
+      expect(await service.listar()).toHaveLength(1);
+      expect(await service.verificar(i.id, { usuario: 'sec1', rol: 'secretaria' })).toMatchObject({ coincide: true });
+    });
     it('el listado trae el hash (sin la firma ni las fotos)', async () => {
       const i = await service.crear(cuerpo(), 'rt1');
 
@@ -152,6 +177,8 @@ describe('InformesService: cerrar, verificar y rechazar modificaciones (HU-18 RN
     });
     it.each([
       ['una foto', (r: InMemoryInformesRepository) => { (r.informes[0].equipos[0].fotos.f1 as { dataUrl: string }).dataUrl = JPG + 'X'; }],
+      ['la foto obligatoria del frente de cabina', (r: InMemoryInformesRepository) => { (r.informes[0].equipos[0].fotos['obligatoria:frente'] as { dataUrl: string }).dataUrl = JPG + 'X'; }],
+      ['la foto obligatoria de los cables', (r: InMemoryInformesRepository) => { delete r.informes[0].equipos[0].fotos['obligatoria:cables']; }],
       ['la firma', (r: InMemoryInformesRepository) => { r.informes[0].firma!.imagen = PNG + 'X'; }],
       ['una observación', (r: InMemoryInformesRepository) => { r.informes[0].equipos[0].observaciones.cabina = 'Alterada'; }],
       ['la hora del servidor', (r: InMemoryInformesRepository) => { r.informes[0].horaServidor = '2026-11-17T13:00:06.000Z'; }],

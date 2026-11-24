@@ -19,6 +19,7 @@ import {
   MaquinaAsignada,
   RechazarInformeDto,
   RechazarInformeResponse,
+  requiereFotoDeCables,
   VisitaInspeccion,
   VistaTernaEdificio,
 } from './firmante.types';
@@ -434,16 +435,15 @@ export class FirmanteService implements OnApplicationBootstrap {
       throw new ConflictException('No se puede autorizar: el informe fue rechazado y volvió a la Secretaría.');
     }
 
-    // Validación 2: Fotos obligatorias (cables y frente)
-    if (
-      !visita.fotosObligatorias ||
-      !visita.fotosObligatorias.cables ||
-      visita.fotosObligatorias.cables.trim() === '' ||
-      !visita.fotosObligatorias.frente ||
-      visita.fotosObligatorias.frente.trim() === ''
-    ) {
+    // Validación 2: Fotos obligatorias. El frente siempre; los cables sólo si el equipo los tiene (un hidráulico no, HU-08 RF-08).
+    const exigeCables = requiereFotoDeCables(maquina.tipo);
+    const fotos = visita.fotosObligatorias;
+    const falta = !fotos?.frente?.trim() || (exigeCables && !fotos?.cables?.trim());
+    if (falta) {
       throw new BadRequestException(
-        'No se puede autorizar: la visita debe contar con fotos obligatorias de cables y frente',
+        exigeCables
+          ? 'No se puede autorizar: la visita debe contar con fotos obligatorias de cables y frente'
+          : 'No se puede autorizar: la visita debe contar con la foto obligatoria del frente de cabina (un equipo hidráulico no lleva foto de cables)',
       );
     }
 

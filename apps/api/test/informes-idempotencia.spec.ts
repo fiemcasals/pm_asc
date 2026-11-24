@@ -2,13 +2,14 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { contenidoSellado, hashInforme, validarInforme } from '../src/informes/informes.logic';
 import { InMemoryInformesRepository } from '../src/informes/informes.repository';
 import { InformesService } from '../src/informes/informes.service';
+import { fotosObligatorias } from './fotos-obligatorias';
 
 // HU-18 RNF-02 (servidor): reenviar el mismo informe no lo duplica, gracias al identificador generado en el celular.
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgGAWjgAIAAAUAAXlFbpoAAAAASUVORK5CYII=';
 const TRAZO = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8]);
 const cuerpo = (extra: Record<string, unknown> = {}) => ({
   consorcioId: 'c1', horaDispositivo: '2026-11-17T13:00:00.000Z',
-  equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: {}, fotos: {} }],
+  equipos: [{ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: {}, fotos: fotosObligatorias() }],
   firma: { nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', imagen: PNG, trazos: [TRAZO] }, ...extra,
 });
 const ID = '3f2b8a4e-5c1d-4e7a-9b60-1d2c3e4f5a6b';

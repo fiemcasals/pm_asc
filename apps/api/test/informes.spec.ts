@@ -1,12 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { firmaTrazada, normalizarDni, validarInforme } from '../src/informes/informes.logic';
 import { Punto } from '../src/informes/informes.types';
+import { fotosObligatorias } from './fotos-obligatorias';
 
 // HU-18 RF-01: el informe consolidado con la firma del encargado o «Sin firma».
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgGAWjgAIAAAUAAXlFbpoAAAAASUVORK5CYII=';
 const JPG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD';
 const TRAZO: Punto[] = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8] as Punto);
-const equipo = (extra: Record<string, unknown> = {}) => ({ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: {}, fotos: {}, ...extra });
+const equipo = (extra: Record<string, unknown> = {}) => ({ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: {}, observaciones: {}, fotos: fotosObligatorias(), ...extra });
 const firma = (extra: Record<string, unknown> = {}) => ({ nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', imagen: PNG, trazos: [TRAZO], ...extra });
 const base = (extra: Record<string, unknown> = {}) => ({ consorcioId: 'c1', horaDispositivo: '2026-11-17T13:00:00Z', equipos: [equipo()], firma: firma(), ...extra });
 const errores = (cuerpo: unknown): string[] => {
@@ -169,6 +170,118 @@ describe('validarInforme', () => {
     });
     it('junta los errores en una sola respuesta', () => {
       expect(errores({ equipos: [] }).length).toBeGreaterThanOrEqual(3);
+    });
+  });
+});
+
+// HU-18 RF-02: cada equipo en uso trae la foto del frente de cabina y, si tiene cables de tracción, la de cables.
+describe('fotos obligatorias de cada equipo en uso (HU-18 RF-02)', () => {
+  const conFotos = (extra: Record<string, unknown>, fotos: Record<string, unknown>) => base({ equipos: [equipo({ ...extra, fotos })] });
+  const FRENTE = { 'obligatoria:frente': { dataUrl: JPG } };
+  const CABLES = { 'obligatoria:cables': { dataUrl: JPG } };
+
+  describe('criterio 1: un equipo en uso sin la foto del frente → 400 que nombra el equipo y la foto', () => {
+    it('sin ninguna foto dice las dos que faltan, con el equipo', () => {
+      const e = errores(conFotos({}, {}));
+
+      expect(e).toHaveLength(2);
+      expect(e[0]).toMatch(/El equipo M1 \(equipos\[0\]\) no trae la foto de frente de cabina y botonera \(obligatoria:frente\)/);
+      expect(e[1]).toMatch(/no trae la foto de cables de tracción \(obligatoria:cables\)/);
+    });
+    it('con la de cables pero sin la del frente, dice sólo la del frente', () => {
+      const e = errores(conFotos({}, CABLES));
+
+      expect(e).toHaveLength(1);
+      expect(e[0]).toMatch(/frente de cabina y botonera/);
+    });
+    it('una foto de anomalía de otro ítem no reemplaza a la obligatoria', () => {
+      expect(errores(conFotos({}, { ...CABLES, 'cabina:puerta': { dataUrl: JPG } })).join(' ')).toMatch(/frente de cabina y botonera/);
+    });
+    it('el rechazo es un 400 «Datos inválidos» con la lista de errores', () => {
+      let respuesta: { message: string; errores: string[] } | undefined;
+      try {
+        validarInforme(conFotos({}, {}));
+      } catch (e) {
+        respuesta = (e as BadRequestException).getResponse() as { message: string; errores: string[] };
+        expect((e as BadRequestException).getStatus()).toBe(400);
+      }
+
+      expect(respuesta?.message).toBe('Datos inválidos');
+      expect(respuesta?.errores.length).toBeGreaterThan(0);
+    });
+    it('con varios equipos, cada uno dice el suyo', () => {
+      const e = errores(base({ equipos: [equipo({ maquinaId: 'm1', referenciaAgc: 'M1' }), equipo({ maquinaId: 'm2', referenciaAgc: 'M2', fotos: FRENTE }), equipo({ maquinaId: 'm3', referenciaAgc: 'M3', fotos: {} })] }));
+
+      expect(e.some((x) => /equipos\[1\]/.test(x) && /cables de tracción/.test(x))).toBe(true);
+      expect(e.some((x) => /equipos\[2\]/.test(x) && /frente de cabina/.test(x))).toBe(true);
+      expect(e.some((x) => /equipos\[0\]/.test(x))).toBe(false);
+    });
+  });
+
+  describe('criterio 2: tracción y montavehículos llevan la de cables; el hidráulico no', () => {
+    it('tracción sin la de cables → 400', () => {
+      expect(errores(conFotos({ tipo: 'traccion' }, FRENTE)).join(' ')).toMatch(/cables de tracción \(obligatoria:cables\)/);
+    });
+    it('montavehículos sin la de cables → 400', () => {
+      expect(errores(conFotos({ tipo: 'montavehiculos' }, FRENTE)).join(' ')).toMatch(/cables de tracción/);
+    });
+    it('hidráulico con sólo la del frente → se acepta', () => {
+      expect(errores(conFotos({ tipo: 'hidraulico' }, FRENTE))).toEqual([]);
+    });
+    it('hidráulico sin la del frente → 400 (el frente se pide siempre)', () => {
+      expect(errores(conFotos({ tipo: 'hidraulico' }, {})).join(' ')).toMatch(/frente de cabina y botonera/);
+    });
+    it('con las dos, tracción y montavehículos se aceptan', () => {
+      expect(errores(conFotos({ tipo: 'traccion' }, { ...FRENTE, ...CABLES }))).toEqual([]);
+      expect(errores(conFotos({ tipo: 'montavehiculos' }, { ...FRENTE, ...CABLES }))).toEqual([]);
+    });
+  });
+
+  describe('criterio 3: la foto tiene que ser una imagen de hasta 2 MB', () => {
+    const conFrente = (foto: unknown) => errores(conFotos({ tipo: 'hidraulico' }, { 'obligatoria:frente': foto })).join(' ');
+
+    it('jpeg, png y webp se aceptan', () => {
+      for (const t of ['jpeg', 'png', 'webp']) expect(conFrente({ dataUrl: `data:image/${t};base64,AAAA` })).toBe('');
+    });
+    it('un texto, otro tipo de archivo o una data URL rota → 400 que dice cuál es', () => {
+      for (const dataUrl of ['hola', 'data:text/html;base64,PGgxPg==', 'data:image/gif;base64,AAAA', 'data:image/jpeg;base64,', 'data:image/jpeg;base64,***']) {
+        expect(conFrente({ dataUrl })).toMatch(/la foto de frente de cabina y botonera \(obligatoria:frente\) tiene que ser una imagen en data URL/);
+      }
+    });
+    it('una foto sin dataUrl, o que no es un objeto → 400', () => {
+      for (const foto of [{}, { dataUrl: 5 }, 'x', 7, []]) expect(conFrente(foto)).toMatch(/tiene que ser una imagen/);
+    });
+    it('2.000.000 caracteres entra; uno más no', () => {
+      const ok = `data:image/jpeg;base64,${'A'.repeat(2_000_000 - 'data:image/jpeg;base64,'.length)}`;
+
+      expect(conFrente({ dataUrl: ok })).toBe('');
+      expect(conFrente({ dataUrl: `${ok}A` })).toMatch(/hasta 2 MB/);
+    });
+    it('la de cables se controla igual que la del frente', () => {
+      expect(errores(conFotos({ tipo: 'traccion' }, { ...FRENTE, 'obligatoria:cables': { dataUrl: 'hola' } })).join(' ')).toMatch(/cables de tracción \(obligatoria:cables\) tiene que ser una imagen/);
+    });
+  });
+
+  describe('criterio 4: un equipo fuera de servicio no las necesita', () => {
+    it('sin fotos se acepta', () => {
+      expect(errores(conFotos({ estadoEquipo: 'fuera_de_servicio' }, {}))).toEqual([]);
+    });
+    it('un equipo en uso y otro fuera de servicio: sólo el primero pide fotos', () => {
+      const e = errores(base({ equipos: [equipo({ fotos: { ...FRENTE, ...CABLES } }), equipo({ maquinaId: 'm2', referenciaAgc: 'M2', estadoEquipo: 'fuera_de_servicio', fotos: {} })] }));
+
+      expect(e).toEqual([]);
+    });
+  });
+
+  describe('los demás errores del equipo no se duplican con los de las fotos', () => {
+    it('un tipo o un estado inválido sólo dice lo suyo; `fotos` que no es un objeto, también', () => {
+      const e = errores(conFotos({ tipo: 'volador' }, {})).join(' ');
+      expect(e).toMatch(/equipos\[0\]\.tipo/);
+      expect(e).not.toMatch(/obligatoria:/);
+
+      const f = errores(base({ equipos: [equipo({ fotos: 'no-es-un-objeto' })] })).join(' ');
+      expect(f).toMatch(/equipos\[0\]\.fotos tiene que ser un objeto/);
+      expect(f).not.toMatch(/obligatoria:/);
     });
   });
 });

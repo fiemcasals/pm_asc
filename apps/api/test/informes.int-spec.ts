@@ -7,6 +7,7 @@ import { configureApp } from '../src/app.setup';
 import { loadConfig } from '../src/config';
 import { loadEnvFileInto } from '../src/env-file';
 import { asegurarUsuarioPrueba } from './test-auth-helper';
+import { fotosObligatorias } from './fotos-obligatorias';
 
 // Integración real (HU-18 RF-01): el informe se guarda en la base con RLS y sin posibilidad de edición. Requiere `npm run db:up` y
 // DATABASE_URL, DATABASE_APP_PASSWORD y AUTH_JWT_SECRET.
@@ -62,7 +63,7 @@ describe('Informe consolidado de la visita contra PostgreSQL real (HU-18 RF-01)'
   });
 
   const http = () => request(app.getHttpServer());
-  const equipo = () => ({ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: { sala_maquinas: { item1: 'ok' } }, observaciones: { sala_maquinas: 'Sin novedades' }, fotos: {} });
+  const equipo = () => ({ maquinaId: 'm1', referenciaAgc: 'M1', tipo: 'traccion', estadoEquipo: 'en_uso', respuestas: { sala_maquinas: { item1: 'ok' } }, observaciones: { sala_maquinas: 'Sin novedades' }, fotos: fotosObligatorias() });
   const informe = (clave: string, extra: Record<string, unknown> = {}) => ({
     consorcioId: edif[clave], horaDispositivo: new Date().toISOString(), equipos: [equipo()],
     firma: { nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', dni: '12345678', imagen: PNG, trazos: [TRAZO] }, ...extra,
@@ -144,9 +145,46 @@ describe('Informe consolidado de la visita contra PostgreSQL real (HU-18 RF-01)'
   });
 
   it('acepta un informe con fotos de más de 100 KB (límite del cuerpo de 25 MB)', async () => {
-    const grande = { ...equipo(), fotos: { a: { dataUrl: `data:image/jpeg;base64,${'A'.repeat(600_000)}` } } };
+    const grande = { ...equipo(), fotos: { ...fotosObligatorias(), a: { dataUrl: `data:image/jpeg;base64,${'A'.repeat(600_000)}` } } };
 
     expect((await cerrar(tokenRt, informe('propio', { equipos: [grande] }))).status).toBe(201);
+  });
+
+  describe('HU-18 RF-02: fotos obligatorias contra la base real', () => {
+    const filas = async () => Number((await admin.query('SELECT count(*) AS n FROM informes_visita WHERE usuario = $1', [`${P}-rt`])).rows[0].n);
+
+    it('un informe con un equipo en uso sin sus fotos obligatorias → 400 con el equipo y la foto, y no queda ninguna fila nueva', async () => {
+      const antes = await filas();
+
+      const res = await cerrar(tokenRt, informe('propio', { equipos: [{ ...equipo(), fotos: {} }] }));
+
+      expect(res.status).toBe(400);
+      expect(res.body.errores).toEqual([
+        expect.stringContaining('El equipo M1 (equipos[0]) no trae la foto de frente de cabina y botonera (obligatoria:frente)'),
+        expect.stringContaining('no trae la foto de cables de tracción (obligatoria:cables)'),
+      ]);
+      expect(await filas()).toBe(antes);
+    });
+
+    it('un hidráulico sólo con el frente se guarda, y un equipo fuera de servicio sin fotos también', async () => {
+      const hidraulico = await cerrar(tokenRt, informe('propio', { equipos: [{ ...equipo(), tipo: 'hidraulico', fotos: fotosObligatorias('hidraulico') }] }));
+      const fuera = await cerrar(tokenRt, informe('propio', { equipos: [{ ...equipo(), estadoEquipo: 'fuera_de_servicio', fotos: {} }] }));
+
+      expect([hidraulico.status, fuera.status]).toEqual([201, 201]);
+    });
+
+    it('las fotos obligatorias quedan guardadas dentro del contenido sellado; cambiar una por fuera de la API se detecta', async () => {
+      const res = await cerrar(tokenRt, informe('propio'));
+      expect(res.status).toBe(201);
+      const [fila] = (await admin.query("SELECT contenido->'equipos'->0->'fotos' AS fotos FROM informes_visita WHERE id = $1", [res.body.id])).rows;
+      expect(Object.keys(fila.fotos).sort()).toEqual(['obligatoria:cables', 'obligatoria:frente']);
+      expect((await http().post(`/api/informes-visita/${res.body.id}/verificar`).set('Authorization', `Bearer ${tokenSec}`)).body).toMatchObject({ coincide: true });
+
+      await admin.query("UPDATE informes_visita SET contenido = jsonb_set(contenido, '{equipos,0,fotos,obligatoria:frente,dataUrl}', '\"data:image/jpeg;base64,AAAA\"') WHERE id = $1", [res.body.id]);
+
+      const v = await http().post(`/api/informes-visita/${res.body.id}/verificar`).set('Authorization', `Bearer ${tokenAdmin}`);
+      expect(v.body).toMatchObject({ coincide: false, hashGuardado: res.body.hashSha256 });
+    });
   });
 
   describe('HU-18 RNF-01: sellado contra la base real', () => {

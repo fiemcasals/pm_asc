@@ -46,7 +46,7 @@ node -e '
   const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD";
   const trazo = Array.from({ length: 12 }, (_, i) => [10 + i * 5, 40 + (i % 3) * 8]);
   const c = { consorcioId: process.argv[1], horaDispositivo: new Date(Date.now() - 120000).toISOString(), horaServidor: "2020-01-01T00:00:00Z", hashSha256: "a".repeat(64),
-    equipos: [{ maquinaId: "m1", referenciaAgc: "M1", tipo: "traccion", estadoEquipo: "en_uso", respuestas: { cabina: { a: "ok" } }, observaciones: { cabina: "Sin novedades" }, fotos: { f1: { dataUrl: JPG } } }],
+    equipos: [{ maquinaId: "m1", referenciaAgc: "M1", tipo: "traccion", estadoEquipo: "en_uso", respuestas: { cabina: { a: "ok" } }, observaciones: { cabina: "Sin novedades" }, fotos: { f1: { dataUrl: JPG }, "obligatoria:frente": { dataUrl: JPG }, "obligatoria:cables": { dataUrl: JPG } } }],
     firma: { nombre: "Carlos", apellido: "Rodriguez", caracter: "Encargado", imagen: PNG, trazos: [trazo] } };
   process.stdout.write(JSON.stringify(c));
 ' "$EDIF" > "$TMP/i.json"

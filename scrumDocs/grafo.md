@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-24T13:29:59.049Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-24T13:41:56.036Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -66,6 +66,7 @@ graph TD
     REQ_1795263641491["RF-06: Retirar las máquinas de ejemplo de la vista de firma"]
     REQ_1795266849123["RF-07: Que el informe cerrado por el RT cree la visita en el Portal Firmante"]
     REQ_1795480710843["RF-08: El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción"]
+    REQ_1795527710974["RF-09: Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]
@@ -79,6 +80,7 @@ graph TD
     REQ_1794582638119["RF-05: Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta"]
     REQ_1794842211977["RF-06: FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA"]
     REQ_1795004203523["RF-07: FIX: Los símbolos del remito PDF salen como caracteres rotos"]
+    REQ_1795527711177["RF-08: Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
     REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]

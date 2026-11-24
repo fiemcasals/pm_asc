@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T00:38:31.787Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T00:38:51.811Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -85,33 +85,33 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 77 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
 | 78 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
 | 79 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
-| 80 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Hacer | germanG | RF-05 | — |
-| 81 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
-| 82 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
-| 83 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 84 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
-| 85 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
-| 86 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 87 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 88 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
-| 89 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 90 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
-| 91 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
-| 92 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
-| 93 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-03 | — |
-| 94 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
-| 95 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 96 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
-| 97 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 98 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
-| 99 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 100 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
-| 101 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, RF-01, RF-01 | — |
-| 102 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
-| 103 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
-| 104 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
-| 105 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | Hacer | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
-| 106 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
+| 80 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
+| 81 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
+| 82 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
+| 83 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
+| 84 | RF-01 | Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica | HU-11 | — | — | tested ✓ | gonza | RF-02 | — |
+| 85 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 86 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 87 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
+| 88 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 89 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
+| 90 | RF-02 | Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo | HU-11 | — | — | tested ✓ | gonza | RF-01 | — |
+| 91 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
+| 92 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-03 | — |
+| 93 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
+| 94 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 95 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
+| 96 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 97 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
+| 98 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 99 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
+| 100 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, RF-01, RF-01 | — |
+| 101 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
+| 102 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
+| 103 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
+| 104 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | Hacer | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
+| 105 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
+| 106 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Hacer | germanG | RF-05, RF-07 | — |
 | 107 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle
@@ -440,10 +440,6 @@ Rama: feature/hu-17-hu-17-inspeccion-tecnica-por-s/req-1794494000545-motor-del-c
 - Nota: PATCH status=pr_open rechazado por Scrum API con 400 "No podés pedir el merge de una Tarea sin condiciones de aprobación (campo acceptanceCriteria)" pese a que acceptanceCriteria tiene 5 ítems y 10 tests generados.
 - Estimado: 5h
 
-### RF-06 — Retirar las máquinas de ejemplo de la vista de firma
-Re-estimada de 4 h a 14 h (21/11/2026). Las 5 m�quinas de ejemplo de FirmanteService.resetSeed (MAQ-CORRIENTES-M1/M2, MAQ-SANTAFE-M1/M2, MAQ-CALLAO-M1, firmante gonza) aparecen en 53 archivos: 29 pruebas de la API, 8 de la web y 16 scripts de entrega (HU-05, HU-06, HU-08, HU-10, HU-11). Desglose sugerido: 1) un ayudante de pruebas que cree edificios con terna y sus m�quinas, y pasar las pruebas de la API y la web a usarlo (~8 h); 2) quitar resetSeed y adaptar los scripts de entrega a los datos de demo (~6 h). Conviene partirla en dos Tareas.
-- Estimado: 14
-
 ### RF-08 — Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio
 Tabla informes_falla (migraci�n 037, client_report_id �nico, RLS, sin DELETE); carga al arrancar sin volver a emitir eventos; guarda en orden; el reintento no duplica ni avisa. Estado del ascensor por HU-17 RF-09. e2e 7/7, int 1/1, verify API 1250 web 616, int 197/197; RF-08-entrega.sh 12/12 con reinicio real. Depende de #103, #104 y #105. PR #108.
 - Estimado: 8
@@ -559,6 +555,10 @@ Implementacion completa de HU-11 RF-04 a nombre de gonza (PR #83 contra dev). Wh
 
 ### RF-06 — Link del aviso de WhatsApp sin contraseña y válido por 7 días
 - Estimado: 3h
+
+### RF-06 — Retirar las máquinas de ejemplo de la vista de firma
+Re-estimada de 4 h a 14 h (21/11/2026). Las 5 m�quinas de ejemplo de FirmanteService.resetSeed (MAQ-CORRIENTES-M1/M2, MAQ-SANTAFE-M1/M2, MAQ-CALLAO-M1, firmante gonza) aparecen en 53 archivos: 29 pruebas de la API, 8 de la web y 16 scripts de entrega (HU-05, HU-06, HU-08, HU-10, HU-11). Desglose sugerido: 1) un ayudante de pruebas que cree edificios con terna y sus m�quinas, y pasar las pruebas de la API y la web a usarlo (~8 h); 2) quitar resetSeed y adaptar los scripts de entrega a los datos de demo (~6 h). Conviene partirla en dos Tareas.
+- Estimado: 14
 
 ### RF-11 — Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio
 Tabla avisos_falla (migraci�n 035, RLS Secretar�a/Admin, sin DELETE); AvisosRepository memoria/Pg; carga al arrancar; aprobar/reintentar esperan el guardado; el enlace vence a los 7 d�as de emitido. e2e 7/7, int 2/2, verify API 1236 web 616, int 195/195; RF-11-entrega.sh 10/10 con reinicio real. Depende de RF-12 (PR #103), incluido en la rama. PR #104.

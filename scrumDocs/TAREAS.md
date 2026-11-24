@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-24T00:38:34.072Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-24T00:38:54.742Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -510,7 +510,7 @@ FirmanteService todavía arranca con 5 máquinas de ejemplo (Av. Corrientes 1234
 
 Hoy el informe que el RT cierra en el celular (HU-18) se guarda en la base pero no llega al Portal Firmante: las visitas que el Firmante ve y firma son las de las máquinas de ejemplo, y ninguna parte del sistema crea la visita de una máquina de un edificio con terna. Esta Tarea conecta los dos: al cerrarse el informe, cada equipo del informe pasa a ser la visita de su máquina en el mes (con sus fotos, la firma del encargado o el cierre «Sin firma»), usando FirmanteService.registrarVisita de HU-08 RF-05.
 
-Decisión de producto del 23/11/2026 (German, opción A): el RT saca en cada equipo en uso la foto del frente de cabina y, si tiene cables de tracción, la de cables (HU-17 RF-11); la API las exige y las sella (HU-18 RF-04); el Portal pide la de cables sólo a los equipos que tienen cables (HU-08 RF-08). Esta Tarea toma esas fotos de cada equipo del informe (las claves «obligatoria:frente» y «obligatoria:cables» de sus fotos) y las pone como las fotos obligatorias de la visita. Se hace después de esas tres. HU-08 RF-06 (retirar las máquinas de ejemplo) va después de ésta.
+Decisión de producto del 23/11/2026 (German, opción A): el RT saca en cada equipo en uso la foto del frente de cabina y, si tiene cables de tracción, la de cables (HU-17 RF-11); la API las exige y las sella (HU-18 RF-02); el Portal pide la de cables sólo a los equipos que tienen cables (HU-08 RF-08). Esta Tarea toma esas fotos de cada equipo del informe (las claves «obligatoria:frente» y «obligatoria:cables» de sus fotos) y las pone como las fotos obligatorias de la visita. Se hace después de esas tres. HU-08 RF-06 (retirar las máquinas de ejemplo) va después de ésta.
 
 **Condiciones de aprobación**
 
@@ -523,7 +523,7 @@ Decisión de producto del 23/11/2026 (German, opción A): el RT saca en cada equ
 
 ### RF-08: El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción (Funcional)
 
-El Portal Firmante exige dos fotos fijas, «cables» y «frente», para autorizar una visita. Los ascensores hidráulicos no tienen cables de tracción (el checklist ya no les pregunta por ellos), así que hoy un hidráulico nunca se podría autorizar y su modal de auditoría marcaría «✗ Falta» en una foto que no existe. Esta Tarea hace que la foto de cables sólo se exija —en la API y en la pantalla— cuando la máquina es de tracción o montavehículos (o no tiene tipo cargado, que se toma como de tracción); la del frente se sigue exigiendo siempre. Es parte de la decisión del 23/11/2026 de pedir las fotos del frente y de cables en cada visita (HU-17 RF-11, HU-18 RF-04).
+El Portal Firmante exige dos fotos fijas, «cables» y «frente», para autorizar una visita. Los ascensores hidráulicos no tienen cables de tracción (el checklist ya no les pregunta por ellos), así que hoy un hidráulico nunca se podría autorizar y su modal de auditoría marcaría «✗ Falta» en una foto que no existe. Esta Tarea hace que la foto de cables sólo se exija —en la API y en la pantalla— cuando la máquina es de tracción o montavehículos (o no tiene tipo cargado, que se toma como de tracción); la del frente se sigue exigiendo siempre. Es parte de la decisión del 23/11/2026 de pedir las fotos del frente y de cables en cada visita (HU-17 RF-11, HU-18 RF-02).
 
 **Condiciones de aprobación**
 
@@ -1144,7 +1144,7 @@ La pantalla de Inspección Técnica usa un edificio fijo («Edificio demo Av. Ca
 
 ### RF-11: Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso (Funcional)
 
-Decisión de producto del 23/11/2026 (German): para que cada visita quede auditable, el RT saca en cada equipo en uso una foto del frente de cabina y botonera y, en los equipos con cables de tracción (tracción y montavehículos), una foto de los cables, aunque no haya ninguna falla. Hoy el checklist sólo pide fotos de las anomalías (HU-17 RF-05), así que un informe sin fallas no trae ninguna foto y el Portal Firmante (HU-08) no deja autorizarlo, porque exige las de «frente» y «cables». Los equipos hidráulicos no tienen cables de tracción: sólo llevan la foto del frente. Un equipo fuera de servicio no las pide (ya lleva su reporte de parada con fotos). Esta Tarea es la parte del celular: sacarlas, guardarlas aunque no haya señal y exigirlas antes de consolidar el informe. Que la API también las exija y las selle es HU-18 RF-04, y que el Portal no pida cables a un hidráulico es HU-08 RF-08. Resuelve lo que HU-17 RF-05 dejó pendiente de MAICON («si la foto de cables y la del frente son siempre obligatorias»).
+Decisión de producto del 23/11/2026 (German): para que cada visita quede auditable, el RT saca en cada equipo en uso una foto del frente de cabina y botonera y, en los equipos con cables de tracción (tracción y montavehículos), una foto de los cables, aunque no haya ninguna falla. Hoy el checklist sólo pide fotos de las anomalías (HU-17 RF-05), así que un informe sin fallas no trae ninguna foto y el Portal Firmante (HU-08) no deja autorizarlo, porque exige las de «frente» y «cables». Los equipos hidráulicos no tienen cables de tracción: sólo llevan la foto del frente. Un equipo fuera de servicio no las pide (ya lleva su reporte de parada con fotos). Esta Tarea es la parte del celular: sacarlas, guardarlas aunque no haya señal y exigirlas antes de consolidar el informe. Que la API también las exija y las selle es HU-18 RF-02, y que el Portal no pida cables a un hidráulico es HU-08 RF-08. Resuelve lo que HU-17 RF-05 dejó pendiente de MAICON («si la foto de cables y la del frente son siempre obligatorias»).
 
 **Condiciones de aprobación**
 

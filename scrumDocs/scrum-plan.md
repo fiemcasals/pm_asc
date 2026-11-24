@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T13:41:51.066Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T13:42:07.621Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 22 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | tested ✓ | germanG | — | — |
 | 23 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | tested ✓ | germanG | — | — |
-| 24 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | Hacer | Sin asignar | — | — |
+| 24 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | Hacer | Sin asignar | — | — |
 | 25 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 26 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 27 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -113,7 +113,8 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 105 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
 | 106 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
 | 107 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-07 | — |
-| 108 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
+| 108 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | Hacer | Sin asignar | RF-07 | — |
+| 109 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle
 
@@ -202,7 +203,7 @@ PR #109 contra dev. En cada equipo en uso el RT saca la foto del frente de cabin
 PR #111 contra dev. El Portal Firmante exige la foto del frente siempre y la foto de cables sólo si el equipo tiene cables de tracción (tracción, montavehículos o sin tipo cargado); un hidráulico, que no tiene cables de tracción, se autoriza con el frente y la firma del encargado. API: requiereFotoDeCables(tipo) decide en POST /api/firmante/autorizar; para tracción el rechazo es el de siempre (mismo mensaje) y para un hidráulico sin la foto del frente dice que falta el frente y que un hidráulico no lleva foto de cables. Pantalla: «Autorizar Firma AGC» se habilita para un hidráulico con el frente y la firma, el motivo de bloqueo no habla de cables y el modal de auditoría dice «No aplica (equipo hidráulico)» en lugar de «✗ Falta». La foto de cables pasa a ser opcional en el tipo; no hay migración ni cambio de contrato. Pruebas: npm run verify con tipos bien, API 1259/1259 (9 nuevas) y web 626/626 (5 nuevas); firmante-persistencia contra PostgreSQL real 4/4 (1 nueva: un hidráulico sin cables se guarda, se autoriza y sigue autorizado después de reiniciar); RF-08-entrega.sh 8 bien, 0 mal y con --carga 50, 100 aperturas del modal sin fallas (p95 135 ms); Playwright con demo.firmante, 9 comprobaciones y 3 capturas resaltadas. Límites: la decisión es de German (23/11/2026) y falta confirmarla con MAICON (el Portal rotula las fotos como «Normativa AGC»); la prueba del navegador responde la lista de máquinas con dos de ejemplo porque los datos de demo no traen un hidráulico con la visita recorrida, y no autoriza nada; el backoffice rotula la foto frente como «Frente del edificio» mientras el Portal y HU-17 RF-11 la llaman «Frente de cabina y botonera» (no se tocó, queda para una tarea aparte). Se puede mergear en cualquier orden respecto de #109 y #110. Detalle en docs/pruebas/hu-08-hu-08-panel-de-liquidacion-rap/RF-08-entrega.md y guía con capturas en RF-08-portal-firmante-hidraulico.md.
 - Estimado: 4h
 
-### RF-09 — Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio
+### RF-08 — Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA
 - Estimado: 0h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
@@ -567,6 +568,9 @@ Inicio de desarrollo de RF-07 (24/11/2026): conectar el informe cerrado del RT c
 ### RF-06 — Retirar las máquinas de ejemplo de la vista de firma
 Pausada el 24/11/2026 antes de escribir código, por decisión del responsable del proyecto: se hace primero RF-07, de la que depende. Hallazgos de la lectura del código en la rama dev (9ce89df): (1) 29 scripts de entrega de 8 Historias (HU-05, 06, 08, 10, 11, 12, 15 y 17) usan las máquinas del seed. (2) 8 de ellos (HU-10 RF-03 a RF-07, HU-11 RF-04 y RF-06, HU-15 RF-02) necesitan una alertaCritica, y en toda la API sólo la crea el seed de FirmanteService.resetSeed (3 alertas: ALT-CP-001, ALT-MAICON-001 y ALT-MAICON-002); la recepción real de fallas críticas (fallas-criticas.service.ts) no la genera. (3) Los de HU-08 (RF-01, 03, 04, 05 y 08) necesitan visitas «Recorrida»: registrarVisita no tiene llamadores en producción hasta RF-07. Falta una tarjeta que conecte la falla crítica real con la alerta de la máquina; sin ella el criterio 3 no se puede cumplir para esos 8 scripts. La rama está abierta y sin commits propios. --- Nota previa (21/11/2026): Re-estimada de 4 h a 14 h (21/11/2026). Las 5 máquinas de ejemplo de FirmanteService.resetSeed (MAQ-CORRIENTES-M1/M2, MAQ-SANTAFE-M1/M2, MAQ-CALLAO-M1, firmante gonza) aparecen en 53 archivos: 29 pruebas de la API, 8 de la web y 16 scripts de entrega (HU-05, HU-06, HU-08, HU-10, HU-11). Desglose sugerido: 1) un ayudante de pruebas que cree edificios con terna y sus máquinas, y pasar las pruebas de la API y la web a usarlo (~8 h); 2) quitar resetSeed y adaptar los scripts de entrega a los datos de demo (~6 h). Conviene partirla en dos Tareas.
 - Estimado: 14
+
+### RF-09 — Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio
+- Estimado: 0h
 
 ### RF-11 — Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio
 Tabla avisos_falla (migraci�n 035, RLS Secretar�a/Admin, sin DELETE); AvisosRepository memoria/Pg; carga al arrancar; aprobar/reintentar esperan el guardado; el enlace vence a los 7 d�as de emitido. e2e 7/7, int 2/2, verify API 1236 web 616, int 195/195; RF-11-entrega.sh 10/10 con reinicio real. Depende de RF-12 (PR #103), incluido en la rama. PR #104.

@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-21T21:42:53.300Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-24T00:38:34.853Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -65,6 +65,7 @@ graph TD
     REQ_1795263641124["RF-05: Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio"]
     REQ_1795263641491["RF-06: Retirar las máquinas de ejemplo de la vista de firma"]
     REQ_1795266849123["RF-07: Que el informe cerrado por el RT cree la visita en el Portal Firmante"]
+    REQ_1795480710843["RF-08: El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]
@@ -136,11 +137,13 @@ graph TD
     REQ_1794494002220["RF-08: Las Fallas Críticas del checklist llegan a la Secretaría"]
     REQ_1795263643334["RF-09: Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio"]
     REQ_1795263643622["RF-10: Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio"]
+    REQ_1795480710109["RF-11: Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso"]
   end
   subgraph US_1794493998373["HU-18: HU-18: Cierre, firma y envío del informe"]
     REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
     REQ_1794494002697["RNF-01: Sellado del informe"]
     REQ_1794494002926["RNF-02: Cola de sincronización del celular"]
+    REQ_1795480710378["RF-02: El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso"]
   end
   subgraph US_1795097860829["RO-02: Probar el envío real de WhatsApp con el celular de German"]
     REQ_1795097860837["RF-01: Probar el envío real de WhatsApp con el celular de German"]
@@ -192,9 +195,13 @@ graph TD
   REQ_1795010603476 --> REQ_1795263641124
   REQ_1795258625857 --> REQ_1795263641124
   REQ_1795263641124 --> REQ_1795263641491
+  REQ_1795266849123 --> REQ_1795263641491
   REQ_1795263641124 --> REQ_1795266849123
   REQ_1794494002445 --> REQ_1795266849123
   REQ_1795258625857 --> REQ_1795266849123
+  REQ_1795480710109 --> REQ_1795266849123
+  REQ_1795480710378 --> REQ_1795266849123
+  REQ_1795480710843 --> REQ_1795266849123
   REQ_1791910395959 --> REQ_1791910396167
   REQ_1791910396167 --> REQ_1791910396255
   REQ_1791910396255 --> REQ_1791910396649

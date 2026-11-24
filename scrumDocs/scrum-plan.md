@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T12:13:07.392Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-24T12:13:10.435Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -554,6 +554,7 @@ Implementacion completa de HU-11 RF-04 a nombre de gonza (PR #83 contra dev). Wh
 - Estimado: 5h
 
 ### RF-07 — Que el informe cerrado por el RT cree la visita en el Portal Firmante
+Inicio de desarrollo de RF-07: conectar informe cerrado del RT con el Portal Firmante
 - Estimado: 10
 
 ### RF-06 — Link del aviso de WhatsApp sin contraseña y válido por 7 días

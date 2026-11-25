@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-25T12:46:20.037Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:51:22.550Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -837,7 +837,7 @@ Implementar el sistema visual NEO estilo Linear con soporte Dark/Light, vista be
 
 **Condiciones de aprobación**
 
-1. El shell principal ofrece botón 'Cambiar tema visual' entre modo oscuro y claro, vista bento 'Estado del sistema' y botón 'Alternar barra lateral' que al colapsar a 80px mantiene expandir al lado del cuadrado violeta sin superposición.
+1. El shell principal ofrece botón 'Cambiar tema visual' entre modo oscuro y claro y botón 'Alternar barra lateral' que al colapsar a 80px mantiene expandir al lado del cuadrado violeta sin superposición.
 2. La barra superior incluye el buscador inline con placeholder 'Buscar consorcio, máquina (M1, M2) o portal…' sin modal Ctrl+K; al escribir muestra resultados agrupados y al elegir uno navega directo al consorcio en Secretaría o modal de auditoría en Firmante.
 3. El Medidor de Cobertura Mensual en Portal ECA aplica recuadros con colores neón diferenciados de alto contraste para 'Inspeccionadas', 'Firmadas (Legal AGC)', 'Pendientes de Visita', 'Con Advertencia' y 'Flota Total'.
 

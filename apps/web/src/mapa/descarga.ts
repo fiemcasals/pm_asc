@@ -40,6 +40,50 @@ export function dependenciasDelNavegador(): Dependencias {
   };
 }
 
+/** ¿El servidor contestó con una página (text/html)? Si el archivo del mapa no existe, el servidor de la app devuelve su index.html con un 200. */
+function esPagina(res: Response): boolean {
+  return /text\/html/i.test(res.headers.get('content-type') ?? '');
+}
+
+/** Los primeros `n` caracteres de la respuesta, sin bajarla entera aunque el servidor haya ignorado el pedido de rango. */
+async function leerInicio(res: Response, n: number): Promise<string> {
+  if (!res.body) return new TextDecoder().decode((await res.arrayBuffer()).slice(0, n));
+  const lector = res.body.getReader();
+  const decodificador = new TextDecoder();
+  let texto = '';
+  try {
+    while (texto.length < n) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      texto += decodificador.decode(value, { stream: true });
+    }
+  } finally {
+    void lector.cancel().catch(() => undefined);
+  }
+  return texto.slice(0, n);
+}
+
+/** Lo que hay en el servidor en la dirección del mapa: un PMTiles, nada (o una página en su lugar), o no se pudo preguntar (sin red). */
+export type EstadoArchivo = 'valido' | 'ausente' | 'sin-red';
+
+/**
+ * Comprueba que el servidor entregue de verdad el archivo del mapa (pidiendo solo sus primeros bytes). Si falta, el servidor de la app
+ * contesta 200 con su página: sin esta comprobación el mapa se dibuja vacío y la app lo da por listo.
+ */
+export async function archivoDelServidor(dep: Dependencias, signal?: AbortSignal): Promise<EstadoArchivo> {
+  let res: Response;
+  try {
+    res = await dep.fetchFn(URL_MAPA, { headers: { Range: `bytes=0-${MAGIA_PMTILES.length - 1}` }, cache: 'no-store', signal });
+  } catch {
+    return 'sin-red';
+  }
+  if (!res.ok || esPagina(res)) {
+    void res.body?.cancel().catch(() => undefined);
+    return 'ausente';
+  }
+  return (await leerInicio(res, MAGIA_PMTILES.length)) === MAGIA_PMTILES ? 'valido' : 'ausente';
+}
+
 /** Lo que se anotó de la última descarga, o null si nunca se bajó o la nota está dañada. */
 export function leerInfo(dep: Dependencias): InfoMapa | null {
   try {
@@ -115,7 +159,7 @@ export async function descargarMapa(
   // Si el archivo no existe, el servidor de la app puede responder con el index.html (200): no es un mapa.
   const cabecera = new TextDecoder().decode(await blob.slice(0, MAGIA_PMTILES.length).arrayBuffer());
   if (cabecera !== MAGIA_PMTILES) {
-    throw new ErrorMapa('El archivo del mapa no es válido: falta generarlo con «npm run mapa:generar».');
+    throw new ErrorMapa('El mapa no está disponible en el servidor: falta cargar el archivo del mapa. Avisale al administrador.');
   }
 
   try {
@@ -150,7 +194,7 @@ export async function hayVersionNueva(dep: Dependencias): Promise<boolean> {
   if (!info) return false;
   try {
     const res = await dep.fetchFn(URL_MAPA, { method: 'HEAD', cache: 'no-store' });
-    if (!res.ok) return false;
+    if (!res.ok || esPagina(res)) return false;
     const remota = versionDe(res);
     if (remota) return remota !== info.version;
     const largo = Number(res.headers.get('content-length'));
@@ -165,7 +209,7 @@ export async function tamanoRemoto(dep: Dependencias): Promise<number | null> {
   try {
     const res = await dep.fetchFn(URL_MAPA, { method: 'HEAD', cache: 'no-store' });
     const largo = Number(res.headers.get('content-length'));
-    return res.ok && Number.isFinite(largo) && largo > 0 ? largo : null;
+    return res.ok && !esPagina(res) && Number.isFinite(largo) && largo > 0 ? largo : null;
   } catch {
     return null;
   }

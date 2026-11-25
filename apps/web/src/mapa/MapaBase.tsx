@@ -2,14 +2,15 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapaMapLibre } from 'maplibre-gl';
 import { CENTRO_CABA, CLAVE_FUENTE, LIMITES_DEL_MAPA, TEXTOS_DEL_MAPA, URL_MAPA, ZOOM } from './config';
 import { ControlDescargaMapa } from './ControlDescargaMapa';
-import { dependenciasDelNavegador, leerMapaGuardado } from './descarga';
+import { AvisoDelMapa, type EstadoMapaBase } from './AvisoDelMapa';
+import { archivoDelServidor, dependenciasDelNavegador, leerMapaGuardado } from './descarga';
 import { estiloMapa, temaDelDocumento } from './estilo';
 import { BlobSource } from './fuenteBlob';
 import { cargarMapLibre } from './maplibre';
 import { soportaWebGL } from './webgl';
 import './mapa.css';
 
-export type EstadoMapaBase = 'cargando' | 'listo' | 'sin-descargar' | 'sin-webgl' | 'error';
+export type { EstadoMapaBase } from './AvisoDelMapa';
 export type OrigenMapa = 'guardado' | 'servidor';
 
 export interface MapaBaseProps {
@@ -81,6 +82,12 @@ export function MapaBase({ testId = 'mapa-base', alto = 360, centro, zoom, ariaL
         setEstado('sin-descargar');
         return;
       }
+      // Sin copia guardada el mapa se lee del servidor: si el archivo no está (el servidor contesta con su página), se avisa en vez de dibujar vacío.
+      if (!guardado && (await archivoDelServidor(dep)) === 'ausente') {
+        if (!cancelado) setEstado('sin-archivo');
+        return;
+      }
+      if (cancelado) return;
 
       try {
         const [ml, pm, protocolo] = await Promise.all([cargarMapLibre(), import('pmtiles'), registrarProtocolo(), import('maplibre-gl/dist/maplibre-gl.css')]);
@@ -177,31 +184,7 @@ export function MapaBase({ testId = 'mapa-base', alto = 360, centro, zoom, ariaL
     <div className="mapa-base-envoltorio">
       <div className="mapa-base" data-testid={testId} data-estado={estado} data-origen={origen ?? undefined} style={{ height: alto }}>
         <div ref={lienzo} className="mapa-base__lienzo" role="application" aria-label={ariaLabel} />
-        {estado === 'cargando' && (
-          <div className="mapa-base__aviso" role="status">
-            Cargando el mapa…
-          </div>
-        )}
-        {estado === 'sin-descargar' && (
-          <div className="mapa-base__aviso mapa-base__aviso--bloqueo" role="alert" data-testid="mapa-sin-descargar">
-            <strong>Mapa sin descargar: conectate a una red para bajarlo.</strong>
-            <span>Sin señal no se puede dibujar el mapa hasta que se baje una vez.</span>
-          </div>
-        )}
-        {estado === 'sin-webgl' && (
-          <div className="mapa-base__aviso mapa-base__aviso--bloqueo" role="alert" data-testid="mapa-sin-webgl">
-            <strong>Este dispositivo no puede dibujar el mapa.</strong>
-            <span>Los edificios se ven igual en la lista.</span>
-          </div>
-        )}
-        {estado === 'error' && (
-          <div className="mapa-base__aviso mapa-base__aviso--bloqueo" role="alert" data-testid="mapa-error">
-            <strong>No se pudo dibujar el mapa.</strong>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={reintentar}>
-              Reintentar
-            </button>
-          </div>
-        )}
+        <AvisoDelMapa estado={estado} onReintentar={reintentar} />
       </div>
       {descarga && <ControlDescargaMapa compacto onDescargado={reintentar} />}
     </div>

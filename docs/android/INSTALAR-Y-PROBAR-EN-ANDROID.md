@@ -20,7 +20,7 @@ Guía para abrir la app que corre en una PC de desarrollo desde el Chrome de un 
 | El repo clonado, con `npm install` hecho | Android con Chrome actualizado |
 | Docker prendido (la base de datos) | Cable USB que transmita datos (no solo carga) |
 | mkcert instalado y el certificado generado (`npm run certs`) | Bloqueo de pantalla configurado (Android lo exige para instalar un certificado) |
-| El archivo del mapa generado (`npm run mapa:generar`) | |
+| El archivo del mapa (viene en el repositorio: no hace falta generarlo) | |
 | `adb` (ver 3.1) | |
 
 ## 3. Preparación (una sola vez)
@@ -35,10 +35,10 @@ Guía para abrir la app que corre en una PC de desarrollo desde el Chrome de un 
 
 ```bash
 npm run certs            # una vez; genera certs/localhost.pem con mkcert
-npm run mapa:generar     # una vez; arma apps/web/public/mapa/caba.pmtiles (~11 MB, ~1 minuto, necesita Internet)
+# el mapa de CABA (apps/web/public/mapa/caba.pmtiles, ~11 MB) ya viene en el repositorio: no hace falta generarlo
 ```
 
-El archivo del mapa **no está en git** (pesa 10,7 MB y se regenera con ese comando). Si falta, la app compila igual, pero la descarga del mapa en el celular falla.
+El archivo del mapa **viene en el repositorio** (pesa 10,7 MB). Si por algún motivo falta, la app compila igual pero los mapas no se dibujan: avisan «El mapa no está disponible» y la descarga para usar sin señal falla; en ese caso `git pull` lo trae, o `npm run mapa:generar` lo vuelve a armar.
 
 ### 3.3 En el celular: activar la depuración USB
 
@@ -150,7 +150,7 @@ Para la prueba sin conexión por Wi-Fi alcanza con frenar el `preview` o apagar 
 | `ERR_CONNECTION_REFUSED` en el celular | El `preview` está apagado, o se perdió el `adb reverse` | Revisar que el `preview` responda en la PC y repetir `adb reverse tcp:4173 tcp:4173` |
 | `adb devices` no muestra el celular o dice `unauthorized` | Cable solo de carga, depuración USB apagada o cartel sin aceptar | Cambiar de cable, revisar 3.3 y aceptar el cartel; si hace falta, «Revocar autorizaciones de depuración USB» y reconectar |
 | El login falla o vuelve a pedir sesión | Se entró por `http://` o por una IP que no está en el certificado | Entrar siempre por `https://localhost:4173` (o la IP incluida en el certificado) |
-| «Descargar mapa» da error o dice que falta generarlo con `npm run mapa:generar` | No existe `apps/web/public/mapa/caba.pmtiles` al compilar | Correr `npm run mapa:generar`, volver a compilar y reiniciar el `preview` |
+| «Descargar mapa» da error o dice «El mapa no está disponible» | Falta `apps/web/public/mapa/caba.pmtiles` al compilar (viene en el repositorio: el repo está desactualizado o se borró) | `git pull` (o, si querés actualizarlo, `npm run mapa:generar`), volver a compilar y reiniciar el `preview` |
 | Recargué sin conexión y la app no abre | El service worker no llegó a instalarse antes de cortar la red | Abrirla una vez con conexión, esperar unos segundos y recién ahí cortar |
 | Se muestra una versión vieja de la app | El service worker sirve la versión anterior hasta que se actualice | Cerrar y abrir la app; si sigue, Ajustes del sitio › Borrar datos de `localhost` |
 | El mapa dice que no hay WebGL | El celular o el navegador no lo soportan o lo tienen desactivado | Probar con otro Chrome actualizado; registrar el modelo |

@@ -95,7 +95,7 @@ describe('descargarMapa', () => {
   it('rechaza lo que no es un PMTiles, como el index.html que el servidor da cuando el archivo no existe', async () => {
     const html = enc.encode('<!doctype html><html><body>app</body></html>');
     const { dep, cache, almacen } = armar(() => ({ cuerpo: html, etag: null }));
-    await expect(descargarMapa(dep)).rejects.toThrow(/npm run mapa:generar/);
+    await expect(descargarMapa(dep)).rejects.toThrow(/falta cargar el archivo del mapa/);
     expect(cache.almacen.size).toBe(0);
     expect(almacen.datos.size).toBe(0);
   });

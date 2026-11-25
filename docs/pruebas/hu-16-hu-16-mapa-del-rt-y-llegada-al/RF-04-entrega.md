@@ -24,7 +24,7 @@ Archivos: `marcadores.ts` (lógica pura), `MapaEdificios.tsx` (componente), `map
 
 ```bash
 npm install
-npm run mapa:generar      # el mapa base (~11 MB); no está en git, necesita internet
+npm run mapa:generar      # solo para actualizar el mapa base (~11 MB, necesita internet): ya viene en el repo (HU-16 RF-06)
 npm run verify            # tipos + API + web
 bash docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-04-entrega.sh
 npm run dev               # y abrir la guía visual
@@ -76,6 +76,6 @@ Medido el 21/11/2026:
 - **Los nombres que se pisan, MapLibre los oculta con su propia regla** y no la prueba una prueba unitaria: se verificó en el navegador.
 - **Los pines son botones HTML** encima del mapa (no una capa de MapLibre), para poder elegirlos con teclado. Con cientos de edificios habría que pasarlos a una capa. El alcance actual es de decenas.
 - **`MapaUbicacionConsorcio` sigue en el repositorio** hasta RF-05, que lo retira.
-- **El archivo del mapa (`caba.pmtiles`, 10,7 MB) no está en git** (es de RF-03): sin él, el mapa muestra «Mapa sin descargar».
+- **El archivo del mapa (`caba.pmtiles`, 10,7 MB) es de RF-03 y desde HU-16 RF-06 va en el repositorio.** Cuando RF-04 se entregó no estaba en git: sin él el mapa salía vacío (o, sin conexión, mostraba «Mapa sin descargar»); hoy, si falta, la app avisa «El mapa no está disponible».
 - **Sin geolocalización:** el componente no usa el GPS del dispositivo (lo verifica el script).
 - **Regresión:** la tarea no tiene módulo. Se corrió toda la API, la web y la integración en verde.

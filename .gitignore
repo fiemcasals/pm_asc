@@ -7,5 +7,3 @@ coverage/
 .env
 certs/
 
-# Mapa base de CABA: se genera con `npm run mapa:generar`, no va al repositorio (HU-16 RF-03)
-apps/web/public/mapa/caba.pmtiles

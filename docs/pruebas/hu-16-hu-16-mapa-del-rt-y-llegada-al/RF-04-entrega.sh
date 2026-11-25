@@ -48,7 +48,7 @@ PMTILES="$WEB/public/mapa/caba.pmtiles"
 if [ -f "$PMTILES" ]; then
   pass "caba.pmtiles presente ($(( $(wc -c < "$PMTILES") / 1048576 )) MB)"
 else
-  omit "falta caba.pmtiles: generarlo con «npm run mapa:generar» (necesita internet, no está en git)"
+  omit "falta caba.pmtiles: viene en el repositorio (git pull) o se genera con «npm run mapa:generar»"
 fi
 for archivo in "public/mapa/fuentes/Noto Sans Medium/0-255.pbf"; do
   [ -f "$WEB/$archivo" ] && pass "la tipografía de las etiquetas está en la app: $archivo" || fail "falta $archivo (las etiquetas no se dibujarían sin conexión)"

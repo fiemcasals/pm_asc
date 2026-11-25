@@ -43,7 +43,7 @@ npm run test:int   # integración contra la base real (requiere npm run db:up)
 
 Cómo abrir la app desde el Chrome de un Android, instalarla y probarla sin conexión (cable USB con
 `adb reverse`, certificado de mkcert en el celular, o por Wi-Fi): [docs/android/INSTALAR-Y-PROBAR-EN-ANDROID.md](docs/android/INSTALAR-Y-PROBAR-EN-ANDROID.md).
-El mapa de CABA necesita su archivo, que no está en git: `npm run mapa:generar` (una vez).
+El mapa de CABA viene en el repositorio (`apps/web/public/mapa/caba.pmtiles`, 10,7 MB): no hace falta generarlo. Para actualizarlo: `npm run mapa:generar` (~1 minuto, necesita Internet) y subir el archivo nuevo.
 
 ## CORS (sólo desarrollo)
 

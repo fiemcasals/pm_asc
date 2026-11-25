@@ -41,6 +41,8 @@
   background: var(--surface-sunken);
   color: var(--text);
   pointer-events: auto;
+  /* Por encima de lo que otras pantallas dibujan sobre el mapa (p. ej. «Sin punto geográfico asignado»): si no, tapan el botón de reintentar. */
+  z-index: 5;
 }
 
 .mapa-base__aviso--bloqueo span {

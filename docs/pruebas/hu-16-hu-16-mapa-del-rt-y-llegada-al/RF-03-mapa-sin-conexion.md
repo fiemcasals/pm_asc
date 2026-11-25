@@ -8,7 +8,7 @@ Esta guía muestra, paso a paso, cómo bajar el mapa de CABA al celular y cómo 
 
 **Antes de empezar**
 
-1. Generar el mapa, una sola vez: `npm run mapa:generar` (~1 minuto, necesita Internet). El archivo no va a git.
+1. El mapa ya viene en el repositorio (`apps/web/public/mapa/caba.pmtiles`): no hace falta generarlo. Para actualizarlo: `npm run mapa:generar` (~1 minuto, necesita Internet) y subir el archivo.
 2. Para los pasos 5 y 6 (sin conexión) hace falta la app **compilada**, porque el service worker de desarrollo no guarda la app entera: `npm run build -w apps/web` y `npm run preview -w apps/web`, y entrar a https://localhost:4173. Los demás pasos se ven igual en https://localhost:8050 con `npm run dev`.
 3. Para «cortar la red» en el navegador: DevTools › Network › «Offline» o el modo avión del celular.
 

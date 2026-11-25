@@ -1,7 +1,7 @@
-// Constantes del mapa base de CABA (HU-16 RF-03). El archivo se genera con `npm run mapa:generar` y las
+// Constantes del mapa base de CABA (HU-16 RF-03). El archivo viene en el repositorio (HU-16 RF-06); para actualizarlo se genera con `npm run mapa:generar`, y las
 // tipografías y los íconos con `npm run mapa:assets`; todo se sirve desde esta misma app, sin servidores de terceros.
 
-/** El archivo con las calles de CABA (PMTiles). No está en git: lo genera `npm run mapa:generar`. */
+/** El archivo con las calles de CABA (PMTiles). Va en el repositorio: sin él el sitio dibuja los mapas vacíos. Para actualizarlo: `npm run mapa:generar` y subirlo. */
 export const URL_MAPA = '/mapa/caba.pmtiles';
 
 /** Clave con la que se registra la fuente guardada en el celular en el protocolo `pmtiles://`. */

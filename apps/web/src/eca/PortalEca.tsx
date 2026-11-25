@@ -7,6 +7,7 @@ import {
   fetchMaquinasEca,
   type MaquinaEca,
   puedeAcusarRemito,
+  puedeDespacharWhatsApp,
 } from './eca';
 import { MedidorCobertura } from './MedidorCobertura';
 
@@ -153,7 +154,7 @@ export function PortalEca({ usuario }: PortalEcaProps) {
       ) : (
         <>
           {/* Alertas Críticas (Fuera de Servicio y Reparación Urgente) */}
-          <AlertasCriticas maquinas={maquinas} puedeAcusar={puedeAcusarRemito(usuario)} />
+          <AlertasCriticas maquinas={maquinas} puedeAcusar={puedeAcusarRemito(usuario)} puedeDespacharWhatsApp={puedeDespacharWhatsApp(usuario)} />
 
           {/* Criterio 1: Gráfico/Medidor de Cobertura */}
           {cobertura && <MedidorCobertura cobertura={cobertura} />}

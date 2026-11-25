@@ -28,7 +28,12 @@ export class WhatsAppController {
     private readonly triggerService: WhatsAppTriggerService,
   ) {}
 
+  /**
+   * Manda un WhatsApp con el número de la empresa a un teléfono que se elige en el pedido: cada mensaje tiene costo y es spam si lo manda
+   * cualquiera. Sólo la Secretaría y el Administrador (HU-11 RF-15); sin sesión responde 401 y con otro rol, 403.
+   */
   @Post('enviar-alerta')
+  @Roles('secretaria', 'administrador')
   async enviarAlerta(
     @Body() input: MensajeAlertaWhatsAppInput,
   ): Promise<WhatsAppEnvioResult> {
@@ -63,7 +68,9 @@ export class WhatsAppController {
     return res;
   }
 
+  /** Arma el texto del aviso, sin mandarlo. Misma regla que el envío: la Secretaría y el Administrador. */
   @Post('formatear')
+  @Roles('secretaria', 'administrador')
   formatearAlerta(
     @Body() input: MensajeAlertaWhatsAppInput,
   ): { ok: boolean; mensajeFormateado: string } {
@@ -74,14 +81,18 @@ export class WhatsAppController {
     };
   }
 
+  /** Dispara el WhatsApp de una alerta crítica a la ECA (con el teléfono de su terna). Sólo la Secretaría y el Administrador. */
   @Post('trigger-alerta-critica')
+  @Roles('secretaria', 'administrador')
   async triggerAlertaCritica(
     @Body() dto: TriggerAlertaCriticaDto,
   ): Promise<WhatsAppDisparoResult> {
     return this.triggerService.dispararAlertaInmediata(dto);
   }
 
+  /** Si hay proveedor de WhatsApp y cuál (nunca credenciales): lo usa el cartel de la bandeja de avisos, de la Secretaría y el Administrador. */
   @Get('estado')
+  @Roles('secretaria', 'administrador')
   getEstado(): { configurado: boolean; proveedor: 'meta' | 'twilio' | 'custom' | null } {
     return {
       configurado: this.connector.estaConfigurado(),

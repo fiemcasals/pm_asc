@@ -233,15 +233,27 @@ async function leerJsonSeguro<T>(res: Response): Promise<T | null> {
   }
 }
 
+/** El WhatsApp lo despacha la Secretaría o el Administrador, con su sesión (HU-11 RF-15). */
+export function puedeDespacharWhatsApp(usuario: { rol: string }): boolean {
+  return usuario.rol === 'secretaria' || usuario.rol === 'administrador';
+}
+
+/** Lo que se le dice a quien no puede despachar: la sesión venció (401) o su rol no alcanza (403). */
+export function mensajeDeErrorWhatsApp(status: number): string {
+  return status === 401 ? 'La sesión venció: ingresá de nuevo.' : 'Sólo la Secretaría y el Administrador despachan alertas por WhatsApp.';
+}
+
 export async function enviarAlertaWhatsApp(
   input: MensajeAlertaWhatsAppInput,
 ): Promise<FetchResult<WhatsAppEnvioResult>> {
   try {
-    const res = await fetch('/api/whatsapp/enviar-alerta', {
+    const res = await fetchConSesion('/api/whatsapp/enviar-alerta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
+
+    if (res.status === 401 || res.status === 403) return { ok: false, error: mensajeDeErrorWhatsApp(res.status) };
 
     const data = await leerJsonSeguro<WhatsAppEnvioResult & { message?: string }>(res);
     const motivoError =
@@ -286,11 +298,13 @@ export async function triggerAlertaWhatsAppInmediata(
   maquinaId?: string,
 ): Promise<FetchResult<TriggerWhatsAppResult>> {
   try {
-    const res = await fetch('/api/whatsapp/trigger-alerta-critica', {
+    const res = await fetchConSesion('/api/whatsapp/trigger-alerta-critica', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ alertaId, maquinaId }),
     });
+
+    if (res.status === 401 || res.status === 403) return { ok: false, error: mensajeDeErrorWhatsApp(res.status) };
 
     const data = await leerJsonSeguro<TriggerWhatsAppResult & { message?: string; error?: string }>(res);
     const motivoError =

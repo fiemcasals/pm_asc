@@ -132,7 +132,7 @@ describe('Avisos de falla crítica con revisión de la Secretaría (HU-11 RF-05)
   it('criterio 3: el disparo de un aviso no aprobado responde 409 con el motivo y no manda nada', async () => {
     const id = await informar();
 
-    const res = await http().post('/api/whatsapp/trigger-alerta-critica').send({ alertaId: id });
+    const res = await http().post('/api/whatsapp/trigger-alerta-critica').set('Authorization', `Bearer ${tokens.secretaria}`).send({ alertaId: id });
 
     expect(res.status).toBe(409);
     expect(res.body.message).toMatch(/pendiente de revisión/);
@@ -140,7 +140,7 @@ describe('Avisos de falla crítica con revisión de la Secretaría (HU-11 RF-05)
   });
 
   it('criterio 3: aunque la alerta de la máquina no tenga aviso todavía, el disparo no sale sin aprobación (409) y deja el aviso pendiente', async () => {
-    const res = await http().post('/api/whatsapp/trigger-alerta-critica').send({ alertaId: 'ALT-MAICON-001' });
+    const res = await http().post('/api/whatsapp/trigger-alerta-critica').set('Authorization', `Bearer ${tokens.secretaria}`).send({ alertaId: 'ALT-MAICON-001' });
 
     expect(res.status).toBe(409);
     expect(enviados).toEqual([]);

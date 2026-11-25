@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-25T13:00:04.070Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T13:25:13.519Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -1075,6 +1075,18 @@ Cambia el componente viejo por el nuevo en las cinco pantallas que hoy lo usan: 
 4. El Semáforo conserva los colores de sus pines, su leyenda y la nota «El mapa muestra solamente edificios: no hay seguimiento de técnicos en vivo».
 5. La app no pide ninguna geolocalización nueva: la prueba de apps/web/src/auth/ubicacion.test.ts que prohíbe otros accesos sigue en verde.
 6. La guía visual tiene capturas con Playwright de las cinco pantallas, en escritorio y en un celular de 360 px, con la mejora a la vista.
+
+### RF-06: Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta (Funcional)
+
+Hoy ningún mapa de la aplicación se dibuja en el sitio desplegado: el archivo con las calles de CABA (apps/web/public/mapa/caba.pmtiles, 10,67 MB) está en el .gitignore y no se sube al repositorio, así que el sitio, que se arma desde el repositorio, no lo tiene. Al pedirlo, el servidor responde 200 con la página de la app (text/html, 924 bytes) en lugar del mapa, y la aplicación no lo nota: dibuja un recuadro vacío y lo marca como «listo», sin ningún aviso. Las tipografías y los íconos del mapa sí están en el repositorio y se sirven bien. Esta Tarea sube el archivo generado al repositorio (decisión del usuario del 25/11/2026) para que cualquier armado del sitio lo traiga, y hace que la aplicación avise «El mapa no está disponible» cuando falte, en vez de mostrar un mapa vacío; el botón de descarga para usar sin señal tampoco debe ofrecer bajar una página como si fuera el mapa. Los datos son de OpenStreetMap (ODbL) y la atribución sigue visible.
+
+**Condiciones de aprobación**
+
+1. El archivo del mapa de CABA (caba.pmtiles) está en el repositorio y una aplicación armada desde el repositorio lo sirve: pidiendo los primeros bytes con Range, responde 206 y empieza con «PMTiles».
+2. Los mapas de la Secretaría, de la ficha del edificio, del alta de consorcio, del Semáforo, del Mapa del RT y de «Mapa sin conexión» dibujan las calles de CABA.
+3. Si el archivo no está en el servidor (o el servidor responde una página en su lugar), el mapa muestra «El mapa no está disponible» con la explicación de que falta cargar el archivo del mapa en el servidor y un botón para reintentar, en vez de quedar vacío como si estuviera listo; y el botón de descarga para usar sin señal no ofrece bajar esa página como si fuera el mapa.
+4. El script que genera el mapa sigue funcionando, la guía de HU-16 RF-03 explica que el archivo va en el repositorio y cómo actualizarlo (generar de nuevo y subirlo), y la atribución «© OpenStreetMap contributors» sigue visible en el mapa.
+5. El sitio desplegado sirve el archivo: pidiendo los primeros bytes del mapa con Range responde 206 y empieza con «PMTiles», y sus mapas se dibujan.
 
 ## HU-17: HU-17: Inspección técnica por solapas
 

@@ -36,6 +36,8 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01 / RNF-03)'
   let adminPool: Pool;
   let dbService: DatabaseService;
   let adminToken = '';
+  /** El diagnóstico de RLS es solo del Administrador (HU-11 RF-15). */
+  let sysadminToken = '';
   let alphaToken = '';
   let betaToken = '';
   const consorciosCreados: string[] = [];
@@ -52,7 +54,9 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01 / RNF-03)'
     const uAdmin = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_int_admin', rol: 'secretaria' });
     const uAlpha = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_user_alpha', rol: 'eca', eca: 'ECA-ALPHA' });
     const uBeta = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_user_beta', rol: 'eca', eca: 'ECA-BETA' });
+    const uSysadmin = await asegurarUsuarioPrueba(adminPool, config, { usuario: 'rls_int_sysadmin', rol: 'administrador' });
     adminToken = uAdmin.token;
+    sysadminToken = uSysadmin.token;
     alphaToken = uAlpha.token;
     betaToken = uBeta.token;
   });
@@ -63,7 +67,7 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01 / RNF-03)'
       await adminPool.query('DELETE FROM consorcios WHERE id = ANY($1)', [consorciosCreados]);
     }
     await adminPool.query('DELETE FROM acuses_recibo_legal WHERE usuario LIKE $1', [`${prefijoAcuse}%`]);
-    await adminPool.query('DELETE FROM usuarios WHERE usuario IN ($1, $2, $3)', ['rls_int_admin', 'rls_user_alpha', 'rls_user_beta']);
+    await adminPool.query('DELETE FROM usuarios WHERE usuario IN ($1, $2, $3, $4)', ['rls_int_admin', 'rls_user_alpha', 'rls_user_beta', 'rls_int_sysadmin']);
     await app.close();
     await adminPool.end();
   });
@@ -71,7 +75,7 @@ describe('Row Level Security por ECA en PostgreSQL real (HU-15 RNF-01 / RNF-03)'
   const http = () => request(app.getHttpServer());
 
   it('criterio 1 y 2: todas las tablas con datos de ECA tienen RLS activo y la API usa un rol sin BYPASSRLS ni propiedad', async () => {
-    const res = await http().get('/api/seguridad/rls').expect(200);
+    const res = await http().get('/api/seguridad/rls').set('Authorization', `Bearer ${sysadminToken}`).expect(200);
 
     expect(res.body.usuarioActual).toBe('ascensores_app');
     expect(res.body.esSuperuser).toBe(false);

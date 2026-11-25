@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-24T13:42:10.499Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:04:33.308Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -816,6 +816,18 @@ Un aviso que ya figura «Enviado» sigue diciéndolo aunque WhatsApp informe des
 - 1. Dado un aviso «Enviado» con un envío que el proveedor informa luego como fallido, cuando la Secretaría abre la bandeja, entonces el aviso muestra que falló un envío y ofrece «Reintentar envío».
 - 2. Dado ese aviso, cuando el reintento sale bien, entonces el aviso vuelve a figurar «Enviado» y el historial conserva el fallo anterior.
 - 3. Un aviso con todos sus envíos entregados o leídos sigue figurando «Enviado», y las pruebas existentes de la bandeja siguen en verde.
+
+### RF-15: WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde (Funcional)
+
+Hoy las rutas que mandan WhatsApp (POST /api/whatsapp/enviar-alerta y trigger-alerta-critica), el formateador (formatear), el estado del proveedor (GET /api/whatsapp/estado) y el diagnóstico de RLS (GET /api/seguridad/rls) no piden sesión: cualquiera puede hacer que el número de la empresa mande un WhatsApp a un teléfono que elija (spam y costo por mensaje de Meta) y ver si hay proveedor configurado y cuál. Pedir sesión: enviar, disparar, formatear y ver el estado, solo Secretaría y Administrador; el diagnóstico de RLS, solo Administrador. Los webhooks de Meta y Twilio siguen sin sesión porque los llaman los proveedores, y ya rechazan lo que no viene firmado: se fija con pruebas. En el portal de la ECA, el botón manual de WhatsApp pasa a mostrarse solo a quien puede usarlo y a mandar con la sesión. Fuera de alcance, para otra tarjeta: ese botón manda a un teléfono fijo y con una dirección localhost fija. Fuente: revisión de seguridad del 18/11/2026 (serie que empezó con el Portal ECA).
+
+**Condiciones de aprobación**
+
+1. Sin sesión, enviar-alerta, trigger-alerta-critica, formatear, el estado del proveedor y el diagnóstico de RLS responden 401, y no se envía ningún mensaje.
+2. Enviar-alerta, trigger-alerta-critica, formatear y el estado del proveedor son solo de la Secretaría y el Administrador (el RT, el Firmante y la ECA reciben 403 y no se envía nada); el diagnóstico de RLS es solo del Administrador.
+3. Los webhooks de WhatsApp siguen sin sesión (los llaman Meta y Twilio) y rechazan todo lo que no viene firmado: queda fijado con pruebas.
+4. En el portal de la ECA, el botón «Despachar Alerta WhatsApp» solo aparece para la Secretaría y el Administrador, y el pedido lleva la sesión.
+5. La bandeja de Avisos sigue mostrando el estado del proveedor y el historial de envíos a la Secretaría y al Administrador.
 
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 

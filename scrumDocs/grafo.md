@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-25T12:19:16.026Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:20:00.387Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -153,6 +153,9 @@ graph TD
   end
   subgraph US_1795097860904["RO-03: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso"]
     REQ_1795097860908["RF-01: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso"]
+  end
+  subgraph US_1795609150548["HU-19: HU-19: Chat interno entre operarios e ingenieros para consultas y reportes"]
+    REQ_1795609195313["RF-01: RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885

@@ -7,7 +7,7 @@
    - Selector de tema `Cambiar tema visual` (`[data-testid="btn-toggle-theme"]`) e íconos SVG dedicados en [`apps/web/src/ui/Icons.tsx`](../../../apps/web/src/ui/Icons.tsx).
 2. **Shell operativo con Sidebar colapsable sin superposición**:
    - En [`apps/web/src/App.tsx`](../../../apps/web/src/App.tsx), la barra lateral izquierda permite alternar mediante `Alternar barra lateral`: al colapsar a `80px`, el botón de expandir queda alineado lado a lado junto al logo violeta sin superponerse.
-   - Vista bento `Estado del sistema` (`[data-testid="tab-sistema"]`) y barra de navegación inferior para móviles.
+   - Barra de navegación inferior para móviles. _(La vista bento «Estado del sistema» y su pestaña `tab-sistema` se retiraron el 25/11/2026 por HU-12 RF-04: la pestaña pasó a ser «Mapa sin conexión», `tab-mapa-sin-conexion`.)_
 3. **Buscador Global Inline en reemplazo del modal `Ctrl+K`**:
    - Componente [`apps/web/src/ui/GlobalSearch.tsx`](../../../apps/web/src/ui/GlobalSearch.tsx) y lógica de filtrado/tipos en [`apps/web/src/ui/command.ts`](../../../apps/web/src/ui/command.ts) consultan consorcios (`/api/consorcios`) y máquinas (`/api/firmante/maquinas`), permitiendo saltar directo al consorcio en [`apps/web/src/consorcios/SecretariaView.tsx`](../../../apps/web/src/consorcios/SecretariaView.tsx) (`consorcioInicialId`) o abrir la auditoría en [`apps/web/src/firmante/PortalFirmante.tsx`](../../../apps/web/src/firmante/PortalFirmante.tsx) (`maquinaInicialId`).
 4. **Contraste Neón en Medidor de Cobertura Mensual**:

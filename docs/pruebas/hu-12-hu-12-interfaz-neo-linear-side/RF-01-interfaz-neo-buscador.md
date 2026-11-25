@@ -14,7 +14,7 @@ flowchart LR
   A --> C["Buscador Global inline en topbar"]
   C --> D["Navegación directa a Consorcio / Firmante"]
   A --> E["Portal ECA: Medidor de Cobertura Neón"]
-  A --> F["Estado del sistema + Cambio Dark/Light"]
+  A --> F["Cambio Dark/Light"]
 ```
 
 ---
@@ -41,8 +41,8 @@ flowchart LR
 
 ![Medidor de cobertura con acentos neón](imagenes/RF-01-paso-3.png)
 
-### Paso 4 — Cambio de tema Dark / Light y vista Estado del sistema
-1. Seleccionar `Estado del sistema` (`data-testid="tab-sistema"`) para verificar las tarjetas bento de conectividad (`API NestJS`, `PostgreSQL + PostGIS`, `PWA Service Worker`).
+### Paso 4 — Cambio de tema Dark / Light
+1. _(Retirado el 25/11/2026, HU-12 RF-04: la vista «Estado del sistema» con las tarjetas de conectividad ya no existe. La conectividad de la API y la base se ve en el indicador «API + PostGIS OK» del pie del menú lateral.)_
 2. Presionar `Cambiar tema visual` (`data-testid="btn-toggle-theme"`) en la barra superior para alternar entre modo oscuro y claro (`Modo Claro` / `Modo Oscuro`) manteniendo el contraste en toda la interfaz.
 
-![Vista Estado del sistema en Modo Claro](imagenes/RF-01-paso-4.png)
+![Pantalla en Modo Claro (la captura es anterior a HU-12 RF-04 y muestra la vista «Estado del sistema», hoy retirada)](imagenes/RF-01-paso-4.png)

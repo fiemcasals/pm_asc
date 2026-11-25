@@ -347,12 +347,6 @@ body {
   color: var(--muted);
   font-family: inherit;
   font-size: 0.76rem;
-  cursor: pointer;
-}
-
-.neo-status-pill:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
 }
 
 .neo-status-label {
@@ -538,51 +532,14 @@ body {
 }
 
 /* ==============================================================================
-   BENTO TELEMETRY GRID (Estado del sistema)
+   PANEL DEL MAPA SIN CONEXION (pestana «Mapa sin conexion»)
    ============================================================================== */
-
-.neo-bento-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.neo-bento-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-}
-
-.neo-bento-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 18px 20px;
-}
 
 .neo-bento-kicker {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.neo-bento-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.neo-bento-value {
-  font-size: 1.02rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.neo-bento-sub {
-  margin: 0;
-  font-size: 0.8rem;
   color: var(--muted);
 }
 

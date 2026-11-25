@@ -49,12 +49,11 @@ export function IconChecklist({ size = 16, className }: IconProps) {
   );
 }
 
-export function IconSistema({ size = 16, className }: IconProps) {
+export function IconMapa({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M9 9h6v6H9z" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M9 4v13.5M15 6.5V20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }

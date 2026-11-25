@@ -35,15 +35,26 @@ trap 'rm -rf "$TMP"' EXIT
 
 json() { node -e 'const b=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const v=eval(process.argv[2]);console.log(v===undefined?"":(typeof v==="object"?JSON.stringify(v):v))' "$1" "$2" 2>/dev/null; }
 
+# Desde la serie de seguridad (HU-15 RF-02 en adelante) los endpoints piden sesión: se ingresa como la Secretaría de los datos de demostración
+# (bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh).
+printf '{"usuario":"demo.secretaria","password":"Demo-Clave-2026"}' > "$TMP/login.json"
+"${CURL[@]}" -o "$TMP/login_res.json" -X POST -H 'Content-Type: application/json' -d @"$TMP/login.json" "$BASE_URL/api/auth/login"
+TOKEN="$(json "$TMP/login_res.json" 'b.accessToken')"
+if [ -z "$TOKEN" ]; then
+  echo "  ❌ no pude ingresar como demo.secretaria: corré antes RF-02-datos-demo.sh (y levantá la API con DATABASE_APP_PASSWORD y AUTH_JWT_SECRET)"
+  exit 1
+fi
+AUTH=(-H "Authorization: Bearer $TOKEN")
+
 if [ "$CARGA" -gt 0 ]; then
   echo "== Modo carga: $CARGA iteraciones de lectura para buscador global y cobertura ECA en $BASE_URL"
   errores=0
   : > "$TMP/tiempos"
   for n in $(seq 1 "$CARGA"); do
     inicio="$(date +%s%N)"
-    c1="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/consorcios")"
-    c2="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/firmante/maquinas")"
-    c3="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/eca/cobertura")"
+    c1="$("${CURL[@]}" "${AUTH[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/consorcios")"
+    c2="$("${CURL[@]}" "${AUTH[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/firmante/maquinas")"
+    c3="$("${CURL[@]}" "${AUTH[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/api/eca/cobertura")"
     if [ "$c1" != "200" ] || [ "$c2" != "200" ] || [ "$c3" != "200" ]; then
       errores=$((errores + 1))
     fi
@@ -71,8 +82,8 @@ else
 fi
 
 echo "2. Endpoints que alimentan el buscador global inline (consorcios + máquinas firmante)"
-c_cons="$("${CURL[@]}" -o "$TMP/cons.json" -w '%{http_code}' "$BASE_URL/api/consorcios")"
-c_maq="$("${CURL[@]}" -o "$TMP/maq.json" -w '%{http_code}' "$BASE_URL/api/firmante/maquinas")"
+c_cons="$("${CURL[@]}" "${AUTH[@]}" -o "$TMP/cons.json" -w '%{http_code}' "$BASE_URL/api/consorcios")"
+c_maq="$("${CURL[@]}" "${AUTH[@]}" -o "$TMP/maq.json" -w '%{http_code}' "$BASE_URL/api/firmante/maquinas")"
 len_cons="$(json "$TMP/cons.json" 'Array.isArray(b) ? b.length : 0')"
 len_maq="$(json "$TMP/maq.json" 'Array.isArray(b) ? b.length : 0')"
 if [ "$c_cons" = "200" ] && [ "$c_maq" = "200" ]; then
@@ -82,7 +93,7 @@ else
 fi
 
 echo "3. Endpoint de Medidor de Cobertura ECA con totales para tarjetas neón"
-c_eca="$("${CURL[@]}" -o "$TMP/eca.json" -w '%{http_code}' "$BASE_URL/api/eca/cobertura")"
+c_eca="$("${CURL[@]}" "${AUTH[@]}" -o "$TMP/eca.json" -w '%{http_code}' "$BASE_URL/api/eca/cobertura")"
 total_eca="$(json "$TMP/eca.json" 'b.totalMaquinas')"
 if [ "$c_eca" = "200" ] && [ -n "$total_eca" ]; then
   pass "Cobertura ECA HTTP $c_eca · totalMaquinas=$total_eca"
@@ -90,7 +101,7 @@ else
   fail "Cobertura ECA HTTP $c_eca · totalMaquinas='$total_eca'"
 fi
 
-echo "4. Health check operativo para panel 'Estado del sistema'"
+echo "4. Health check operativo (lo que lee el indicador «API + PostGIS OK» del pie del menú lateral)"
 c_health="$("${CURL[@]}" -o "$TMP/health.json" -w '%{http_code}' "$BASE_URL/api/health")"
 db_status="$(json "$TMP/health.json" 'b.db && b.db.status')"
 if [ "$c_health" = "200" ] && [ "$db_status" = "ok" ]; then

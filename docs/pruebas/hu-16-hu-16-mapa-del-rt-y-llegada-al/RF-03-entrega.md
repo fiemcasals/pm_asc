@@ -16,7 +16,7 @@ El mapa de hoy es un dibujo fijo con tres avenidas hechas a mano y no sirve para
 - **Descarga** (`ControlDescargaMapa`): «Descargar mapa para usar sin señal», con barra de avance y **Cancelar**. Guarda el archivo en la caché del navegador y anota la versión (el ETag que informa el servidor). Avisa cuando hay una versión más nueva. La versión nueva se guarda aparte y reemplaza a la anterior recién cuando terminó de bajar y se comprobó que es un PMTiles; si se corta, el mapa que ya había sigue sirviendo.
 - **Qué lee el mapa:** con el mapa guardado, lo lee del celular, sin red. Sin guardar pero con red, lee los mosaicos del servidor de la app a medida que hacen falta. Sin red y sin mapa guardado, dice «Mapa sin descargar: conectate a una red para bajarlo», y al volver la conexión se dibuja solo.
 - **PWA:** el service worker precachea el worker de MapLibre, las tipografías y los íconos (29 entradas, 3,6 MiB), pero **no** el archivo de CABA, que se baja a pedido.
-- **Dónde se ve:** Estado del sistema › «Mapa de CABA para usar sin señal». Los mapas de las demás pantallas siguen siendo el dibujo anterior hasta RF-05.
+- **Dónde se ve:** pestaña «Mapa sin conexión» (antes «Estado del sistema», HU-12 RF-04) › «Mapa de CABA para usar sin señal». El RT lo baja desde su propio mapa. Los mapas de las demás pantallas siguen siendo el dibujo anterior hasta RF-05.
 
 ## 2. Cómo se levanta y cómo se prueba
 
@@ -40,11 +40,11 @@ Para probar **sin conexión de verdad** hace falta la app compilada (el service 
 ## 3. Qué datos hacen falta
 
 - El archivo de CABA: `npm run mapa:generar`. Tipografías e íconos ya están en el repo (`npm run mapa:assets` solo para actualizarlos).
-- Un usuario que pueda abrir «Estado del sistema»: se probó con `admin` / `Admin-Desarrollo-2026`.
+- Un usuario que pueda abrir «Mapa sin conexión» (antes «Estado del sistema»; el RT no tiene esa pestaña): se probó con `admin` / `Admin-Desarrollo-2026`.
 
 ## 4. Endpoints o pantallas
 
-- **Pantalla:** Estado del sistema › «Mapa de CABA para usar sin señal».
+- **Pantalla:** «Mapa sin conexión» (antes «Estado del sistema») › «Mapa de CABA para usar sin señal».
 - **API:** ninguno nuevo. La app entrega archivos estáticos: `/mapa/caba.pmtiles` (por rangos), `/mapa/fuentes/…` y `/mapa/sprites/…`.
 
 ## 4.5. Cómo se corre integrado

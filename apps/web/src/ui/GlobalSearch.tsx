@@ -7,6 +7,7 @@ import {
   type Vista,
 } from './command';
 import { IconArrowRight, IconSearch } from './Icons';
+import { comandosDeNavegacion } from './navegacion';
 
 interface GlobalSearchProps {
   onNavigate: (vista: Vista) => void;
@@ -60,48 +61,7 @@ export function GlobalSearch({
   }, []);
 
   const items = useMemo<CommandItem[]>(() => {
-    const base: CommandItem[] = [
-      {
-        id: 'nav-firmante',
-        group: 'Navegación',
-        title: 'Portal Firmante (RT Legal)',
-        subtitle: 'Liquidación, auditoría de fotos y firma AGC',
-        keywords: 'firmante rt legal agc liquidacion',
-        action: () => onNavigate('firmante'),
-      },
-      {
-        id: 'nav-inspeccion',
-        group: 'Navegación',
-        title: 'Inspección Técnica (Checklist)',
-        subtitle: 'Relevamiento móvil por solapas para RT de Calle',
-        keywords: 'inspeccion checklist solapas rt calle ascensor',
-        action: () => onNavigate('inspeccion'),
-      },
-      {
-        id: 'nav-eca',
-        group: 'Navegación',
-        title: 'Portal ECA (Conservadoras)',
-        subtitle: 'Cobertura mensual, alertas críticas y WhatsApp',
-        keywords: 'eca conservadora cobertura alerta whatsapp',
-        action: () => onNavigate('eca'),
-      },
-      {
-        id: 'nav-secretaria',
-        group: 'Navegación',
-        title: 'Secretaría (Edificios y Máquinas)',
-        subtitle: 'Alta de consorcios, fichas técnicas y roles',
-        keywords: 'secretaria consorcios edificios maquinas roles',
-        action: () => onNavigate('secretaria'),
-      },
-      {
-        id: 'nav-sistema',
-        group: 'Navegación',
-        title: 'Estado del Sistema',
-        subtitle: 'Salud de API, PostgreSQL + PostGIS y Service Worker',
-        keywords: 'estado salud api postgres postgis sw',
-        action: () => onNavigate('sistema'),
-      },
-    ];
+    const base: CommandItem[] = comandosDeNavegacion(onNavigate);
 
     const consorcioItems: CommandItem[] = consorcios.slice(0, 8).map((c) => ({
       id: `cons-${c.id}`,

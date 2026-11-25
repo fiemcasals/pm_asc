@@ -59,7 +59,7 @@ Ninguno. No hay usuarios ni registros de negocio todavía. La base se crea vací
 |---|---|---|
 | `GET` | `/api/health` | 200 `{"status":"ok","api":"ok","db":{"status":"ok","postgis":"3.4.3"}}`. Si no hay base: **503** con `db.status: "error"` |
 | `OPTIONS` | `/api/*` | Preflight CORS: 204 con `Access-Control-Allow-Origin` sólo para los orígenes autorizados |
-| Pantalla | `https://localhost:8050/` | Título `Inspecciones de Ascensores`, tarjeta `Estado del sistema` con `API`, `Base de datos` y `Service worker` |
+| Pantalla | `https://localhost:8050/` | Título `Inspecciones de Ascensores`, indicador «API + PostGIS OK» al pie del menú lateral (la tarjeta `Estado del sistema` se retiró en HU-12 RF-04) |
 | Archivo | `/manifest.webmanifest` | Manifiesto de la PWA |
 
 ## 4.5. Cómo se corre integrado
@@ -85,8 +85,10 @@ El script no deja datos. Para la condición 3 levanta una API en modo producció
 
 ## 6. Evidencia Visual de Pruebas en el Navegador
 
-![Estado del Sistema y Base PostGIS](imagenes/RF-01-estado-sistema-postgis.png)
+_Nota (25/11/2026): la captura y la verificación de abajo son anteriores a HU-12 RF-04, que retiró la pestaña «Estado del Sistema». Hoy el estado de la API y de la base se comprueba con `GET /api/health` y con el indicador «API + PostGIS OK» del pie del menú lateral; el service worker, en F12 › Application › Service workers._
 
-- **Inspección en vivo**: Prueba automatizada en Google Chrome (`https://localhost:8050/`) verificando la pestaña `Estado del Sistema`.
+![Captura anterior a HU-12 RF-04: la pestaña «Estado del Sistema», hoy retirada, con la base PostGIS](imagenes/RF-01-estado-sistema-postgis.png)
+
+- **Inspección en vivo**: Prueba automatizada en Google Chrome (`https://localhost:8050/`) verificando la pestaña `Estado del Sistema` (retirada en HU-12 RF-04).
 - **Validación**: Conexión activa a API NestJS (`En línea`), Service Worker PWA (`Registrado`) y base PostgreSQL 16 con PostGIS (`En línea (PostGIS 3.4.3)`).
 

@@ -3,7 +3,7 @@ import { MapaBase } from './MapaBase';
 import './mapa.css';
 
 /**
- * «Mapa de CABA sin conexión», en el Estado del sistema: muestra el mapa base y deja bajarlo al celular con wifi para
+ * «Mapa de CABA sin conexión», en la pestaña «Mapa sin conexión»: muestra el mapa base y deja bajarlo al celular con wifi para
  * usarlo después sin señal. Los mapas de las demás pantallas se apoyan en este mismo archivo.
  */
 export function PanelMapaSinConexion(): React.JSX.Element {

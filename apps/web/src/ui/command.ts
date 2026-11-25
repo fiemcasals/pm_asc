@@ -1,4 +1,4 @@
-export type Vista = 'firmante' | 'inspeccion' | 'eca' | 'secretaria' | 'sistema' | 'rt' | 'usuarios';
+export type Vista = 'firmante' | 'inspeccion' | 'eca' | 'secretaria' | 'mapa-sin-conexion' | 'rt' | 'usuarios';
 export type ThemeMode = 'dark' | 'light';
 
 export interface CommandItem {

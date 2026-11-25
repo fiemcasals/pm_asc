@@ -29,13 +29,13 @@ flowchart LR
 
 Abrir https://localhost:8050 en Chrome o Edge. El navegador **no** tiene que mostrar ninguna advertencia de certificado.
 
-Se ve el título `Inspecciones de Ascensores`, el subtítulo `Entorno de desarrollo` y la tarjeta `Estado del sistema`.
+Se ve el título `Inspecciones de Ascensores`, el subtítulo `Entorno de desarrollo` y, al pie del menú lateral, el indicador `API + PostGIS OK` (la tarjeta `Estado del sistema` que se veía antes se retiró en HU-12 RF-04: la captura es anterior).
 
 ![Paso 1: la app cargada, con el título Inspecciones de Ascensores resaltado](imagenes/RF-01-paso-1.png)
 
 ### Paso 2 — Service worker registrado (condición 5)
 
-En la tarjeta `Estado del sistema`, la fila `Service worker` dice `Registrado`. Puede mostrar `Verificando…` durante un segundo.
+La fila `Service worker` de la tarjeta `Estado del sistema` se retiró en HU-12 RF-04 (la captura de abajo es anterior): ahora se comprueba con lo que sigue.
 
 ![Paso 2: la fila Service worker con el valor Registrado resaltado](imagenes/RF-01-paso-2.png)
 

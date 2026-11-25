@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-25T13:00:05.942Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T13:25:15.335Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -128,6 +128,7 @@ graph TD
     REQ_1795097971049["RF-03: Mapa base de CABA propio, que se dibuja sin conexión"]
     REQ_1795097971265["RF-04: Componente de mapa con pines por estado, zoom y nombres que no se pisan"]
     REQ_1795097971367["RF-05: Usar el mapa nuevo en las pantallas y retirar el dibujo anterior"]
+    REQ_1795613107749["RF-06: Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta"]
   end
   subgraph US_1794493998283["HU-17: HU-17: Inspección técnica por solapas"]
     REQ_1794494000545["RF-01: Motor del checklist configurable"]

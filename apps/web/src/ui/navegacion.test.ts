@@ -38,16 +38,20 @@ describe('la pestaña «Mapa sin conexión» (criterio 2)', () => {
 });
 
 describe('quién ve cada pestaña', () => {
-  it.each(['secretaria', 'firmante', 'eca'])('%s ve los portales y el mapa sin conexión, sin usuarios', (rol) => {
-    expect(ids(itemsDeNavegacion(rol))).toEqual(['firmante', 'inspeccion', 'eca', 'secretaria', 'mapa-sin-conexion']);
+  it.each(['secretaria', 'firmante'])('%s ve los portales, el chat y el mapa sin conexión, sin usuarios', (rol) => {
+    expect(ids(itemsDeNavegacion(rol))).toEqual(['firmante', 'inspeccion', 'eca', 'secretaria', 'chat', 'mapa-sin-conexion']);
+  });
+
+  it('la ECA ve los portales y el mapa sin conexión, pero no el chat interno ni usuarios', () => {
+    expect(ids(itemsDeNavegacion('eca'))).toEqual(['firmante', 'inspeccion', 'eca', 'secretaria', 'mapa-sin-conexion']);
   });
 
   it('el Administrador ve además Usuarios y permisos', () => {
-    expect(ids(itemsDeNavegacion('administrador'))).toEqual(['firmante', 'inspeccion', 'eca', 'secretaria', 'mapa-sin-conexion', 'usuarios']);
+    expect(ids(itemsDeNavegacion('administrador'))).toEqual(['firmante', 'inspeccion', 'eca', 'secretaria', 'chat', 'mapa-sin-conexion', 'usuarios']);
   });
 
-  it('el RT de Calle ve su mapa y la inspección técnica, nada más', () => {
-    expect(ids(itemsDeNavegacion('rt_calle'))).toEqual(['rt', 'inspeccion']);
+  it('el RT de Calle ve su mapa, la inspección técnica y el chat, nada más', () => {
+    expect(ids(itemsDeNavegacion('rt_calle'))).toEqual(['rt', 'inspeccion', 'chat']);
   });
 });
 

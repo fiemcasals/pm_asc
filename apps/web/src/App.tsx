@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AdminUsuarios } from './admin/AdminUsuarios';
 import { ConsentimientoUbicacion } from './auth/ConsentimientoUbicacion';
 import { Login } from './auth/Login';
+import { ChatOperativoView } from './chat/ChatOperativoView';
 import {
   alRevocarse,
   cerrarSesion,
@@ -120,7 +121,8 @@ interface EscritorioProps {
 function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const esRt = usuario.rol === 'rt_calle';
   const esAdmin = usuario.rol === 'administrador';
-  // El RT de Calle ve su mapa y la inspección técnica; el resto, los portales del sistema.
+  // El RT de Calle ve su mapa, la inspección técnica y el chat operativo (HU-19).
+  // Las empresas conservadoras (ECA) no tienen acceso al chat interno.
   // Usuarios y permisos es sólo del Administrador (la API además lo exige).
   const navItems = itemsDeNavegacion(usuario.rol);
   const [vista, setVista] = useState<Vista>(() =>
@@ -366,6 +368,9 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
           {vista === 'eca' && <PortalEca usuario={usuario} />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />
+          )}
+          {vista === 'chat' && usuario.rol !== 'eca' && (
+            <ChatOperativoView usuario={usuario} />
           )}
           {vista === 'usuarios' && <AdminUsuarios />}
           {vista === 'mapa-sin-conexion' && <PanelMapaSinConexion />}

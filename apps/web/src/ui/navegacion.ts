@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { CommandItem, Vista } from './command';
-import { IconBrand, IconChecklist, IconEca, IconFirmante, IconMapa, IconSecretaria, IconUsuarios } from './Icons';
+import { IconBrand, IconChat, IconChecklist, IconEca, IconFirmante, IconMapa, IconSecretaria, IconUsuarios } from './Icons';
 
 export interface ItemNavegacion {
   id: Vista;
@@ -19,23 +19,37 @@ export const NAV_RT: ItemNavegacion = {
   icon: IconBrand,
 };
 
+/** El chat interno entre operarios e ingenieros (HU-19). */
+export const NAV_CHAT: ItemNavegacion = {
+  id: 'chat',
+  label: 'Chat Operativo',
+  shortLabel: 'Chat',
+  testId: 'tab-chat',
+  icon: IconChat,
+};
+
 export const NAV_ITEMS: ItemNavegacion[] = [
   { id: 'firmante', label: 'Portal Firmante (RT Legal)', shortLabel: 'Firmante', testId: 'tab-firmante', icon: IconFirmante },
   { id: 'inspeccion', label: 'Inspección Técnica (Checklist)', shortLabel: 'Inspección', testId: 'tab-inspeccion', icon: IconChecklist },
   { id: 'eca', label: 'Portal ECA (Conservadoras)', shortLabel: 'Portal ECA', testId: 'tab-eca', icon: IconEca },
   { id: 'secretaria', label: 'Secretaría (Edificios y Máquinas)', shortLabel: 'Secretaría', testId: 'tab-secretaria', icon: IconSecretaria },
+  NAV_CHAT,
   { id: 'mapa-sin-conexion', label: 'Mapa sin conexión', shortLabel: 'Sin conexión', testId: 'tab-mapa-sin-conexion', icon: IconMapa },
   { id: 'usuarios', label: 'Usuarios y permisos', shortLabel: 'Usuarios', testId: 'tab-usuarios', icon: IconUsuarios },
 ];
 
 /**
- * Las pestañas del menú lateral y de la barra del celular según quién ingresó. El RT de Calle ve su mapa y la inspección técnica; el resto,
- * los portales del sistema. Usuarios y permisos es sólo del Administrador (la API además lo exige).
+ * Las pestañas del menú lateral y de la barra del celular según quién ingresó. El RT de Calle ve su mapa, la inspección técnica y el chat
+ * operativo (HU-19); el resto, los portales del sistema. Las empresas conservadoras (ECA) no tienen acceso al chat interno. Usuarios y permisos
+ * es sólo del Administrador (la API además lo exige).
  */
 export function itemsDeNavegacion(rol: string): ItemNavegacion[] {
-  if (rol === 'rt_calle') return [NAV_RT, ...NAV_ITEMS.filter((item) => item.id === 'inspeccion')];
-  if (rol === 'administrador') return NAV_ITEMS;
-  return NAV_ITEMS.filter((item) => item.id !== 'usuarios');
+  if (rol === 'rt_calle') return [NAV_RT, ...NAV_ITEMS.filter((item) => item.id === 'inspeccion'), NAV_CHAT];
+  return NAV_ITEMS.filter((item) => {
+    if (item.id === 'usuarios' && rol !== 'administrador') return false;
+    if (item.id === 'chat' && rol === 'eca') return false;
+    return true;
+  });
 }
 
 /** Los comandos de «Navegación» del buscador global: llevan a cada portal. */

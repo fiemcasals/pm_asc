@@ -5,7 +5,7 @@ Esta guía muestra cada pantalla que usa el mapa, con el mapa nuevo, en una comp
 - **Tarea:** RF-05 — `REQ-1795097971367` · **Entrega:** [RF-05-entrega.md](RF-05-entrega.md) · **El componente:** [RF-04-guia-visual.md](RF-04-guia-visual.md)
 - **URL:** https://localhost:8050 (la app levantada con `npm run dev`)
 - **Usuario:** `demo.secretaria` / `Demo-Clave-2026` (rol secretaria) para las pantallas 1 a 5, y `rt.beto` / `Demo-Clave-2026` (rol RT de Calle) para la 6.
-- **Antes de empezar:** cargar los datos de demo con `bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh` y generar el mapa base con `npm run mapa:generar` (no está en git; necesita internet).
+- **Antes de empezar:** cargar los datos de demo con `bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh` y tener el mapa base (ya viene en el repositorio desde HU-16 RF-06; solo se genera de nuevo con `npm run mapa:generar` para actualizarlo).
 - **Capturas:** sacadas con Playwright, con el mapa de cada paso resaltado en magenta con `scrumDocs/resaltado-de-capturas.css`.
 
 ```mermaid

@@ -5,7 +5,7 @@ Esta guía muestra cómo se ve y cómo se maneja el mapa nuevo: pines de color e
 - **Tarea:** RF-04 — `REQ-1795097971265` · **Entrega:** [RF-04-entrega.md](RF-04-entrega.md)
 - **URL:** https://localhost:8050 (la app levantada con `npm run dev`)
 - **Usuario:** `demo.secretaria` · **Clave:** `Demo-Clave-2026` · **Rol:** secretaria (el paso 6 usa `rt.beto`, el mismo usuario y clave de demo)
-- **Antes de empezar:** cargar los datos de demo con `bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh` y generar el mapa base con `npm run mapa:generar` (no está en git; necesita internet).
+- **Antes de empezar:** cargar los datos de demo con `bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh` y tener el mapa base (ya viene en el repositorio desde HU-16 RF-06; solo se genera de nuevo con `npm run mapa:generar` para actualizarlo).
 - **Capturas:** sacadas con Playwright en 1280 × 800 (el paso 6, en 360 × 740), con el elemento de cada paso resaltado en magenta con `scrumDocs/resaltado-de-capturas.css`.
 - **Una aclaración:** este componente recién se usa en pantallas con RF-05. Estas capturas se sacaron con las dos Tareas juntas, en el Semáforo, en el alta de consorcio y en el Mapa del RT.
 

@@ -6,7 +6,7 @@
 #   bash docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-03-entrega.sh --carga 100      # además, pide 100 rangos del archivo al servidor y mide
 #
 # Requiere `npm run dev` (la web en https://localhost:8050). El archivo apps/web/public/mapa/caba.pmtiles NO está en git:
-# si falta, corré `npm run mapa:generar`. Lo que se ve en el navegador (descarga, sin conexión) está en RF-03-mapa-sin-conexion.md.
+# si falta, viene en el repositorio (git pull) o se genera con `npm run mapa:generar`. Lo que se ve en el navegador (descarga, sin conexión) está en RF-03-mapa-sin-conexion.md.
 
 set -u
 
@@ -47,7 +47,7 @@ echo "== HU-16 / RF-03 contra $BASE_URL"
 
 echo "1. El archivo del mapa de CABA"
 if [ ! -f "$ARCHIVO" ]; then
-  fail "no existe $ARCHIVO: corré «npm run mapa:generar»"
+  fail "no existe $ARCHIVO: viene en el repositorio (git pull) o se genera con «npm run mapa:generar»"
   echo; echo "== Resultado: $OK verificaciones OK, $FALLAS fallidas"; exit 1
 fi
 (cd "$RAIZ" && node --input-type=module -e '

@@ -450,7 +450,7 @@ Para que el sistema mande WhatsApp se necesita **una cuenta con un proveedor** (
 | **No me deja entrar** | Revisá mayúsculas y minúsculas del usuario y la clave. Si no te acordás, usá «Olvidé mi contraseña». |
 | **No me llega el correo de recuperación** | Mirá en «No deseado» o «Spam». Si tu cuenta no tiene email cargado, pedile al Administrador que lo cargue. |
 | **Me falta una pantalla del menú** | Tu rol no la usa. No es un error. El Administrador puede cambiarte el rol. |
-| **El mapa no se dibuja** | Probá con otro wifi. Si pasa en el servidor, quien administra tiene que generar el mapa (ver README, `npm run mapa:generar`). |
+| **El mapa no se dibuja** | Si dice «El mapa no está disponible», falta el archivo del mapa en el servidor: avisale a quien administra (el archivo viene con la app; ver README). Si dice «Mapa sin descargar», conectate a una red para bajarlo. Si no dice nada, probá con otro wifi. |
 | **Un edificio no aparece en el mapa** | No tiene ubicación cargada. Abrí su ficha y fijá el punto en el mapa. Igualmente aparece en las listas. |
 | **No hay mapa sin señal en el celular** | Con wifi, entrá a **Estado del Sistema** y tocá **Descargar mapa para usar sin señal**. |
 | **Cartel «WhatsApp no configurado»** | Falta la puesta en marcha de la [sección 11](#11-puesta-en-marcha-de-los-avisos-por-whatsapp). Los avisos salen solo por correo. |

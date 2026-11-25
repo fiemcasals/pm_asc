@@ -23,7 +23,7 @@ Archivos: las cinco pantallas, `rtmapa/mapaRt.ts` (`cargarMapaRtConRespaldo`, `g
 
 ```bash
 npm install
-npm run mapa:generar      # el mapa base (~11 MB); no está en git, necesita internet
+npm run mapa:generar      # solo para actualizar el mapa base (~11 MB, necesita internet): ya viene en el repo (HU-16 RF-06)
 npm run verify
 bash docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-05-entrega.sh
 npm run dev               # y abrir la guía visual

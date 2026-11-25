@@ -6,7 +6,7 @@
 //
 // Lee la compilación diaria de Protomaps (datos de OpenStreetMap, ODbL) con pedidos de rango, así que baja solo los
 // mosaicos que caen en el recuadro de CABA y no los ~140 GB del planeta, y escribe un archivo PMTiles v3 en
-// apps/web/public/mapa/caba.pmtiles. El archivo NO va al repositorio (está en .gitignore): se genera con este script.
+// apps/web/public/mapa/caba.pmtiles. El archivo VA en el repositorio (HU-16 RF-06): sin él el sitio desplegado dibuja los mapas vacíos. Para actualizarlo, correr este script y subir el resultado.
 // Es lo mismo que hace `pmtiles extract`, pero en Node, para no depender de un ejecutable externo.
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';

@@ -1,0 +1,13 @@
+Mapa base de CABA (caba.pmtiles)
+================================
+
+Qué es: el recorte de CABA (oeste -58.535, sur -34.705, este -58.335, norte -34.525; zoom 0 a 15) de la compilación diaria de Protomaps
+del 25/11/2026 (https://build.protomaps.com/20261125.pmtiles), en formato PMTiles v3. Lo usan todos los mapas de la aplicación y se baja al
+celular para usarlo sin señal.
+
+Datos: (c) OpenStreetMap contributors, licencia Open Database License (ODbL) 1.0: https://www.openstreetmap.org/copyright
+Estilo y compilación: Protomaps (https://github.com/protomaps/basemaps). La aplicación muestra la atribución sobre cada mapa.
+
+Cómo se arma: node scripts/mapa/generar-mapa-caba.mjs (o `npm run mapa:generar`; ~1 minuto, necesita Internet). Va en el repositorio
+(HU-16 RF-06): sin este archivo el sitio desplegado dibuja los mapas vacíos. Para actualizarlo, generarlo de nuevo y subir el resultado.
+Las tipografías (fuentes/, licencia OFL) y los íconos (sprites/) están en las carpetas de al lado.

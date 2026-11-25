@@ -10,7 +10,7 @@
 
 El mapa de hoy es un dibujo fijo con tres avenidas hechas a mano y no sirve para ubicarse en la calle. El RT trabaja a veces sin wifi y sin señal, así que el mapa nuevo se dibuja desde un archivo **propio**, guardado en el celular. No se usó el servidor de mosaicos de OpenStreetMap porque su política prohíbe bajar los mosaicos para usarlos sin conexión.
 
-- **El archivo del mapa de CABA** (`apps/web/public/mapa/caba.pmtiles`): calles, manzanas, parques, agua y nombres, en formato PMTiles. Pesa **10,67 MB** (zoom 0 a 15, 533 mosaicos) y sale de la compilación `20261118` de Protomaps, con datos de OpenStreetMap. Lo genera `npm run mapa:generar` (~1 minuto, necesita Internet): `scripts/mapa/generar-mapa-caba.mjs` lee la compilación por pedidos de rango —solo baja los mosaicos del recuadro de CABA, no los ~140 GB del planeta—, escribe el archivo y lo vuelve a leer con la misma librería que lo dibuja, comparando un mosaico por zoom con el original. **No va a git** (`.gitignore`).
+- **El archivo del mapa de CABA** (`apps/web/public/mapa/caba.pmtiles`): calles, manzanas, parques, agua y nombres, en formato PMTiles. Pesa **10,67 MB** (zoom 0 a 15, 533 mosaicos) y sale de la compilación `20261118` de Protomaps, con datos de OpenStreetMap. Va en el repositorio (desde HU-16 RF-06); para actualizarlo se genera de nuevo con `npm run mapa:generar` (~1 minuto, necesita Internet): `scripts/mapa/generar-mapa-caba.mjs` lee la compilación por pedidos de rango —solo baja los mosaicos del recuadro de CABA, no los ~140 GB del planeta—, escribe el archivo y lo vuelve a leer con la misma librería que lo dibuja, comparando un mosaico por zoom con el original. **No va a git** (`.gitignore`).
 - **Tipografías e íconos propios** (`apps/web/public/mapa/`, 0,87 MB, sí van a git): `npm run mapa:assets` los baja de un commit fijo de `protomaps/basemaps-assets`. Tipografías Noto Sans bajo SIL OFL; íconos derivados de `tangrams/icons` (MIT).
 - **`MapaBase`** (`apps/web/src/mapa/`): el mapa, con MapLibre GL JS. Zoom y desplazamiento, límites en CABA (no deja alejar hasta mostrar el vacío), controles y textos en castellano, atribución «© OpenStreetMap contributors · Protomaps», y sigue el tema claro u oscuro de la app. Sin WebGL, o si falla, lo dice en lugar de dejar un recuadro roto. Un mapa dentro de una página que se desplaza puede usar `gestosCooperativos` (Ctrl + rueda, o dos dedos).
 - **Descarga** (`ControlDescargaMapa`): «Descargar mapa para usar sin señal», con barra de avance y **Cancelar**. Guarda el archivo en la caché del navegador y anota la versión (el ETag que informa el servidor). Avisa cuando hay una versión más nueva. La versión nueva se guarda aparte y reemplaza a la anterior recién cuando terminó de bajar y se comprobó que es un PMTiles; si se corta, el mapa que ya había sigue sirviendo.
@@ -22,7 +22,7 @@ El mapa de hoy es un dibujo fijo con tres avenidas hechas a mano y no sirve para
 
 ```bash
 npm install
-npm run mapa:generar        # una vez: arma apps/web/public/mapa/caba.pmtiles
+npm run mapa:generar        # solo para actualizar el mapa: arma apps/web/public/mapa/caba.pmtiles (ya viene en el repo)
 npm run db:up && npm run dev
 ```
 
@@ -39,7 +39,7 @@ Para probar **sin conexión de verdad** hace falta la app compilada (el service 
 
 ## 3. Qué datos hacen falta
 
-- El archivo de CABA: `npm run mapa:generar`. Tipografías e íconos ya están en el repo (`npm run mapa:assets` solo para actualizarlos).
+- El archivo de CABA ya viene en el repositorio (solo para actualizarlo: `npm run mapa:generar`). Tipografías e íconos ya están en el repo (`npm run mapa:assets` solo para actualizarlos).
 - Un usuario que pueda abrir «Mapa sin conexión» (antes «Estado del sistema»; el RT no tiene esa pestaña): se probó con `admin` / `Admin-Desarrollo-2026`.
 
 ## 4. Endpoints o pantallas
@@ -59,12 +59,12 @@ Lo que se ve en el navegador —descarga, sin conexión, versión nueva— se re
 
 ## 5. Qué quedó afuera y qué se asumió
 
-- **El archivo no está en git.** Pesa 10,7 MB y se regenera con un comando. Quien clone el repo, y el despliegue a producción, tienen que correr `npm run mapa:generar` (o copiar el archivo) antes de compilar. Si falta, la descarga lo rechaza con «falta generarlo con npm run mapa:generar» (hay un test); el mapa en línea sin el archivo no se probó.
+- **El archivo va en el repositorio desde HU-16 RF-06.** Cuando RF-03 se entregó no estaba en git (había que correr `npm run mapa:generar` antes de compilar), el sitio desplegado nunca lo tuvo y todos los mapas salían vacíos: el servidor contestaba su página en lugar del archivo y la app lo daba por listo. Ahora se sube con el código y, si falta, la app lo dice («El mapa no está disponible»).
 - **Se cambió una condición de la tarea.** Decía «con `pmtiles extract`». En este entorno no se pudo bajar y ejecutar esa herramienta, así que el generador es un script propio en Node que hace lo mismo con la librería `pmtiles` y evita que cada desarrollador dependa de un ejecutable. La condición se reescribió sin nombrar la herramienta; lo que exige (recuadro de CABA, zoom 15 o menos, compilación con fecha, sin terceros) se cumple igual.
 - **Solo se probó en Chromium** (Playwright, escritorio y una ventana de 360 px). **No se probó en un celular Android real** ni en Safari. El celular del cliente es Android, así que conviene una prueba ahí antes de darlo por cerrado. Sin WebGL el mapa muestra un aviso.
 - **Tipografías: solo los rangos latinos** (`0-255`, `256-511`, `8192-8447`), que cubren el castellano. Un nombre con otro alfabeto se dibujaría sin esos caracteres.
 - **El archivo llega hasta el zoom 15.** Más cerca (hasta el 17) se agranda el mosaico del 15: sirve para ubicarse, no agrega calles ni números.
-- **Los datos del mapa quedan en la compilación `20261118`.** Actualizarlos es volver a correr `npm run mapa:generar`; los celulares avisan que hay una versión nueva.
+- **Los datos del mapa quedan en la compilación `20261118`.** Actualizarlos es volver a correr `npm run mapa:generar` y subir el archivo nuevo; los celulares avisan que hay una versión nueva.
 - **Quedan por hacer los pines y las demás pantallas.** Esta tarea no dibuja edificios: eso es RF-04, y cambiar las 5 pantallas es RF-05.
 - **El navegador puede borrar lo guardado** si el celular se queda sin espacio. La app lo detecta (la nota de versión sin el archivo cuenta como «no descargado») y vuelve a ofrecer la descarga.
 - **Dos cosas que vi una vez y no pude reproducir.** En una prueba el mapa apareció guardado sin que se apretara el botón; y otra vez el zoom pasó de 11 a 15,4 sin que se tocara el mapa. Repetí el flujo desde cero varias veces y la descarga solo ocurre al apretar el botón, y el zoom se mantiene estable. Por las dudas, este panel usa gestos cooperativos para que la rueda del mouse no acerque el mapa sin querer.

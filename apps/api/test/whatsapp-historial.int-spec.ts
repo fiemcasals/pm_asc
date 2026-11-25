@@ -67,7 +67,7 @@ describe('Historial de envíos de WhatsApp contra PostgreSQL real (HU-11 RF-12)'
   });
 
   const http = () => request(app.getHttpServer());
-  const enviar = async () => (await http().post('/api/whatsapp/enviar-alerta').send(AVISO).expect(201)).body.idMensaje as string;
+  const enviar = async () => (await http().post('/api/whatsapp/enviar-alerta').set('Authorization', `Bearer ${token}`).send(AVISO).expect(201)).body.idMensaje as string;
   const registro = async (id: string) =>
     ((await http().get('/api/whatsapp/historial').set('Authorization', `Bearer ${token}`).expect(200)).body.registros as any[]).find((r) => r.idMensaje === id);
   const proveedor = (id: string, status: string) => {

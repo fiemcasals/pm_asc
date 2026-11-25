@@ -11,6 +11,8 @@ interface AlertasCriticasProps {
   onAcuseRegistrado?: (alertaId: string, fechaHora: string, usuario: string) => void;
   /** El remito y el acuse legal son de la ECA: la Secretaría y el Administrador ven las alertas pero no los descargan (HU-15 RF-02). */
   puedeAcusar?: boolean;
+  /** El WhatsApp lo despacha la Secretaría o el Administrador: a una ECA no se le ofrece el botón (HU-11 RF-15). */
+  puedeDespacharWhatsApp?: boolean;
 }
 
 interface NotificacionPanel {
@@ -37,6 +39,8 @@ export interface AccionesAlertaProps {
   remitoClassName: string;
   /** false: no es una ECA, así que no se ofrece el remito (lo descarga la ECA y queda su acuse legal). */
   puedeDescargarRemito?: boolean;
+  /** false: no se ofrece el botón de WhatsApp (sólo lo despachan la Secretaría y el Administrador). */
+  puedeDespacharWhatsApp?: boolean;
   onDescargarRemito: (m: MaquinaEca) => void;
   onEnviarWhatsApp: (m: MaquinaEca) => void;
 }
@@ -52,6 +56,7 @@ export function AccionesAlertaCritica({
   waError,
   remitoClassName,
   puedeDescargarRemito = true,
+  puedeDespacharWhatsApp = true,
   onDescargarRemito,
   onEnviarWhatsApp,
 }: AccionesAlertaProps) {
@@ -72,14 +77,16 @@ export function AccionesAlertaCritica({
         </p>
       )}
 
-      <button
-        className="btn-whatsapp-alerta"
-        data-testid={`btn-whatsapp-${maquina.id}`}
-        onClick={() => onEnviarWhatsApp(maquina)}
-        disabled={enviandoWaId === alertaId}
-      >
-        📱 Despachar Alerta WhatsApp
-      </button>
+      {puedeDespacharWhatsApp && (
+        <button
+          className="btn-whatsapp-alerta"
+          data-testid={`btn-whatsapp-${maquina.id}`}
+          onClick={() => onEnviarWhatsApp(maquina)}
+          disabled={enviandoWaId === alertaId}
+        >
+          📱 Despachar Alerta WhatsApp
+        </button>
+      )}
 
       {acuse && (
         <div
@@ -120,7 +127,7 @@ export function AccionesAlertaCritica({
   );
 }
 
-export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = true }: AlertasCriticasProps) {
+export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = true, puedeDespacharWhatsApp = true }: AlertasCriticasProps) {
   const [descargandoId, setDescargandoId] = useState<string | null>(null);
   const [enviandoWaId, setEnviandoWaId] = useState<string | null>(null);
   const [acusesLocales, setAcusesLocales] = useState<
@@ -351,6 +358,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = tru
                   waError={waErrores[alertaId]}
                   remitoClassName="btn-remito-rojo"
                   puedeDescargarRemito={puedeAcusar}
+                  puedeDespacharWhatsApp={puedeDespacharWhatsApp}
                   onDescargarRemito={handleDescargarRemito}
                   onEnviarWhatsApp={handleEnviarWhatsApp}
                 />
@@ -487,6 +495,7 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = tru
               waError={waErrores[alertaId]}
               remitoClassName="btn-remito-naranja"
               puedeDescargarRemito={puedeAcusar}
+              puedeDespacharWhatsApp={puedeDespacharWhatsApp}
               onDescargarRemito={handleDescargarRemito}
               onEnviarWhatsApp={handleEnviarWhatsApp}
             />

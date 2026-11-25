@@ -60,8 +60,14 @@ describe('GET /api/whatsapp/historial pide sesión de Secretaría o Administrado
     expect(res.body.registros).toEqual(expect.arrayContaining([expect.objectContaining({ telefonoDestino: '+5491155550000', estadoEntrega: 'no_configurado' })]));
   });
 
-  it('el estado de WhatsApp (el cartel de la bandeja) sigue sin pedir sesión y no expone envíos', async () => {
-    const res = await request(app.getHttpServer()).get('/api/whatsapp/estado').expect(200);
-    expect(res.body).toEqual({ configurado: false, proveedor: null });
+  // HU-11 RF-15: el estado del proveedor (lo usa el cartel de la bandeja, de la Secretaría y el Administrador) ya no es público.
+  it('el estado de WhatsApp (el cartel de la bandeja) pide sesión de Secretaría o Administrador y no expone envíos', async () => {
+    const estado = () => request(app.getHttpServer()).get('/api/whatsapp/estado');
+    await estado().expect(401);
+    for (const rol of ['rt_calle', 'firmante', 'eca'] as Rol[]) await estado().set('Authorization', `Bearer ${tokens[rol]}`).expect(403);
+    for (const rol of ['secretaria', 'administrador'] as Rol[]) {
+      const res = await estado().set('Authorization', `Bearer ${tokens[rol]}`).expect(200);
+      expect(res.body).toEqual({ configurado: false, proveedor: null });
+    }
   });
 });

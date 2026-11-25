@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-24T13:42:07.621Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-25T12:04:27.484Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -29,7 +29,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 22 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | tested ✓ | germanG | — | — |
 | 23 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | tested ✓ | germanG | — | — |
-| 24 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | Hacer | Sin asignar | — | — |
+| 24 | RF-15 | WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde | HU-11 | — | — | Hacer | Sin asignar | — | — |
 | 25 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 26 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 27 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -103,18 +103,19 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 95 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 96 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
 | 97 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 98 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
-| 99 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 100 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
-| 101 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, RF-01, RF-01 | — |
-| 102 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
-| 103 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
-| 104 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
-| 105 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
-| 106 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
-| 107 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-07 | — |
-| 108 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | Hacer | Sin asignar | RF-07 | — |
-| 109 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
+| 98 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | Hacer | Sin asignar | RF-03, RF-09, RF-05, RF-01, RF-02, RF-03, RF-02 | — |
+| 99 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
+| 100 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 101 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
+| 102 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, RF-01, RF-01 | — |
+| 103 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-03, RF-02, RF-02 | — |
+| 104 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
+| 105 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
+| 106 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
+| 107 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
+| 108 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Bloqueada | dev-ma-2 | RF-05, RF-07 | — |
+| 109 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | Hacer | Sin asignar | RF-07 | — |
+| 110 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle
 
@@ -203,7 +204,7 @@ PR #109 contra dev. En cada equipo en uso el RT saca la foto del frente de cabin
 PR #111 contra dev. El Portal Firmante exige la foto del frente siempre y la foto de cables sólo si el equipo tiene cables de tracción (tracción, montavehículos o sin tipo cargado); un hidráulico, que no tiene cables de tracción, se autoriza con el frente y la firma del encargado. API: requiereFotoDeCables(tipo) decide en POST /api/firmante/autorizar; para tracción el rechazo es el de siempre (mismo mensaje) y para un hidráulico sin la foto del frente dice que falta el frente y que un hidráulico no lleva foto de cables. Pantalla: «Autorizar Firma AGC» se habilita para un hidráulico con el frente y la firma, el motivo de bloqueo no habla de cables y el modal de auditoría dice «No aplica (equipo hidráulico)» en lugar de «✗ Falta». La foto de cables pasa a ser opcional en el tipo; no hay migración ni cambio de contrato. Pruebas: npm run verify con tipos bien, API 1259/1259 (9 nuevas) y web 626/626 (5 nuevas); firmante-persistencia contra PostgreSQL real 4/4 (1 nueva: un hidráulico sin cables se guarda, se autoriza y sigue autorizado después de reiniciar); RF-08-entrega.sh 8 bien, 0 mal y con --carga 50, 100 aperturas del modal sin fallas (p95 135 ms); Playwright con demo.firmante, 9 comprobaciones y 3 capturas resaltadas. Límites: la decisión es de German (23/11/2026) y falta confirmarla con MAICON (el Portal rotula las fotos como «Normativa AGC»); la prueba del navegador responde la lista de máquinas con dos de ejemplo porque los datos de demo no traen un hidráulico con la visita recorrida, y no autoriza nada; el backoffice rotula la foto frente como «Frente del edificio» mientras el Portal y HU-17 RF-11 la llaman «Frente de cabina y botonera» (no se tocó, queda para una tarea aparte). Se puede mergear en cualquier orden respecto de #109 y #110. Detalle en docs/pruebas/hu-08-hu-08-panel-de-liquidacion-rap/RF-08-entrega.md y guía con capturas en RF-08-portal-firmante-hidraulico.md.
 - Estimado: 4h
 
-### RF-08 — Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA
+### RF-15 — WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde
 - Estimado: 0h
 
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
@@ -532,6 +533,9 @@ PR #38 abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/38. Implemen
 
 ### RF-03 — No informar como entregado un WhatsApp que no se envió
 PR #21 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/21). Commit 358f9ae55e15808975ae960bb587de4ecb6c9788 en rama oficial. Eliminado el falso estado "entregado" en WhatsAppConnectorService cuando no hay proveedor configurado (!transport): POST /api/whatsapp/enviar-alerta devuelve HTTP 503 Service Unavailable (estadoEntrega: "no_configurado", idMensaje: "", intentos: 0) y POST /api/whatsapp/trigger-alerta-critica registra el intento como no_realizado en el historial consultable por GET /api/whatsapp/historial. En Portal ECA (eca.ts + AccionesAlertaCritica en AlertasCriticas.tsx + styles.css) muestra el motivo real devuelto por el servidor en .whatsapp-error-badge y .alerta-notificacion-error, limpia estado previo y nunca muestra "WhatsApp Despachado". Verificado en árbol limpio: npm run verify -> 0 errores TS, Jest API 20 suites / 154 tests passed, Vitest Web 5 archivos / 68 tests passed; npm run test:int -> 6 suites / 24 tests passed contra PostgreSQL; RF-03-entrega.sh 3/3 OK y --carga 50: 0 falsos entregados / distinto de 503 (promedio 116 ms, p95 132 ms); verificado en navegador Chrome con captura de pantalla. Asumido: historial en memoria dentro del alcance de RF-03; proveedor real (Meta/Twilio) y lectura de teléfono ECA desde roles_edificio quedan reservados para HU-11 · RF-04 (REQ-1794155774018). Los 3 Tests de desarrollo aprobados con evidencia y los 3 de integración preparados para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/358f9ae55e15808975ae960bb587de4ecb6c9788/docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-03-entrega.md
+- Estimado: 0h
+
+### RF-08 — Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA
 - Estimado: 0h
 
 ### RF-06 — Fallas por piso en Accesos

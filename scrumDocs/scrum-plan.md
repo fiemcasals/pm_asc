@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-25T12:58:37.342Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-25T12:59:39.717Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -31,7 +31,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 23 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | tested ✓ | germanG | — | — |
 | 24 | RF-15 | WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde | HU-11 | — | — | tested ✓ | germanG | — | — |
 | 25 | RF-01 | RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces | HU-19 | — | — | tested ✓ | gonza | — | — |
-| 26 | RF-04 | Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña | HU-12 | — | — | Hecho | dev-ma-2 | — | — |
+| 26 | RF-04 | Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña | HU-12 | — | — | Hecho ✓ dev | dev-ma-2 | — | — |
 | 27 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 28 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 29 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |

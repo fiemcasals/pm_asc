@@ -1,0 +1,251 @@
+{
+  "fecha": "2026-11-24T13:47:08.521Z",
+  "herramienta": "Playwright (Google Chrome Canary/Stable Channel)",
+  "urlBase": "https://localhost:8050",
+  "totalSuites": 7,
+  "suitesPasadas": 0,
+  "totalCasos": 27,
+  "casosPasados": 27,
+  "casosFallados": 0,
+  "erroresDetectados": [],
+  "advertenciasDetectadas": [],
+  "modulos": {
+    "Autenticación": {
+      "casos": [
+        {
+          "nombre": "1.1 Carga inicial sin sesión muestra login limpio con botón deshabilitado",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "1.2 Rechazo de credenciales inválidas con mensaje claro en UI",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "1.3 Toggle para ver/ocultar contraseña",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "1.4 Flujo de Recupero de Contraseña",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 4,
+      "fail": 0
+    },
+    "Administrador": {
+      "casos": [
+        {
+          "nombre": "2.1 Login exitoso como Administrador y visualización de escritorio",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "2.2 Administración de Usuarios: validación de contraseña y creación de usuario",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "2.3 Estado del Sistema y Monitoreo de Salud (API, PostGIS, Service Worker)",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "2.4 Cambio de Tema (Dark / Light Mode)",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "2.5 Cierre de Sesión seguro",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 5,
+      "fail": 0
+    },
+    "Secretaría": {
+      "casos": [
+        {
+          "nombre": "3.1 Login como Secretaría y verificación estricta de RBAC",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "3.2 Listado y Búsqueda de Consorcios",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "3.3 Alta y validación de Consorcios con máquinas",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "3.4 Pestaña Semáforo Mensual de Control",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "3.5 Pestañas Roles, Avisos y Monitoreo General",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "3.6 Cierre de sesión de Secretaría",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 6,
+      "fail": 0
+    },
+    "Portal Firmante": {
+      "casos": [
+        {
+          "nombre": "4.1 Login como Firmante Técnico Legal y verificación de interfaz",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "4.2 Verificación HU-08 RF-06: 0 máquinas hardcodeadas de ejemplo",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "4.3 Modal de Auditoría Técnica y Checklist de Seguridad",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "4.4 Cierre de sesión de Firmante",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 4,
+      "fail": 0
+    },
+    "Portal ECA": {
+      "casos": [
+        {
+          "nombre": "5.1 Login como Empresa Conservadora (ECA) y verificación de aislamiento",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "5.2 Tabla de flota, meses y alertas críticas",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 2,
+      "fail": 0
+    },
+    "RT de Calle": {
+      "casos": [
+        {
+          "nombre": "6.1 Login y Consentimiento Legal de Geolocalización (Ley 25.326)",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "6.2 RBAC Estricto: RT sólo ve Mapa e Inspección",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "6.3 Inspección Técnica y Panel de Firma Digital",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 3,
+      "fail": 0
+    },
+    "Seguridad y Robustez": {
+      "casos": [
+        {
+          "nombre": "7.1 Inyección de XSS y caracteres maliciosos en Login",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "7.2 Navegación a rutas 404 / no mapeadas",
+          "estado": "PASS"
+        },
+        {
+          "nombre": "7.3 Monitoreo de integridad de bundle JS y ausencia de fallos 500",
+          "estado": "PASS"
+        }
+      ],
+      "ok": 3,
+      "fail": 0
+    }
+  },
+  "capturas": [
+    {
+      "nombre": "01_login_inicial.png",
+      "descripcion": "Pantalla de ingreso al sistema con campos vacíos",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\01_login_inicial.png"
+    },
+    {
+      "nombre": "02_login_error_credenciales.png",
+      "descripcion": "Mensaje de error por credenciales incorrectas",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\02_login_error_credenciales.png"
+    },
+    {
+      "nombre": "03_login_recupero_password.png",
+      "descripcion": "Formulario de recuperación de contraseña",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\03_login_recupero_password.png"
+    },
+    {
+      "nombre": "04_admin_escritorio.png",
+      "descripcion": "Escritorio del Administrador con navegación completa",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\04_admin_escritorio.png"
+    },
+    {
+      "nombre": "05_admin_usuarios_tabla.png",
+      "descripcion": "Gestión de usuarios con usuario nuevo registrado",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\05_admin_usuarios_tabla.png"
+    },
+    {
+      "nombre": "06_admin_estado_sistema.png",
+      "descripcion": "Monitoreo de estado de API, Base de Datos PostGIS y Service Worker",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\06_admin_estado_sistema.png"
+    },
+    {
+      "nombre": "07_secretaria_inicio.png",
+      "descripcion": "Inicio de Secretaría: Consorcios, Ficha y Semáforo",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\07_secretaria_inicio.png"
+    },
+    {
+      "nombre": "08_secretaria_consorcio_creado.png",
+      "descripcion": "Consorcio dado de alta exitosamente",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\08_secretaria_consorcio_creado.png"
+    },
+    {
+      "nombre": "09_secretaria_semaforo_mensual.png",
+      "descripcion": "Semáforo de inspecciones al día 25/11/2026",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\09_secretaria_semaforo_mensual.png"
+    },
+    {
+      "nombre": "10_firmante_listado_maquinas.png",
+      "descripcion": "Listado de máquinas en Portal Firmante",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\10_firmante_listado_maquinas.png"
+    },
+    {
+      "nombre": "12_portal_eca_general.png",
+      "descripcion": "Portal ECA: Conservación de ascensores y edificios",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\12_portal_eca_general.png"
+    },
+    {
+      "nombre": "13_portal_eca_alertas.png",
+      "descripcion": "Centro de Alertas Críticas y Remitos de Conservación",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\13_portal_eca_alertas.png"
+    },
+    {
+      "nombre": "14_rt_consentimiento_ubicacion.png",
+      "descripcion": "Pantalla legal de consentimiento de geolocalización",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\14_rt_consentimiento_ubicacion.png"
+    },
+    {
+      "nombre": "15_rt_mapa_inicio.png",
+      "descripcion": "Mapa del RT de Calle con edificios asignados",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\15_rt_mapa_inicio.png"
+    },
+    {
+      "nombre": "16_rt_inspeccion_aviso.png",
+      "descripcion": "Pantalla de inspección sin visita previa",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\16_rt_inspeccion_aviso.png"
+    },
+    {
+      "nombre": "17_xss_injection_test.png",
+      "descripcion": "Resultado de prueba de inyección de caracteres maliciosos",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\17_xss_injection_test.png"
+    },
+    {
+      "nombre": "18_ruta_inexistente_fallback.png",
+      "descripcion": "Comportamiento de la aplicación ante ruta 404",
+      "path": "C:\\Users\\SV GOLDAR\\Desktop\\Ascensor\\pm_asc\\docs\\pruebas\\imagenes\\playwright-audit\\18_ruta_inexistente_fallback.png"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-25T12:04:32.080Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:19:12.625Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -180,3 +180,17 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 4. Dado un informe cerrado, cuando alguien intenta modificarlo, entonces el sistema lo rechaza.
 5. Dado que no hay señal al cerrar, cuando vuelve la conexión con la app abierta, entonces el informe se envía sin duplicarse.
 6. Dado un informe cerrado, cuando se guarda, entonces cada equipo en uso trae la foto del frente de cabina (y la de cables si tiene cables de tracción) y esas fotos quedan selladas con el informe; sin ellas la API lo rechaza.
+
+## HU-19: HU-19: Chat interno entre operarios e ingenieros para consultas y reportes
+
+Como operario en la calle o ingeniero a cargo, quiero tener un chat dentro de la aplicación para poder hablar en un grupo general o por privado, mandando fotos y enlaces, para resolver dudas y avisar rápido sobre cualquier problema en un ascensor.
+
+### Criterios de Aceptacion
+
+1. En el menú de la aplicación aparece la sección 'Chat' para operarios, ingenieros y administradores.
+2. El usuario puede elegir entre hablar en el grupo general (con todo el equipo) o abrir un chat privado con un operario o ingeniero específico.
+3. Se pueden enviar mensajes de texto comunes y enlaces web, los cuales se pueden abrir tocándolos directamente.
+4. Se pueden sacar o adjuntar fotos desde el teléfono para mostrar roturas, piezas o problemas del ascensor en el chat.
+5. El técnico puede elegir de una lista el edificio o ascensor donde está trabajando para que el mensaje aclare automáticamente la ubicación.
+6. Los mensajes quedan guardados con la hora, la fecha y el nombre de quién lo escribió, separando los mensajes propios de los recibidos.
+7. Las empresas conservadoras (ECA) y personas ajenas no tienen acceso a este chat interno.

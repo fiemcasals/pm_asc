@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-25T12:39:04.854Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-25T12:39:10.941Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -210,6 +210,7 @@ PR #111 contra dev. El Portal Firmante exige la foto del frente siempre y la fot
 - Estimado: 0h
 
 ### RF-01 — RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces
+Pull Request #115 abierto hacia dev con implementacion completa y tests en verde
 - Estimado: 4h
 
 ### RF-04 — Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña

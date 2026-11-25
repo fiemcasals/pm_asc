@@ -28,122 +28,11 @@ import { PortalFirmante } from './firmante/PortalFirmante';
 import { fetchHealth, type HealthState } from './health';
 import { type ThemeMode, type Vista } from './ui/command';
 import { GlobalSearch } from './ui/GlobalSearch';
-import {
-  IconBrand,
-  IconChat,
-  IconChecklist,
-  IconEca,
-  IconFirmante,
-  IconMoon,
-  IconPanelLeft,
-  IconSalir,
-  IconSecretaria,
-  IconSistema,
-  IconSun,
-  IconUsuarios,
-} from './ui/Icons';
-
-type SwState = 'verificando' | 'registrado' | 'no-soportado' | 'no-registrado';
+import { IconBrand, IconMoon, IconPanelLeft, IconSalir, IconSun } from './ui/Icons';
+import { IndicadorEstado } from './ui/IndicadorEstado';
+import { itemsDeNavegacion } from './ui/navegacion';
 
 const THEME_STORAGE_KEY = 'mant_asc_theme';
-
-function useServiceWorkerState(): SwState {
-  const [state, setState] = useState<SwState>('verificando');
-
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) {
-      setState('no-soportado');
-      return;
-    }
-    let active = true;
-    const timeout = setTimeout(() => active && setState('no-registrado'), 10_000);
-    navigator.serviceWorker.ready.then(() => {
-      clearTimeout(timeout);
-      if (active) setState('registrado');
-    });
-    return () => {
-      active = false;
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  return state;
-}
-
-const SW_LABEL: Record<SwState, string> = {
-  verificando: 'Verificando…',
-  registrado: 'Registrado',
-  'no-soportado': 'No soportado por este navegador',
-  'no-registrado': 'No registrado',
-};
-
-const NAV_RT = {
-  id: 'rt' as const,
-  label: 'Mapa del RT',
-  shortLabel: 'Mapa',
-  testId: 'tab-rt',
-  icon: IconBrand,
-};
-
-const NAV_CHAT = {
-  id: 'chat' as const,
-  label: 'Chat Operativo',
-  shortLabel: 'Chat',
-  testId: 'tab-chat',
-  icon: IconChat,
-};
-
-const NAV_ITEMS: Array<{
-  id: Vista;
-  label: string;
-  shortLabel: string;
-  testId: string;
-  icon: (props: { size?: number }) => React.ReactElement;
-}> = [
-  {
-    id: 'firmante',
-    label: 'Portal Firmante (RT Legal)',
-    shortLabel: 'Firmante',
-    testId: 'tab-firmante',
-    icon: IconFirmante,
-  },
-  {
-    id: 'inspeccion',
-    label: 'Inspección Técnica (Checklist)',
-    shortLabel: 'Inspección',
-    testId: 'tab-inspeccion',
-    icon: IconChecklist,
-  },
-  {
-    id: 'eca',
-    label: 'Portal ECA (Conservadoras)',
-    shortLabel: 'Portal ECA',
-    testId: 'tab-eca',
-    icon: IconEca,
-  },
-  {
-    id: 'secretaria',
-    label: 'Secretaría (Edificios y Máquinas)',
-    shortLabel: 'Secretaría',
-    testId: 'tab-secretaria',
-    icon: IconSecretaria,
-  },
-  NAV_CHAT,
-  {
-    id: 'sistema',
-    label: 'Estado del Sistema',
-    shortLabel: 'Sistema',
-    testId: 'tab-sistema',
-    icon: IconSistema,
-  },
-  {
-    id: 'usuarios',
-    label: 'Usuarios y permisos',
-    shortLabel: 'Usuarios',
-    testId: 'tab-usuarios',
-    icon: IconUsuarios,
-  },
-];
 
 /** La ruta /admin abre directo la pantalla de usuarios (sólo si quien entra es Administrador). */
 const RUTA_ADMIN = '/admin';
@@ -232,17 +121,10 @@ interface EscritorioProps {
 function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const esRt = usuario.rol === 'rt_calle';
   const esAdmin = usuario.rol === 'administrador';
-  const esEca = usuario.rol === 'eca';
   // El RT de Calle ve su mapa, la inspección técnica y el chat operativo (HU-19).
   // Las empresas conservadoras (ECA) no tienen acceso al chat interno.
   // Usuarios y permisos es sólo del Administrador (la API además lo exige).
-  const navItems = esRt
-    ? [NAV_RT, NAV_ITEMS[1], NAV_CHAT]
-    : NAV_ITEMS.filter((item) => {
-        if (item.id === 'usuarios' && !esAdmin) return false;
-        if (item.id === 'chat' && esEca) return false;
-        return true;
-      });
+  const navItems = itemsDeNavegacion(usuario.rol);
   const [vista, setVista] = useState<Vista>(() =>
     esAdmin && typeof window !== 'undefined' && window.location.pathname.startsWith(RUTA_ADMIN)
       ? 'usuarios'
@@ -256,7 +138,6 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [consorcioBuscadoId, setConsorcioBuscadoId] = useState<string | null>(null);
   const [maquinaBuscadaId, setMaquinaBuscadaId] = useState<string | null>(null);
-  const swState = useServiceWorkerState();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -342,9 +223,6 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   }, [usuario.rol]);
 
   const currentNav = navItems.find((item) => item.id === vista) ?? navItems[0];
-  const systemOnline = health?.kind === 'ok';
-  const systemDotClass =
-    health === null ? 'dot-pending' : systemOnline ? 'dot-ok' : 'dot-error';
 
   return (
     <div className={`neo-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -411,23 +289,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
           >
             <IconSalir size={15} />
           </button>
-          <button
-            type="button"
-            className="neo-status-pill"
-            onClick={() => irA('sistema')}
-            title="Ver detalle del estado del sistema"
-          >
-            <span className={`neo-dot ${systemDotClass}`} />
-            {!sidebarCollapsed && (
-              <span className="neo-status-label">
-                {health === null
-                  ? 'Conectando…'
-                  : systemOnline
-                    ? 'API + PostGIS OK'
-                    : 'Revisar sistema'}
-              </span>
-            )}
-          </button>
+          <IndicadorEstado health={health} colapsado={sidebarCollapsed} />
 
           <button
             type="button"
@@ -511,84 +373,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
             <ChatOperativoView usuario={usuario} />
           )}
           {vista === 'usuarios' && <AdminUsuarios />}
-          {vista === 'sistema' && (
-            <section className="neo-bento-section" aria-labelledby="estado-titulo">
-              <div className="portal-header">
-                <div>
-                  <h2 id="estado-titulo" className="portal-title">
-                    Estado del sistema
-                  </h2>
-                  <p className="portal-desc">
-                    Telemetría en tiempo real de la API NestJS, PostgreSQL + PostGIS y Service Worker PWA.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => {
-                    setHealth(null);
-                    void fetchHealth().then(setHealth);
-                  }}
-                >
-                  Actualizar
-                </button>
-              </div>
-
-              <div className="neo-bento-grid">
-                <article className="card neo-bento-card">
-                  <span className="neo-bento-kicker">BACKEND · NESTJS</span>
-                  <div className="neo-bento-row">
-                    <span className={`neo-dot ${health === null ? 'dot-pending' : health.kind === 'api-error' ? 'dot-error' : 'dot-ok'}`} />
-                    <strong className="neo-bento-value" data-testid="estado-api">
-                      {health === null
-                        ? 'Verificando…'
-                        : health.kind === 'api-error'
-                          ? health.message
-                          : 'En línea'}
-                    </strong>
-                  </div>
-                  <p className="neo-bento-sub">Proxy local `/api` → puerto `:3050`</p>
-                </article>
-
-                <article className="card neo-bento-card">
-                  <span className="neo-bento-kicker">BASE DE DATOS</span>
-                  <div className="neo-bento-row">
-                    <span className={`neo-dot ${health?.kind === 'ok' ? 'dot-ok' : health === null ? 'dot-pending' : 'dot-error'}`} />
-                    <strong className="neo-bento-value" data-testid="estado-db">
-                      {health === null && 'Verificando…'}
-                      {health?.kind === 'ok' && `En línea (PostGIS ${health.postgis})`}
-                      {health?.kind === 'db-error' && health.message}
-                      {health?.kind === 'api-error' && 'Sin datos'}
-                    </strong>
-                  </div>
-                  <p className="neo-bento-sub">PostgreSQL 16 + PostGIS (Docker :5433)</p>
-                </article>
-
-                <article className="card neo-bento-card">
-                  <span className="neo-bento-kicker">MODO OFFLINE · PWA</span>
-                  <div className="neo-bento-row">
-                    <span className={`neo-dot ${swState === 'registrado' ? 'dot-ok' : swState === 'verificando' ? 'dot-pending' : 'dot-error'}`} />
-                    <strong className="neo-bento-value" data-testid="estado-sw">
-                      {SW_LABEL[swState]}
-                    </strong>
-                  </div>
-                  <p className="neo-bento-sub">Caché local para trabajo en sala de máquinas</p>
-                </article>
-
-                <article className="card neo-bento-card">
-                  <span className="neo-bento-kicker">INTERFAZ · NEO LINEAR</span>
-                  <div className="neo-bento-row">
-                    <strong className="neo-bento-value">
-                      {theme === 'dark' ? 'Oscuro (Command)' : 'Claro (High Contrast)'}
-                    </strong>
-                  </div>
-                  <p className="neo-bento-sub">Rama experimental local `GONZA`</p>
-                </article>
-              </div>
-
-              <PanelMapaSinConexion />
-            </section>
-          )}
+          {vista === 'mapa-sin-conexion' && <PanelMapaSinConexion />}
         </main>
       </div>
 

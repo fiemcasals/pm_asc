@@ -1,6 +1,6 @@
 # HU-16 / RF-03 · Guía visual — El mapa de CABA que se dibuja sin conexión
 
-Esta guía muestra, paso a paso, cómo bajar el mapa de CABA al celular y cómo se ve **sin wifi y sin señal**. El mapa vive hoy en «Estado del sistema»; los mapas del resto de las pantallas se apoyan en este mismo archivo (tareas siguientes).
+Esta guía muestra, paso a paso, cómo bajar el mapa de CABA al celular y cómo se ve **sin wifi y sin señal**. El mapa vive hoy en la pestaña «Mapa sin conexión» (antes «Estado del sistema»); los mapas del resto de las pantallas se apoyan en este mismo archivo (tareas siguientes).
 
 - **Tarea:** RF-03 — `REQ-1795097971049` · **Entrega:** [RF-03-entrega.md](RF-03-entrega.md)
 - **Usuario:** `admin` · **Clave:** `Admin-Desarrollo-2026`
@@ -12,15 +12,15 @@ Esta guía muestra, paso a paso, cómo bajar el mapa de CABA al celular y cómo 
 2. Para los pasos 5 y 6 (sin conexión) hace falta la app **compilada**, porque el service worker de desarrollo no guarda la app entera: `npm run build -w apps/web` y `npm run preview -w apps/web`, y entrar a https://localhost:4173. Los demás pasos se ven igual en https://localhost:8050 con `npm run dev`.
 3. Para «cortar la red» en el navegador: DevTools › Network › «Offline» o el modo avión del celular.
 
-## Paso 1 · Entrar a «Estado del sistema»
+## Paso 1 · Entrar a «Mapa sin conexión»
 
-Ingresá y apretá **Estado del Sistema** en la barra lateral (en el celular, **Sistema** en la barra de abajo).
+Ingresá y apretá **Mapa sin conexión** en la barra lateral (en el celular, **Sin conexión** en la barra de abajo). _La captura es anterior a HU-12 RF-04 y todavía muestra el nombre viejo de la pestaña, «Estado del Sistema»._
 
-![Barra lateral con «Estado del Sistema» resaltado](imagenes/RF-03-paso-1.png)
+![Barra lateral con la pestaña resaltada (la captura es anterior: se llamaba «Estado del Sistema»)](imagenes/RF-03-paso-1.png)
 
 ## Paso 2 · El mapa y el botón para bajarlo
 
-Al final de la página está el panel «Mapa de CABA para usar sin señal». Con conexión, el mapa se dibuja leyendo el archivo del servidor, y debajo dice que todavía no está guardado en este celular y cuánto pesa.
+En la pestaña está el panel «Mapa de CABA para usar sin señal». Con conexión, el mapa se dibuja leyendo el archivo del servidor, y debajo dice que todavía no está guardado en este celular y cuánto pesa.
 
 ![Panel del mapa con el botón «Descargar mapa para usar sin señal» resaltado](imagenes/RF-03-paso-2.png)
 
@@ -44,7 +44,7 @@ Cuando termina, el panel lo confirma y el mapa pasa a leerse desde el celular, y
 
 ## Paso 5 · Sin wifi y sin señal
 
-Cortá la red (modo avión) y recargá la página. La app abre igual, con el aviso «Sin señal: estás trabajando con la sesión guardada en este dispositivo». Entrá otra vez a «Estado del Sistema» y acercá el mapa con **+**.
+Cortá la red (modo avión) y recargá la página. La app abre igual, con el aviso «Sin señal: estás trabajando con la sesión guardada en este dispositivo». Entrá otra vez a «Mapa sin conexión» y acercá el mapa con **+**.
 
 ![Mapa de CABA al nivel de la cuadra, sin conexión, resaltado](imagenes/RF-03-paso-5.png)
 

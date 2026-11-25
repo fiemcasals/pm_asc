@@ -1106,4 +1106,39 @@ export const MIGRATIONS: Migration[] = [
       REVOKE DELETE ON informes_falla FROM ascensores_app;
     `,
   },
+  {
+    id: '038_chat_mensajes',
+    sql: `
+      -- HU-19 RF-01: Chat interno entre operarios e ingenieros con salas global e individual, fotos y enlaces.
+      CREATE TABLE chat_mensajes (
+        id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        emisor_id       uuid NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+        destinatario_id uuid REFERENCES usuarios (id) ON DELETE CASCADE,
+        tipo_sala       text NOT NULL CHECK (tipo_sala IN ('global', 'directo')),
+        contenido       text NOT NULL CHECK (length(btrim(contenido)) > 0 OR adjunto_url IS NOT NULL),
+        adjunto_url     text,
+        consorcio_id    uuid REFERENCES consorcios (id) ON DELETE SET NULL,
+        maquina_ref     text,
+        creado_en       timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX chat_mensajes_tipo_sala_idx ON chat_mensajes (tipo_sala, creado_en);
+      CREATE INDEX chat_mensajes_destinatario_idx ON chat_mensajes (destinatario_id, creado_en) WHERE destinatario_id IS NOT NULL;
+      CREATE INDEX chat_mensajes_emisor_idx ON chat_mensajes (emisor_id, creado_en);
+
+      ALTER TABLE chat_mensajes ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_chat_mensajes_admin_secretaria ON chat_mensajes;
+      CREATE POLICY rls_chat_mensajes_admin_secretaria ON chat_mensajes
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('secretaria', 'administrador'));
+
+      DROP POLICY IF EXISTS rls_chat_mensajes_operarios ON chat_mensajes;
+      CREATE POLICY rls_chat_mensajes_operarios ON chat_mensajes
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('rt_calle', 'firmante', 'administrador', 'secretaria'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('rt_calle', 'firmante', 'administrador', 'secretaria'));
+
+      GRANT SELECT, INSERT, UPDATE, DELETE ON chat_mensajes TO ascensores_app;
+    `,
+  },
 ];

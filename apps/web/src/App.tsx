@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AdminUsuarios } from './admin/AdminUsuarios';
 import { ConsentimientoUbicacion } from './auth/ConsentimientoUbicacion';
 import { Login } from './auth/Login';
+import { ChatOperativoView } from './chat/ChatOperativoView';
 import {
   alRevocarse,
   cerrarSesion,
@@ -29,6 +30,7 @@ import { type ThemeMode, type Vista } from './ui/command';
 import { GlobalSearch } from './ui/GlobalSearch';
 import {
   IconBrand,
+  IconChat,
   IconChecklist,
   IconEca,
   IconFirmante,
@@ -83,6 +85,14 @@ const NAV_RT = {
   icon: IconBrand,
 };
 
+const NAV_CHAT = {
+  id: 'chat' as const,
+  label: 'Chat Operativo',
+  shortLabel: 'Chat',
+  testId: 'tab-chat',
+  icon: IconChat,
+};
+
 const NAV_ITEMS: Array<{
   id: Vista;
   label: string;
@@ -118,6 +128,7 @@ const NAV_ITEMS: Array<{
     testId: 'tab-secretaria',
     icon: IconSecretaria,
   },
+  NAV_CHAT,
   {
     id: 'sistema',
     label: 'Estado del Sistema',
@@ -221,13 +232,17 @@ interface EscritorioProps {
 function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const esRt = usuario.rol === 'rt_calle';
   const esAdmin = usuario.rol === 'administrador';
-  // El RT de Calle ve su mapa y la inspección técnica; el resto, los portales del sistema.
+  const esEca = usuario.rol === 'eca';
+  // El RT de Calle ve su mapa, la inspección técnica y el chat operativo (HU-19).
+  // Las empresas conservadoras (ECA) no tienen acceso al chat interno.
   // Usuarios y permisos es sólo del Administrador (la API además lo exige).
   const navItems = esRt
-    ? [NAV_RT, NAV_ITEMS[1]]
-    : esAdmin
-      ? NAV_ITEMS
-      : NAV_ITEMS.filter((item) => item.id !== 'usuarios');
+    ? [NAV_RT, NAV_ITEMS[1], NAV_CHAT]
+    : NAV_ITEMS.filter((item) => {
+        if (item.id === 'usuarios' && !esAdmin) return false;
+        if (item.id === 'chat' && esEca) return false;
+        return true;
+      });
   const [vista, setVista] = useState<Vista>(() =>
     esAdmin && typeof window !== 'undefined' && window.location.pathname.startsWith(RUTA_ADMIN)
       ? 'usuarios'
@@ -491,6 +506,9 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
           {vista === 'eca' && <PortalEca usuario={usuario} />}
           {vista === 'secretaria' && (
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />
+          )}
+          {vista === 'chat' && usuario.rol !== 'eca' && (
+            <ChatOperativoView usuario={usuario} />
           )}
           {vista === 'usuarios' && <AdminUsuarios />}
           {vista === 'sistema' && (

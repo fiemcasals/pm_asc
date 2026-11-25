@@ -74,6 +74,9 @@ import { PagosRepository } from './pagos/pagos.repository';
 import { PgPagosRepository } from './pagos/pg-pagos.repository';
 import { PagosService } from './pagos/pagos.service';
 import { VisitasFallidasService } from './visitas-fallidas/visitas-fallidas.service';
+import { ChatController } from './chat/chat.controller';
+import { ChatRepository, PgChatRepository } from './chat/chat.repository';
+import { ChatService } from './chat/chat.service';
 
 @Module({})
 export class AppModule implements NestModule {
@@ -121,6 +124,7 @@ export class AppModule implements NestModule {
         FallasCriticasController,
         SeguridadRlsController,
         SemaforoController,
+        ChatController,
       ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
@@ -168,6 +172,8 @@ export class AppModule implements NestModule {
         FallasCriticasService,
         { provide: SemaforoRepository, useClass: PgSemaforoRepository },
         SemaforoService,
+        { provide: ChatRepository, useClass: PgChatRepository },
+        ChatService,
       ],
     };
   }

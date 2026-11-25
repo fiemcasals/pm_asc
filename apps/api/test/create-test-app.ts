@@ -23,6 +23,7 @@ import { HistorialWhatsAppRepository, InMemoryHistorialWhatsAppRepository } from
 import { AvisosRepository, InMemoryAvisosRepository } from '../src/avisos/avisos.repository';
 import { InMemoryParadasRepository, ParadasRepository } from '../src/paradas/paradas.repository';
 import { FallasCriticasRepository, InMemoryFallasCriticasRepository } from '../src/fallas-criticas/fallas-criticas.repository';
+import { ChatRepository, InMemoryChatRepository } from '../src/chat/chat.repository';
 import { DetalleImportacionAgc, FilaAgcValidada, ResultadoPersistenciaAgc } from '../src/consorcios/importador-agc.types';
 import { PORCENTAJES_OPERATIVOS, RolesEdificio, RolesInput } from '../src/consorcios/roles.types';
 import { DatabaseService } from '../src/database/database.service';
@@ -401,6 +402,7 @@ export async function createTestApp(
   avisosRepo: AvisosRepository = new InMemoryAvisosRepository(),
   paradasRepo: ParadasRepository = new InMemoryParadasRepository(),
   fallasRepo: FallasCriticasRepository = new InMemoryFallasCriticasRepository(),
+  chatRepo: ChatRepository = new InMemoryChatRepository(),
 ): Promise<{ app: INestApplication; config: AppConfig }> {
   // Por defecto las pruebas no exigen el día de separación entre visitas fallidas (HU-07 RF-05): lo piden explícitamente las que lo prueban.
   const config = loadConfig({ VISITAS_FALLIDAS_MIN_DIAS: '0', ...env });
@@ -441,6 +443,8 @@ export async function createTestApp(
     .useValue(paradasRepo)
     .overrideProvider(FallasCriticasRepository)
     .useValue(fallasRepo)
+    .overrideProvider(ChatRepository)
+    .useValue(chatRepo)
     .overrideProvider(Mailer)
     .useValue(mailer)
     .compile();

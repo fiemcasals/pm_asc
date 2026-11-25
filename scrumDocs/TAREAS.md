@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-25T12:31:15.189Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:34:17.497Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -861,6 +861,18 @@ La web formatea fechas y horas con toLocaleString('es-AR') sin indicar el ciclo 
 - 3. Las fechas sin hora no cambian.
 - 4. Una prueba de la función de formato cubre la mañana, la tarde, la medianoche (00:xx) y un navegador en otra zona horaria; npm run verify sigue en verde.
 - 5. Una captura con Playwright de la bandeja de avisos y de la ficha del edificio muestra una hora de la tarde en formato de 24 horas.
+
+### RF-04: Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña (Funcional)
+
+La vista «Estado del sistema» muestra un encabezado y cuatro tarjetas (Backend NestJS, Base de datos PostgreSQL + PostGIS, Modo offline PWA e Interfaz) con texto técnico de desarrollo («Proxy local /api → puerto :3050», «Rama experimental local GONZA») que no le sirve a nadie que use la aplicación. Retirar ese encabezado y esas tarjetas. Debajo de ellas vive el panel «Mapa de CABA sin conexión» (HU-16 RF-03), donde el RT baja el mapa al celular con wifi: se conserva, y la pestaña pasa a llamarse «Mapa sin conexión» (menú lateral, barra inferior del celular y buscador global). El endpoint GET /api/health no se toca (lo piden RO-01 RF-01 y los chequeos de despliegue). El indicador chico «API + PostGIS OK» del pie del menú lateral sigue como indicador, pero ya no lleva a esa pestaña. Se corrige el criterio 1 de HU-12 RF-01, que nombra la «vista bento Estado del sistema», y las guías y scripts de entrega que la citan (HU-12 RF-01, HU-16 RF-03, RO-01 RF-01). Pedido del usuario del 25/11/2026.
+
+**Condiciones de aprobación**
+
+1. La pestaña que antes se llamaba «Estado del sistema» ya no muestra el encabezado «Estado del sistema» ni las tarjetas de Backend, Base de datos, Modo offline e Interfaz.
+2. Esa pestaña se llama «Mapa sin conexión» en el menú lateral, en la barra inferior del celular y en el buscador global, y sigue mostrando el panel «Mapa de CABA sin conexión» con su botón para bajar el mapa, que funciona igual que antes.
+3. El indicador «API + PostGIS OK» del pie del menú lateral sigue informando el estado de la API, y ya no lleva a la pestaña del mapa.
+4. GET /api/health responde igual que antes (estado de la API y versión de PostGIS) y la aplicación ya no muestra ninguna de las tarjetas que lo leían.
+5. El criterio 1 de HU-12 RF-01 ya no nombra la vista bento «Estado del sistema», y las guías y scripts de entrega de HU-12 RF-01, HU-16 RF-03 y RO-01 RF-01 describen la pantalla actual y siguen pasando.
 
 ## HU-13: HU-13: Claridad Operativa y Limpieza de Obviedades en Portales ECA y Consorcios
 

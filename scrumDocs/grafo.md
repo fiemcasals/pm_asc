@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-24T13:42:12.402Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:04:34.884Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -97,6 +97,7 @@ graph TD
     REQ_1795263642415["RF-12: Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio"]
     REQ_1795263642719["RF-13: Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp"]
     REQ_1795263643018["RF-14: Que el estado general de un aviso refleje un envío de WhatsApp que falla después"]
+    REQ_1795608267360["RF-15: WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]

@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-25T12:40:10.439Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:46:20.037Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -869,7 +869,7 @@ La vista «Estado del sistema» muestra un encabezado y cuatro tarjetas (Backend
 **Condiciones de aprobación**
 
 1. La pestaña que antes se llamaba «Estado del sistema» ya no muestra el encabezado «Estado del sistema» ni las tarjetas de Backend, Base de datos, Modo offline e Interfaz.
-2. Esa pestaña se llama «Mapa sin conexión» en el menú lateral, en la barra inferior del celular y en el buscador global, y sigue mostrando el panel «Mapa de CABA sin conexión» con su botón para bajar el mapa, que funciona igual que antes.
+2. Esa pestaña se llama «Mapa sin conexión» en el menú lateral y en el buscador global, y «Sin conexión» en la barra inferior del celular, y sigue mostrando el panel «Mapa de CABA sin conexión» con su botón para bajar el mapa, que funciona igual que antes.
 3. El indicador «API + PostGIS OK» del pie del menú lateral sigue informando el estado de la API, y ya no lleva a la pestaña del mapa.
 4. GET /api/health responde igual que antes (estado de la API y versión de PostGIS) y la aplicación ya no muestra ninguna de las tarjetas que lo leían.
 5. El criterio 1 de HU-12 RF-01 ya no nombra la vista bento «Estado del sistema», y las guías y scripts de entrega de HU-12 RF-01, HU-16 RF-03 y RO-01 RF-01 describen la pantalla actual y siguen pasando.

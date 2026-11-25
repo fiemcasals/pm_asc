@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-25T12:19:13.906Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-25T12:19:58.704Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -1255,6 +1255,22 @@ Fuente: "Desarrollo lógico de app para Representante Técnico" (cliente) y resp
 3. Reenviar el mismo informe no lo duplica, gracias a un identificador generado en el celular.
 4. Un envío interrumpido se reintenta sin perder fotos.
 5. Si la sesión venció, lo pendiente se conserva y se envía después de volver a ingresar.
+
+## HU-19: HU-19: Chat interno entre operarios e ingenieros para consultas y reportes
+
+### RF-01: RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces (Funcional)
+
+Desarrollo de un chat integrado en la aplicación que permite a los operarios en la calle y a los ingenieros comunicarse en tiempo real. Cuenta con un canal general para todo el equipo y chats privados individuales. Permite mandar mensajes de texto, fotos sacadas con el celular o de la galería, enlaces directos a páginas web y seleccionar el edificio o ascensor para avisar rápido sobre cualquier falla o consulta técnica.
+
+**Condiciones de aprobación**
+
+1. En la barra de navegación lateral se muestra el botón 'Chat' para operarios de calle, ingenieros y administradores.
+2. La pantalla permite elegir entre hablar en el canal 'Grupo General' o seleccionar un compañero para abrir un chat privado individual.
+3. Los mensajes de texto enviados se muestran de inmediato con el nombre de la persona, su rol, la hora y el texto.
+4. Se pueden adjuntar y enviar fotos desde la cámara o galería, viéndose como fotos dentro de la conversación.
+5. Los enlaces web que se envíen se pueden tocar o clickear para abrirlos directamente.
+6. El operario puede elegir el edificio o ascensor de una lista para que el mensaje aclare dónde está trabajando.
+7. Los mensajes quedan guardados y no se pierden al recargar la página o volver a entrar al sistema.
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

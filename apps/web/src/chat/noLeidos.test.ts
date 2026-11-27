@@ -129,7 +129,8 @@ describe('cómo lo usa la aplicación', () => {
       expect(hook).toContain("typeof cuerpo.total === 'number' && cuerpo.total > 0 ? cuerpo.total : 0");
     });
     it('la aplicación lo usa solo si el usuario tiene la pestaña del chat', () => {
-      expect(app).toContain("useNoLeidosChat(navItems.some((item) => item.id === 'chat'))");
+      expect(app).toContain("const tieneChat = navItems.some((item) => item.id === 'chat');");
+      expect(app).toMatch(/useNoLeidosChat\(tieneChat, /);
     });
     it('el menú lateral y la barra del celular muestran el total solo en la pestaña del chat y solo si hay algo sin leer', () => {
       expect(app).toMatch(/item\.id === 'chat' && noLeidosChat > 0 && \(\s*<span className="neo-nav-badge" data-testid="chat-no-leidos-menu"/);

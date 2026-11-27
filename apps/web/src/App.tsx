@@ -32,6 +32,7 @@ import { IconBrand, IconMoon, IconPanelLeft, IconSalir, IconSun } from './ui/Ico
 import { IndicadorEstado } from './ui/IndicadorEstado';
 import { itemsDeNavegacion } from './ui/navegacion';
 import { textoContador } from './chat/noLeidos';
+import { useAvisosDelChat } from './chat/useAvisosDelChat';
 import { useNoLeidosChat } from './chat/useNoLeidosChat';
 
 const THEME_STORAGE_KEY = 'mant_asc_theme';
@@ -127,8 +128,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   // Las empresas conservadoras (ECA) no tienen acceso al chat interno.
   // Usuarios y permisos es sólo del Administrador (la API además lo exige).
   const navItems = itemsDeNavegacion(usuario.rol);
-  // HU-19 RF-09: los mensajes del chat sin leer, en el menú y en el título de la pestaña, esté en la pantalla que esté (solo si tiene chat)
-  const noLeidosChat = useNoLeidosChat(navItems.some((item) => item.id === 'chat'));
+  const tieneChat = navItems.some((item) => item.id === 'chat');
   const [vista, setVista] = useState<Vista>(() =>
     esAdmin && typeof window !== 'undefined' && window.location.pathname.startsWith(RUTA_ADMIN)
       ? 'usuarios'
@@ -142,6 +142,8 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [consorcioBuscadoId, setConsorcioBuscadoId] = useState<string | null>(null);
   const [maquinaBuscadaId, setMaquinaBuscadaId] = useState<string | null>(null);
+  // HU-19 RF-10: la conversación que hay que abrir en el chat (al tocar un aviso del navegador); `n` cambia con cada pedido
+  const [conversacionPedida, setConversacionPedida] = useState<{ sala: string; n: number } | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -155,6 +157,20 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
     },
     [vista],
   );
+
+  /** Al tocar un aviso del navegador: se pasa a la pestaña del chat y se abre esa conversación (HU-19 RF-10). */
+  const abrirConversacionDelChat = useCallback(
+    (sala: string) => {
+      irA('chat');
+      setConversacionPedida((previa) => ({ sala, n: (previa?.n ?? 0) + 1 }));
+    },
+    [irA],
+  );
+
+  // HU-19 RF-09 y RF-10: los mensajes del chat sin leer, en el menú y en el título de la pestaña, y los avisos del navegador cuando llega uno nuevo,
+  // esté la persona en la pantalla que esté (solo si tiene chat)
+  const avisosDelChat = useAvisosDelChat(usuario.id, tieneChat, abrirConversacionDelChat);
+  const noLeidosChat = useNoLeidosChat(tieneChat, avisosDelChat.procesar);
 
   const handleSelectConsorcio = useCallback(
     (consorcioId: string) => {
@@ -379,7 +395,7 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
             <SecretariaView consorcioInicialId={consorcioBuscadoId} />
           )}
           {vista === 'chat' && usuario.rol !== 'eca' && (
-            <ChatOperativoView usuario={usuario} />
+            <ChatOperativoView usuario={usuario} avisos={avisosDelChat} conversacionPedida={conversacionPedida} />
           )}
           {vista === 'usuarios' && <AdminUsuarios />}
           {vista === 'mapa-sin-conexion' && <PanelMapaSinConexion />}

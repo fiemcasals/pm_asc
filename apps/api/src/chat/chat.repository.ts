@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Rol } from '../auth/auth.types';
 import { randomUUID } from 'node:crypto';
-import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, NoLeidosPorSala, OpcionesHilo, PaginaMensajes, TipoSala } from './chat.types';
+import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, NoLeidosPorSala, OpcionesHilo, PaginaMensajes, ResumenMensajeNoLeido, TipoSala } from './chat.types';
 
 /**
  * Los roles que usan el chat y, por eso mismo, los que pueden figurar como contacto de un chat privado
@@ -19,6 +19,8 @@ export abstract class ChatRepository {
   abstract listarContactos(usuarioId: string): Promise<ContactoChat[]>;
   /** Los mensajes de otros que el usuario no leyó, por conversación («global» o el id del compañero). Solo cuenta el grupo y los privados dirigidos a él. */
   abstract contarNoLeidos(usuarioId: string): Promise<NoLeidosPorSala>;
+  /** El último mensaje que le escribió otra persona al usuario en esa conversación (el del grupo o el del privado), sin la foto. Para avisar de lo que llega. */
+  abstract ultimoDeOtros(usuarioId: string, sala: string): Promise<ResumenMensajeNoLeido | null>;
   /**
    * Marca la conversación como leída hasta ese mensaje (nunca hacia atrás). Devuelve false si el mensaje no es de esa conversación
    * (para el grupo, cualquier mensaje del grupo; para un privado, uno entre el usuario y ese compañero).
@@ -172,6 +174,22 @@ export class PgChatRepository extends ChatRepository {
     if ((grupo[0]?.n ?? 0) > 0) resultado.global = grupo[0].n;
     for (const p of privados) resultado[p.sala] = p.n;
     return resultado;
+  }
+
+  async ultimoDeOtros(usuarioId: string, sala: string): Promise<ResumenMensajeNoLeido | null> {
+    const deLaSala = sala === 'global' ? `m.tipo_sala = 'global' AND m.emisor_id <> $1` : `m.tipo_sala = 'directo' AND m.emisor_id = $2::uuid AND m.destinatario_id = $1`;
+    const filas = await this.db.query<{ id: string; emisor_nombre: string; contenido: string; con_foto: boolean; creado_en: Date }>(
+      `SELECT m.id, u.nombre AS emisor_nombre, left(m.contenido, 200) AS contenido, (m.adjunto_url IS NOT NULL) AS con_foto, m.creado_en
+         FROM chat_mensajes m
+         JOIN usuarios u ON u.id = m.emisor_id
+        WHERE ${deLaSala}
+        ORDER BY m.creado_en DESC, m.id DESC
+        LIMIT 1`,
+      sala === 'global' ? [usuarioId] : [usuarioId, sala],
+    );
+    if (filas.length === 0) return null;
+    const f = filas[0];
+    return { id: f.id, emisorNombre: f.emisor_nombre, contenido: f.contenido, conFoto: f.con_foto, creadoEn: f.creado_en instanceof Date ? f.creado_en.toISOString() : String(f.creado_en) };
   }
 
   async marcarLeido(usuarioId: string, sala: string, mensajeId: string): Promise<boolean> {
@@ -339,6 +357,12 @@ export class InMemoryChatRepository extends ChatRepository {
       if (n > 0) resultado[sala] = n;
     }
     return resultado;
+  }
+
+  async ultimoDeOtros(usuarioId: string, sala: string): Promise<ResumenMensajeNoLeido | null> {
+    const deOtros = this.deLaSalaDe(usuarioId, sala).filter((m) => m.emisorId !== usuarioId);
+    const m = deOtros[deOtros.length - 1];
+    return m ? { id: m.id, emisorNombre: m.emisorNombre, contenido: m.contenido.slice(0, 200), conFoto: !!m.adjuntoUrl, creadoEn: m.creadoEn } : null;
   }
 
   async marcarLeido(usuarioId: string, sala: string, mensajeId: string): Promise<boolean> {

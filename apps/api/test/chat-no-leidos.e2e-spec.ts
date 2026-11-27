@@ -50,11 +50,11 @@ describe('Chat: no leídos, por la API (HU-19 RF-09)', () => {
   });
 
   it('criterio 2: GET /api/chat/no-leidos devuelve el total y lo que escribe uno mismo no cuenta', async () => {
-    expect(await total('firmante')).toEqual({ total: 0 });
+    expect(await total('firmante')).toMatchObject({ total: 0 });
     await alGrupo('rt_calle', 'g1');
     await aPrivado('rt_calle', ids.firmante, 'p1');
-    expect(await total('firmante')).toEqual({ total: 2 });
-    expect(await total('rt_calle')).toEqual({ total: 0 });
+    expect(await total('firmante')).toMatchObject({ total: 2 });
+    expect(await total('rt_calle')).toMatchObject({ total: 0 });
   });
 
   it('criterio 3: POST /api/chat/lecturas deja la conversación en cero y devuelve lo que queda y el total', async () => {
@@ -64,7 +64,7 @@ describe('Chat: no leídos, por la API (HU-19 RF-09)', () => {
     const res = await http().post('/api/chat/lecturas').set(como('firmante')).send({ sala: ids.rt_calle, hasta: p2.body.id }).expect(200);
     expect(res.body).toEqual({ sala: ids.rt_calle, noLeidos: 0, total: 1 });
     expect((await canales('firmante')).find((c) => c.id === ids.rt_calle)?.noLeidos).toBe(0);
-    expect(await total('firmante')).toEqual({ total: 1 });
+    expect(await total('firmante')).toMatchObject({ total: 1 });
     // hacia atrás no se vuelve
     const atras = await http().post('/api/chat/lecturas').set(como('firmante')).send({ sala: ids.rt_calle, hasta: p1.body.id }).expect(200);
     expect(atras.body.noLeidos).toBe(0);
@@ -72,7 +72,7 @@ describe('Chat: no leídos, por la API (HU-19 RF-09)', () => {
 
   it('criterio 5: un tercero no tiene contadores por un privado ajeno ni puede marcarlo leído', async () => {
     const p = await aPrivado('rt_calle', ids.firmante, 'secreto');
-    expect(await total('administrador')).toEqual({ total: 0 });
+    expect(await total('administrador')).toMatchObject({ total: 0 });
     expect((await canales('administrador')).every((c) => c.noLeidos === 0)).toBe(true);
     await http().post('/api/chat/lecturas').set(como('administrador')).send({ sala: ids.rt_calle, hasta: p.body.id }).expect(400);
     await http().post('/api/chat/lecturas').set(como('administrador')).send({ sala: ids.firmante, hasta: p.body.id }).expect(400);

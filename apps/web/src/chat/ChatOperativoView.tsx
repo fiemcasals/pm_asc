@@ -2,6 +2,9 @@ import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from
 import { fetchConSesion, Usuario } from '../auth/sesion';
 import { etiquetaDeRol } from './etiquetaRol';
 import { estaAlFinal, fusionarVentana, sumarAnteriores, sumarPropio } from './hilo';
+import { ayudaDeEstado, textoDeEstado } from './avisos';
+import type { AvisosDelChat } from './useAvisosDelChat';
+import { fijarConversacionVista } from './visto';
 import { MAX_CARACTERES_MENSAJE } from './limites';
 import { avisarCambioDeLecturas, INTERVALO_CANALES_MS, ordenarCanales, textoContador } from './noLeidos';
 import './chat.css';
@@ -43,9 +46,13 @@ interface ConsorcioOpcion {
 
 interface ChatOperativoViewProps {
   usuario: Usuario;
+  /** Los avisos del navegador (HU-19 RF-10): su estado y los botones para activarlos o desactivarlos. */
+  avisos?: Pick<AvisosDelChat, 'estado' | 'activar' | 'desactivar'>;
+  /** Una conversación que hay que abrir (al tocar un aviso del navegador); `n` cambia con cada pedido. */
+  conversacionPedida?: { sala: string; n: number } | null;
 }
 
-export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
+export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatOperativoViewProps) {
   const [canales, setCanales] = useState<CanalChat[]>([
     {
       id: 'global',
@@ -218,6 +225,17 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
     return () => clearInterval(intervalo);
   }, [cargarCanales, cargarConsorcios]);
 
+  // HU-19 RF-10: al tocar un aviso del navegador se abre la conversación del mensaje
+  useEffect(() => {
+    if (conversacionPedida) setCanalActivoId(conversacionPedida.sala);
+  }, [conversacionPedida]);
+
+  // HU-19 RF-10: los avisos del navegador saben qué conversación se está mirando para no avisar de lo que ya se ve
+  useEffect(() => {
+    fijarConversacionVista(canalActivoId);
+    return () => fijarConversacionVista(null);
+  }, [canalActivoId]);
+
   // Al llegar o cambiar mensajes, o al volver a mirar la pestaña, lo que se ve queda leído
   useEffect(() => {
     void marcarLeido();
@@ -352,6 +370,29 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
           <h2 className="chat-canales-titulo">Comunicaciones</h2>
           <span className="chat-badge-rol">{etiquetaDeRol(usuario.rol)}</span>
         </div>
+
+        {avisos && (
+          <div className="chat-avisos" data-testid="chat-avisos" data-estado={avisos.estado}>
+            <div className="chat-avisos-fila">
+              <span className="chat-avisos-estado" data-testid="chat-avisos-estado">
+                {textoDeEstado(avisos.estado)}
+              </span>
+              {avisos.estado === 'desactivados' && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => void avisos.activar()} data-testid="chat-btn-activar-avisos">
+                  Activar avisos del chat
+                </button>
+              )}
+              {avisos.estado === 'activados' && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={avisos.desactivar} data-testid="chat-btn-desactivar-avisos">
+                  Desactivar
+                </button>
+              )}
+            </div>
+            <span className="chat-avisos-ayuda" data-testid="chat-avisos-ayuda">
+              {ayudaDeEstado(avisos.estado)}
+            </span>
+          </div>
+        )}
 
         <div className="chat-canales-lista" data-testid="chat-lista-canales">
           {ordenarCanales(canales).map((c) => {

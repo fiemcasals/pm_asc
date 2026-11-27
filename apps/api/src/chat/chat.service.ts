@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { ChatRepository } from './chat.repository';
-import { CanalChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes, ResultadoLectura } from './chat.types';
+import { CanalChat, ConversacionNoLeida, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes, ResultadoLectura, ResumenNoLeidos } from './chat.types';
 import { esUuid } from './chat.validacion';
 
 @Injectable()
@@ -48,6 +48,21 @@ export class ChatService {
   async contarNoLeidosTotal(usuario: UsuarioAutenticado): Promise<number> {
     const [porSala, contactos] = await Promise.all([this.repo.contarNoLeidos(usuario.id), this.repo.listarContactos(usuario.id)]);
     return this.sumar(porSala, contactos.map((c) => c.id));
+  }
+
+  /**
+   * El total de siempre más, de cada conversación con mensajes sin leer, el último que le escribió otra persona: quién fue y el comienzo del texto
+   * (nunca la foto). Con eso la pantalla avisa en el navegador de lo que llega (HU-19 RF-10).
+   */
+  async resumenNoLeidos(usuario: UsuarioAutenticado): Promise<ResumenNoLeidos> {
+    const [porSala, contactos] = await Promise.all([this.repo.contarNoLeidos(usuario.id), this.repo.listarContactos(usuario.id)]);
+    const salas = ['global', ...contactos.map((c) => c.id)].filter((sala) => (porSala[sala] ?? 0) > 0);
+    const conversaciones: ConversacionNoLeida[] = [];
+    for (const sala of salas) {
+      const ultimoMensaje = await this.repo.ultimoDeOtros(usuario.id, sala);
+      if (ultimoMensaje) conversaciones.push({ sala, noLeidos: porSala[sala], ultimoMensaje });
+    }
+    return { total: this.sumar(porSala, contactos.map((c) => c.id)), conversaciones };
   }
 
   /** Marca la conversación como leída hasta el mensaje que la persona vio, y devuelve lo que queda sin leer en ella y en total. */

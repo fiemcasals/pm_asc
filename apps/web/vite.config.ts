@@ -46,6 +46,8 @@ export default defineConfig(({ command, mode }) => {
         // En desarrollo también se registra el service worker, para poder verificarlo.
         devOptions: { enabled: true, type: 'module' },
         workbox: {
+          // Al tocar un aviso del chat (HU-19 RF-10) se abre la conversación: lo hace public/sw-chat.js, que el service worker carga acá.
+          importScripts: ['sw-chat.js'],
           // El mapa (HU-16 RF-03): sus tipografías (.pbf) y los íconos (.json) se guardan con la app. El archivo de
           // calles (caba.pmtiles, ~11 MB) NO: se baja a pedido con «Descargar mapa para usar sin señal».
           globPatterns: ['**/*.{js,mjs,css,html,ico,png,svg,woff2}', 'mapa/**/*.{pbf,json}'],

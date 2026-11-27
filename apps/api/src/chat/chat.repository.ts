@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Rol } from '../auth/auth.types';
-import { ContactoChat, CrearMensajeDto, MensajeChat, TipoSala } from './chat.types';
+import { randomUUID } from 'node:crypto';
+import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes, TipoSala } from './chat.types';
 
 /**
  * Los roles que usan el chat y, por eso mismo, los que pueden figurar como contacto de un chat privado
@@ -12,7 +13,7 @@ export const ROLES_DEL_CHAT: readonly Rol[] = ['rt_calle', 'firmante', 'administ
 
 export abstract class ChatRepository {
   abstract guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat>;
-  abstract listarMensajes(sala: string, usuarioId: string): Promise<MensajeChat[]>;
+  abstract listarMensajes(sala: string, usuarioId: string, opciones?: OpcionesHilo): Promise<PaginaMensajes>;
   abstract listarContactos(usuarioId: string): Promise<ContactoChat[]>;
   abstract obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null>;
 }
@@ -71,42 +72,47 @@ export class PgChatRepository extends ChatRepository {
     return this.mapearMensaje(mensajesCompletos[0]);
   }
 
-  async listarMensajes(sala: string, usuarioId: string): Promise<MensajeChat[]> {
-    let filas: FilaMensaje[];
-
+  /**
+   * Un tramo del hilo de una conversación: los `limite` mensajes MÁS NUEVOS (o, con `antes`, los que preceden a ese mensaje), de más
+   * viejo a más nuevo. Se ordena por (fecha, id) para que mensajes de la misma fecha tengan siempre el mismo lugar. HU-19 RF-02: antes
+   * traía los 200 más VIEJOS, y al pasar los 200 el hilo dejaba de mostrar los mensajes nuevos.
+   */
+  async listarMensajes(sala: string, usuarioId: string, opciones: OpcionesHilo = {}): Promise<PaginaMensajes> {
+    const limite = Math.min(Math.max(Math.trunc(opciones.limite ?? LIMITE_HILO), 1), LIMITE_HILO);
+    const params: unknown[] = [];
+    let donde: string;
     if (sala === 'global') {
-      filas = await this.db.query<FilaMensaje>(
-        `SELECT m.id, m.emisor_id, u.nombre AS emisor_nombre, u.usuario AS emisor_usuario, u.rol AS emisor_rol,
-                m.destinatario_id, ud.nombre AS destinatario_nombre, ud.usuario AS destinatario_usuario,
-                m.tipo_sala, m.contenido, m.adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
-                m.maquina_ref, m.creado_en
-           FROM chat_mensajes m
-           JOIN usuarios u ON u.id = m.emisor_id
-           LEFT JOIN usuarios ud ON ud.id = m.destinatario_id
-           LEFT JOIN consorcios c ON c.id = m.consorcio_id
-          WHERE m.tipo_sala = 'global'
-          ORDER BY m.creado_en ASC
-          LIMIT 200`,
-      );
+      donde = `m.tipo_sala = 'global'`;
     } else {
-      filas = await this.db.query<FilaMensaje>(
-        `SELECT m.id, m.emisor_id, u.nombre AS emisor_nombre, u.usuario AS emisor_usuario, u.rol AS emisor_rol,
-                m.destinatario_id, ud.nombre AS destinatario_nombre, ud.usuario AS destinatario_usuario,
-                m.tipo_sala, m.contenido, m.adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
-                m.maquina_ref, m.creado_en
-           FROM chat_mensajes m
-           JOIN usuarios u ON u.id = m.emisor_id
-           LEFT JOIN usuarios ud ON ud.id = m.destinatario_id
-           LEFT JOIN consorcios c ON c.id = m.consorcio_id
-          WHERE m.tipo_sala = 'directo'
-            AND ((m.emisor_id = $1 AND m.destinatario_id = $2) OR (m.emisor_id = $2 AND m.destinatario_id = $1))
-          ORDER BY m.creado_en ASC
-          LIMIT 200`,
-        [usuarioId, sala],
-      );
+      params.push(usuarioId, sala);
+      donde = `m.tipo_sala = 'directo'
+            AND ((m.emisor_id = $1 AND m.destinatario_id = $2) OR (m.emisor_id = $2 AND m.destinatario_id = $1))`;
     }
+    if (opciones.antes) {
+      params.push(opciones.antes);
+      donde += `
+            AND (m.creado_en, m.id) < (SELECT a.creado_en, a.id FROM chat_mensajes a WHERE a.id = $${params.length})`;
+    }
+    params.push(limite + 1); // uno de más: si vuelve, hay anteriores
+    const filas = await this.db.query<FilaMensaje>(
+      `SELECT m.id, m.emisor_id, u.nombre AS emisor_nombre, u.usuario AS emisor_usuario, u.rol AS emisor_rol,
+              m.destinatario_id, ud.nombre AS destinatario_nombre, ud.usuario AS destinatario_usuario,
+              m.tipo_sala, m.contenido, m.adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
+              m.maquina_ref, m.creado_en
+         FROM chat_mensajes m
+         JOIN usuarios u ON u.id = m.emisor_id
+         LEFT JOIN usuarios ud ON ud.id = m.destinatario_id
+         LEFT JOIN consorcios c ON c.id = m.consorcio_id
+        WHERE ${donde}
+        ORDER BY m.creado_en DESC, m.id DESC
+        LIMIT $${params.length}`,
+      params,
+    );
 
-    return filas.map((f) => this.mapearMensaje(f));
+    return {
+      mensajes: filas.slice(0, limite).reverse().map((f) => this.mapearMensaje(f)),
+      hayAnteriores: filas.length > limite,
+    };
   }
 
   async listarContactos(usuarioId: string): Promise<ContactoChat[]> {
@@ -132,14 +138,14 @@ export class PgChatRepository extends ChatRepository {
     let filas: Array<{ contenido: string; creado_en: Date }>;
     if (sala === 'global') {
       filas = await this.db.query<{ contenido: string; creado_en: Date }>(
-        `SELECT contenido, creado_en FROM chat_mensajes WHERE tipo_sala = 'global' ORDER BY creado_en DESC LIMIT 1`,
+        `SELECT contenido, creado_en FROM chat_mensajes WHERE tipo_sala = 'global' ORDER BY creado_en DESC, id DESC LIMIT 1`,
       );
     } else {
       filas = await this.db.query<{ contenido: string; creado_en: Date }>(
         `SELECT contenido, creado_en FROM chat_mensajes
           WHERE tipo_sala = 'directo'
             AND ((emisor_id = $1 AND destinatario_id = $2) OR (emisor_id = $2 AND destinatario_id = $1))
-          ORDER BY creado_en DESC LIMIT 1`,
+          ORDER BY creado_en DESC, id DESC LIMIT 1`,
         [usuarioId, sala],
       );
     }
@@ -187,7 +193,7 @@ export class InMemoryChatRepository extends ChatRepository {
   }
 
   async guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat> {
-    const id = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const id = randomUUID();
     const nuevo: MensajeChat = {
       id,
       emisorId,
@@ -209,16 +215,20 @@ export class InMemoryChatRepository extends ChatRepository {
     return nuevo;
   }
 
-  async listarMensajes(sala: string, usuarioId: string): Promise<MensajeChat[]> {
-    if (sala === 'global') {
-      return this.mensajes.filter((m) => m.tipoSala === 'global');
-    }
-    return this.mensajes.filter(
-      (m) =>
-        m.tipoSala === 'directo' &&
-        ((m.emisorId === usuarioId && m.destinatarioId === sala) ||
-          (m.emisorId === sala && m.destinatarioId === usuarioId)),
-    );
+  async listarMensajes(sala: string, usuarioId: string, opciones: OpcionesHilo = {}): Promise<PaginaMensajes> {
+    const limite = Math.min(Math.max(Math.trunc(opciones.limite ?? LIMITE_HILO), 1), LIMITE_HILO);
+    const deLaSala =
+      sala === 'global'
+        ? this.mensajes.filter((m) => m.tipoSala === 'global')
+        : this.mensajes.filter(
+            (m) =>
+              m.tipoSala === 'directo' &&
+              ((m.emisorId === usuarioId && m.destinatarioId === sala) ||
+                (m.emisorId === sala && m.destinatarioId === usuarioId)),
+          );
+    const hasta = opciones.antes ? Math.max(deLaSala.findIndex((m) => m.id === opciones.antes), 0) : deLaSala.length;
+    const desde = Math.max(hasta - limite, 0);
+    return { mensajes: deLaSala.slice(desde, hasta), hayAnteriores: desde > 0 };
   }
 
   async listarContactos(usuarioId: string): Promise<ContactoChat[]> {
@@ -226,7 +236,7 @@ export class InMemoryChatRepository extends ChatRepository {
   }
 
   async obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null> {
-    const lista = await this.listarMensajes(sala, usuarioId);
+    const { mensajes: lista } = await this.listarMensajes(sala, usuarioId);
     if (lista.length === 0) return null;
     const ult = lista[lista.length - 1];
     return { contenido: ult.contenido, creadoEn: ult.creadoEn };

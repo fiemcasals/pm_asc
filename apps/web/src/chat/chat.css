@@ -470,3 +470,50 @@
   font-weight: bold;
   cursor: pointer;
 }
+
+/* HU-19 RF-02: el hilo con su aviso de mensajes nuevos y el botón de mensajes anteriores */
+.chat-hilo-contenedor {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-hilo-contenedor .chat-mensajes-area {
+  min-height: 0;
+}
+
+.chat-btn-anteriores {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.chat-aviso-nuevos {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent, #5e81ac);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.chat-aviso-nuevos-cuenta {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  text-align: center;
+}

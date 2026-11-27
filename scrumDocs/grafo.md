@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-27T11:15:36.824Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-27T11:17:31.230Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -158,6 +158,15 @@ graph TD
   end
   subgraph US_1795609150548["HU-19: HU-19: Chat interno entre operarios e ingenieros para consultas y reportes"]
     REQ_1795609195313["RF-01: RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces"]
+    REQ_1795778246174["RF-02: El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores"]
+    REQ_1795778246351["RF-03: La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder"]
+    REQ_1795778246508["RF-04: La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo"]
+    REQ_1795778246661["RF-05: Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar"]
+    REQ_1795778246789["RF-06: El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión"]
+    REQ_1795778246963["RF-07: La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen"]
+    REQ_1795778247124["RF-08: Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada"]
+    REQ_1795778247270["RF-09: El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña"]
+    REQ_1795778247416["RF-10: Avisos del navegador cuando llega un mensaje nuevo del chat"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885
@@ -291,4 +300,9 @@ graph TD
   REQ_1794494001967 --> REQ_1794494002926
   REQ_1795480710109 --> REQ_1795480710378
   REQ_1795097860369 --> REQ_1795097860908
+  REQ_1795778246351 --> REQ_1795778246508
+  REQ_1795778246508 --> REQ_1795778246661
+  REQ_1795778246174 --> REQ_1795778247270
+  REQ_1795778246351 --> REQ_1795778247270
+  REQ_1795778247270 --> REQ_1795778247416
 ```

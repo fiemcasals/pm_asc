@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-27T11:15:14.147Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-27T11:15:23.544Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -117,7 +117,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 109 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
 | 110 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
 | 111 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Bloqueada | dev-ma-2 | RF-05, RF-07 | — |
-| 112 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | Hacer | Sin asignar | RF-07 | — |
+| 112 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | Haciendo | Sin asignar | RF-07 | — |
 | 113 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle

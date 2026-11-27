@@ -361,6 +361,166 @@ describe('Conexión del informe cerrado con el Portal Firmante (HU-08 RF-07)', (
     expect(m1Reinicio.visita!.autorizadoPor).toBe('firmante1');
   });
 
+  describe('Aislamiento de visitas por edificio (HU-08 RF-09)', () => {
+    it('criterios 1, 3 y 5: un informe con un equipo «M9» que no pertenece al edificio es rechazado con 400 nombrando el equipo, y ninguna máquina de otro edificio recibe visita', async () => {
+      const authSec = await token('secretaria1');
+      const authRt = await token('rt_calle1');
+
+      // Crear Consorcio B con máquina M9
+      const altaB = await http()
+        .post('/api/consorcios')
+        .set('Authorization', authSec)
+        .send({
+          nombre: 'Consorcio B con M9',
+          direccion: 'Av. Corrientes 1000, CABA',
+          maquinas: [{ referenciaAgc: 'M9', descripcion: 'Ascensor Único M9' }],
+        })
+        .expect(201);
+      const consorcioBId = altaB.body.id;
+      informes.edificios.add(consorcioBId);
+
+      await http()
+        .put(`/api/consorcios/${consorcioBId}/roles`)
+        .set('Authorization', authSec)
+        .send({
+          rtCalle: { nombre: 'rt_calle1', telefono: '11 1111-2222', email: 'rt@maicon.com' },
+          firmante: { nombre: 'firmante1', telefono: '11 3333-4444', email: 'firmante@maicon.com' },
+          eca: { nombre: 'MAICON SRL', email: 'guardia@maicon.com' },
+        })
+        .expect(200);
+
+      // Máquinas antes del intento
+      const maqAntes = await maquinasDe('firmante1');
+      const m9Antes = maqAntes.find((m) => m.consorcioId === consorcioBId && m.codigoAGC === 'M9');
+      expect(m9Antes).toBeTruthy();
+      expect(m9Antes!.visita).toBeNull();
+      expect(m9Antes!.estado).toBe('Pendiente de Visita');
+
+      // Enviar informe para Consorcio A (consorcioId) pero con equipo M9 (que pertenece a B)
+      const informeErroneo = {
+        consorcioId, // Edificio A (sólo tiene M1 y M2)
+        horaDispositivo: '2026-11-25T11:00:00.000Z',
+        equipos: [
+          {
+            maquinaId: 'M9',
+            referenciaAgc: 'M9',
+            tipo: 'traccion',
+            estadoEquipo: 'en_uso',
+            respuestas: { sala: { freno: 'ok' } },
+            observaciones: {},
+            fotos: fotosObligatorias('traccion'),
+          },
+        ],
+        firma: {
+          nombre: 'Carlos',
+          apellido: 'Rodríguez',
+          caracter: 'Encargado',
+          dni: '20123456',
+          imagen: PNG,
+          trazos: [TRAZO],
+        },
+      };
+
+      const res = await http()
+        .post('/api/informes-visita')
+        .set('Authorization', authRt)
+        .send(informeErroneo);
+
+      // Criterio 3: rechaza con 400 y nombra el equipo que no es del edificio
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toContain('M9');
+
+      // Criterio 1: Ninguna máquina de otro edificio cambia de estado ni recibe visita
+      const maqDespues = await maquinasDe('firmante1');
+      const m9Despues = maqDespues.find((m) => m.consorcioId === consorcioBId && m.codigoAGC === 'M9');
+      expect(m9Despues!.estado).toBe('Pendiente de Visita');
+      expect(m9Despues!.visita).toBeNull();
+
+      // Tampoco se guardó ningún informe en el repositorio
+      expect(informes.informes.some((i) => i.consorcioId === consorcioId && i.equipos.some((e) => e.referenciaAgc === 'M9'))).toBe(false);
+    });
+
+    it('criterio 2: dos edificios A y B con una máquina «M9» cada uno; al cerrar el informe de A, la visita queda sólo en la M9 de A y la M9 de B sigue sin cambios', async () => {
+      const authSec = await token('secretaria1');
+      const authRt = await token('rt_calle1');
+
+      // Crear Consorcio B con M9
+      const altaB = await http()
+        .post('/api/consorcios')
+        .set('Authorization', authSec)
+        .send({
+          nombre: 'Edificio B M9',
+          direccion: 'Calle B 200',
+          maquinas: [{ referenciaAgc: 'M9', descripcion: 'M9 de B' }],
+        })
+        .expect(201);
+      const bId = altaB.body.id;
+      informes.edificios.add(bId);
+
+      await http()
+        .put(`/api/consorcios/${bId}/roles`)
+        .set('Authorization', authSec)
+        .send({
+          rtCalle: { nombre: 'rt_calle1', email: 'rt@maicon.com' },
+          firmante: { nombre: 'firmante1', email: 'firmante@maicon.com' },
+          eca: { nombre: 'MAICON SRL', email: 'guardia@maicon.com' },
+        })
+        .expect(200);
+
+      // Consorcio A también tiene una máquina M9
+      await http()
+        .put(`/api/consorcios/${consorcioId}`)
+        .set('Authorization', authSec)
+        .send({
+          nombre: 'Edificio A con M9',
+          direccion: 'Calle A 100',
+          maquinas: [{ referenciaAgc: 'M9', descripcion: 'M9 de A' }],
+        })
+        .expect(200);
+
+      // Cerrar informe del Consorcio A para su propia M9
+      const informeA = {
+        consorcioId,
+        horaDispositivo: '2026-11-25T11:00:00.000Z',
+        equipos: [
+          {
+            maquinaId: 'M9',
+            referenciaAgc: 'M9',
+            tipo: 'traccion',
+            estadoEquipo: 'en_uso',
+            respuestas: { sala: { freno: 'ok' } },
+            observaciones: {},
+            fotos: fotosObligatorias('traccion'),
+          },
+        ],
+        firma: {
+          nombre: 'Encargado A',
+          apellido: 'Pérez',
+          caracter: 'Encargado',
+          dni: '11111111',
+          imagen: PNG,
+          trazos: [TRAZO],
+        },
+      };
+
+      await http().post('/api/informes-visita').set('Authorization', authRt).send(informeA).expect(201);
+
+      // Verificar que la visita quedó en la M9 de A y la M9 de B sigue sin cambios
+      const maquinas = await maquinasDe('firmante1');
+      const m9A = maquinas.find((m) => m.consorcioId === consorcioId && m.codigoAGC === 'M9');
+      const m9B = maquinas.find((m) => m.consorcioId === bId && m.codigoAGC === 'M9');
+
+      expect(m9A).toBeTruthy();
+      expect(m9A!.estado).toBe('Recorrida');
+      expect(m9A!.visita).toBeTruthy();
+      expect(m9A!.visita!.nombreEncargado).toContain('Encargado A');
+
+      expect(m9B).toBeTruthy();
+      expect(m9B!.estado).toBe('Pendiente de Visita');
+      expect(m9B!.visita).toBeNull();
+    });
+  });
+
   const CARGA = process.env.CARGA ? parseInt(process.env.CARGA, 10) : 0;
   if (CARGA > 0) {
     it(`prueba de carga: ${CARGA} recorridos de cierre de informe y consulta en Portal Firmante`, async () => {

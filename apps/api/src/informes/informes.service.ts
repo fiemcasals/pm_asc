@@ -6,6 +6,7 @@ import { AuditoriaInforme, CLAVE_FOTO_OBLIGATORIA, InformeVisita, IntentoModific
 import { FirmanteService } from '../firmante/firmante.service';
 import { AsignacionesFirmanteService } from '../firmante/asignaciones-firmante.service';
 import { VisitaInspeccion } from '../firmante/firmante.types';
+import { ConsorciosRepository } from '../consorcios/consorcios.repository';
 
 export const MENSAJE_INFORME_CERRADO = 'El informe está cerrado: no se puede modificar ni borrar. El intento quedó registrado.';
 
@@ -16,6 +17,7 @@ export class InformesService {
     private readonly repo: InformesRepository,
     @Optional() private readonly firmante?: FirmanteService,
     @Optional() private readonly asignaciones?: AsignacionesFirmanteService,
+    @Optional() private readonly consorcios?: ConsorciosRepository,
   ) {}
 
   /**
@@ -38,6 +40,26 @@ export class InformesService {
       if (previo) return this.respuestaDeReenvio(previo, usuario);
     }
     if (!(await this.repo.existeEdificio(nuevo.consorcioId))) throw new NotFoundException('Edificio no encontrado');
+
+    // HU-08 RF-09: Un informe cerrado sólo crea visitas en máquinas de su propio edificio.
+    // Si un equipo no pertenece al edificio, se rechaza con 400 nombrando el equipo y no se guarda el informe.
+    const maquinasEdificio = await this.obtenerMaquinasDeEdificio(nuevo.consorcioId);
+    if (maquinasEdificio.length > 0) {
+      for (const eq of nuevo.equipos) {
+        const pertenece = maquinasEdificio.some(
+          (m) =>
+            m.id === eq.maquinaId ||
+            (m.referenciaAgc && m.referenciaAgc.trim().toLowerCase() === eq.referenciaAgc.trim().toLowerCase()) ||
+            (m.referenciaAgc && m.referenciaAgc.trim().toLowerCase() === eq.maquinaId.trim().toLowerCase()) ||
+            m.id === `MAQ-${nuevo.consorcioId}-${eq.maquinaId}` ||
+            m.id.endsWith(`-${eq.maquinaId}`),
+        );
+        if (!pertenece) {
+          throw new BadRequestException(`El equipo ${eq.referenciaAgc || eq.maquinaId} no pertenece al edificio`);
+        }
+      }
+    }
+
     const base = { ...nuevo, id: randomUUID(), usuario, horaServidor: new Date().toISOString() };
     const guardado = await this.repo.guardar({ ...base, clientReportId, hashSha256: hashInforme(base), versionHash: VERSION_HASH });
     if (guardado) {
@@ -68,25 +90,17 @@ export class InformesService {
       : null;
 
     for (const eq of informe.equipos) {
-      // Prioridad 1: máquinas del edificio del informe
-      const maquina =
-        this.firmante
-          .getMaquinas()
-          .find(
-            (m) =>
-              m.consorcioId === informe.consorcioId &&
-              (m.id === eq.maquinaId ||
-                m.id === `MAQ-${informe.consorcioId}-${eq.maquinaId}` ||
-                (m.codigoAGC && m.codigoAGC.toLowerCase() === eq.referenciaAgc.toLowerCase()) ||
-                m.id.endsWith(`-${eq.maquinaId}`)),
-          ) ??
-        this.firmante
-          .getMaquinas()
-          .find(
-            (m) =>
-              m.id === eq.maquinaId ||
-              (m.codigoAGC && m.codigoAGC.toLowerCase() === eq.referenciaAgc.toLowerCase()),
-          );
+      // HU-08 RF-09: Sólo máquinas del edificio del informe. No se busca en máquinas de otros consorcios.
+      const maquina = this.firmante
+        .getMaquinas()
+        .find(
+          (m) =>
+            m.consorcioId === informe.consorcioId &&
+            (m.id === eq.maquinaId ||
+              m.id === `MAQ-${informe.consorcioId}-${eq.maquinaId}` ||
+              (m.codigoAGC && m.codigoAGC.toLowerCase() === eq.referenciaAgc.toLowerCase()) ||
+              m.id.endsWith(`-${eq.maquinaId}`)),
+        );
       if (!maquina) continue;
       // Criterio 4: no se pisa una firma ya autorizada
       if (maquina.visita?.autorizada) continue;
@@ -149,6 +163,33 @@ export class InformesService {
         await this.firmante.registrarVisita(maquina.id, visita, 'Recorrida');
       }
     }
+  }
+
+  /** HU-08 RF-09: Obtiene las máquinas asociadas al edificio desde el repositorio o los servicios disponibles. */
+  private async obtenerMaquinasDeEdificio(consorcioId: string): Promise<Array<{ id: string; referenciaAgc: string }>> {
+    const delRepo = await this.repo.maquinasDeEdificio(consorcioId);
+    if (delRepo && delRepo.length > 0) return delRepo;
+
+    if (this.consorcios) {
+      try {
+        const ficha = await this.consorcios.obtener(consorcioId);
+        if (ficha && ficha.maquinas && ficha.maquinas.length > 0) {
+          return ficha.maquinas.map((m) => ({ id: m.id, referenciaAgc: m.referenciaAgc }));
+        }
+      } catch {
+        // En entornos sin acceso directo a consorcios se continúa con los siguientes proveedores
+      }
+    }
+
+    if (this.firmante) {
+      const deFirmante = this.firmante
+        .getMaquinas()
+        .filter((m) => m.consorcioId === consorcioId)
+        .map((m) => ({ id: m.id, referenciaAgc: m.codigoAGC }));
+      if (deFirmante.length > 0) return deFirmante;
+    }
+
+    return [];
   }
 
   private respuestaDeReenvio(previo: InformeVisita, usuario: string): ResultadoCierre {

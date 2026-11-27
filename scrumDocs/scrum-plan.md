@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-27T11:17:27.445Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-27T11:31:42.776Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -34,33 +34,33 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 26 | RF-04 | Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 27 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | testing | dev-ma-2 | — | — |
 | 28 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
-| 29 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
+| 29 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | Haciendo | dev-ma-2 | — | — |
 | 30 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
 | 31 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
 | 32 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
-| 33 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | Hacer | Sin asignar | — | — |
-| 34 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 35 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 36 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
-| 37 | RF-01 | Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso | RO-03 | — | — | Hacer | germanG | RF-08 | — |
-| 38 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | tested ✓ | germanG | RF-09 | — |
-| 39 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
-| 40 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | tested ✓ | germanG | RF-11 | — |
-| 41 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | Hacer | dev-ma-2 | RF-03 | — |
-| 42 | RF-09 | El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña | HU-19 | — | — | Hacer | dev-ma-2 | RF-02, RF-03 | — |
-| 43 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
-| 44 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
-| 45 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 46 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
-| 47 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 48 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 49 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
-| 50 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
-| 51 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
-| 52 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-10 | — |
-| 53 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
-| 54 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
-| 55 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hacer | dev-ma-2 | RF-04 | — |
+| 33 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 34 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 35 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
+| 36 | RF-01 | Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso | RO-03 | — | — | Hacer | germanG | RF-08 | — |
+| 37 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | tested ✓ | germanG | RF-09 | — |
+| 38 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
+| 39 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | tested ✓ | germanG | RF-11 | — |
+| 40 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | Hacer | dev-ma-2 | RF-03 | — |
+| 41 | RF-09 | El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña | HU-19 | — | — | Hacer | dev-ma-2 | RF-02, RF-03 | — |
+| 42 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
+| 43 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
+| 44 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 45 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
+| 46 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 47 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 48 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
+| 49 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
+| 50 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
+| 51 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-10 | — |
+| 52 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
+| 53 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
+| 54 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hacer | dev-ma-2 | RF-04 | — |
+| 55 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | Hacer | dev-ma-2 | RF-09 | — |
 | 56 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 57 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
 | 58 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
@@ -244,9 +244,6 @@ Pull Request #115 abierto hacia dev con implementacion completa y tests en verde
 ### RF-08 — Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada
 - Estimado: 3h
 
-### RF-10 — Avisos del navegador cuando llega un mensaje nuevo del chat
-- Estimado: 0h
-
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
 Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia AGC única por edificio, borrado en cascada) y endpoints POST, GET, GET :id, PUT y DELETE en /api/consorcios. Mínimo necesario agregado: sistema de migraciones (SQL plano, aplicado al arrancar la API, tabla schema_migrations), porque RO-01 lo dejó asignado a esta tarea; GET (listado) y PUT/DELETE porque la descripción pide CRUD. Pruebas: npm run verify 36/36 en API (21 nuevos) y 4/4 en web; test:int 7/7 contra PostGIS real; script de entrega 5/5; carga 200 recorridos, 0 fallidos, p95 320 ms. 2 tests de desarrollo aprobados con evidencia; 2 de integración preparados para QA. Afuera: la ECA (HU-02), autenticación, paginación del listado y ubicación geográfica. Consorcio y edificio se modelaron como una sola entidad. PR: https://github.com/fiemcasals/pm_asc/pull/3
 - Estimado: 4h
@@ -334,6 +331,9 @@ PR #94, apilado sobre #93 (base: la rama de RF-04): mergear primero RF-04. La fi
 
 ### RF-05 — Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar
 - Estimado: 1d
+
+### RF-10 — Avisos del navegador cuando llega un mensaje nuevo del chat
+- Estimado: 6h
 
 ### RF-04 — Horarios de atención por edificio editables por la Secretaría
 - Estimado: 3h

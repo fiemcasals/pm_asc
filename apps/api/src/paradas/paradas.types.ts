@@ -16,6 +16,10 @@ export interface ReporteParada {
   causa: string;
   /** Cantidad de fotos adjuntas (las imágenes no se devuelven en la lista). */
   fotos: number;
+  /** Primera fotografía para la cabina trabada / alerta crítica. */
+  fotoUrl?: string | null;
+  /** Identificador de la alerta crítica generada (HU-10 RF-08). */
+  alertaId?: string;
   /** Cómo queda el equipo: «<estado> — Pendiente de confirmación» hasta que el Firmante lo confirma o lo rechaza. */
   estado: string;
   confirmacion: ConfirmacionEstado;

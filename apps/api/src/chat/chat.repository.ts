@@ -11,10 +11,16 @@ import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, 
  */
 export const ROLES_DEL_CHAT: readonly Rol[] = ['rt_calle', 'firmante', 'administrador', 'secretaria'];
 
+const ROLES_SQL = ROLES_DEL_CHAT.map((r) => `'${r}'`).join(', ');
+
 export abstract class ChatRepository {
   abstract guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat>;
   abstract listarMensajes(sala: string, usuarioId: string, opciones?: OpcionesHilo): Promise<PaginaMensajes>;
   abstract listarContactos(usuarioId: string): Promise<ContactoChat[]>;
+  /** ¿El destinatario existe, está activo, es de un rol del chat y no es el propio usuario? (HU-19 RF-04) */
+  abstract esContacto(usuarioId: string, destinatarioId: string): Promise<boolean>;
+  /** ¿Existe el edificio, para quien lo pide? Con el RLS, un Técnico o un Firmante solo ve los que tiene asignados. (HU-19 RF-04) */
+  abstract existeConsorcio(consorcioId: string): Promise<boolean>;
   abstract obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null>;
 }
 
@@ -120,7 +126,7 @@ export class PgChatRepository extends ChatRepository {
       `SELECT id, usuario, nombre, rol
          FROM usuarios
         WHERE activo = true
-          AND rol IN (${ROLES_DEL_CHAT.map((r) => `'${r}'`).join(', ')})
+          AND rol IN (${ROLES_SQL})
           AND id <> $1
         ORDER BY CASE rol WHEN 'firmante' THEN 1 WHEN 'secretaria' THEN 2 WHEN 'rt_calle' THEN 3 ELSE 4 END, nombre ASC`,
       [usuarioId],
@@ -132,6 +138,19 @@ export class PgChatRepository extends ChatRepository {
       nombre: f.nombre,
       rol: f.rol as Rol,
     }));
+  }
+
+  async esContacto(usuarioId: string, destinatarioId: string): Promise<boolean> {
+    const filas = await this.db.query<{ uno: number }>(
+      `SELECT 1 AS uno FROM usuarios WHERE id = $1 AND id <> $2 AND activo = true AND rol IN (${ROLES_SQL})`,
+      [destinatarioId, usuarioId],
+    );
+    return filas.length > 0;
+  }
+
+  async existeConsorcio(consorcioId: string): Promise<boolean> {
+    const filas = await this.db.query<{ uno: number }>('SELECT 1 AS uno FROM consorcios WHERE id = $1', [consorcioId]);
+    return filas.length > 0;
   }
 
   async obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null> {
@@ -182,14 +201,21 @@ export class PgChatRepository extends ChatRepository {
 export class InMemoryChatRepository extends ChatRepository {
   private mensajes: MensajeChat[] = [];
   private contactos: ContactoChat[] = [
-    { id: 'usr-rt-1', usuario: 'rt1', nombre: 'Operario RT 1', rol: 'rt_calle' },
-    { id: 'usr-firmante-1', usuario: 'firmante1', nombre: 'Ing. Firmante Legal', rol: 'firmante' },
-    { id: 'usr-admin-1', usuario: 'admin', nombre: 'Administrador del Sistema', rol: 'administrador' },
-    { id: 'usr-secretaria-1', usuario: 'secretaria', nombre: 'Secretaría', rol: 'secretaria' },
+    { id: '00000000-0000-4000-8000-0000000000c1', usuario: 'rt1', nombre: 'Operario RT 1', rol: 'rt_calle' },
+    { id: '00000000-0000-4000-8000-0000000000c2', usuario: 'firmante1', nombre: 'Ing. Firmante Legal', rol: 'firmante' },
+    { id: '00000000-0000-4000-8000-0000000000c3', usuario: 'admin', nombre: 'Administrador del Sistema', rol: 'administrador' },
+    { id: '00000000-0000-4000-8000-0000000000c4', usuario: 'secretaria', nombre: 'Secretaría', rol: 'secretaria' },
   ];
+
+  private consorcios = new Set<string>();
 
   setContactos(c: ContactoChat[]) {
     this.contactos = c;
+  }
+
+  /** Los edificios que existen, para probar el etiquetado de un mensaje. */
+  setConsorcios(ids: string[]) {
+    this.consorcios = new Set(ids);
   }
 
   async guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat> {
@@ -233,6 +259,14 @@ export class InMemoryChatRepository extends ChatRepository {
 
   async listarContactos(usuarioId: string): Promise<ContactoChat[]> {
     return this.contactos.filter((c) => c.id !== usuarioId);
+  }
+
+  async esContacto(usuarioId: string, destinatarioId: string): Promise<boolean> {
+    return this.contactos.some((c) => c.id === destinatarioId && c.id !== usuarioId);
+  }
+
+  async existeConsorcio(consorcioId: string): Promise<boolean> {
+    return this.consorcios.has(consorcioId);
   }
 
   async obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null> {

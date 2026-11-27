@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { ChatRepository } from './chat.repository';
 import { CanalChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes } from './chat.types';
+import { esUuid } from './chat.validacion';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class ChatService {
@@ -51,7 +51,7 @@ export class ChatService {
   async obtenerHilo(sala: string, usuario: UsuarioAutenticado, opciones: OpcionesHilo = {}): Promise<PaginaMensajes> {
     const salaNorm = sala && sala.trim() ? sala.trim() : 'global';
     const antes = opciones.antes?.trim() || null;
-    if (antes && !UUID.test(antes)) {
+    if (antes && !esUuid(antes)) {
       throw new BadRequestException('El mensaje desde el cual pedir los anteriores no es válido.');
     }
     const limite = opciones.limite ?? LIMITE_HILO;
@@ -77,6 +77,15 @@ export class ChatService {
       if (dto.destinatarioId === usuario.id) {
         throw new BadRequestException('No puedes enviarte un mensaje privado a ti mismo.');
       }
+      // HU-19 RF-04: el destinatario tiene que existir, estar activo y ser alguien con quien se puede chatear
+      if (!(await this.repo.esContacto(usuario.id, dto.destinatarioId))) {
+        throw new BadRequestException('El destinatario no existe o no es un contacto del chat.');
+      }
+    }
+
+    // HU-19 RF-04: el edificio con el que se etiqueta tiene que existir (y poder verlo quien escribe)
+    if (dto.consorcioId && !(await this.repo.existeConsorcio(dto.consorcioId))) {
+      throw new BadRequestException('El edificio elegido no existe o no está disponible para vos.');
     }
 
     const payload: CrearMensajeDto = {

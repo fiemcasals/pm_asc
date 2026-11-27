@@ -143,6 +143,11 @@
   color: #88c0d0;
 }
 
+.chat-badge-rol.secretaria {
+  background: #434c5e;
+  color: #ebcb8b;
+}
+
 /* Columna Derecha: Ventana de Conversación */
 .chat-conversacion-panel {
   flex: 1;

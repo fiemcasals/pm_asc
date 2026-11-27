@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-27T14:16:17.592Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-27T14:23:49.590Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -60,7 +60,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 52 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
 | 53 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
 | 54 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hacer | dev-ma-2 | RF-04 | — |
-| 55 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | Hacer | dev-ma-2 | RF-09 | — |
+| 55 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | Haciendo | dev-ma-2 | RF-09 | — |
 | 56 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 57 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
 | 58 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |

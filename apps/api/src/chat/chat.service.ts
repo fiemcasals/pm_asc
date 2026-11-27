@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { ChatRepository } from './chat.repository';
-import { CanalChat, CrearMensajeDto, MensajeChat } from './chat.types';
+import { CanalChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes } from './chat.types';
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @Injectable()
 export class ChatService {
@@ -37,10 +39,26 @@ export class ChatService {
     return [global, ...canalesDirectos];
   }
 
-  /** Historial cronológico de la conversación pedida. */
+  /** Los mensajes más nuevos de la conversación pedida, de más viejo a más nuevo (hasta LIMITE_HILO). */
   async obtenerMensajes(sala: string, usuario: UsuarioAutenticado): Promise<MensajeChat[]> {
+    return (await this.obtenerHilo(sala, usuario)).mensajes;
+  }
+
+  /**
+   * Un tramo del hilo y si quedan mensajes anteriores (HU-19 RF-02). Sin `antes` trae los más nuevos; con `antes` (el id del mensaje más
+   * viejo que ya se ve) trae los que lo preceden, para el botón «Ver mensajes anteriores».
+   */
+  async obtenerHilo(sala: string, usuario: UsuarioAutenticado, opciones: OpcionesHilo = {}): Promise<PaginaMensajes> {
     const salaNorm = sala && sala.trim() ? sala.trim() : 'global';
-    return this.repo.listarMensajes(salaNorm, usuario.id);
+    const antes = opciones.antes?.trim() || null;
+    if (antes && !UUID.test(antes)) {
+      throw new BadRequestException('El mensaje desde el cual pedir los anteriores no es válido.');
+    }
+    const limite = opciones.limite ?? LIMITE_HILO;
+    if (!Number.isInteger(limite) || limite < 1 || limite > LIMITE_HILO) {
+      throw new BadRequestException(`La cantidad de mensajes tiene que ser un número entre 1 y ${LIMITE_HILO}.`);
+    }
+    return this.repo.listarMensajes(salaNorm, usuario.id, { antes, limite });
   }
 
   /** Envío de un mensaje de texto, foto o enlace. */

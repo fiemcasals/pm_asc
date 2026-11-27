@@ -45,3 +45,19 @@ export interface CrearMensajeDto {
   consorcioId?: string | null;
   maquinaRef?: string | null;
 }
+
+/** Cuántos mensajes trae el hilo de una conversación por vez (HU-19 RF-02). */
+export const LIMITE_HILO = 200;
+
+export interface OpcionesHilo {
+  /** Id del mensaje más viejo que ya se ve: trae los anteriores a ese. Sin él, trae los más nuevos. */
+  antes?: string | null;
+  /** Cuántos traer, de 1 a LIMITE_HILO. Por defecto LIMITE_HILO. */
+  limite?: number;
+}
+
+/** Un tramo del hilo, de más viejo a más nuevo, y si quedan mensajes anteriores a él. */
+export interface PaginaMensajes {
+  mensajes: MensajeChat[];
+  hayAnteriores: boolean;
+}

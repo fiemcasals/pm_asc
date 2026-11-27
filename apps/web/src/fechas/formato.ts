@@ -51,3 +51,15 @@ export function fechaHora(valor: ValorFecha, opciones: { segundos?: boolean; ani
   const h = hora(valor, opciones);
   return opciones.anio === false ? `${p.dia}/${p.mes}, ${h}` : `${p.dia}/${p.mes}/${p.anio} ${h}`;
 }
+
+/** «21/11/2026»: el día (en la hora de Buenos Aires), para escribirlo. */
+export function fecha(valor: ValorFecha): string {
+  const p = partes(valor);
+  return p ? `${p.dia}/${p.mes}/${p.anio}` : '';
+}
+
+/** «2026-11-21»: el día (en la hora de Buenos Aires) como clave, para saber si dos momentos son del mismo día. */
+export function claveDeDia(valor: ValorFecha): string {
+  const p = partes(valor);
+  return p ? `${p.anio}-${p.mes}-${p.dia}` : '';
+}

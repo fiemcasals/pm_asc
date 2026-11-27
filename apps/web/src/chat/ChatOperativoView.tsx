@@ -3,6 +3,9 @@ import { fetchConSesion, Usuario } from '../auth/sesion';
 import { etiquetaDeRol } from './etiquetaRol';
 import { estaAlFinal, fusionarVentana, sumarAnteriores, sumarPropio } from './hilo';
 import { ayudaDeEstado, textoDeEstado } from './avisos';
+import { conSeparadores, horaOFecha } from './dias';
+import { esTeclaDeAbrir, esTeclaDeCerrar } from './foto';
+import { hora } from '../fechas/formato';
 import type { AvisosDelChat } from './useAvisosDelChat';
 import { fijarConversacionVista } from './visto';
 import { MAX_CARACTERES_MENSAJE } from './limites';
@@ -70,6 +73,9 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
   const [consorcioSeleccionado, setConsorcioSeleccionado] = useState<string>('');
   const [maquinaRef, setMaquinaRef] = useState<string>('');
   const [fotoModal, setFotoModal] = useState<string | null>(null);
+  // HU-19 RF-08: la miniatura desde la que se abrió la foto (el foco vuelve a ella al cerrar) y el botón «Cerrar» (el foco entra ahí al abrir)
+  const fotoOrigenRef = useRef<HTMLElement | null>(null);
+  const botonCerrarFotoRef = useRef<HTMLButtonElement>(null);
   // HU-19 RF-02: si quedan mensajes anteriores a los que se ven, y cuántos mensajes nuevos llegaron mientras se leía más arriba.
   const [hayAnteriores, setHayAnteriores] = useState<boolean>(false);
   const [cargandoAnteriores, setCargandoAnteriores] = useState<boolean>(false);
@@ -290,6 +296,35 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
     }
   }, [mensajes, cargando]);
 
+  // HU-19 RF-08: la foto agrandada se cierra con Escape y con «Cerrar», y el foco vuelve a la miniatura desde la que se abrió
+  const abrirFoto = useCallback((src: string, origen: HTMLElement) => {
+    fotoOrigenRef.current = origen;
+    setFotoModal(src);
+  }, []);
+
+  const cerrarFoto = useCallback(() => {
+    setFotoModal(null);
+    const origen = fotoOrigenRef.current;
+    fotoOrigenRef.current = null;
+    if (origen && origen.isConnected) origen.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!fotoModal) return undefined;
+    botonCerrarFotoRef.current?.focus();
+    const alTeclear = (e: KeyboardEvent) => {
+      if (esTeclaDeCerrar(e.key)) {
+        e.preventDefault();
+        cerrarFoto();
+      } else if (e.key === 'Tab') {
+        e.preventDefault(); // el único botón de la ventana es «Cerrar»: el foco no se escapa a lo que quedó atrás
+        botonCerrarFotoRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', alTeclear);
+    return () => document.removeEventListener('keydown', alTeclear);
+  }, [fotoModal, cerrarFoto]);
+
   // Manejo de adjuntar foto
   const handleSeleccionarFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -417,7 +452,7 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                     <span className={`chat-canal-nombre ${pendientes > 0 ? 'no-leido' : ''}`}>{c.nombre}</span>
                     {c.ultimoMensajeHora && (
                       <span className="chat-canal-hora">
-                        {new Date(c.ultimoMensajeHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {horaOFecha(c.ultimoMensajeHora)}
                       </span>
                     )}
                   </div>
@@ -481,7 +516,15 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                 : 'No hay mensajes en esta conversación privada. Escribe un mensaje directo a tu compañero.'}
             </div>
           ) : (
-            mensajes.map((m) => {
+            conSeparadores(mensajes).map((elemento) => {
+              if (elemento.tipo === 'dia') {
+                return (
+                  <div key={`dia-${elemento.clave}`} className="chat-separador-dia" data-testid="chat-separador-dia" role="separator">
+                    <span>{elemento.etiqueta}</span>
+                  </div>
+                );
+              }
+              const m = elemento.mensaje;
               const propio = esPropio(m);
 
               return (
@@ -510,7 +553,16 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                         <img
                           src={m.adjuntoUrl}
                           alt="Adjunto del chat"
-                          onClick={() => setFotoModal(m.adjuntoUrl ?? null)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="Ver la foto ampliada"
+                          onClick={(e) => abrirFoto(m.adjuntoUrl ?? '', e.currentTarget)}
+                          onKeyDown={(e) => {
+                            if (esTeclaDeAbrir(e.key)) {
+                              e.preventDefault();
+                              abrirFoto(m.adjuntoUrl ?? '', e.currentTarget);
+                            }
+                          }}
                           onLoad={() => {
                             // Al cargarse una foto el hilo crece: si se estaba al final, se sigue al final
                             if (alFinalRef.current && scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -521,7 +573,7 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                     )}
 
                     <div className="chat-globo-meta">
-                      {new Date(m.creadoEn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {hora(m.creadoEn)}
                     </div>
                   </div>
                 </div>
@@ -626,10 +678,10 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
 
       {/* Modal Zoom de Foto */}
       {fotoModal && (
-        <div className="chat-modal-overlay" onClick={() => setFotoModal(null)} data-testid="chat-modal-zoom">
+        <div className="chat-modal-overlay" onClick={cerrarFoto} data-testid="chat-modal-zoom" role="dialog" aria-modal="true" aria-label="Foto ampliada">
           <div className="chat-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="chat-modal-cerrar" onClick={() => setFotoModal(null)}>
-              ✕
+            <button type="button" className="chat-modal-cerrar" onClick={cerrarFoto} ref={botonCerrarFotoRef} data-testid="chat-modal-cerrar">
+              ✕ Cerrar
             </button>
             <img src={fotoModal} alt="Foto ampliada" />
           </div>

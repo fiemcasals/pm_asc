@@ -59,6 +59,7 @@ describe('ChatService', () => {
     });
 
     it('permite enviar un mensaje con foto adjunta y referencia a edificio', async () => {
+      repo.setConsorcios(['consorcio-123']); // HU-19 RF-04: el edificio con el que se etiqueta tiene que existir
       const msg = await service.enviarMensaje(
         {
           tipoSala: 'global',

@@ -3,7 +3,8 @@ import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { UsuarioAutenticado } from '../auth/auth.types';
-import { CanalChat, CrearMensajeDto, MensajeChat } from './chat.types';
+import { CanalChat, MensajeChat } from './chat.types';
+import { validarMensaje, validarSala } from './chat.validacion';
 import { ROLES_DEL_CHAT } from './chat.repository';
 
 // Quien puede usar el chat es, exactamente, quien puede figurar como contacto de un privado (HU-19 RF-03).
@@ -34,7 +35,7 @@ export class ChatController {
       cuantos = /^\d+$/.test(limite) ? Number(limite) : NaN;
       if (Number.isNaN(cuantos)) throw new BadRequestException('La cantidad de mensajes tiene que ser un número entero.');
     }
-    const pagina = await this.service.obtenerHilo(sala || 'global', usuario, { antes, limite: cuantos });
+    const pagina = await this.service.obtenerHilo(validarSala(sala), usuario, { antes, limite: cuantos });
     res.setHeader('X-Hay-Anteriores', pagina.hayAnteriores ? 'true' : 'false');
     res.setHeader('Access-Control-Expose-Headers', 'X-Hay-Anteriores');
     return pagina.mensajes;
@@ -42,9 +43,9 @@ export class ChatController {
 
   @Post('mensajes')
   async enviarMensaje(
-    @Body() dto: CrearMensajeDto,
+    @Body() cuerpo: unknown,
     @UsuarioActual() usuario: UsuarioAutenticado,
   ): Promise<MensajeChat> {
-    return this.service.enviarMensaje(dto, usuario);
+    return this.service.enviarMensaje(validarMensaje(cuerpo), usuario);
   }
 }

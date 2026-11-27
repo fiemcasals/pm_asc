@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-27T12:28:00.656Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-27T12:40:51.558Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -32,8 +32,8 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 24 | RF-15 | WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde | HU-11 | — | — | tested ✓ | germanG | — | — |
 | 25 | RF-01 | RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces | HU-19 | — | — | tested ✓ | gonza | — | — |
 | 26 | RF-04 | Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 27 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | testing | dev-ma-2 | — | — |
-| 28 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | testing | dev-ma-2 | — | — |
+| 27 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 28 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 29 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 30 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
 | 31 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
@@ -45,7 +45,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 37 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | tested ✓ | germanG | RF-09 | — |
 | 38 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
 | 39 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | tested ✓ | germanG | RF-11 | — |
-| 40 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | Hacer | dev-ma-2 | RF-03 | — |
+| 40 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | Haciendo | dev-ma-2 | RF-03 | — |
 | 41 | RF-09 | El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña | HU-19 | — | — | Hacer | dev-ma-2 | RF-02, RF-03 | — |
 | 42 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 43 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |

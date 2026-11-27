@@ -459,16 +459,22 @@
 
 .chat-modal-cerrar {
   position: absolute;
-  top: -12px;
-  right: -12px;
+  top: -14px;
+  right: -14px;
   background: #bf616a;
   color: white;
   border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
   font-weight: bold;
   cursor: pointer;
+}
+
+.chat-modal-cerrar:focus-visible,
+.chat-globo-foto img:focus-visible {
+  outline: 3px solid #88c0d0;
+  outline-offset: 2px;
 }
 
 /* HU-19 RF-02: el hilo con su aviso de mensajes nuevos y el botón de mensajes anteriores */
@@ -576,4 +582,20 @@
   font-size: 0.75rem;
   line-height: 1.35;
   color: var(--text-muted, #94a3b8);
+}
+
+/* HU-19 RF-08: el día de los mensajes («Hoy», «Ayer» o la fecha) */
+.chat-separador-dia {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chat-separador-dia span {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.75rem;
+  font-weight: 600;
 }

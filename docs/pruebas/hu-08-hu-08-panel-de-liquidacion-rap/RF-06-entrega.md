@@ -13,6 +13,29 @@
 | Soporte de lista vacía sin error | Si no hay edificios con terna, el endpoint `/api/firmante/maquinas` responde `[]` con HTTP 200 |
 | Eliminación de duplicados por dirección | Las máquinas reales de la base (con `consorcioId`) son las únicas mostradas |
 
+## Pruebas visuales automatizadas con Playwright (Lenguaje Sencillo)
+
+Se ejecutaron pruebas visuales con **Playwright** sobre Google Chrome oficial para validar que el sistema muestra únicamente información real y ordenada:
+
+### 1. El Portal Firmante muestra solo ascensores reales
+![06_portal_firmante_sin_ejemplos_ni_duplicados.png](imagenes/06_portal_firmante_sin_ejemplos_ni_duplicados.png)
+* **¿Qué se ve?**: El Ingeniero Firmante (`demo.firmante`) ingresa a su pantalla. En la tabla figuran únicamente los edificios y ascensores asignados en la base de datos real. Ya no están los 5 ascensores de ejemplo fijos que estaban duplicados.
+* **¿Qué está sucediendo?**: El sistema filtró limpiamente los datos y dejó solo las máquinas reales vinculadas por terna.
+
+### 2. Vista completa para la Secretaría
+![07_portal_firmante_vista_secretaria.png](imagenes/07_portal_firmante_vista_secretaria.png)
+* **¿Qué se ve?**: La Secretaría (`demo.secretaria`) entra al Portal Firmante y ve la totalidad de la flota de ascensores reales con sus estados de visita actualizados y sin ejemplos ficticios.
+* **¿Qué está sucediendo?**: La Secretaría tiene acceso al panorama completo del consorcio sin datos de prueba mezclados.
+
+### 3. Flota de la Conservadora en Portal ECA
+![08_portal_eca_flota_real_sin_duplicados.png](imagenes/08_portal_eca_flota_real_sin_duplicados.png)
+* **¿Qué se ve?**: En el Portal ECA, el catálogo de flota muestra solo los ascensores que le pertenecen a la conservadora correspondiente, sin direcciones duplicadas como Santa Fe 3200.
+* **¿Qué está sucediendo?**: Los portales conservan estricta coherencia y no mezclan ni duplican información entre empresas.
+
+### 4. Catálogo y semáforo consistentes
+![09_portal_eca_catalogo_consistente.png](imagenes/09_portal_eca_catalogo_consistente.png)
+* **¿Qué se ve?**: La pantalla de monitoreo y semáforo renderiza sin errores ni advertencias, manteniendo un listado limpio y legible.
+
 ## Criterios de Aceptación verificados
 
 1. **Criterio 1: Sólo máquinas de edificios con terna**

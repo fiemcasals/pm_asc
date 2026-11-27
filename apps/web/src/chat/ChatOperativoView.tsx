@@ -3,6 +3,7 @@ import { fetchConSesion, Usuario } from '../auth/sesion';
 import { etiquetaDeRol } from './etiquetaRol';
 import { estaAlFinal, fusionarVentana, sumarAnteriores, sumarPropio } from './hilo';
 import { MAX_CARACTERES_MENSAJE } from './limites';
+import { avisarCambioDeLecturas, INTERVALO_CANALES_MS, ordenarCanales, textoContador } from './noLeidos';
 import './chat.css';
 
 export interface MensajeChat {
@@ -31,6 +32,8 @@ export interface CanalChat {
   rol?: string;
   ultimoMensaje?: string | null;
   ultimoMensajeHora?: string | null;
+  /** Mensajes de otros que todavía no se leyeron en esta conversación (HU-19 RF-09). */
+  noLeidos?: number;
 }
 
 interface ConsorcioOpcion {
@@ -64,6 +67,8 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
   const [hayAnteriores, setHayAnteriores] = useState<boolean>(false);
   const [cargandoAnteriores, setCargandoAnteriores] = useState<boolean>(false);
   const [mensajesNuevos, setMensajesNuevos] = useState<number>(0);
+  // HU-19 RF-09: si se está mirando el final del hilo (lo que se ve ya está leído) y hasta qué mensaje se avisó al servidor de cada conversación
+  const [enElFinal, setEnElFinal] = useState<boolean>(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -74,6 +79,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
   const canalRef = useRef<string>('global');
   const cargadoRef = useRef<boolean>(false);
   const mensajesRef = useRef<MensajeChat[]>([]);
+  const ultimoMarcadoRef = useRef<Record<string, string>>({});
   mensajesRef.current = mensajes;
 
   // Cargar canales disponibles
@@ -157,25 +163,77 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
     }
   }, [canalActivoId]);
 
+  // HU-19 RF-09: lo que se está viendo se marca como leído en el servidor: la conversación abierta, con la pestaña a la vista y mirando el
+  // final del hilo. Si se está leyendo más arriba, lo que llega queda sin leer hasta volver al final.
+  const marcarLeido = useCallback(async () => {
+    const sala = canalRef.current;
+    const ultimo = mensajesRef.current[mensajesRef.current.length - 1];
+    if (!ultimo || !alFinalRef.current || document.visibilityState !== 'visible') return;
+    if (ultimoMarcadoRef.current[sala] === ultimo.id) return;
+    ultimoMarcadoRef.current[sala] = ultimo.id;
+    try {
+      const res = await fetchConSesion('/api/chat/lecturas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sala, hasta: ultimo.id }),
+      });
+      if (!res.ok) {
+        delete ultimoMarcadoRef.current[sala]; // se vuelve a intentar con la próxima actualización
+        return;
+      }
+      const lectura = (await res.json()) as { sala: string; noLeidos: number };
+      setCanales((previos) => previos.map((c) => (c.id === lectura.sala ? { ...c, noLeidos: lectura.noLeidos } : c)));
+      avisarCambioDeLecturas();
+    } catch {
+      delete ultimoMarcadoRef.current[sala];
+    }
+  }, []);
+
   const irAlFinal = useCallback(() => {
     const area = scrollRef.current;
     if (area) area.scrollTop = area.scrollHeight;
     alFinalRef.current = true;
+    setEnElFinal(true);
     setMensajesNuevos(0);
-  }, []);
+    void marcarLeido();
+  }, [marcarLeido]);
 
   const alMoverElHilo = useCallback(() => {
     const area = scrollRef.current;
     if (!area) return;
     const alFinal = estaAlFinal(area.scrollTop, area.clientHeight, area.scrollHeight);
     alFinalRef.current = alFinal;
-    if (alFinal) setMensajesNuevos(0);
-  }, []);
+    setEnElFinal(alFinal);
+    if (alFinal) {
+      setMensajesNuevos(0);
+      void marcarLeido();
+    }
+  }, [marcarLeido]);
 
   useEffect(() => {
     void cargarCanales();
     void cargarConsorcios();
+    // HU-19 RF-09: la lista de conversaciones se actualiza sola (contadores, último mensaje y orden)
+    const intervalo = setInterval(() => void cargarCanales(), INTERVALO_CANALES_MS);
+    return () => clearInterval(intervalo);
   }, [cargarCanales, cargarConsorcios]);
+
+  // Al llegar o cambiar mensajes, o al volver a mirar la pestaña, lo que se ve queda leído
+  useEffect(() => {
+    void marcarLeido();
+  }, [mensajes, cargando, marcarLeido]);
+
+  useEffect(() => {
+    const alVolver = () => {
+      if (document.visibilityState === 'visible') void marcarLeido();
+    };
+    document.addEventListener('visibilitychange', alVolver);
+    window.addEventListener('focus', alVolver);
+    return () => {
+      document.removeEventListener('visibilitychange', alVolver);
+      window.removeEventListener('focus', alVolver);
+    };
+  }, [marcarLeido]);
 
   useEffect(() => {
     // Conversación nueva: se empieza de cero y se baja al último mensaje al cargar
@@ -183,6 +241,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
     cargadoRef.current = false;
     modoScrollRef.current = 'fondo';
     alFinalRef.current = true;
+    setEnElFinal(true);
     setMensajes([]);
     setHayAnteriores(false);
     setMensajesNuevos(0);
@@ -207,6 +266,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
     if (modo === 'fondo') {
       area.scrollTop = area.scrollHeight;
       alFinalRef.current = true;
+      setEnElFinal(true);
     } else if (modo === 'mantener') {
       area.scrollTop = medidaAntesRef.current.arriba + (area.scrollHeight - medidaAntesRef.current.alto);
     }
@@ -294,15 +354,17 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
         </div>
 
         <div className="chat-canales-lista" data-testid="chat-lista-canales">
-          {canales.map((c) => {
+          {ordenarCanales(canales).map((c) => {
             const esActivo = c.id === canalActivoId;
             const esGlobal = c.tipo === 'global';
+            // La conversación que se está mirando al final no muestra contador: lo que se ve ya está leído
+            const pendientes = esActivo && enElFinal ? 0 : c.noLeidos ?? 0;
 
             return (
               <button
                 key={c.id}
                 type="button"
-                className={`chat-canal-card ${esActivo ? 'activo' : ''}`}
+                className={`chat-canal-card ${esActivo ? 'activo' : ''} ${pendientes > 0 ? 'con-no-leidos' : ''}`}
                 onClick={() => setCanalActivoId(c.id)}
                 data-testid={esGlobal ? 'chat-canal-global' : `chat-canal-item-${c.id}`}
               >
@@ -311,7 +373,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
                 </div>
                 <div className="chat-canal-info">
                   <div className="chat-canal-nombre-row">
-                    <span className="chat-canal-nombre">{c.nombre}</span>
+                    <span className={`chat-canal-nombre ${pendientes > 0 ? 'no-leido' : ''}`}>{c.nombre}</span>
                     {c.ultimoMensajeHora && (
                       <span className="chat-canal-hora">
                         {new Date(c.ultimoMensajeHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -323,6 +385,11 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
                     {c.ultimoMensaje ? c.ultimoMensaje : esGlobal ? 'Sala abierta a todos' : 'Conversación privada'}
                   </div>
                 </div>
+                {pendientes > 0 && (
+                  <span className="chat-contador" data-testid={`chat-contador-${c.id}`} aria-label={`${pendientes} mensajes sin leer`}>
+                    {textoContador(pendientes)}
+                  </span>
+                )}
               </button>
             );
           })}

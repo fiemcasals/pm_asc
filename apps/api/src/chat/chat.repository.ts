@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Rol } from '../auth/auth.types';
 import { randomUUID } from 'node:crypto';
-import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes, TipoSala } from './chat.types';
+import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, NoLeidosPorSala, OpcionesHilo, PaginaMensajes, TipoSala } from './chat.types';
 
 /**
  * Los roles que usan el chat y, por eso mismo, los que pueden figurar como contacto de un chat privado
@@ -17,6 +17,13 @@ export abstract class ChatRepository {
   abstract guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat>;
   abstract listarMensajes(sala: string, usuarioId: string, opciones?: OpcionesHilo): Promise<PaginaMensajes>;
   abstract listarContactos(usuarioId: string): Promise<ContactoChat[]>;
+  /** Los mensajes de otros que el usuario no leyó, por conversación («global» o el id del compañero). Solo cuenta el grupo y los privados dirigidos a él. */
+  abstract contarNoLeidos(usuarioId: string): Promise<NoLeidosPorSala>;
+  /**
+   * Marca la conversación como leída hasta ese mensaje (nunca hacia atrás). Devuelve false si el mensaje no es de esa conversación
+   * (para el grupo, cualquier mensaje del grupo; para un privado, uno entre el usuario y ese compañero).
+   */
+  abstract marcarLeido(usuarioId: string, sala: string, mensajeId: string): Promise<boolean>;
   /** ¿El destinatario existe, está activo, es de un rol del chat y no es el propio usuario? (HU-19 RF-04) */
   abstract esContacto(usuarioId: string, destinatarioId: string): Promise<boolean>;
   /** ¿Existe el edificio, para quien lo pide? Con el RLS, un Técnico o un Firmante solo ve los que tiene asignados. (HU-19 RF-04) */
@@ -140,6 +147,53 @@ export class PgChatRepository extends ChatRepository {
     }));
   }
 
+  async contarNoLeidos(usuarioId: string): Promise<NoLeidosPorSala> {
+    // Del grupo: los de otros posteriores a lo leído; sin lectura, los posteriores a la fecha en que se creó el usuario (no se le acumula lo anterior a que existiera).
+    const grupo = await this.db.query<{ n: number }>(
+      `SELECT count(*)::int AS n
+         FROM chat_mensajes m
+         JOIN usuarios u ON u.id = $1
+         LEFT JOIN chat_lecturas l ON l.usuario_id = $1 AND l.sala = 'global'
+        WHERE m.tipo_sala = 'global' AND m.emisor_id <> $1
+          AND (m.creado_en, m.id) > (COALESCE(l.leido_en, u.created_at), COALESCE(l.leido_id, '00000000-0000-0000-0000-000000000000'::uuid))`,
+      [usuarioId],
+    );
+    // De cada privado: solo los que le escribió el compañero a este usuario, posteriores a lo leído.
+    const privados = await this.db.query<{ sala: string; n: number }>(
+      `SELECT m.emisor_id::text AS sala, count(*)::int AS n
+         FROM chat_mensajes m
+         LEFT JOIN chat_lecturas l ON l.usuario_id = $1 AND l.sala = m.emisor_id::text
+        WHERE m.tipo_sala = 'directo' AND m.destinatario_id = $1
+          AND (m.creado_en, m.id) > (COALESCE(l.leido_en, '-infinity'::timestamptz), COALESCE(l.leido_id, '00000000-0000-0000-0000-000000000000'::uuid))
+        GROUP BY m.emisor_id`,
+      [usuarioId],
+    );
+    const resultado: NoLeidosPorSala = {};
+    if ((grupo[0]?.n ?? 0) > 0) resultado.global = grupo[0].n;
+    for (const p of privados) resultado[p.sala] = p.n;
+    return resultado;
+  }
+
+  async marcarLeido(usuarioId: string, sala: string, mensajeId: string): Promise<boolean> {
+    // El mensaje tiene que ser de esa conversación; la lectura solo avanza (si ya se había leído más adelante, no se toca).
+    const donde =
+      sala === 'global'
+        ? `m.tipo_sala = 'global'`
+        : `m.tipo_sala = 'directo' AND ((m.emisor_id = $2::uuid AND m.destinatario_id = $3::uuid) OR (m.emisor_id = $3::uuid AND m.destinatario_id = $2::uuid))`;
+    const filas = await this.db.query<{ existe: number }>(
+      `WITH msg AS (SELECT m.id, m.creado_en FROM chat_mensajes m WHERE m.id = $1::uuid AND ${donde}),
+            avance AS (
+              INSERT INTO chat_lecturas (usuario_id, sala, leido_en, leido_id)
+              SELECT $2::uuid, $3::text, msg.creado_en, msg.id FROM msg
+              ON CONFLICT (usuario_id, sala) DO UPDATE SET leido_en = EXCLUDED.leido_en, leido_id = EXCLUDED.leido_id
+               WHERE (chat_lecturas.leido_en, chat_lecturas.leido_id) < (EXCLUDED.leido_en, EXCLUDED.leido_id)
+              RETURNING 1)
+       SELECT count(*)::int AS existe FROM msg`,
+      [mensajeId, usuarioId, sala],
+    );
+    return (filas[0]?.existe ?? 0) > 0;
+  }
+
   async esContacto(usuarioId: string, destinatarioId: string): Promise<boolean> {
     const filas = await this.db.query<{ uno: number }>(
       `SELECT 1 AS uno FROM usuarios WHERE id = $1 AND id <> $2 AND activo = true AND rol IN (${ROLES_SQL})`,
@@ -208,6 +262,8 @@ export class InMemoryChatRepository extends ChatRepository {
   ];
 
   private consorcios = new Set<string>();
+  /** Hasta qué mensaje leyó cada usuario cada conversación: «usuario|sala» → id del mensaje. */
+  private lecturas = new Map<string, string>();
 
   setContactos(c: ContactoChat[]) {
     this.contactos = c;
@@ -259,6 +315,39 @@ export class InMemoryChatRepository extends ChatRepository {
 
   async listarContactos(usuarioId: string): Promise<ContactoChat[]> {
     return this.contactos.filter((c) => c.id !== usuarioId);
+  }
+
+  private deLaSalaDe(usuarioId: string, sala: string): MensajeChat[] {
+    return sala === 'global'
+      ? this.mensajes.filter((m) => m.tipoSala === 'global')
+      : this.mensajes.filter(
+          (m) =>
+            m.tipoSala === 'directo' &&
+            ((m.emisorId === usuarioId && m.destinatarioId === sala) || (m.emisorId === sala && m.destinatarioId === usuarioId)),
+        );
+  }
+
+  async contarNoLeidos(usuarioId: string): Promise<NoLeidosPorSala> {
+    const salas = new Set<string>(['global']);
+    for (const m of this.mensajes) if (m.tipoSala === 'directo' && m.destinatarioId === usuarioId) salas.add(m.emisorId);
+    const resultado: NoLeidosPorSala = {};
+    for (const sala of salas) {
+      const lista = this.deLaSalaDe(usuarioId, sala);
+      const leido = this.lecturas.get(`${usuarioId}|${sala}`);
+      const desde = leido ? lista.findIndex((m) => m.id === leido) + 1 : 0;
+      const n = lista.slice(desde).filter((m) => m.emisorId !== usuarioId).length;
+      if (n > 0) resultado[sala] = n;
+    }
+    return resultado;
+  }
+
+  async marcarLeido(usuarioId: string, sala: string, mensajeId: string): Promise<boolean> {
+    const lista = this.deLaSalaDe(usuarioId, sala);
+    const indice = lista.findIndex((m) => m.id === mensajeId);
+    if (indice < 0) return false;
+    const actual = this.lecturas.get(`${usuarioId}|${sala}`);
+    if (!actual || lista.findIndex((m) => m.id === actual) < indice) this.lecturas.set(`${usuarioId}|${sala}`, mensajeId);
+    return true;
   }
 
   async esContacto(usuarioId: string, destinatarioId: string): Promise<boolean> {

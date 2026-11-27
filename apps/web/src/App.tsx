@@ -31,6 +31,8 @@ import { GlobalSearch } from './ui/GlobalSearch';
 import { IconBrand, IconMoon, IconPanelLeft, IconSalir, IconSun } from './ui/Icons';
 import { IndicadorEstado } from './ui/IndicadorEstado';
 import { itemsDeNavegacion } from './ui/navegacion';
+import { textoContador } from './chat/noLeidos';
+import { useNoLeidosChat } from './chat/useNoLeidosChat';
 
 const THEME_STORAGE_KEY = 'mant_asc_theme';
 
@@ -125,6 +127,8 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
   // Las empresas conservadoras (ECA) no tienen acceso al chat interno.
   // Usuarios y permisos es sólo del Administrador (la API además lo exige).
   const navItems = itemsDeNavegacion(usuario.rol);
+  // HU-19 RF-09: los mensajes del chat sin leer, en el menú y en el título de la pestaña, esté en la pantalla que esté (solo si tiene chat)
+  const noLeidosChat = useNoLeidosChat(navItems.some((item) => item.id === 'chat'));
   const [vista, setVista] = useState<Vista>(() =>
     esAdmin && typeof window !== 'undefined' && window.location.pathname.startsWith(RUTA_ADMIN)
       ? 'usuarios'
@@ -268,6 +272,11 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
               >
                 <Icon size={16} />
                 {!sidebarCollapsed && <span className="neo-nav-text">{item.label}</span>}
+                {item.id === 'chat' && noLeidosChat > 0 && (
+                  <span className="neo-nav-badge" data-testid="chat-no-leidos-menu" aria-label={`${noLeidosChat} mensajes sin leer`}>
+                    {textoContador(noLeidosChat)}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -392,6 +401,11 @@ function Escritorio({ usuario, sinSenal, onCerrarSesion }: EscritorioProps) {
             >
               <Icon size={17} />
               <span>{item.shortLabel}</span>
+              {item.id === 'chat' && noLeidosChat > 0 && (
+                <span className="neo-mobile-badge" data-testid="mob-chat-no-leidos-menu" aria-label={`${noLeidosChat} mensajes sin leer`}>
+                  {textoContador(noLeidosChat)}
+                </span>
+              )}
             </button>
           );
         })}

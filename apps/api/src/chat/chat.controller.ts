@@ -1,10 +1,10 @@
-import { BadRequestException, Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { UsuarioAutenticado } from '../auth/auth.types';
-import { CanalChat, MensajeChat } from './chat.types';
-import { validarMensaje, validarSala } from './chat.validacion';
+import { CanalChat, MensajeChat, ResultadoLectura } from './chat.types';
+import { validarLectura, validarMensaje, validarSala } from './chat.validacion';
 import { ROLES_DEL_CHAT } from './chat.repository';
 
 // Quien puede usar el chat es, exactamente, quien puede figurar como contacto de un privado (HU-19 RF-03).
@@ -16,6 +16,20 @@ export class ChatController {
   @Get('canales')
   async obtenerCanales(@UsuarioActual() usuario: UsuarioAutenticado): Promise<CanalChat[]> {
     return this.service.obtenerCanales(usuario);
+  }
+
+  /** Cuántos mensajes sin leer tiene en total quien pide: lo que muestra el menú y el título de la pestaña (HU-19 RF-09). */
+  @Get('no-leidos')
+  async contarNoLeidos(@UsuarioActual() usuario: UsuarioAutenticado): Promise<{ total: number }> {
+    return { total: await this.service.contarNoLeidosTotal(usuario) };
+  }
+
+  /** Marca una conversación como leída hasta el mensaje que la persona vio. Devuelve lo que queda sin leer en ella y en total. */
+  @Post('lecturas')
+  @HttpCode(200)
+  async marcarLeido(@Body() cuerpo: unknown, @UsuarioActual() usuario: UsuarioAutenticado): Promise<ResultadoLectura> {
+    const { sala, hasta } = validarLectura(cuerpo);
+    return this.service.marcarLeido(usuario, sala, hasta);
   }
 
   /**

@@ -71,3 +71,15 @@ export function validarMensaje(cuerpo: unknown): CrearMensajeDto {
 
   return { tipoSala: c.tipoSala, destinatarioId, contenido, adjuntoUrl, consorcioId, maquinaRef };
 }
+
+/** Una lectura: la conversación (`global` o el identificador de un compañero, nunca vacía) y el mensaje hasta el que se leyó. HU-19 RF-09. */
+export function validarLectura(cuerpo: unknown): { sala: string; hasta: string } {
+  if (cuerpo === null || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) {
+    throw new BadRequestException('La lectura tiene que ser un objeto con la conversación y el mensaje leído.');
+  }
+  const c = cuerpo as Record<string, unknown>;
+  if (c.sala === undefined || c.sala === null || c.sala === '') throw new BadRequestException('Falta indicar la conversación leída.');
+  const sala = validarSala(c.sala);
+  if (!esUuid(c.hasta)) throw new BadRequestException('El mensaje leído no es un identificador válido.');
+  return { sala, hasta: c.hasta };
+}

@@ -379,5 +379,37 @@ describe('Informe consolidado de la visita contra PostgreSQL real (HU-18 RF-01)'
       expect(mPost!.visita?.autorizada).toBe(true);
       expect(mPost!.visita?.autorizadoPor).toBe(`${P}-firmante`);
     });
+
+    it('HU-08 RF-09 criterios 1, 3 y 5: un informe con un equipo «M9» que no pertenece al edificio es rechazado con 400 y no guarda la fila en PostgreSQL real', async () => {
+      // edif.propio sólo tiene M1. Si enviamos M9, debe rechazar con 400 nombrando M9
+      const infErroneo = {
+        consorcioId: edif.propio,
+        horaDispositivo: '2026-11-25T11:00:00.000Z',
+        equipos: [
+          {
+            maquinaId: 'M9',
+            referenciaAgc: 'M9',
+            tipo: 'traccion',
+            estadoEquipo: 'en_uso',
+            respuestas: { cabina: { a: 'ok' } },
+            observaciones: {},
+            fotos: fotosObligatorias('traccion'),
+          },
+        ],
+        firma: { nombre: 'Carlos', apellido: 'Rodríguez', caracter: 'Encargado', dni: '20123456', imagen: PNG, trazos: [TRAZO] },
+      };
+
+      const res = await request(app.getHttpServer())
+        .post('/api/informes-visita')
+        .set('Authorization', `Bearer ${tokenRt}`)
+        .send(infErroneo);
+
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toContain('M9');
+
+      // Verificar en PostgreSQL real que no existe ninguna fila guardada con ese equipo
+      const filas = await admin.query('SELECT count(*)::int AS total FROM informes_visita WHERE consorcio_id = $1 AND contenido::text LIKE $2', [edif.propio, '%M9%']);
+      expect(filas.rows[0].total).toBe(0);
+    });
   });
 });

@@ -11,6 +11,8 @@ export type NuevaVerificacion = Omit<VerificacionInforme, 'id' | 'verificadoEn'>
 export abstract class InformesRepository {
   /** ¿Existe el edificio y lo ve quien consulta? (el RT sólo ve los que tiene asignados). */
   abstract existeEdificio(consorcioId: string): Promise<boolean>;
+  /** Máquinas del edificio (HU-08 RF-09). */
+  abstract maquinasDeEdificio(consorcioId: string): Promise<Array<{ id: string; referenciaAgc: string }>>;
   /**
    * Guarda el informe ya sellado (con su id, su hora del servidor y su hash). Devuelve `null` si ya había uno con el mismo identificador del
    * celular (`clientReportId`): la unicidad la garantiza la base, así que dos envíos simultáneos no pueden crear dos informes.
@@ -28,12 +30,17 @@ export abstract class InformesRepository {
 /** En memoria, para las pruebas aisladas. */
 export class InMemoryInformesRepository extends InformesRepository {
   readonly edificios = new Set<string>();
+  readonly maquinasPorEdificio = new Map<string, Array<{ id: string; referenciaAgc: string }>>();
   readonly informes: InformeVisita[] = [];
   readonly intentos: IntentoModificacion[] = [];
   readonly verificaciones: VerificacionInforme[] = [];
 
   async existeEdificio(consorcioId: string) {
     return this.edificios.has(consorcioId);
+  }
+
+  async maquinasDeEdificio(consorcioId: string): Promise<Array<{ id: string; referenciaAgc: string }>> {
+    return structuredClone(this.maquinasPorEdificio.get(consorcioId) ?? []);
   }
 
   async guardar(i: InformeVisita) {
@@ -126,6 +133,15 @@ export class PgInformesRepository extends InformesRepository {
   async existeEdificio(consorcioId: string) {
     if (!ES_UUID.test(consorcioId)) return false;
     return (await this.db.query('SELECT 1 FROM consorcios WHERE id = $1', [consorcioId])).length > 0;
+  }
+
+  async maquinasDeEdificio(consorcioId: string): Promise<Array<{ id: string; referenciaAgc: string }>> {
+    if (!ES_UUID.test(consorcioId)) return [];
+    const filas = await this.db.query<{ id: string; referencia_agc: string }>(
+      'SELECT id::text, referencia_agc FROM maquinas WHERE consorcio_id = $1',
+      [consorcioId],
+    );
+    return filas.map((f) => ({ id: f.id, referenciaAgc: f.referencia_agc }));
   }
 
   async guardar(i: InformeVisita): Promise<InformeVisita | null> {

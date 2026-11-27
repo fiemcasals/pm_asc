@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-27T11:38:07.519Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-27T11:42:03.527Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -115,7 +115,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 107 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 108 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
 | 109 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 110 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | Hacer | Sin asignar | RF-03, RF-09, RF-05, RF-01, RF-02, RF-03, RF-02 | — |
+| 110 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | Hacer | gonza | RF-03, RF-09, RF-05, RF-01, RF-02, RF-03, RF-02 | — |
 | 111 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
 | 112 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
 | 113 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
@@ -126,7 +126,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 118 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
 | 119 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
 | 120 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | Bloqueada | dev-ma-2 | RF-05, RF-07 | — |
-| 121 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | testing | Sin asignar | RF-07 | — |
+| 121 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | tested ✓ | Sin asignar | RF-07 | — |
 | 122 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
 
 ## Detalle
@@ -585,7 +585,7 @@ PR #21 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/21). Commit
 - Estimado: 0h
 
 ### RF-08 — Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA
-- Estimado: 0h
+- Estimado: 4h
 
 ### RF-06 — Fallas por piso en Accesos
 PR abierto hacia dev: https://github.com/fiemcasals/pm_asc/pull/34. RF-06 implementado en InspeccionCampoView.tsx + fallasPiso.ts (Seguridad Critica con 'Espacio entre puertas mayor a 12 cm', Mecanica de Puerta y Llamadores, multiples fallas por piso y eliminacion puntual). Pruebas de desarrollo Aprobadas (3/3). Verificado: npm run verify (API 26 suites/207 tests, Web 8 files/88 tests), Playwright 360x800 (scrollWidth=360) y RF-06-entrega.sh --carga 20 (promedio 9.03 ms). Nota Scrum API: PATCH status=pr_open devuelve 400 'sin condiciones de aprobacion (acceptanceCriteria)' pese a tener 3 criterios cargados y 3/3 tests de desarrollo aprobados.

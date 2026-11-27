@@ -28,6 +28,8 @@ export interface CanalChat {
   rol?: Rol;
   ultimoMensaje?: string | null;
   ultimoMensajeHora?: string | null;
+  /** Mensajes de otros que todavía no se leyeron en esta conversación (HU-19 RF-09). */
+  noLeidos?: number;
 }
 
 export interface ContactoChat {
@@ -67,3 +69,13 @@ export const LIMITE_CONTENIDO = 2000;
 
 /** Lo más largo que puede ser la referencia de una máquina en un mensaje. */
 export const LIMITE_MAQUINA = 40;
+
+/** Los mensajes sin leer de un usuario, por conversación: la clave es «global» o el identificador del compañero (HU-19 RF-09). */
+export type NoLeidosPorSala = Record<string, number>;
+
+/** Lo que responde marcar una conversación como leída: lo que queda sin leer en ella y en total. */
+export interface ResultadoLectura {
+  sala: string;
+  noLeidos: number;
+  total: number;
+}

@@ -170,7 +170,7 @@ describe('la pantalla del chat usa el hilo así (criterios 3 a 5)', () => {
     expect(vista).toContain("modoScrollRef.current = 'mantener';");
     expect(vista).toContain('area.scrollTop = medidaAntesRef.current.arriba + (area.scrollHeight - medidaAntesRef.current.alto);');
     expect(vista).toContain('if (area) medidaAntesRef.current = { alto: area.scrollHeight, arriba: area.scrollTop };');
-    expect(vista).toContain('if (alFinal) setMensajesNuevos(0);');
+    expect(vista).toMatch(/if \(alFinal\) \{\s*setMensajesNuevos\(0\);/);
     expect(vista).toContain('const alFinal = estaAlFinal(');
     expect(vista).toContain('onScroll={alMoverElHilo}');
     expect(vista).toContain('onClick={irAlFinal}');

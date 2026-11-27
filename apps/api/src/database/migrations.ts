@@ -1141,4 +1141,40 @@ export const MIGRATIONS: Migration[] = [
       GRANT SELECT, INSERT, UPDATE, DELETE ON chat_mensajes TO ascensores_app;
     `,
   },
+  {
+    id: '039_chat_lecturas',
+    sql: `
+      -- HU-19 RF-09: hasta dónde leyó cada usuario cada conversación del chat. Lo no leído de una conversación son los mensajes de otros que
+      -- vienen después de ese punto. «sala» es 'global' o el identificador del compañero con quien se habla (en minúscula).
+      CREATE TABLE chat_lecturas (
+        usuario_id uuid NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+        sala       text NOT NULL CHECK (sala = 'global' OR sala ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
+        leido_en   timestamptz NOT NULL,
+        leido_id   uuid NOT NULL,
+        PRIMARY KEY (usuario_id, sala)
+      );
+
+      ALTER TABLE chat_lecturas ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_chat_lecturas_chat ON chat_lecturas;
+      CREATE POLICY rls_chat_lecturas_chat ON chat_lecturas
+        USING (NULLIF(current_setting('app.rol_actual', true), '') IN ('rt_calle', 'firmante', 'administrador', 'secretaria'))
+        WITH CHECK (NULLIF(current_setting('app.rol_actual', true), '') IN ('rt_calle', 'firmante', 'administrador', 'secretaria'));
+
+      GRANT SELECT, INSERT, UPDATE, DELETE ON chat_lecturas TO ascensores_app;
+
+      -- Lo que ya está escrito se da por leído: los contadores empiezan en cero y cuentan lo que llegue desde ahora.
+      INSERT INTO chat_lecturas (usuario_id, sala, leido_en, leido_id)
+      SELECT u.id, 'global', g.creado_en, g.id
+        FROM usuarios u
+        CROSS JOIN LATERAL (SELECT creado_en, id FROM chat_mensajes WHERE tipo_sala = 'global' ORDER BY creado_en DESC, id DESC LIMIT 1) g
+       WHERE u.rol IN ('rt_calle', 'firmante', 'administrador', 'secretaria');
+
+      INSERT INTO chat_lecturas (usuario_id, sala, leido_en, leido_id)
+      SELECT DISTINCT ON (m.destinatario_id, m.emisor_id) m.destinatario_id, m.emisor_id::text, m.creado_en, m.id
+        FROM chat_mensajes m
+       WHERE m.tipo_sala = 'directo' AND m.destinatario_id IS NOT NULL
+       ORDER BY m.destinatario_id, m.emisor_id, m.creado_en DESC, m.id DESC;
+    `,
+  },
 ];

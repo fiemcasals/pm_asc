@@ -1280,3 +1280,50 @@ body {
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
 }
 
+
+/* HU-19 RF-09: los mensajes del chat sin leer, en el menú lateral y en la barra del celular */
+.neo-nav-item.tab-btn {
+  position: relative;
+}
+
+.neo-nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.sidebar-collapsed .neo-nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  margin-left: 0;
+  min-width: 16px;
+  padding: 0 4px;
+  font-size: 0.65rem;
+}
+
+.neo-mobile-btn {
+  position: relative;
+}
+
+.neo-mobile-badge {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 6px);
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}

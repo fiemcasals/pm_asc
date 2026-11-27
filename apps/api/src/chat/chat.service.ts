@@ -1,16 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { ChatRepository } from './chat.repository';
-import { CanalChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes } from './chat.types';
+import { CanalChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes, ResultadoLectura } from './chat.types';
 import { esUuid } from './chat.validacion';
-
 
 @Injectable()
 export class ChatService {
   constructor(private readonly repo: ChatRepository) {}
 
-  /** Devuelve las salas disponibles: canal global + chats individuales con compañeros de equipo. */
+  /** Devuelve las salas disponibles: canal global + chats individuales con compañeros de equipo, cada una con sus mensajes sin leer (HU-19 RF-09). */
   async obtenerCanales(usuario: UsuarioAutenticado): Promise<CanalChat[]> {
+    const noLeidos = await this.repo.contarNoLeidos(usuario.id);
     const ultimoGlobal = await this.repo.obtenerUltimoMensaje('global', usuario.id);
     const global: CanalChat = {
       id: 'global',
@@ -18,6 +18,7 @@ export class ChatService {
       nombre: '👥 Grupo General (Operarios e Ingenieros)',
       ultimoMensaje: ultimoGlobal?.contenido ?? null,
       ultimoMensajeHora: ultimoGlobal?.creadoEn ?? null,
+      noLeidos: noLeidos.global ?? 0,
     };
 
     const contactos = await this.repo.listarContactos(usuario.id);
@@ -33,10 +34,37 @@ export class ChatService {
         rol: c.rol,
         ultimoMensaje: ult?.contenido ?? null,
         ultimoMensajeHora: ult?.creadoEn ?? null,
+        noLeidos: noLeidos[c.id] ?? 0,
       });
     }
 
     return [global, ...canalesDirectos];
+  }
+
+  /**
+   * Cuántos mensajes sin leer tiene el usuario en total: los del grupo general y los privados que le escribieron. Solo cuentan las conversaciones
+   * que figuran en su lista (global y sus contactos): lo de alguien que ya no es contacto no se podría abrir para leer. HU-19 RF-09.
+   */
+  async contarNoLeidosTotal(usuario: UsuarioAutenticado): Promise<number> {
+    const [porSala, contactos] = await Promise.all([this.repo.contarNoLeidos(usuario.id), this.repo.listarContactos(usuario.id)]);
+    return this.sumar(porSala, contactos.map((c) => c.id));
+  }
+
+  /** Marca la conversación como leída hasta el mensaje que la persona vio, y devuelve lo que queda sin leer en ella y en total. */
+  async marcarLeido(usuario: UsuarioAutenticado, sala: string, mensajeId: string): Promise<ResultadoLectura> {
+    const salaNorm = sala === 'global' ? 'global' : sala.toLowerCase();
+    if (salaNorm !== 'global' && salaNorm === usuario.id.toLowerCase()) {
+      throw new BadRequestException('No hay una conversación privada con uno mismo.');
+    }
+    if (!(await this.repo.marcarLeido(usuario.id, salaNorm, mensajeId.toLowerCase()))) {
+      throw new BadRequestException('El mensaje no pertenece a esa conversación.');
+    }
+    const [porSala, contactos] = await Promise.all([this.repo.contarNoLeidos(usuario.id), this.repo.listarContactos(usuario.id)]);
+    return { sala: salaNorm, noLeidos: porSala[salaNorm] ?? 0, total: this.sumar(porSala, contactos.map((c) => c.id)) };
+  }
+
+  private sumar(porSala: Record<string, number>, idsDeContactos: string[]): number {
+    return ['global', ...idsDeContactos].reduce((suma, sala) => suma + (porSala[sala] ?? 0), 0);
   }
 
   /** Los mensajes más nuevos de la conversación pedida, de más viejo a más nuevo (hasta LIMITE_HILO). */

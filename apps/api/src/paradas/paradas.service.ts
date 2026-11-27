@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FirmanteService } from '../firmante/firmante.service';
-import { MaquinaAsignada } from '../firmante/firmante.types';
+import { MaquinaAsignada, TipoAlertaCritica } from '../firmante/firmante.types';
 import { ParadasRepository } from './paradas.repository';
 import { ESTADOS_ANORMALES, EstadoAnormal, ReporteParada } from './paradas.types';
 
@@ -65,9 +65,26 @@ export class ParadasService {
     if (ultimo.confirmacion === 'Pendiente de confirmación' || (ultimo.confirmacion === 'Confirmado' && !ultimo.normalizadoEn)) {
       m.estadoOperativo = ultimo.estadoMarcado;
       m.confirmacionEstado = ultimo.confirmacion;
+      const alertaId = ultimo.alertaId || `ALT-${ultimo.id}`;
+      const tipoAlerta: TipoAlertaCritica = ultimo.estadoMarcado === 'Fuera de Servicio' ? 'FUERA_DE_SERVICIO' : 'REPARACION_URGENTE';
+      const titulo = ultimo.estadoMarcado === 'Fuera de Servicio'
+        ? `🚨 FUERA DE SERVICIO: ${ultimo.causa}`
+        : `⚠️ REPARACIÓN URGENTE: ${ultimo.causa}`;
+      const acusePrevio = m.alertaCritica?.id === alertaId ? m.alertaCritica.acuseRecibo : null;
+      m.alertaCritica = {
+        id: alertaId,
+        tipo: tipoAlerta,
+        titulo,
+        motivo: ultimo.causa,
+        fotografiaCabinaTrabada: ultimo.fotoUrl ?? null,
+        fechaDeteccion: ultimo.fecha,
+        remitoUrl: `/api/eca/remito/${alertaId}`,
+        acuseRecibo: acusePrevio,
+      };
     } else {
       m.estadoOperativo = 'Normal';
       m.confirmacionEstado = ultimo.confirmacion === 'Rechazado' ? 'Rechazado' : undefined;
+      m.alertaCritica = null;
     }
   }
 
@@ -92,23 +109,28 @@ export class ParadasService {
     if (fotos.length > MAX_FOTOS) errores.push(`fotos admite hasta ${MAX_FOTOS}`);
     if (errores.length > 0) throw new BadRequestException({ message: 'Datos inválidos', errores });
 
-    const maquina = this.firmante.getMaquinas().find((m) => m.id === maquinaId);
+    const maquina = this.firmante.getMaquinas().find(
+      (m) => m.id === maquinaId || (m.consorcioId && (m.id.endsWith(`-${maquinaId}`) || m.codigoAGC === maquinaId)),
+    );
     if (!maquina) throw new NotFoundException(`No existe la máquina ${maquinaId}`);
-    if (this.reportes.some((r) => r.maquinaId === maquinaId && r.confirmacion === 'Pendiente de confirmación')) {
+    if (this.reportes.some((r) => r.maquinaId === maquina.id && r.confirmacion === 'Pendiente de confirmación')) {
       throw new ConflictException('Este equipo ya tiene un reporte pendiente de confirmación.');
     }
 
-    maquina.estadoOperativo = estado as EstadoAnormal;
-    maquina.confirmacionEstado = 'Pendiente de confirmación';
+    const alertaId = typeof b.alertaId === 'string' && b.alertaId.trim() ? b.alertaId.trim() : `ALT-${randomUUID()}`;
+    const fotoUrl = fotos.length > 0 ? fotos[0] : null;
+
     const reporte: ReporteParada = {
       id: `PAR-${randomUUID()}`,
-      maquinaId,
+      maquinaId: maquina.id,
       codigoAGC: maquina.codigoAGC,
       edificio: maquina.edificio.consorcio,
       eca: maquina.eca,
       estadoMarcado: estado as EstadoAnormal,
       causa,
       fotos: fotos.length,
+      fotoUrl,
+      alertaId,
       estado: `${estado} — Pendiente de confirmación`,
       confirmacion: 'Pendiente de confirmación',
       reportadoPor,
@@ -116,11 +138,38 @@ export class ParadasService {
       avisadoA: ['secretaria', `firmante:${maquina.firmanteUsername}`],
       ...(clientReportId ? { clientReportId } : {}),
     };
+
+    const antes = {
+      reporte: structuredClone(reporte),
+      estadoOperativo: maquina.estadoOperativo,
+      confirmacionEstado: maquina.confirmacionEstado,
+      alertaCritica: maquina.alertaCritica ? structuredClone(maquina.alertaCritica) : null,
+    };
+
+    maquina.estadoOperativo = estado as EstadoAnormal;
+    maquina.confirmacionEstado = 'Pendiente de confirmación';
+    const tipoAlerta: TipoAlertaCritica = estado === 'Fuera de Servicio' ? 'FUERA_DE_SERVICIO' : 'REPARACION_URGENTE';
+    const titulo = estado === 'Fuera de Servicio'
+      ? `🚨 FUERA DE SERVICIO: ${causa}`
+      : `⚠️ REPARACIÓN URGENTE: ${causa}`;
+
+    maquina.alertaCritica = {
+      id: alertaId,
+      tipo: tipoAlerta,
+      titulo,
+      motivo: causa,
+      fotografiaCabinaTrabada: fotoUrl,
+      fechaDeteccion: reporte.fecha,
+      remitoUrl: `/api/eca/remito/${alertaId}`,
+      acuseRecibo: null,
+    };
+
     try {
       await this.guardar(reporte);
     } catch (err) {
-      maquina.estadoOperativo = 'Normal';
-      maquina.confirmacionEstado = undefined;
+      maquina.estadoOperativo = antes.estadoOperativo;
+      maquina.confirmacionEstado = antes.confirmacionEstado;
+      maquina.alertaCritica = antes.alertaCritica;
       this.logger.error(`No se pudo guardar el reporte de parada: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     }
@@ -151,7 +200,12 @@ export class ParadasService {
     if (decision === 'rechazar' && !motivoLimpio) throw new BadRequestException({ message: 'Datos inválidos', errores: ['motivo es obligatorio al rechazar'] });
 
     const maquina = this.firmante.getMaquinas().find((m) => m.id === reporte.maquinaId)!;
-    const antes = { reporte: structuredClone(reporte), estadoOperativo: maquina.estadoOperativo, confirmacionEstado: maquina.confirmacionEstado };
+    const antes = {
+      reporte: structuredClone(reporte),
+      estadoOperativo: maquina.estadoOperativo,
+      confirmacionEstado: maquina.confirmacionEstado,
+      alertaCritica: maquina.alertaCritica ? structuredClone(maquina.alertaCritica) : null,
+    };
     reporte.resueltoPor = usuario.usuario;
     reporte.resueltoEn = new Date().toISOString();
     if (decision === 'confirmar') {
@@ -164,6 +218,7 @@ export class ParadasService {
       reporte.motivoRechazo = motivoLimpio;
       maquina.confirmacionEstado = 'Rechazado';
       maquina.estadoOperativo = 'Normal';
+      maquina.alertaCritica = null;
     }
     try {
       await this.guardar(reporte);
@@ -173,6 +228,7 @@ export class ParadasService {
       for (const k of ['resueltoPor', 'resueltoEn', 'motivoRechazo'] as const) if (!(k in antes.reporte)) delete reporte[k];
       maquina.estadoOperativo = antes.estadoOperativo;
       maquina.confirmacionEstado = antes.confirmacionEstado;
+      maquina.alertaCritica = antes.alertaCritica;
       throw err;
     }
     return structuredClone(reporte);
@@ -187,22 +243,25 @@ export class ParadasService {
     if (fotos.length === 0) {
       throw new BadRequestException({ message: 'Datos inválidos', errores: ['fotos: para volver a Normal hace falta una nueva inspección con al menos una foto'] });
     }
-    const maquina = this.firmante.getMaquinas().find((m) => m.id === maquinaId);
+    const maquina = this.firmante.getMaquinas().find(
+      (m) => m.id === maquinaId || (m.consorcioId && (m.id.endsWith(`-${maquinaId}`) || m.codigoAGC === maquinaId)),
+    );
     if (!maquina) throw new NotFoundException(`No existe la máquina ${maquinaId}`);
-    if (this.reportes.some((r) => r.maquinaId === maquinaId && r.confirmacion === 'Pendiente de confirmación')) {
+    if (this.reportes.some((r) => r.maquinaId === maquina.id && r.confirmacion === 'Pendiente de confirmación')) {
       throw new ConflictException('El estado de este equipo está pendiente de confirmación del Firmante: todavía no se puede volver a Normal.');
     }
     if ((maquina.estadoOperativo ?? 'Normal') === 'Normal') throw new ConflictException('Este equipo ya está en estado Normal.');
     maquina.estadoOperativo = 'Normal';
     maquina.confirmacionEstado = undefined;
+    maquina.alertaCritica = null;
     // El último reporte confirmado queda marcado como normalizado: así, después de un reinicio, el equipo sigue «Normal».
-    const confirmado = [...this.reportes].reverse().find((r) => r.maquinaId === maquinaId && r.confirmacion === 'Confirmado' && !r.normalizadoEn);
+    const confirmado = [...this.reportes].reverse().find((r) => r.maquinaId === maquina.id && r.confirmacion === 'Confirmado' && !r.normalizadoEn);
     if (confirmado) {
       confirmado.normalizadoEn = new Date().toISOString();
       confirmado.normalizadoPor = reportadoPor;
       await this.guardar(confirmado);
     }
-    return { maquinaId, estadoOperativo: 'Normal', reportadoPor, fotos: fotos.length };
+    return { maquinaId: maquina.id, estadoOperativo: 'Normal', reportadoPor, fotos: fotos.length };
   }
 
   private firmanteDe(maquinaId: string): string {

@@ -16,6 +16,8 @@ describe('Hilo del chat: los más nuevos, y los anteriores a pedido (HU-19 RF-02
 
   beforeEach(() => {
     repo = new InMemoryChatRepository();
+    // HU-19 RF-04: un privado solo se puede enviar a un contacto del chat
+    repo.setContactos([ana, beto, carla].map((u) => ({ id: u.id, usuario: u.usuario, nombre: u.usuario, rol: u.rol })));
     service = new ChatService(repo);
   });
 

@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from
 import { fetchConSesion, Usuario } from '../auth/sesion';
 import { etiquetaDeRol } from './etiquetaRol';
 import { estaAlFinal, fusionarVentana, sumarAnteriores, sumarPropio } from './hilo';
+import { MAX_CARACTERES_MENSAJE } from './limites';
 import './chat.css';
 
 export interface MensajeChat {
@@ -499,6 +500,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
               placeholder="Escribe un mensaje para el equipo… (puedes incluir enlaces http)"
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
+              maxLength={MAX_CARACTERES_MENSAJE}
               data-testid="chat-input-texto"
             />
 

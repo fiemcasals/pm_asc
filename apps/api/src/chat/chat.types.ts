@@ -61,3 +61,9 @@ export interface PaginaMensajes {
   mensajes: MensajeChat[];
   hayAnteriores: boolean;
 }
+
+/** Lo más largo que puede ser el texto de un mensaje (HU-19 RF-04). La caja de texto de la web usa el mismo número. */
+export const LIMITE_CONTENIDO = 2000;
+
+/** Lo más largo que puede ser la referencia de una máquina en un mensaje. */
+export const LIMITE_MAQUINA = 40;

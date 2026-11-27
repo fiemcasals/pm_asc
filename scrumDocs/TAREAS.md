@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-27T11:15:35.151Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-27T11:17:30.077Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -1295,6 +1295,112 @@ Desarrollo de un chat integrado en la aplicación que permite a los operarios en
 5. Los enlaces web que se envíen se pueden tocar o clickear para abrirlos directamente.
 6. El operario puede elegir el edificio o ascensor de una lista para que el mensaje aclare dónde está trabajando.
 7. Los mensajes quedan guardados y no se pierden al recargar la página o volver a entrar al sistema.
+
+### RF-02: El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores (Funcional)
+
+Hoy el chat pide los 200 mensajes MÁS VIEJOS de cada conversación (orden ascendente con límite 200): al pasar los 200, los mensajes nuevos dejan de verse para todos aunque se guardan y la lista de chats los muestra como «último mensaje» (probado: con 210 mensajes el hilo quedó clavado en el 187). Además, cada 3,5 segundos la actualización automática lleva el hilo al final, así que no se pueden leer mensajes anteriores (probado: se pasó de arriba a abajo en menos de 8 s). Esta tarjeta hace que el hilo muestre los 200 más nuevos, permita pedir los anteriores y respete el lugar donde está leyendo quien subió.
+
+**Condiciones de aprobación**
+
+1. Cuando el grupo general o un chat privado tiene más de 200 mensajes, el hilo muestra los 200 más nuevos, de más viejo a más nuevo, y un mensaje recién enviado aparece en el hilo de todos los participantes
+2. El último mensaje que se ve al final del hilo es el mismo que muestra la lista de chats como último mensaje de esa conversación
+3. Un botón «Ver mensajes anteriores» agrega al principio del hilo los 200 mensajes previos sin mover lo que se está leyendo, y deja de aparecer cuando no quedan más
+4. Si se sube a leer mensajes anteriores, la actualización automática no devuelve el hilo al final: se queda en el mismo lugar
+5. Si se está al final del hilo, un mensaje nuevo lo baja para mostrarlo; si se está leyendo más arriba, aparece el aviso «Mensajes nuevos ↓» que lleva al final al tocarlo
+
+### RF-03: La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder (Funcional)
+
+La Secretaría puede entrar al chat y escribirle por privado a cualquiera, pero no figura en la lista de contactos de nadie (solo se listan Técnicos RT, Firmantes y Administradores). Resultado probado en pantalla: un mensaje privado de la Secretaría a un RT se guarda, pero el RT no tiene ese chat en su lista, nunca lo ve y no puede contestar. Esta tarjeta agrega a la Secretaría como contacto de los demás roles del chat, para que los privados con ella funcionen en las dos direcciones.
+
+**Condiciones de aprobación**
+
+1. La lista de chats de un Técnico RT, de un Ingeniero Firmante y de un Administrador incluye a la Secretaría como contacto, y la Secretaría no se ve a sí misma en su lista
+2. Un mensaje privado de un Técnico RT a la Secretaría llega y la Secretaría lo ve al abrir el chat con ese Técnico
+3. Un mensaje privado de la Secretaría a un Técnico RT aparece en el chat del Técnico con la Secretaría, y la respuesta del Técnico le llega a la Secretaría
+4. Los privados con la Secretaría solo los ven sus dos participantes: otro Técnico, el Firmante y el Administrador no los ven ni en el grupo general ni abriendo su propio chat
+5. La ECA sigue sin chat: no ve la pestaña «Chat Operativo» y la API del chat le responde 403
+
+### RF-04: La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo (Funcional)
+
+La API del chat casi no valida lo que recibe. Probado con una sesión de Técnico RT: un destinatario que no es un identificador válido o que no existe, un tipo de sala inventado o ausente, un edificio inválido o un contenido que no es texto devuelven 500 (error del servidor) en vez de 400; pedir los mensajes de una sala inválida también da 500. Y se guardan sin objeción un mensaje de 100.000 caracteres (armó un globo de casi 59.000 px que dejó el hilo inutilizable para todos), adjuntos con dirección `javascript:` o `http://` externa (el navegador de cada lector pide esa dirección) y privados a alguien que no es contacto del emisor. Esta tarjeta pone esas validaciones en la API (que es la que manda) y un tope de largo en la caja de texto. Va después de la tarjeta de la Secretaría porque «destinatario que no es contacto» necesita que la lista de contactos ya esté completa.
+
+**Condiciones de aprobación**
+
+1. Un mensaje privado cuyo destinatario no es un identificador válido, no existe, está inactivo o no es un contacto del emisor responde 400 con un mensaje que lo explica, nunca 500, y no se guarda
+2. Un mensaje con tipo de sala distinto de «global» o «directo», o sin tipo de sala, responde 400 y no se guarda
+3. Un mensaje con un edificio que no existe o que no es un identificador válido responde 400 y no se guarda
+4. Un contenido que no es texto, o de más de 2.000 caracteres, responde 400; la caja de texto del chat no deja escribir más de 2.000 caracteres
+5. Un adjunto que no es una imagen en formato data:image (png, jpeg o webp), por ejemplo una dirección `javascript:` o `http://`, responde 400 y no se guarda
+6. Pedir los mensajes de una sala que no es «global» ni un identificador válido responde 400 en vez de 500
+
+### RF-05: Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar (Funcional)
+
+La foto se manda tal como la saca el celular y viaja dentro de cada mensaje en base64; además, cada usuario baja el hilo completo cada 3,5 segundos. Probado: con una sola foto de 8 MB, cada actualización del hilo bajó 8,1 MB por usuario; con unas pocas fotos de celular el chat se vuelve inusable con datos móviles. Esta tarjeta reduce la foto en el dispositivo antes de enviarla (lado mayor 1.600 px, JPEG) y hace que el hilo no lleve las fotos adentro: se piden aparte, una vez, y el navegador las guarda. Va después de la validación de la API porque define el formato y el tope de los adjuntos.
+
+**Condiciones de aprobación**
+
+1. Al elegir una foto de celular (por ejemplo 4000×3000 px y 5 MB), la pantalla la reduce antes de enviarla a 1.600 px como máximo del lado mayor, en JPEG, y lo enviado pesa menos de 500 KB; al agrandarla en el hilo se sigue leyendo bien
+2. La actualización automática del hilo no vuelve a bajar las fotos: en una conversación con 5 fotos, cada actualización pesa menos de 50 KB
+3. La foto se ve en el hilo de quien la envió y de los demás participantes, y al tocarla se agranda
+4. Solo pueden pedir una foto quienes pueden leer ese mensaje (en el grupo, los roles del chat; en un privado, sus dos participantes): sin sesión responde 401 y un tercero en un privado no la obtiene
+5. Si el archivo elegido no es una imagen o, ya reducida, supera el tope permitido, la pantalla lo dice con un mensaje claro y no envía nada
+
+### RF-06: El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión (Funcional)
+
+Hoy, si el envío falla (sin red, error del servidor o foto demasiado grande) la pantalla no muestra nada: el texto queda en la caja y quien escribe no sabe si salió. Probado sin red y con un error 500 simulado. Además, la cabecera dice siempre «Equipo conectado» (grupo) o «En línea» (privados) como texto fijo, incluso sin conexión. Esta tarjeta muestra un aviso cuando el envío falla y hace que el estado de la cabecera refleje el resultado real de la última actualización.
+
+**Condiciones de aprobación**
+
+1. Si el envío falla por falta de conexión o por un error del servidor, debajo de la caja de texto aparece un aviso que dice que el mensaje no se envió, el texto escrito se conserva y un botón «Reintentar» lo vuelve a enviar
+2. Si el servidor rechaza el mensaje con un 400, el aviso muestra el motivo en lenguaje claro
+3. La cabecera del chat muestra «Conectado» cuando la última actualización salió bien y «Sin conexión, reintentando…» cuando falló, y vuelve a «Conectado» sola al recuperarse la red; ya no dice «Equipo conectado» ni «En línea» fijos
+4. Mientras un mensaje se está enviando, el botón Enviar queda deshabilitado y no se puede enviar dos veces el mismo texto
+
+### RF-07: La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen (Funcional)
+
+El edificio elegido en el selector queda elegido después de enviar: todos los mensajes siguientes salen etiquetados con ese edificio (probado: una foto enviada después del primer mensaje salió con la etiqueta sin que se la eligiera de nuevo). Además, la etiqueta se arma con una consulta que respeta la seguridad por edificio, así que un Técnico o Firmante que no está asignado a ese edificio ve el mensaje sin etiqueta aunque quien lo envió sí la puso. Supuesto de esta tarjeta, a confirmar: la etiqueta es parte del mensaje y debe verla cualquiera que pueda leerlo (el nombre del edificio lo eligió quien escribe dentro de su propia lista).
+
+**Condiciones de aprobación**
+
+1. Después de enviar un mensaje con un edificio vinculado, el selector vuelve a «(Opcional) Vincular Edificio…» y el siguiente mensaje sale sin etiqueta salvo que se elija un edificio otra vez
+2. Un mensaje con edificio muestra la etiqueta «📍 nombre del edificio» (y la máquina si se indicó) a todos los que pueden leerlo, estén o no asignados a ese edificio
+3. El campo de máquina aparece solo cuando hay un edificio elegido, admite hasta 40 caracteres y se vacía al enviar
+4. El selector ofrece a cada usuario los edificios que puede ver (Técnico y Firmante, los asignados; Secretaría y Administrador, todos)
+
+### RF-08: Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada (Funcional)
+
+Tres detalles menores. (1) La hora de los mensajes y de la lista de chats usa `toLocaleTimeString`, que muestra la hora con el formato del dispositivo (AM/PM en algunos) y rompe la prueba guardiana de HU-12 RF-03 (única prueba de la web que hoy falla en `dev`). (2) El mensaje muestra solo la hora, sin el día: uno de ayer se ve igual que uno de hoy. (3) La foto agrandada solo se cierra tocando el fondo: Escape no la cierra y no hay botón visible para cerrarla.
+
+**Condiciones de aprobación**
+
+1. La hora de cada mensaje y la de la lista de chats se muestra en formato de 24 horas (HH:MM) igual en cualquier dispositivo, con el mismo formato de fechas que el resto de la aplicación
+2. Los mensajes de un día anterior muestran el día: un separador «Hoy», «Ayer» o la fecha completa entre mensajes de distintos días
+3. La foto agrandada se cierra con la tecla Escape y con un botón «Cerrar» visible, y el foco vuelve a la foto desde la que se abrió
+4. La prueba guardiana de formato de fechas de HU-12 RF-03 pasa: ninguna parte del chat usa el formato de hora del dispositivo
+
+### RF-09: El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña (Funcional)
+
+Hoy el chat no tiene ninguna noción de «no leído» ni de aviso: la lista de chats se carga una sola vez al abrir la pantalla y solo se consulta la conversación abierta, así que quien está en otra conversación o en otra pestaña de la aplicación (Mapa del RT, Inspección…) no se entera de que le escribieron (probado con dos usuarios a la vez). Esta tarjeta es la base de los avisos: guarda en el servidor hasta dónde leyó cada usuario cada conversación y muestra contadores. Va después del arreglo de los 200 mensajes (el «último leído» depende de qué mensajes se ven) y de la Secretaría como contacto (para que sus privados también cuenten).
+
+**Condiciones de aprobación**
+
+1. Cada conversación de la lista de chats muestra un contador con sus mensajes no leídos y su nombre en negrita mientras tenga alguno; la lista se actualiza sola cada pocos segundos y ordena primero la conversación con el mensaje más reciente
+2. La pestaña «Chat Operativo» del menú muestra el total de no leídos, también cuando la persona está en otra pestaña de la aplicación, y el título de la pestaña del navegador muestra ese total, por ejemplo «(3) mant_asc»
+3. Al abrir una conversación y ver sus mensajes, su contador vuelve a cero; los mensajes que uno mismo envía nunca cuentan como no leídos
+4. Lo leído se guarda por usuario en el servidor: al salir y entrar desde otro dispositivo, los contadores son los mismos
+5. Nadie cuenta ni ve mensajes de privados ajenos: el total de no leídos de cada usuario solo suma el grupo general y sus propios privados
+
+### RF-10: Avisos del navegador cuando llega un mensaje nuevo del chat (Funcional)
+
+Prueba de avisos con las notificaciones del navegador (pedido del usuario del 25/11/2026, «por si acaso»). Alcance: funcionan mientras la aplicación está abierta en el navegador, incluso si la pestaña está en segundo plano o la persona está en otra pestaña de la aplicación; con la aplicación cerrada o el celular bloqueado NO llegan (eso necesitaría notificaciones push con un servidor de claves y es otra tarjeta, si se quiere). Nota técnica: en Chrome de Android el aviso no se puede crear con `new Notification()`; hay que mostrarlo desde el service worker de la aplicación (`registration.showNotification`). Depende de la tarjeta de no leídos, que es la que sabe qué mensajes son nuevos.
+
+**Condiciones de aprobación**
+
+1. Un botón «Activar avisos del chat» pide el permiso del navegador solo cuando se lo toca, nunca al cargar la página, y muestra si los avisos están activados, bloqueados o no disponibles en ese navegador
+2. Con los avisos activados, cuando llega un mensaje nuevo de otra persona y la pestaña está en segundo plano, o la persona está en otra conversación o en otra pestaña de la aplicación, el navegador muestra un aviso con el nombre de quien escribió y el comienzo del mensaje (hasta 100 caracteres, sin la foto)
+3. Tocar el aviso lleva a la aplicación y abre esa conversación
+4. No se avisa por los mensajes propios ni por los de la conversación que ya se está viendo con la pestaña a la vista; varios mensajes seguidos de la misma conversación reemplazan al aviso anterior en vez de apilarse
+5. Si el permiso está denegado o el navegador no admite avisos, el chat y los contadores de no leídos funcionan igual y la pantalla lo explica sin errores; desactivar los avisos los detiene y la preferencia se recuerda en ese dispositivo
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

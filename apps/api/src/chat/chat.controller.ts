@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { UsuarioAutenticado } from '../auth/auth.types';
-import { CanalChat, MensajeChat, ResultadoLectura } from './chat.types';
+import { CanalChat, MensajeChat, ResultadoLectura, ResumenNoLeidos } from './chat.types';
 import { validarLectura, validarMensaje, validarSala } from './chat.validacion';
 import { ROLES_DEL_CHAT } from './chat.repository';
 
@@ -18,10 +18,13 @@ export class ChatController {
     return this.service.obtenerCanales(usuario);
   }
 
-  /** Cuántos mensajes sin leer tiene en total quien pide: lo que muestra el menú y el título de la pestaña (HU-19 RF-09). */
+  /**
+   * Cuántos mensajes sin leer tiene en total quien pide (lo que muestra el menú y el título de la pestaña, HU-19 RF-09) y, de cada conversación con algo
+   * sin leer, el último mensaje que le escribió otra persona: de ahí salen los avisos del navegador (HU-19 RF-10).
+   */
   @Get('no-leidos')
-  async contarNoLeidos(@UsuarioActual() usuario: UsuarioAutenticado): Promise<{ total: number }> {
-    return { total: await this.service.contarNoLeidosTotal(usuario) };
+  async contarNoLeidos(@UsuarioActual() usuario: UsuarioAutenticado): Promise<ResumenNoLeidos> {
+    return this.service.resumenNoLeidos(usuario);
   }
 
   /** Marca una conversación como leída hasta el mensaje que la persona vio. Devuelve lo que queda sin leer en ella y en total. */

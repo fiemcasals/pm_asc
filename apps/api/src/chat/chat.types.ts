@@ -79,3 +79,26 @@ export interface ResultadoLectura {
   noLeidos: number;
   total: number;
 }
+
+/** Lo que hace falta de un mensaje sin leer para avisar de él: quién escribió y el comienzo del texto (sin la foto). HU-19 RF-10. */
+export interface ResumenMensajeNoLeido {
+  id: string;
+  emisorNombre: string;
+  /** Hasta los primeros 200 caracteres del texto: de ahí la pantalla muestra el comienzo. */
+  contenido: string;
+  conFoto: boolean;
+  creadoEn: string;
+}
+
+/** Una conversación con mensajes sin leer y el último que le llegó a la persona (de otro). */
+export interface ConversacionNoLeida {
+  sala: string;
+  noLeidos: number;
+  ultimoMensaje: ResumenMensajeNoLeido;
+}
+
+/** Lo que responde GET /api/chat/no-leidos: el total de siempre y, además, lo necesario para avisar de lo que llega. */
+export interface ResumenNoLeidos {
+  total: number;
+  conversaciones: ConversacionNoLeida[];
+}

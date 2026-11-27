@@ -540,3 +540,40 @@
   line-height: 1.4;
   text-align: center;
 }
+
+/* HU-19 RF-10: el estado de los avisos del navegador y el botón para activarlos */
+.chat-avisos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle, #2e3440);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.chat-avisos-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-avisos-estado {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main, #eceff4);
+}
+
+.chat-avisos[data-estado='activados'] .chat-avisos-estado {
+  color: #a3be8c;
+}
+
+.chat-avisos[data-estado='bloqueados'] .chat-avisos-estado {
+  color: #ebcb8b;
+}
+
+.chat-avisos-ayuda {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-muted, #94a3b8);
+}

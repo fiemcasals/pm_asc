@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fetchConSesion, Usuario } from '../auth/sesion';
+import { etiquetaDeRol } from './etiquetaRol';
 import './chat.css';
 
 export interface MensajeChat {
@@ -196,26 +197,13 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
     });
   };
 
-  const rolLabel = (rol?: string) => {
-    switch (rol) {
-      case 'firmante':
-        return 'Ing. Legal';
-      case 'rt_calle':
-        return 'Técnico RT';
-      case 'administrador':
-        return 'Admin';
-      default:
-        return rol ?? '';
-    }
-  };
-
   return (
     <section className="chat-contenedor" data-testid="vista-chat" aria-label="Chat Operativo">
       {/* Panel Izquierdo: Lista de Canales y Contactos */}
       <aside className="chat-canales-panel">
         <div className="chat-canales-header">
           <h2 className="chat-canales-titulo">Comunicaciones</h2>
-          <span className="chat-badge-rol">{rolLabel(usuario.rol)}</span>
+          <span className="chat-badge-rol">{etiquetaDeRol(usuario.rol)}</span>
         </div>
 
         <div className="chat-canales-lista" data-testid="chat-lista-canales">
@@ -244,7 +232,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
                     )}
                   </div>
                   <div className="chat-canal-subtexto">
-                    {c.rol && <span className={`chat-badge-rol ${c.rol}`}>{rolLabel(c.rol)}</span>}{' '}
+                    {c.rol && <span className={`chat-badge-rol ${c.rol}`}>{etiquetaDeRol(c.rol)}</span>}{' '}
                     {c.ultimoMensaje ? c.ultimoMensaje : esGlobal ? 'Sala abierta a todos' : 'Conversación privada'}
                   </div>
                 </div>
@@ -262,7 +250,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
               {canalActivo.nombre}
             </h3>
             <span className="chat-header-estado">
-              {canalActivo.tipo === 'global' ? 'Equipo conectado' : `${rolLabel(canalActivo.rol)} · En línea`}
+              {canalActivo.tipo === 'global' ? 'Equipo conectado' : `${etiquetaDeRol(canalActivo.rol)} · En línea`}
             </span>
           </div>
           <button
@@ -298,7 +286,7 @@ export function ChatOperativoView({ usuario }: ChatOperativoViewProps) {
                     {!esPropio && (
                       <div className="chat-globo-emisor">
                         <span>{m.emisorNombre}</span>
-                        <span className={`chat-badge-rol ${m.emisorRol}`}>{rolLabel(m.emisorRol)}</span>
+                        <span className={`chat-badge-rol ${m.emisorRol}`}>{etiquetaDeRol(m.emisorRol)}</span>
                       </div>
                     )}
 

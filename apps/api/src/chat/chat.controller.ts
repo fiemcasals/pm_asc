@@ -3,9 +3,11 @@ import { ChatService } from './chat.service';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { CanalChat, CrearMensajeDto, MensajeChat } from './chat.types';
+import { ROLES_DEL_CHAT } from './chat.repository';
 
+// Quien puede usar el chat es, exactamente, quien puede figurar como contacto de un privado (HU-19 RF-03).
 @Controller('chat')
-@Roles('rt_calle', 'firmante', 'administrador', 'secretaria')
+@Roles(...ROLES_DEL_CHAT)
 export class ChatController {
   constructor(private readonly service: ChatService) {}
 

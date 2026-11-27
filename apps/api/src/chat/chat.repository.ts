@@ -3,6 +3,13 @@ import { DatabaseService } from '../database/database.service';
 import { Rol } from '../auth/auth.types';
 import { ContactoChat, CrearMensajeDto, MensajeChat, TipoSala } from './chat.types';
 
+/**
+ * Los roles que usan el chat y, por eso mismo, los que pueden figurar como contacto de un chat privado
+ * (la ECA queda afuera: el chat es interno). HU-19 RF-03: la Secretaría estaba autorizada a escribir pero
+ * no figuraba en la lista de nadie, así que sus privados no se podían leer ni responder.
+ */
+export const ROLES_DEL_CHAT: readonly Rol[] = ['rt_calle', 'firmante', 'administrador', 'secretaria'];
+
 export abstract class ChatRepository {
   abstract guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat>;
   abstract listarMensajes(sala: string, usuarioId: string): Promise<MensajeChat[]>;
@@ -107,9 +114,9 @@ export class PgChatRepository extends ChatRepository {
       `SELECT id, usuario, nombre, rol
          FROM usuarios
         WHERE activo = true
-          AND rol IN ('rt_calle', 'firmante', 'administrador')
+          AND rol IN (${ROLES_DEL_CHAT.map((r) => `'${r}'`).join(', ')})
           AND id <> $1
-        ORDER BY CASE rol WHEN 'firmante' THEN 1 WHEN 'rt_calle' THEN 2 ELSE 3 END, nombre ASC`,
+        ORDER BY CASE rol WHEN 'firmante' THEN 1 WHEN 'secretaria' THEN 2 WHEN 'rt_calle' THEN 3 ELSE 4 END, nombre ASC`,
       [usuarioId],
     );
 
@@ -172,6 +179,7 @@ export class InMemoryChatRepository extends ChatRepository {
     { id: 'usr-rt-1', usuario: 'rt1', nombre: 'Operario RT 1', rol: 'rt_calle' },
     { id: 'usr-firmante-1', usuario: 'firmante1', nombre: 'Ing. Firmante Legal', rol: 'firmante' },
     { id: 'usr-admin-1', usuario: 'admin', nombre: 'Administrador del Sistema', rol: 'administrador' },
+    { id: 'usr-secretaria-1', usuario: 'secretaria', nombre: 'Secretaría', rol: 'secretaria' },
   ];
 
   setContactos(c: ContactoChat[]) {

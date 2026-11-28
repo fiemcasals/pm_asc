@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-28T03:54:56.351Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T13:23:08.929Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -83,20 +83,10 @@ graph TD
     REQ_1795527711177["RF-08: Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
-    REQ_1791910396804["RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica"]
-    REQ_1791910396892["RF-02: Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo"]
-    REQ_1794155773535["RF-03: No informar como entregado un WhatsApp que no se envió"]
-    REQ_1794155774018["RF-04: Enviar las alertas por WhatsApp a través de un proveedor real"]
     REQ_1794493273993["RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría"]
     REQ_1794493274385["RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días"]
     REQ_1795091473089["RF-07: FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04"]
-    REQ_1795097860369["RF-08: Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada"]
-    REQ_1795097860589["RF-09: Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor"]
-    REQ_1795097860686["RF-10: Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío"]
     REQ_1795263642081["RF-11: Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio"]
-    REQ_1795263642415["RF-12: Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio"]
-    REQ_1795263642719["RF-13: Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp"]
-    REQ_1795263643018["RF-14: Que el estado general de un aviso refleje un envío de WhatsApp que falla después"]
     REQ_1795608267360["RF-15: WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
@@ -149,12 +139,6 @@ graph TD
     REQ_1794494002697["RNF-01: Sellado del informe"]
     REQ_1794494002926["RNF-02: Cola de sincronización del celular"]
     REQ_1795480710378["RF-02: El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso"]
-  end
-  subgraph US_1795097860829["RO-02: Probar el envío real de WhatsApp con el celular de German"]
-    REQ_1795097860837["RF-01: Probar el envío real de WhatsApp con el celular de German"]
-  end
-  subgraph US_1795097860904["RO-03: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso"]
-    REQ_1795097860908["RF-01: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso"]
   end
   subgraph US_1795609150548["HU-19: HU-19: Chat interno entre operarios e ingenieros para consultas y reportes"]
     REQ_1795609195313["RF-01: RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces"]
@@ -235,25 +219,10 @@ graph TD
   REQ_1791910396729 --> REQ_1795527711177
   REQ_1793980587652 --> REQ_1795527711177
   REQ_1795008148136 --> REQ_1795527711177
-  REQ_1791910396729 --> REQ_1791910396804
-  REQ_1791910396804 --> REQ_1791910396892
-  REQ_1791910396804 --> REQ_1794155773535
-  REQ_1791910396892 --> REQ_1794155773535
-  REQ_1794155773535 --> REQ_1794155774018
-  REQ_1791910396804 --> REQ_1794155774018
-  REQ_1791910395002 --> REQ_1794155774018
-  REQ_1794155773535 --> REQ_1794493273993
-  REQ_1791910396892 --> REQ_1794493273993
   REQ_1791910396553 --> REQ_1794493273993
   REQ_1794493273993 --> REQ_1794493274385
-  REQ_1795097860589 --> REQ_1795097860686
   REQ_1794493273993 --> REQ_1795263642081
   REQ_1794493274385 --> REQ_1795263642081
-  REQ_1795097860589 --> REQ_1795263642415
-  REQ_1795097860686 --> REQ_1795263642415
-  REQ_1795097860686 --> REQ_1795263642719
-  REQ_1795097860589 --> REQ_1795263643018
-  REQ_1795097860686 --> REQ_1795263643018
   REQ_1794486918351 --> REQ_1794488168014
   REQ_1791560828605 --> REQ_1794493998753
   REQ_1794493998753 --> REQ_1794493998996
@@ -299,7 +268,6 @@ graph TD
   REQ_1794494002445 --> REQ_1794494002926
   REQ_1794494001967 --> REQ_1794494002926
   REQ_1795480710109 --> REQ_1795480710378
-  REQ_1795097860369 --> REQ_1795097860908
   REQ_1795778246351 --> REQ_1795778246508
   REQ_1795778246508 --> REQ_1795778246661
   REQ_1795778246174 --> REQ_1795778247270

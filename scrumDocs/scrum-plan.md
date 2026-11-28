@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T14:30:21.923Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T14:31:26.806Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -35,10 +35,10 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 27 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hecho | germanG | — | — |
 | 28 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hecho | germanG | — | — |
 | 29 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 30 | RF-12 | [FIX] La lista de paradas vuelve a no traer las imágenes | HU-17 | — | — | Hecho | germanG | — | — |
-| 31 | RF-03 | [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera» | HU-05 | — | — | Hacer | Sin asignar | — | — |
-| 32 | RF-07 | [FIX] La guía de Android incluye el mapa en las pantallas donde se usa | HU-16 | — | — | Hacer | Sin asignar | — | — |
-| 33 | RF-11 | [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada | HU-19 | — | — | Hacer | Sin asignar | — | — |
+| 30 | RF-12 | [FIX] La lista de paradas vuelve a no traer las imágenes | HU-17 | — | — | Hecho ✓ dev | germanG | — | — |
+| 31 | RF-03 | [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera» | HU-05 | — | — | Hacer | germanG | — | — |
+| 32 | RF-07 | [FIX] La guía de Android incluye el mapa en las pantallas donde se usa | HU-16 | — | — | Hacer | germanG | — | — |
+| 33 | RF-11 | [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada | HU-19 | — | — | Hacer | germanG | — | — |
 | 34 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 35 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
 | 36 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
@@ -47,7 +47,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 39 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-03 | — |
 | 40 | RF-09 | El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-02, RF-03 | — |
 | 41 | RF-16 | Los avisos aprobados por la Secretaría llegan al Firmante por el chat interno | HU-11 | — | — | Hacer | germanG | RF-07 | — |
-| 42 | RF-09 | [FIX] Las alertas dejan de llevar la foto adentro: el remito, el aviso y el backoffice la piden por la ruta | HU-10 | — | — | Hacer | Sin asignar | RF-12 | — |
+| 42 | RF-09 | [FIX] Las alertas dejan de llevar la foto adentro: el remito, el aviso y el backoffice la piden por la ruta | HU-10 | — | — | Hacer | germanG | RF-12 | — |
 | 43 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
 | 44 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
 | 45 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -59,7 +59,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 51 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
 | 52 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hecho | germanG | RF-04 | — |
 | 53 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-09 | — |
-| 54 | RF-17 | [FIX] Retirar el envío por WhatsApp de la API | HU-11 | — | — | Hacer | Sin asignar | RF-16 | — |
+| 54 | RF-17 | [FIX] Retirar el envío por WhatsApp de la API | HU-11 | — | — | Hacer | germanG | RF-16 | — |
 | 55 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 56 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
 | 57 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
@@ -67,7 +67,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 59 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
 | 60 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
 | 61 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
-| 62 | RF-18 | [FIX] Retirar WhatsApp de las pantallas | HU-11 | — | — | Hacer | Sin asignar | RF-17 | — |
+| 62 | RF-18 | [FIX] Retirar WhatsApp de las pantallas | HU-11 | — | — | Hacer | germanG | RF-17 | — |
 | 63 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 64 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 65 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
@@ -77,7 +77,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 69 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
 | 70 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | tested ✓ | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
 | 71 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | tested ✓ | dev-ma-2 | RF-01, RNF-02 | — |
-| 72 | RF-19 | [FIX] Retirar WhatsApp de la documentación, la configuración y los datos de demo | HU-11 | — | — | Hacer | Sin asignar | RF-17, RF-18 | — |
+| 72 | RF-19 | [FIX] Retirar WhatsApp de la documentación, la configuración y los datos de demo | HU-11 | — | — | Hacer | germanG | RF-17, RF-18 | — |
 | 73 | RF-05 | Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
 | 74 | RNF-01 | Índice por fecha para el semáforo y medición con volumen | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
 | 75 | RF-03 | Refrescar el panel de reasignación cuando el RT del edificio cambió | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |

@@ -64,7 +64,7 @@ Resultado del 28/11/2026:
 
 ## 7. Qué quedó afuera y qué se asumió
 
-- **Las alertas siguen llevando la imagen adentro.** `GET /api/eca/alertas`, `GET /api/eca/maquinas` y `GET /api/firmante/maquinas` siguen trayendo `fotografiaCabinaTrabada` en base64, porque el remito, el aviso con enlace y el backoffice leen ese campo. La pantalla de la ECA ya no la usa (pide la ruta), pero el peso de esas respuestas no bajó. Sacarla de ahí obliga a que el remito, el aviso y el backoffice también la pidan por la ruta: es una tarea aparte, más grande. **Queda sin tarea creada; conviene crearla.**
+- **Las alertas siguen llevando la imagen adentro.** `GET /api/eca/alertas`, `GET /api/eca/maquinas` y `GET /api/firmante/maquinas` siguen trayendo `fotografiaCabinaTrabada` en base64, porque el remito, el aviso con enlace y el backoffice leen ese campo. La pantalla de la ECA ya no la usa (pide la ruta), pero el peso de esas respuestas no bajó. Sacarla de ahí obliga a que el remito, el aviso y el backoffice también la pidan por la ruta: es una tarea aparte, más grande. **Está en el tablero como HU-10 RF-09 (`REQ-1795876195799`)**, que depende de esta Tarea.
 - **El caché de memoria de la pantalla está duplicado con el del chat.** `memoriaDeFotos.ts` y el de HU-19 RF-05 (PR #126, todavía sin mergear) hacen lo mismo, con otro nombre. Cuando se mergee el chat conviene unificarlos.
 - **Reportes viejos con una dirección web en `fotoUrl`** (no una imagen) no se sirven por la ruta: `fotoRuta` es `null` y la alerta usa la foto de siempre. Hoy los reportes que carga el RT son imágenes.
 - **Un RT sólo ve la foto de los reportes que cargó él.** Otro RT, la ECA de otra empresa o un Firmante de otro edificio reciben 404.

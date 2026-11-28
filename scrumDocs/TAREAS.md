@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-28T14:25:10.775Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T14:29:58.475Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -663,6 +663,19 @@ Hallazgo de QA del 24/11/2026 al medir HU-08 RF-06 (rama testing, 6220a60). En t
 4. Dada esa alerta, cuando el RT normaliza el equipo (POST /api/paradas/maquinas/<id>/normalizar), entonces la alerta deja de figurar en el Portal ECA.
 5. Dada esa alerta, cuando se reinicia la API, entonces sigue figurando: sale de lo que ya se guarda en la base (los reportes de parada) y no de la memoria.
 6. Los scripts de entrega de HU-10 (RF-03 a RF-07), HU-11 (RF-04 y RF-06) y HU-15 (RF-02), que hoy dependen de ALT-CP-001, ALT-MAICON-001 y ALT-MAICON-002, crean su alerta por este camino y pasan sin las máquinas de ejemplo; la entrega informa cuántas comprobaciones pasan antes y después de cada script.
+
+### RF-09: [FIX] Las alertas dejan de llevar la foto adentro: el remito, el aviso y el backoffice la piden por la ruta (Funcional)
+
+HU-17 RF-12 hizo que la lista de paradas no trajera imágenes y que el Portal ECA pida la foto de su alerta por una ruta aparte (GET /api/paradas/:id/foto, con sesión). Pero la alerta de la máquina sigue llevando la foto adentro (fotografiaCabinaTrabada, una data URL en base64), así que GET /api/eca/alertas, GET /api/eca/maquinas y GET /api/firmante/maquinas siguen bajando una foto entera por alerta en cada consulta. No se pudo sacar en HU-17 RF-12 porque otras tres partes leen ese campo: el remito de la ECA (JSON y HTML, eca.controller), el aviso de la Secretaría con su enlace de 7 días sin sesión (avisos.service) y el detalle de visita del backoffice (backoffice.logic). Esta Tarea las pasa a pedir la foto por separado y saca la imagen de lo que devuelve la API: el remito y el aviso la toman del servidor, el aviso con enlace la sirve por una ruta propia del token (sin sesión, sólo mientras el enlace vale), y el backoffice la pide por la ruta con sesión. Se coordina con HU-11 RF-16 y RF-17, que tocan el servicio de avisos.
+
+**Condiciones de aprobación**
+
+1. Dados GET /api/eca/alertas, GET /api/eca/maquinas y GET /api/firmante/maquinas, cuando una alerta viene de un reporte de parada, entonces trae fotoRuta y ninguna imagen (ni base64 ni data URL); con 5 alertas con una foto de 500 KB cada una, cada respuesta pesa menos de 10 KB.
+2. Dado el Portal ECA, cuando la ECA abre la alerta de un equipo fuera de servicio, entonces ve la foto de la cabina como hoy, pedida por la ruta con sesión una sola vez.
+3. Dado el remito de una alerta (JSON y HTML), cuando la ECA lo descarga, entonces muestra la foto de la falla como hoy.
+4. Dado el aviso de una falla crítica aprobado por la Secretaría, cuando el Firmante o la ECA abre el enlace sin sesión dentro de los 7 días, entonces ve la foto de la falla y el informe, y la foto sólo se sirve con ese enlace vigente: con el enlace vencido o inexistente no se entrega.
+5. Dado el detalle de una visita en el backoffice, cuando la visita tiene una alerta con foto de cabina trabada, entonces la muestra como hoy.
+6. Las pruebas existentes de HU-10, HU-11, HU-05 y HU-17 siguen en verde (se actualizan las que leen la imagen de la alerta en línea) y hay pruebas nuevas por HTTP y contra PostgreSQL real de los criterios 1, 3 y 4.
 
 ## HU-11: HU-11: Avisos automáticos de fallas críticas al Firmante y a la ECA
 
@@ -1378,6 +1391,17 @@ Prueba de avisos con las notificaciones del navegador (pedido del usuario del 25
 3. Tocar el aviso lleva a la aplicación y abre esa conversación
 4. No se avisa por los mensajes propios ni por los de la conversación que ya se está viendo con la pestaña a la vista; varios mensajes seguidos de la misma conversación reemplazan al aviso anterior en vez de apilarse
 5. Si el permiso está denegado o el navegador no admite avisos, el chat y los contadores de no leídos funcionan igual y la pantalla lo explica sin errores; desactivar los avisos los detiene y la preferencia se recuerda en ese dispositivo
+
+### RF-11: [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada (Funcional)
+
+chat-hilo.e2e-spec escribe 205 mensajes uno por uno por HTTP para pasar el límite de 200 del hilo, y no declara su propio tope, así que usa los 5 s de Jest. Con la máquina libre sus dos pruebas de 205 mensajes tardan 2,1 y 1,8 s; con la máquina ocupada, 4,9 y 4,1 s; y en la suite completa de la API bajo carga fallaron las dos con «Exceeded timeout of 5000 ms» (medido el 28/11/2026, docs/decisiones/2026-11-28-pruebas-intermitentes/README.md). No es un problema de la API del chat: son 205 pedidos seguidos. Esta Tarea hace que la prueba cargue los 205 mensajes directo en el repositorio (ChatRepository.guardarMensaje, en memoria) y siga leyendo por HTTP, con sesión: baja de segundos a milisegundos y no depende de la carga. No se sube ningún tope ni se agregan reintentos. Escribir mensajes por HTTP ya lo prueban chat.e2e-spec y chat-validacion.e2e-spec.
+
+**Condiciones de aprobación**
+
+1. Dada la prueba chat-hilo.e2e-spec, cuando se corre con la máquina libre, entonces cada una de sus pruebas tarda menos de 1 s (hoy las dos de 205 mensajes tardan unos 2 s).
+2. Dada la máquina ocupada, cuando se corre la suite completa de la API con docs/decisiones/2026-11-28-pruebas-intermitentes/estres-suite-api.sh, entonces chat-hilo.e2e-spec no falla por «Exceeded timeout» (hoy fallan las dos pruebas de 205 mensajes).
+3. La prueba comprueba lo mismo que hoy: con más de 200 mensajes el hilo responde los 200 más nuevos y avisa en X-Hay-Anteriores que quedan anteriores, y con el id del más viejo trae los 5 anteriores y avisa que no quedan más; los mensajes se cargan con el repositorio y se leen por HTTP con la sesión de un usuario.
+4. No se sube ningún tope (jest.setTimeout, testTimeout) ni se agregan reintentos, y no se quita ninguna prueba: las que escriben por HTTP siguen en chat.e2e-spec y chat-validacion.e2e-spec.
 
 ## RO-01: RO-01: Setup del proyecto y entorno de desarrollo verificable
 

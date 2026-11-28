@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T15:38:01.910Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T17:49:14.396Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -36,7 +36,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 28 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hecho ✓ dev | germanG | — | — |
 | 29 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 30 | RF-12 | [FIX] La lista de paradas vuelve a no traer las imágenes | HU-17 | — | — | Hecho ✓ dev | germanG | — | — |
-| 31 | RF-03 | [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera» | HU-05 | — | — | Hecho | germanG | — | — |
+| 31 | RF-03 | [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera» | HU-05 | — | — | Hecho ✓ dev | germanG | — | — |
 | 32 | RF-07 | [FIX] La guía de Android incluye el mapa en las pantallas donde se usa | HU-16 | — | — | Hecho | germanG | — | — |
 | 33 | RF-11 | [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada | HU-19 | — | — | Hecho | germanG | — | — |
 | 34 | RF-10 | [FIX] Los scripts de entrega que prueban la API en vivo con las máquinas de ejemplo (MAQ-CORRIENTES, MAQ-SANTAFE, MAQ-CALLAO) usan equipos que existen | HU-08 | — | — | Hacer | germanG | — | — |

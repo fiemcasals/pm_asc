@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T13:23:04.478Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T13:24:47.028Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -8,124 +8,115 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | RF-01 | RO-01: Setup del proyecto y entorno de desarrollo verificable | RO-01 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 2 | RNF-02 | Evitar que las pruebas de integración fallen al correr en paralelo | HU-01 | — | — | tested ✓ | germanG | — | — |
-| 3 | RF-03 | No informar como entregado un WhatsApp que no se envió | HU-11 | — | — | tested ✓ | gonza | REQ-1791910396804, REQ-1791910396892 | — |
-| 4 | RF-01 | Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | — | — |
-| 5 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
-| 6 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
-| 7 | RF-06 | FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA | HU-10 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 8 | RF-07 | FIX: Los símbolos del remito PDF salen como caracteres rotos | HU-10 | — | — | tested ✓ | germanG | — | — |
-| 9 | RF-02 | Portal ECA con sesión: cada ECA ve solo lo suyo | HU-15 | — | — | tested ✓ | germanG | — | — |
-| 10 | RF-04 | Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo | HU-08 | — | — | tested ✓ | germanG | — | — |
-| 11 | RF-06 | RT con sesión: fallas críticas y checklist solo para quien corresponde | HU-06 | — | — | tested ✓ | germanG | — | — |
-| 12 | RF-07 | Canal en tiempo real de fallas críticas con sesión | HU-06 | — | — | tested ✓ | germanG | — | — |
-| 13 | RF-07 | FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04 | HU-11 | — | — | tested ✓ | germanG | — | — |
-| 14 | RF-04 | [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert | HU-04 | — | — | tested ✓ | germanG | — | — |
-| 15 | RF-08 | Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada | HU-11 | — | — | tested ✓ | germanG | — | — |
-| 16 | RF-09 | Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor | HU-11 | — | — | tested ✓ | germanG | — | — |
-| 17 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
-| 18 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | tested ✓ | germanG | — | — |
-| 19 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 20 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | germanG | — | — |
-| 21 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 22 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 23 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | tested ✓ | germanG | — | — |
-| 24 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | tested ✓ | germanG | — | — |
-| 25 | RF-15 | WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde | HU-11 | — | — | tested ✓ | germanG | — | — |
-| 26 | RF-01 | RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces | HU-19 | — | — | tested ✓ | gonza | — | — |
-| 27 | RF-04 | Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 28 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 29 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 30 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 31 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hecho | germanG | — | — |
-| 32 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hecho | germanG | — | — |
-| 33 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 34 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 35 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 36 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
-| 37 | RF-01 | Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso | RO-03 | — | — | Hacer | germanG | RF-08 | — |
-| 38 | RF-10 | Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío | HU-11 | — | — | tested ✓ | germanG | RF-09 | — |
-| 39 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
-| 40 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | tested ✓ | germanG | RF-11 | — |
-| 41 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-03 | — |
-| 42 | RF-09 | El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-02, RF-03 | — |
-| 43 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
-| 44 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
-| 45 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
-| 46 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
-| 47 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 48 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
-| 49 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
-| 50 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
-| 51 | RF-12 | Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
-| 52 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-10 | — |
-| 53 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
-| 54 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
-| 55 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hecho | germanG | RF-04 | — |
-| 56 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-09 | — |
-| 57 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
-| 58 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
-| 59 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
-| 60 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
-| 61 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
-| 62 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 63 | RF-04 | Enviar las alertas por WhatsApp a través de un proveedor real | HU-11 | — | — | tested ✓ | gonza | RF-03, REQ-1791910396804, RF-01 | — |
-| 64 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
-| 65 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 66 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 67 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 68 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
-| 69 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | tested ✓ | germanG | RF-01 | — |
-| 70 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
-| 71 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 72 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | tested ✓ | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
-| 73 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | tested ✓ | dev-ma-2 | RF-01, RNF-02 | — |
-| 74 | RF-05 | Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
-| 75 | RNF-01 | Índice por fecha para el semáforo y medición con volumen | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
-| 76 | RF-03 | Refrescar el panel de reasignación cuando el RT del edificio cambió | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
-| 77 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | tested ✓ | germanG | RF-01, RF-02 | — |
-| 78 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 79 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | tested ✓ | germanG | RF-02 | — |
-| 80 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
-| 81 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
-| 82 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | tested ✓ | germanG | RF-01 | — |
-| 83 | RF-06 | Que reasignar o asignar la terna actualice la vista de firma de inmediato | HU-02 | — | — | tested ✓ | germanG | RF-03, RF-05 | — |
-| 84 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 85 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
-| 86 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | tested ✓ | gonza | RF-01 | — |
-| 87 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | tested ✓ | germanG | RF-01 | — |
-| 88 | RF-05 | Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio | HU-08 | — | — | tested ✓ | germanG | RF-04, RF-06 | — |
-| 89 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
-| 90 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
-| 91 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
-| 92 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-02 | — |
-| 93 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
-| 94 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
-| 95 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
-| 96 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
-| 97 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
-| 98 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
-| 99 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
-| 100 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
-| 101 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 102 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
-| 103 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
-| 104 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
-| 105 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
-| 106 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
-| 107 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
-| 108 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-03 | — |
-| 109 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
-| 110 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 111 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
-| 112 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-03, RF-09, RF-05, RF-01, RF-02, RF-03, RF-02 | — |
-| 113 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
-| 114 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
-| 115 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
-| 116 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
-| 117 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
-| 118 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
-| 119 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-07 | — |
-| 120 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | tested ✓ | Sin asignar | RF-07 | — |
+| 3 | RF-01 | Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | — | — |
+| 4 | RF-01 | Alertas Críticas del Portal ECA sin prefijos obvios ni códigos duplicados | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
+| 5 | RF-02 | Limpieza de badges obvios y jerga técnica en Portal ECA y Consorcios | HU-13 | M5: Portal ECA y Notificaciones Críticas | — | tested ✓ | gonza | — | — |
+| 6 | RF-06 | FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA | HU-10 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 7 | RF-07 | FIX: Los símbolos del remito PDF salen como caracteres rotos | HU-10 | — | — | tested ✓ | germanG | — | — |
+| 8 | RF-02 | Portal ECA con sesión: cada ECA ve solo lo suyo | HU-15 | — | — | tested ✓ | germanG | — | — |
+| 9 | RF-04 | Portal del Firmante con sesión: cada Firmante ve y firma solo lo suyo | HU-08 | — | — | tested ✓ | germanG | — | — |
+| 10 | RF-06 | RT con sesión: fallas críticas y checklist solo para quien corresponde | HU-06 | — | — | tested ✓ | germanG | — | — |
+| 11 | RF-07 | Canal en tiempo real de fallas críticas con sesión | HU-06 | — | — | tested ✓ | germanG | — | — |
+| 12 | RF-07 | FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04 | HU-11 | — | — | tested ✓ | germanG | — | — |
+| 13 | RF-04 | [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert | HU-04 | — | — | tested ✓ | germanG | — | — |
+| 14 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | tested ✓ | germanG | — | — |
+| 15 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 16 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | germanG | — | — |
+| 17 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 18 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 19 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | tested ✓ | germanG | — | — |
+| 20 | RF-08 | El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción | HU-08 | — | — | tested ✓ | germanG | — | — |
+| 21 | RF-15 | WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde | HU-11 | — | — | tested ✓ | germanG | — | — |
+| 22 | RF-01 | RF-01: Chat interno para operarios e ingenieros con mensajes, fotos y enlaces | HU-19 | — | — | tested ✓ | gonza | — | — |
+| 23 | RF-04 | Retirar la telemetría de «Estado del sistema» y dejar el mapa sin conexión en su pestaña | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 24 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 25 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 26 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 27 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hecho | germanG | — | — |
+| 28 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hecho | germanG | — | — |
+| 29 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
+| 30 | RF-16 | Los avisos aprobados por la Secretaría llegan al Firmante por el chat interno | HU-11 | — | — | Hacer | Sin asignar | — | — |
+| 31 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 32 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 33 | RF-02 | FIX: Corregir contraste de textos y contenedores en Modo Oscuro | HU-12 | M1: Administración y Asignaciones (Secretaría) | — | tested ✓ | gonza | RF-01 | — |
+| 34 | RF-04 | Componente de mapa con pines por estado, zoom y nombres que no se pisan | HU-16 | — | — | tested ✓ | germanG | RF-03 | — |
+| 35 | RF-02 | El informe cerrado exige y sella las fotos obligatorias de cada equipo en uso | HU-18 | — | — | tested ✓ | germanG | RF-11 | — |
+| 36 | RF-04 | La API del chat rechaza con un mensaje claro lo que no corresponde en vez de fallar o guardarlo | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-03 | — |
+| 37 | RF-09 | El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-02, RF-03 | — |
+| 38 | RF-02 | UI de Secretaría: Carga y Ficha de Edificios y Máquinas | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
+| 39 | RF-01 | API de Asignación Tripartita de Roles por Edificio | HU-02 | — | — | tested ✓ | germanG | RF-01 | — |
+| 40 | RNF-01 | Rechazar con 400 los textos que la base no puede guardar (carácter NUL) | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
+| 41 | RF-03 | Importar el listado Excel de la AGC (máquinas, ubicaciones y estados) | HU-01 | — | — | tested ✓ | gonza | RF-01 | — |
+| 42 | RF-02 | Pantalla de ingreso | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 43 | RNF-01 | Consentimiento de ubicación y revocación de sesiones | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
+| 44 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
+| 45 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
+| 46 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
+| 47 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hecho | germanG | RF-04 | — |
+| 48 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-09 | — |
+| 49 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
+| 50 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
+| 51 | RF-06 | Que la ficha del edificio y el alta de consorcio entren en un celular de 360 px | HU-01 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
+| 52 | RF-02 | UI de Secretaría: Pestaña de Asignación de Roles de Trabajo | HU-02 | — | — | tested ✓ | dev-ma-2 | RF-01, RF-02 | — |
+| 53 | RF-01 | Motor de Control Semafórico por Antigüedad de Visita | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
+| 54 | RF-01 | API de Máquinas Asignadas y Autorización de Firma AGC | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
+| 55 | RNF-02 | Acceso de RT y Firmante a edificios de varias ECA | HU-15 | — | — | tested ✓ | gonza | RNF-01, RF-01 | — |
+| 56 | RF-03 | Evitar que un guardado pise una asignación más nueva | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
+| 57 | RNF-01 | Leer todas las ternas en una sola consulta | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
+| 58 | RF-04 | Porcentajes de pago y abono configurables por máquina | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
+| 59 | RF-02 | Mapa de la Secretaría con el semáforo de edificios y reasignación sugerida | HU-04 | — | — | tested ✓ | germanG | RF-01 | — |
+| 60 | RF-01 | API de Monitoreo Backoffice y Acciones Comerciales | HU-05 | — | — | tested ✓ | germanG | RF-01 | — |
+| 61 | RF-02 | UI Portal del Usuario Firmante: Lista Limpia y Modal de Auditoría | HU-08 | — | — | tested ✓ | gonza | RF-01 | — |
+| 62 | RF-01 | API de Cobertura de Flota por Empresa Conservadora | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
+| 63 | RF-01 | Mapa del RT con pines por horario | HU-16 | — | — | tested ✓ | germanG | RF-02, RNF-02, RF-05, RF-04 | — |
+| 64 | RNF-03 | Tomar la ECA y el rol del RLS desde la sesión del usuario | HU-15 | — | — | tested ✓ | dev-ma-2 | RF-01, RNF-02 | — |
+| 65 | RF-05 | Guardar el teléfono y el email del RT de Calle en su usuario y usarlos al reasignar | HU-02 | — | — | tested ✓ | germanG | RF-02 | — |
+| 66 | RNF-01 | Índice por fecha para el semáforo y medición con volumen | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
+| 67 | RF-03 | Refrescar el panel de reasignación cuando el RT del edificio cambió | HU-04 | — | — | tested ✓ | germanG | RF-02 | — |
+| 68 | RF-02 | UI Tablero Dinámico de Monitoreo General (Backoffice) | HU-05 | — | — | tested ✓ | germanG | RF-01, RF-02 | — |
+| 69 | RF-01 | Gestión de Advertencias 1 y 2 por Visita Fallida y Email a Consorcio | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
+| 70 | RF-03 | Rechazo del Firmante vuelve a la Secretaría y plazo de 5 días hábiles | HU-08 | — | — | tested ✓ | germanG | RF-02 | — |
+| 71 | RF-02 | UI Portal ECA: Dashboard de Solo Lectura y Medidor de Cobertura | HU-09 | — | — | tested ✓ | gonza | RF-01 | — |
+| 72 | RF-01 | Recepción de Falla Crítica y Alerta Emergente en Secretaría | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-01 | — |
+| 73 | RF-02 | Tarjeta del edificio y validación de presencia a 30 m | HU-16 | — | — | tested ✓ | germanG | RF-01 | — |
+| 74 | RF-06 | Que reasignar o asignar la terna actualice la vista de firma de inmediato | HU-02 | — | — | tested ✓ | germanG | RF-03, RF-05 | — |
+| 75 | RF-02 | Bloqueo por Advertencia 3 y Cálculo de Recargo del 45% | HU-07 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 76 | RF-03 | Persistir las visitas fallidas en PostgreSQL | HU-07 | — | — | tested ✓ | gonza | RF-01 | — |
+| 77 | RF-02 | Generación de PDF Legal MAICON S.R.L. y envío por email a la ECA | HU-06 | — | — | tested ✓ | gonza | RF-01 | — |
+| 78 | RF-03 | Lista de Fallas Críticas definida por el cliente | HU-06 | — | — | tested ✓ | germanG | RF-01 | — |
+| 79 | RF-05 | Guardar en PostgreSQL las máquinas, visitas y firmas del Portal Firmante para que sobrevivan a un reinicio | HU-08 | — | — | tested ✓ | germanG | RF-04, RF-06 | — |
+| 80 | RF-04 | Recargo del 45 % una sola vez por máquina no inspeccionada | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
+| 81 | RF-05 | Edificio bloqueado fuera del recorrido y mínimo 1 día entre visitas fallidas | HU-07 | — | — | tested ✓ | germanG | RF-03 | — |
+| 82 | RF-01 | Carteles de Alerta de Fuera de Uso y Reparación Urgente en Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-02, RF-02 | — |
+| 83 | RF-05 | Enviar los avisos a la ECA solo después de la revisión de la Secretaría | HU-11 | — | — | tested ✓ | germanG | RF-02 | — |
+| 84 | RF-04 | Alerta de Falla Crítica también al RT Firmante y alarma sonora hasta que se abra | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
+| 85 | RF-05 | Estado del ascensor: el RT lo marca y el Firmante lo confirma | HU-06 | — | — | tested ✓ | germanG | RF-03 | — |
+| 86 | RF-01 | Motor del checklist configurable | HU-17 | — | — | tested ✓ | germanG | RF-01, RF-03 | — |
+| 87 | RF-08 | Guardar en PostgreSQL los informes de falla crítica y el estado del ascensor para que sobrevivan a un reinicio | HU-06 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
+| 88 | RF-06 | Pantalla de constancia de visita fallida en el celular del RT | HU-07 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
+| 89 | RF-02 | Descarga de Remito Técnico y Registro de Acuse de Recibo Legal | HU-10 | — | — | tested ✓ | gonza | RF-01 | — |
+| 90 | RF-06 | Link del aviso de WhatsApp sin contraseña y válido por 7 días | HU-11 | — | — | tested ✓ | germanG | RF-05 | — |
+| 91 | RF-02 | Selección de equipo y pregunta de uso | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-01, RF-05 | — |
+| 92 | RF-03 | Registrar el acuse de recibo legal solo si quedó guardado en la base | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 93 | RF-05 | Que el acuse de recibo guardado se vuelva a leer al reiniciar la API y no se duplique por alerta | HU-10 | — | — | tested ✓ | germanG | RF-02 | — |
+| 94 | RF-11 | Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-06 | — |
+| 95 | RF-03 | Reporte de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | germanG | RF-02, RF-05 | — |
+| 96 | RF-04 | Pantalla de solapa generada desde el motor | HU-17 | — | — | tested ✓ | gonza | RF-01, RF-02 | — |
+| 97 | RF-10 | Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-02 | — |
+| 98 | RF-04 | Recordatorio a la ECA a las 24 h y aviso a la Secretaría a las 48 h sin acuse | HU-10 | — | — | tested ✓ | germanG | RF-03 | — |
+| 99 | RF-09 | Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio | HU-17 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-03 | — |
+| 100 | RF-05 | Fotos por anomalía | HU-17 | — | — | tested ✓ | gonza | RF-04 | — |
+| 101 | RF-07 | Navegación por estaciones y sala compartida | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 102 | RF-08 | Las Fallas Críticas del checklist llegan a la Secretaría | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-04 | — |
+| 103 | RF-08 | Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA | HU-10 | — | — | tested ✓ | gonza | RF-03, RF-09, RF-05, RF-01, RF-02, RF-03, RF-02 | — |
+| 104 | RF-06 | Fallas por piso en Accesos | HU-17 | — | — | tested ✓ | germanG | RF-04, RF-05 | — |
+| 105 | RNF-01 | Visita en curso sin señal | HU-17 | — | — | tested ✓ | gonza | RF-04, RF-05 | — |
+| 106 | RF-01 | Consolidación y firma en pantalla | HU-18 | — | — | tested ✓ | germanG | RF-07, RF-03 | — |
+| 107 | RNF-01 | Sellado del informe | HU-18 | — | — | tested ✓ | germanG | RF-01 | — |
+| 108 | RNF-02 | Cola de sincronización del celular | HU-18 | — | — | tested ✓ | germanG | RF-01, RNF-01 | — |
+| 109 | RF-07 | Que el informe cerrado por el RT cree la visita en el Portal Firmante | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-01, RF-06, RF-11, RF-02, RF-08 | — |
+| 110 | RF-06 | Retirar las máquinas de ejemplo de la vista de firma | HU-08 | — | — | tested ✓ | dev-ma-2 | RF-05, RF-07 | — |
+| 111 | RF-09 | Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio | HU-08 | — | — | tested ✓ | Sin asignar | RF-07 | — |
 
 ## Detalle
 
@@ -136,10 +127,6 @@ Monorepo listo: web React+Vite PWA (HTTPS https://localhost:8050 con mkcert, ser
 ### RNF-02 — Evitar que las pruebas de integración fallen al correr en paralelo
 PR contra dev. maxWorkers: 1 en jest.int.config.js: la suite de integración corre de a un archivo. RNF-02-entrega.sh --carga 8: 8 corridas, 0 fallidas, 21/21 en cada una, filas 0/0 antes y después. Antes fallaban 3 de 6 corridas. npm run verify: API 144/144, web 49/49. Sin cambios en el código de la app. Los Tests de integración no llevan pasos HTTP: se corren con el script desde la terminal.
 - Estimado: 1h
-
-### RF-03 — No informar como entregado un WhatsApp que no se envió
-PR #21 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/21). Commit 358f9ae55e15808975ae960bb587de4ecb6c9788 en rama oficial. Eliminado el falso estado "entregado" en WhatsAppConnectorService cuando no hay proveedor configurado (!transport): POST /api/whatsapp/enviar-alerta devuelve HTTP 503 Service Unavailable (estadoEntrega: "no_configurado", idMensaje: "", intentos: 0) y POST /api/whatsapp/trigger-alerta-critica registra el intento como no_realizado en el historial consultable por GET /api/whatsapp/historial. En Portal ECA (eca.ts + AccionesAlertaCritica en AlertasCriticas.tsx + styles.css) muestra el motivo real devuelto por el servidor en .whatsapp-error-badge y .alerta-notificacion-error, limpia estado previo y nunca muestra "WhatsApp Despachado". Verificado en árbol limpio: npm run verify -> 0 errores TS, Jest API 20 suites / 154 tests passed, Vitest Web 5 archivos / 68 tests passed; npm run test:int -> 6 suites / 24 tests passed contra PostgreSQL; RF-03-entrega.sh 3/3 OK y --carga 50: 0 falsos entregados / distinto de 503 (promedio 116 ms, p95 132 ms); verificado en navegador Chrome con captura de pantalla. Asumido: historial en memoria dentro del alcance de RF-03; proveedor real (Meta/Twilio) y lectura de teléfono ECA desde roles_edificio quedan reservados para HU-11 · RF-04 (REQ-1794155774018). Los 3 Tests de desarrollo aprobados con evidencia y los 3 de integración preparados para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/358f9ae55e15808975ae960bb587de4ecb6c9788/docs/pruebas/hu-11-hu-11-notificaciones-automatic/RF-03-entrega.md
-- Estimado: 0h
 
 ### RF-01 — Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline
 PR #22 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/22). Commit 5dffa1d7be6a0ed82b11415f10287710ab6ded13. Implementado sistema visual NEO Linear Dark/Light, vista bento 'Estado del sistema', sidebar colapsable a 80px con boton expandir junto al logo violeta sin superposicion, buscador global inline en barra superior sin modal Ctrl+K y estilos neon en Medidor de Cobertura. Verificado: npm run verify (tsc 0 errores; API Jest 22/22, 170 tests; Web Vitest 7/7, 82 tests), RF-01-entrega.sh 4/4 OK y --carga 20 0 fallas (avg 142 ms, p95 154 ms). 3 Tests desarrollo Aprobado y 3 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/5dffa1d7be6a0ed82b11415f10287710ab6ded13/docs/pruebas/hu-12-hu-12-interfaz-neo-linear-side/RF-01-entrega.md
@@ -179,17 +166,6 @@ PR #86 contra dev. Se arreglaron 6 scripts de entrega desactualizados y el scrip
 ### RF-04 — [FIX] Script de entrega de HU-04 RF-02: la inspección de prueba la carga un RT y el login usa el certificado de mkcert
 PR #87 contra dev. Se arregló docs/pruebas/hu-04-.../RF-02-entrega.sh (que fallaba 2 de 14 verificaciones aunque la app andaba bien); solo cambian archivos bajo docs/pruebas/ (1 script modificado; nuevos: RF-04-entrega.sh, RF-04-entrega.md, la guía visual RF-04-reasignar-en-pantalla.md y 3 capturas sacadas con Playwright). Causas: la inspección del 5/11 del edificio C2 se cargaba con la sesión de la Secretaría y desde HU-06 RF-06 el checklist es solo del RT (403), así que el RT c pesaba 2 y no 1; y el login usaba curl a secas, que contra https://localhost:8050 termina con el error 35 de Schannel. Ahora el RT c carga la inspección con su sesión, el script corta con el motivo si el API no la crea, y el login usa el mismo curl con --ssl-no-revoke y el certificado de mkcert. Resultado: 14 verificaciones OK, 0 fallidas contra https://localhost:8050 y contra http://127.0.0.1:3050 (antes: 12 OK y 2 fallidas por la API directa, y sin ingresar por HTTPS); --carga 20 con 0 fallidas en las dos (p95 70 ms por HTTPS y 34 ms por la API directa); 0 residuos en la base. Guía visual con Playwright: lo que verifica el script se ve en Secretaría › Semáforo › «Reasignar» (rt.carla con 1 pendiente aunque tiene 2 edificios). Mínimo necesario agregado: RF-04-entrega.sh, el corredor que pide el estándar de entrega. Detalle en docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-04-entrega.md.
 - Estimado: 1h
-
-### RF-08 — Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada
-PR #90 contra dev. Los avisos de WhatsApp salen como plantilla: Meta type "template" con nombre, idioma y 5 parámetros; Twilio ContentSid y ContentVariables, sin Body. Sin plantilla configurada no sale nada (no_configurado). Parámetros sin saltos de línea, tabulaciones ni tandas de más de 4 espacios, hasta 1024 caracteres. whatsapp-proveedor.e2e-spec 16/16, verify API 1154/1154, test:int 188/188, RF-08-entrega.sh 6/6 y carga 200 sin fallos (promedio 121 ms). Mínimo necesario fuera de lo pedido: las pruebas de RF-04 y su script cargan ahora la plantilla en su entorno. No se probó contra Meta ni Twilio reales: lo cubren RO-02 y RO-03.
-- Estimado: 4h
-
-### RF-09 — Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor
-PR #91 contra dev. Entradas públicas GET/POST /api/whatsapp/webhook/meta y POST /api/whatsapp/webhook/twilio con validación de firma (HMAC-SHA256 sobre el cuerpo sin modificar; HMAC-SHA1 de la URL pública y los parámetros). Firma inválida o sin secreto: 401 sin cambios. El historial distingue aceptado, enviado, entregado, leido y fallido (con código y mensaje del proveedor); nunca retrocede y los repetidos no hacen nada. Un mensaje desconocido responde 200 sin crear nada. Un envío 2xx figura aceptado, no entregado. whatsapp-webhook.e2e-spec 31/31, verify API 1174/1174, test:int 188/188, RF-09-entrega.sh 13/13 y carga 100 sin fallos. Mínimo necesario fuera de lo pedido: se capturó el cuerpo sin modificar solo para la ruta de Meta en app.setup.ts, y se ajustaron las pruebas de RF-03 y RF-04 que esperaban entregado ante un 2xx. No probado con Meta ni Twilio reales. El historial sigue en memoria.
-- Estimado: 8h
-
-### RF-01 — Probar el envío real de WhatsApp con el celular de German
-- Estimado: 2h
 
 ### RF-03 — Mapa base de CABA propio, que se dibuja sin conexión
 PR #88 contra dev. Mapa base de CABA propio que se dibuja sin conexión: archivo PMTiles de CABA (10,67 MB, zoom 0 a 15, 533 mosaicos, build 20261118 de Protomaps) generado con `npm run mapa:generar` (script propio en Node que lee la compilación por pedidos de rango; no va a git); tipografías (OFL) e íconos (MIT) propios en apps/web/public/mapa (0,87 MB); MapaBase con MapLibre (zoom, límites en CABA, tema claro y oscuro, controles en castellano, atribución de OpenStreetMap y Protomaps); botón «Descargar mapa para usar sin señal» con avance y cancelar, que guarda el archivo en la caché del navegador, avisa de versiones nuevas y reemplaza la anterior recién cuando la nueva terminó de bajar y es un PMTiles válido; la PWA guarda el worker de MapLibre, las tipografías y los íconos (29 entradas, 3,6 MiB) y no el archivo de CABA; panel «Mapa de CABA para usar sin señal» en Estado del sistema. Pruebas: npm run verify con tipos OK, API 1143 y web 539 (24 nuevos); RF-03-entrega.sh 11 de 11, --carga 100 con 0 fallidos y --regenerar de punta a punta; con la app compilada y Playwright, con la red cortada y la página recargada el mapa se dibuja completo con calles y nombres hasta el zoom 15,93; sin red y sin mapa guardado, el aviso «Mapa sin descargar: conectate a una red para bajarlo»; al volver la red se dibuja solo; versión nueva → «Actualizar el mapa»; tema claro y oscuro; celular de 360 px; los 42 pedidos al abrir, acercar y descargar el mapa fueron todos a la propia app. Cambio respecto de lo planeado: la condición 1 decía «con pmtiles extract»; en este entorno no se pudo bajar y ejecutar esa herramienta, así que el generador es un script propio y se reescribió la condición sin nombrarla (PM). Límites: solo se probó en Chromium, no en un Android real; el archivo del mapa no está en git y hay que generarlo al clonar y al desplegar. Los pines (RF-04) y el cambio de las 5 pantallas (RF-05) quedan para las tareas siguientes. Detalle en docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-03-entrega.md y guía con capturas de Playwright en RF-03-mapa-sin-conexion.md.
@@ -249,6 +225,9 @@ Hecho: el edificio se elige para cada mensaje (el selector se vac�a al enviar)
 ### RF-08 — Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada
 - Estimado: 3h
 
+### RF-16 — Los avisos aprobados por la Secretaría llegan al Firmante por el chat interno
+- Estimado: 0h
+
 ### RF-01 — API y Modelo de Datos de Consorcios y Máquinas
 Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia AGC única por edificio, borrado en cascada) y endpoints POST, GET, GET :id, PUT y DELETE en /api/consorcios. Mínimo necesario agregado: sistema de migraciones (SQL plano, aplicado al arrancar la API, tabla schema_migrations), porque RO-01 lo dejó asignado a esta tarea; GET (listado) y PUT/DELETE porque la descripción pide CRUD. Pruebas: npm run verify 36/36 en API (21 nuevos) y 4/4 en web; test:int 7/7 contra PostGIS real; script de entrega 5/5; carga 200 recorridos, 0 fallidos, p95 320 ms. 2 tests de desarrollo aprobados con evidencia; 2 de integración preparados para QA. Afuera: la ECA (HU-02), autenticación, paginación del listado y ubicación geográfica. Consorcio y edificio se modelaron como una sola entidad. PR: https://github.com/fiemcasals/pm_asc/pull/3
 - Estimado: 4h
@@ -259,13 +238,6 @@ Modelo de datos y CRUD de consorcios: tablas consorcios y maquinas (referencia A
 ### RF-02 — FIX: Corregir contraste de textos y contenedores en Modo Oscuro
 PR #23 abierto contra dev (https://github.com/fiemcasals/pm_asc/pull/23). Commit 95d426e89cbc0d414837b1f9c8f929d41fd15d06. Corregido contraste de textos y contenedores en Modo Oscuro en apps/web/src/styles.css (--surface-sunken, [data-theme='dark'] .audit-grid, .cartel-bloqueo-tercera-visita, badges 45%, total-liquidacion-consorcio, .ficha-table, .solo-lectura-pill, .badge-modo-consulta, textos atenuados). Verificado en rama aislada con npm run verify (API 22/22 170 tests, Web 6/6 79 tests), RF-02-entrega.sh 2/2 OK, --carga 20 0 fallas (avg 102 ms, p95 118 ms) y Playwright. 2 Tests desarrollo Aprobado y 2 integracion Pendiente para QA. Entrega: https://github.com/fiemcasals/pm_asc/blob/95d426e89cbc0d414837b1f9c8f929d41fd15d06/docs/pruebas/hu-12-hu-12-interfaz-neo-linear-side/RF-02-entrega.md
 - Estimado: 1h
-
-### RF-01 — Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso
-- Estimado: 4h
-
-### RF-10 — Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío
-PR #92 contra dev. La bandeja de avisos muestra un cartel con el estado de WhatsApp («WhatsApp activo: Meta» / «…: Twilio» / «WhatsApp no configurado…» / «No se pudo consultar el estado»), sin credenciales ni teléfonos, y por cada envío el estado que confirmó el proveedor (Aceptado, Enviado, Entregado, Leído o Falló con motivo y código). avisos.test.ts 26/26, verify API 1143/1143 y web 555, test:int 188/188, RF-10-entrega.sh 7/7 combinada con RF-09 y carga 100 sin fallos. Guía visual con 9 capturas de Playwright. Mínimo necesario fuera de lo pedido: botón «Actualizar estados», porque los estados cambian cuando el proveedor avisa. Depende de HU-11/RF-09: mergearla antes. El estado general del aviso queda «Enviado» aunque el proveedor avise después una falla. La pantalla se verificó con Playwright, no con una prueba automática del componente.
-- Estimado: 4h
 
 ### RF-04 — Componente de mapa con pines por estado, zoom y nombres que no se pisan
 PR #93 contra dev. MapaEdificios (MapLibre) sobre el mapa base propio, con el mismo contrato de datos que el dibujo anterior: pines por latitud y longitud reales (error de 0,11 % a 0,52 % en el navegador), zoom y desplazamiento, encuadre de todos los edificios, nombres que no se pisan (rojos primero, y a la izquierda del pin si a la derecha no entran), pines accesibles con teclado, tema claro y oscuro, modo editable con 6 decimales y pin arrastrable, y celular de 360 px sin conexión. marcadores.test.ts 26/26, verify API 1143 y web 565, test:int 188, build OK, RF-04-entrega.sh 7/7. Guía visual con 6 capturas de Playwright. Mínimo necesario fuera de lo pedido: el tipo MarcadorMapa pasó a mapa/marcadores.ts y el componente viejo lo reexporta. Al probar en el navegador aparecieron y se corrigieron 3 defectos: nombres sin dibujar en tema claro, edificios sin reencuadrar al bajar el mapa, y nombres cortados en el borde derecho. No se probó el pellizco con dos dedos ni un celular físico. Nada usa el componente hasta HU-16/RF-05: mergear antes.
@@ -318,18 +290,6 @@ Pruebas:
 PR #40 abierto contra dev; ver entrega en docs/pruebas/hu-15-hu-15-aislamiento-de-datos-ent/RF-01-entrega.md
 - Estimado: 3h
 
-### RF-12 — Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio
-Tabla whatsapp_envios (migraci�n 034, RLS Secretar�a/Admin, sin DELETE); HistorialWhatsAppRepository memoria/Pg; el conector carga al arrancar y guarda en orden y en segundo plano. e2e 7/7, int 2/2, verify API 1229 web 616, int 193/193; RF-12-entrega.sh --carga 50 10/10 con reinicio real. L�mite: los avisos de la bandeja son RF-11. PR #103.
-- Estimado: 6
-
-### RF-13 — Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp
-@Roles(secretaria, administrador) en GET /api/whatsapp/historial: 401 sin sesi�n, 403 RT/Firmante/ECA, 200 Secretar�a/Administrador. e2e nueva 8/8, API 1216/1216; scripts RF-03/04/05/06/09/10 actualizados y en verde. Queda fuera: enviar-alerta y trigger-alerta-critica siguen p�blicos. PR #101.
-- Estimado: 2
-
-### RF-14 — Que el estado general de un aviso refleje un envío de WhatsApp que falla después
-Cada env�o guarda el idMensaje; al leer la bandeja se cruza con el historial y un fallo informado por el proveedor deja el aviso en �Fall� el env�o� con Reintentar; el reintento manda s�lo lo que fall� y conserva el fallo. Web cruza por idMensaje. e2e 6/6, web 29/29, verify API 1214 y web 598, RF-14-entrega.sh 14/14 con carga 10. PR #102.
-- Estimado: 4
-
 ### RF-05 — Usar el mapa nuevo en las pantallas y retirar el dibujo anterior
 PR #94, apilado sobre #93 (base: la rama de RF-04): mergear primero RF-04. La ficha del edificio (lectura y edición), el alta de consorcio, Secretaría (vista de mapa y Monitoreo), el Semáforo y el Mapa del RT usan MapaEdificios, y se borró MapaUbicacionConsorcio: 0 referencias a él ni a las avenidas dibujadas a mano en apps/web/src. El Mapa del RT guarda los últimos datos y, sin red, los muestra con un cartel con la hora; un error del servidor o una sesión revocada no se tapan, y al cerrar sesión se borran. El Semáforo conserva colores, leyenda y nota; sin geolocalización nueva. mapaRtGuardado.test.ts 13/13, verify API 1143 y web 578, test:int 188, RF-05-entrega.sh 15/15 y carga sin fallos. Guía visual con 15 capturas de Playwright. Mínimo necesario fuera de lo pedido: se cambió la dirección de ejemplo de tarjeta.test.ts para que la búsqueda de «Av. Rivadavia» dé vacía, y auth/sesion.ts borra los datos guardados al cerrar sesión. La ficha del edificio no entra en 360 px (ya era más ancha que el celular antes). Los datos del RT quedan en localStorage sin cifrar hasta cerrar sesión. No probado en un celular físico.
 - Estimado: 8h
@@ -370,10 +330,6 @@ GET /api/semaforo (módulo nuevo apps/api/src/semaforo/): edificio con todas sus
 ### RF-01 — API de Máquinas Asignadas y Autorización de Firma AGC
 Implementada la API de Máquinas Asignadas (GET /api/firmante/maquinas) y Autorización de Firma AGC (POST /api/firmante/autorizar) con validación estricta de estado Recorrida, fotos obligatorias y firma del encargado. Pruebas: 33 tests en verde (18 específicos del firmante). Entrega y script en docs/pruebas/hu-08-hu-08-panel-de-liquidacion-rap/.
 - Estimado: 4h
-
-### RF-04 — Enviar las alertas por WhatsApp a través de un proveedor real
-Implementacion completa de HU-11 RF-04 a nombre de gonza (PR #83 contra dev). WhatsAppProviderTransport HTTP real compatible con Meta Cloud API y Twilio desde variables de entorno, eliminacion del numero fijo +5491144009988, resolucion del telefono ECA desde roles_edificio (sin telefono no envia e informa motivo), propagacion del error exacto del proveedor con historial fallido y cero credenciales en repositorio. 5 suites (40/40 tests) en verde; RF-04-entrega.sh 7/7 OK (--carga 25: 0 fallos, prom 122 ms, max 255 ms).
-- Estimado: 0h
 
 ### RNF-02 — Acceso de RT y Firmante a edificios de varias ECA
 PR #29 abierto contra dev: https://github.com/fiemcasals/pm_asc/pull/29

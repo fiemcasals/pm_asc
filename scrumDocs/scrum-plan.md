@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T03:36:55.784Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T03:37:02.643Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -331,7 +331,7 @@ PR #94, apilado sobre #93 (base: la rama de RF-04): mergear primero RF-04. La fi
 - Estimado: 8h
 
 ### RF-05 — Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar
-Inicio de desarrollo: reducir la foto en el celular antes de enviarla y servir las fotos aparte del hilo.
+Hecho: la foto se reduce en el dispositivo (1.600 px, JPEG, menos de 500 KB; medido 6,9 MB ? 310 KB) y el hilo lleva la ruta de la foto en vez de la foto (con 5 fotos, 2 KB por actualizaci�n; cada foto se baja una vez). GET /api/chat/mensajes/:id/foto solo para quien puede leer el mensaje (401 sin sesi�n, 404 a un tercero). La API rechaza fotos de m�s de 600 KB. RF-05-entrega.sh --carga 30: 11 OK (Playwright 7/7). paradas.spec.ts falla ya en dev (HU-10 RF-08), fuera de esta Tarea. PR #126.
 - Estimado: 1d
 
 ### RF-10 — Avisos del navegador cuando llega un mensaje nuevo del chat

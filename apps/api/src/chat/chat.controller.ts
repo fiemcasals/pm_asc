@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Param, Post, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { Roles, UsuarioActual } from '../auth/roles.guard';
@@ -56,6 +56,19 @@ export class ChatController {
     res.setHeader('X-Hay-Anteriores', pagina.hayAnteriores ? 'true' : 'false');
     res.setHeader('Access-Control-Expose-Headers', 'X-Hay-Anteriores');
     return pagina.mensajes;
+  }
+
+  /**
+   * La foto de un mensaje (HU-19 RF-05). El hilo lleva solo esta ruta; la pantalla la pide una vez y el navegador la guarda: la foto de un mensaje
+   * no cambia nunca, así que se puede guardar por un año, y «private» hace que solo la guarde el navegador de quien la pidió, nunca un intermediario.
+   */
+  @Get('mensajes/:id/foto')
+  async obtenerFoto(@Param('id') id: string, @UsuarioActual() usuario: UsuarioAutenticado, @Res() res: Response): Promise<void> {
+    const foto = await this.service.obtenerFoto(id, usuario);
+    res.setHeader('Content-Type', foto.tipo);
+    res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(foto.datos);
   }
 
   @Post('mensajes')

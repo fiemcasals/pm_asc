@@ -67,6 +67,15 @@ export interface PaginaMensajes {
 /** Lo más largo que puede ser el texto de un mensaje (HU-19 RF-04). La caja de texto de la web usa el mismo número. */
 export const LIMITE_CONTENIDO = 2000;
 
+/**
+ * Lo más pesada que puede ser la foto de un mensaje, ya decodificada (HU-19 RF-05): 600 KB. La pantalla la reduce antes de enviarla (lado mayor
+ * 1.600 px, JPEG) y apunta a menos de 500 KB; una foto que aun reducida pasa este tope se rechaza con 400. La web usa el mismo número.
+ */
+export const LIMITE_FOTO_BYTES = 600 * 1024;
+
+/** Dónde se pide la foto de un mensaje: el hilo lleva esta ruta y no la foto (HU-19 RF-05). */
+export const rutaDeFoto = (mensajeId: string): string => `/api/chat/mensajes/${mensajeId}/foto`;
+
 /** Lo más largo que puede ser la referencia de una máquina en un mensaje. */
 export const LIMITE_MAQUINA = 40;
 

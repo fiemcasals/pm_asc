@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { CrearMensajeDto, LIMITE_CONTENIDO, LIMITE_MAQUINA } from './chat.types';
+import { CrearMensajeDto, LIMITE_CONTENIDO, LIMITE_FOTO_BYTES, LIMITE_MAQUINA } from './chat.types';
 
 // HU-19 RF-04 — lo que entra por la API del chat se valida en la puerta: lo que no corresponde se rechaza con 400 y un mensaje que lo explica,
 // en vez de llegar a la base (y fallar con un 500) o guardarse tal cual. Las reglas que dependen de los datos (¿existe el destinatario?,
@@ -10,6 +10,19 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const IMAGEN = /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
 
 export const esUuid = (valor: unknown): valor is string => typeof valor === 'string' && UUID.test(valor);
+
+/** Cuántos bytes ocupa la imagen de un `data:...;base64,...` una vez decodificada (HU-19 RF-05). */
+export function bytesDeImagen(dataUrl: string): number {
+  const datos = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const relleno = datos.endsWith('==') ? 2 : datos.endsWith('=') ? 1 : 0;
+  return Math.floor((datos.length * 3) / 4) - relleno;
+}
+
+/** Separa un `data:image/...;base64,...` guardado en el tipo de imagen y sus bytes, para servirlo como archivo (HU-19 RF-05). */
+export function decodificarImagen(dataUrl: string): { tipo: string; datos: Buffer } | null {
+  const m = /^data:(image\/(?:png|jpeg|webp));base64,(.*)$/s.exec(dataUrl);
+  return m ? { tipo: m[1], datos: Buffer.from(m[2], 'base64') } : null;
+}
 
 const sinValor = (valor: unknown): boolean => valor === undefined || valor === null || valor === '';
 
@@ -51,6 +64,10 @@ export function validarMensaje(cuerpo: unknown): CrearMensajeDto {
   if (!sinValor(c.adjuntoUrl)) {
     if (typeof c.adjuntoUrl !== 'string' || !IMAGEN.test(c.adjuntoUrl)) {
       throw new BadRequestException('El adjunto tiene que ser una imagen PNG, JPEG o WEBP.');
+    }
+    // HU-19 RF-05: la foto ya llega reducida desde la pantalla; si aun así pesa más que el tope, no se guarda.
+    if (bytesDeImagen(c.adjuntoUrl) > LIMITE_FOTO_BYTES) {
+      throw new BadRequestException(`La foto es demasiado pesada: puede pesar hasta ${Math.round(LIMITE_FOTO_BYTES / 1024)} KB.`);
     }
     adjuntoUrl = c.adjuntoUrl;
   }

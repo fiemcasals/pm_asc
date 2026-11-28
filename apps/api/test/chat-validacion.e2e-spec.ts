@@ -83,9 +83,16 @@ describe('Chat: validación de lo que entra, por la API (HU-19 RF-04)', () => {
     expect((await grupo()).map((m) => m.contenido)).toEqual(['hola equipo', '📷 Foto adjunta', 'a'.repeat(2000), 'x']);
   });
 
-  it('una foto grande y válida (8 MB) se acepta', async () => {
+  // HU-19 RF-05 fija el tope de los adjuntos: 600 KB ya decodificada (la pantalla la reduce antes de enviarla).
+  it('una foto de hasta 600 KB se acepta', async () => {
+    const justa = `data:image/jpeg;base64,${'A'.repeat((600 * 1024 * 4) / 3)}`;
+    await enviar({ tipoSala: 'global', contenido: 'foto justa', adjuntoUrl: justa }).expect(201);
+  });
+
+  it('una foto de más de 600 KB (por ejemplo 8 MB sin reducir) responde 400 y no se guarda', async () => {
     const grande = `data:image/jpeg;base64,${'A'.repeat(8 * 1024 * 1024)}`;
-    await enviar({ tipoSala: 'global', contenido: 'foto grande', adjuntoUrl: grande }).expect(201);
+    const res = await enviar({ tipoSala: 'global', contenido: 'foto grande', adjuntoUrl: grande }).expect(400);
+    expect(String(res.body.message)).toMatch(/demasiado pesada: puede pesar hasta 600 KB/);
   });
 
   describe('criterio 6: pedir los mensajes de una conversación', () => {

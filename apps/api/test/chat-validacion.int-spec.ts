@@ -173,7 +173,8 @@ describe('Chat: la validación contra PostgreSQL real (HU-19 RF-04)', () => {
 
     it('una imagen PNG en base64 se guarda con su foto', async () => {
       const res = await enviar(s.rt, { tipoSala: 'global', contenido: '', adjuntoUrl: PNG }).expect(201);
-      expect(res.body.adjuntoUrl).toBe(PNG);
+      // HU-19 RF-05: el mensaje lleva la ruta de la foto, que se pide aparte
+      expect(res.body.adjuntoUrl).toBe(`/api/chat/mensajes/${res.body.id}/foto`);
       expect(res.body.contenido).toBe('📷 Foto adjunta');
     });
   });

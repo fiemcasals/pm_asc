@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Rol } from '../auth/auth.types';
 import { randomUUID } from 'node:crypto';
-import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, NoLeidosPorSala, OpcionesHilo, PaginaMensajes, ResumenMensajeNoLeido, TipoSala } from './chat.types';
+import { ContactoChat, CrearMensajeDto, LIMITE_HILO, MensajeChat, NoLeidosPorSala, OpcionesHilo, PaginaMensajes, ResumenMensajeNoLeido, rutaDeFoto, TipoSala } from './chat.types';
 
 /**
  * Los roles que usan el chat y, por eso mismo, los que pueden figurar como contacto de un chat privado
@@ -13,9 +13,20 @@ export const ROLES_DEL_CHAT: readonly Rol[] = ['rt_calle', 'firmante', 'administ
 
 const ROLES_SQL = ROLES_DEL_CHAT.map((r) => `'${r}'`).join(', ');
 
+/**
+ * HU-19 RF-05: el hilo no lleva la foto adentro (una sola foto de celular hacía pesar 8 MB cada actualización): lleva la ruta donde pedirla,
+ * una vez, con GET /api/chat/mensajes/:id/foto. Es la misma ruta que arma rutaDeFoto().
+ */
+const RUTA_DE_FOTO_SQL = `CASE WHEN m.adjunto_url IS NULL THEN NULL ELSE '/api/chat/mensajes/' || m.id::text || '/foto' END`;
+
 export abstract class ChatRepository {
   abstract guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat>;
   abstract listarMensajes(sala: string, usuarioId: string, opciones?: OpcionesHilo): Promise<PaginaMensajes>;
+  /**
+   * La foto de un mensaje (el `data:image/...;base64,...` guardado), solo si el usuario puede leer ese mensaje: del grupo, cualquiera del chat;
+   * de un privado, sus dos participantes. Si no existe, no tiene foto o es de un privado ajeno, null. HU-19 RF-05.
+   */
+  abstract obtenerFoto(mensajeId: string, usuarioId: string): Promise<string | null>;
   abstract listarContactos(usuarioId: string): Promise<ContactoChat[]>;
   /** Los mensajes de otros que el usuario no leyó, por conversación («global» o el id del compañero). Solo cuenta el grupo y los privados dirigidos a él. */
   abstract contarNoLeidos(usuarioId: string): Promise<NoLeidosPorSala>;
@@ -74,7 +85,7 @@ export class PgChatRepository extends ChatRepository {
     const mensajesCompletos = await this.db.query<FilaMensaje>(
       `SELECT m.id, m.emisor_id, u.nombre AS emisor_nombre, u.usuario AS emisor_usuario, u.rol AS emisor_rol,
               m.destinatario_id, ud.nombre AS destinatario_nombre, ud.usuario AS destinatario_usuario,
-              m.tipo_sala, m.contenido, m.adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
+              m.tipo_sala, m.contenido, ${RUTA_DE_FOTO_SQL} AS adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
               m.maquina_ref, m.creado_en
          FROM chat_mensajes m
          JOIN usuarios u ON u.id = m.emisor_id
@@ -112,7 +123,7 @@ export class PgChatRepository extends ChatRepository {
     const filas = await this.db.query<FilaMensaje>(
       `SELECT m.id, m.emisor_id, u.nombre AS emisor_nombre, u.usuario AS emisor_usuario, u.rol AS emisor_rol,
               m.destinatario_id, ud.nombre AS destinatario_nombre, ud.usuario AS destinatario_usuario,
-              m.tipo_sala, m.contenido, m.adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
+              m.tipo_sala, m.contenido, ${RUTA_DE_FOTO_SQL} AS adjunto_url, m.consorcio_id, c.nombre AS edificio_nombre,
               m.maquina_ref, m.creado_en
          FROM chat_mensajes m
          JOIN usuarios u ON u.id = m.emisor_id
@@ -128,6 +139,17 @@ export class PgChatRepository extends ChatRepository {
       mensajes: filas.slice(0, limite).reverse().map((f) => this.mapearMensaje(f)),
       hayAnteriores: filas.length > limite,
     };
+  }
+
+  async obtenerFoto(mensajeId: string, usuarioId: string): Promise<string | null> {
+    const filas = await this.db.query<{ adjunto_url: string }>(
+      `SELECT m.adjunto_url
+         FROM chat_mensajes m
+        WHERE m.id = $1::uuid AND m.adjunto_url IS NOT NULL
+          AND (m.tipo_sala = 'global' OR m.emisor_id = $2::uuid OR m.destinatario_id = $2::uuid)`,
+      [mensajeId, usuarioId],
+    );
+    return filas[0]?.adjunto_url ?? null;
   }
 
   async listarContactos(usuarioId: string): Promise<ContactoChat[]> {
@@ -272,6 +294,8 @@ export class PgChatRepository extends ChatRepository {
 /** Implementación en memoria para pruebas unitarias */
 export class InMemoryChatRepository extends ChatRepository {
   private mensajes: MensajeChat[] = [];
+  /** La foto de cada mensaje, aparte del hilo (como en la base, HU-19 RF-05). */
+  private fotos = new Map<string, string>();
   private contactos: ContactoChat[] = [
     { id: '00000000-0000-4000-8000-0000000000c1', usuario: 'rt1', nombre: 'Operario RT 1', rol: 'rt_calle' },
     { id: '00000000-0000-4000-8000-0000000000c2', usuario: 'firmante1', nombre: 'Ing. Firmante Legal', rol: 'firmante' },
@@ -305,14 +329,22 @@ export class InMemoryChatRepository extends ChatRepository {
       destinatarioUsuario: null,
       tipoSala: dto.tipoSala,
       contenido: dto.contenido,
-      adjuntoUrl: dto.adjuntoUrl ?? null,
+      adjuntoUrl: dto.adjuntoUrl ? rutaDeFoto(id) : null,
       consorcioId: dto.consorcioId ?? null,
       edificioNombre: null,
       maquinaRef: dto.maquinaRef ?? null,
       creadoEn: new Date().toISOString(),
     };
     this.mensajes.push(nuevo);
+    if (dto.adjuntoUrl) this.fotos.set(id, dto.adjuntoUrl);
     return nuevo;
+  }
+
+  async obtenerFoto(mensajeId: string, usuarioId: string): Promise<string | null> {
+    const m = this.mensajes.find((x) => x.id === mensajeId);
+    if (!m || !this.fotos.has(mensajeId)) return null;
+    const puedeLeerlo = m.tipoSala === 'global' || m.emisorId === usuarioId || m.destinatarioId === usuarioId;
+    return puedeLeerlo ? this.fotos.get(mensajeId) ?? null : null;
   }
 
   async listarMensajes(sala: string, usuarioId: string, opciones: OpcionesHilo = {}): Promise<PaginaMensajes> {

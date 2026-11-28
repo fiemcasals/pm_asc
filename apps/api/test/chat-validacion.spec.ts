@@ -124,9 +124,15 @@ describe('validarMensaje', () => {
     it.each([undefined, null, ''])('sin adjunto (%p) pasa', (adjuntoUrl) => {
       expect(validarMensaje({ tipoSala: 'global', contenido: 'hola', adjuntoUrl }).adjuntoUrl).toBeNull();
     });
-    it('una foto grande (8 MB de base64) se valida sin problema', () => {
+    // HU-19 RF-05: el tope de la foto es 600 KB ya decodificada (la pantalla la reduce antes de enviarla)
+    it('una foto de hasta 600 KB se valida sin problema', () => {
+      const justa = `data:image/jpeg;base64,${'A'.repeat((600 * 1024 * 4) / 3)}`;
+      expect(validarMensaje({ tipoSala: 'global', contenido: 'foto', adjuntoUrl: justa }).adjuntoUrl).toBe(justa);
+    });
+
+    it('una foto de más de 600 KB (8 MB sin reducir) se rechaza con el motivo', () => {
       const grande = `data:image/jpeg;base64,${'A'.repeat(8 * 1024 * 1024)}`;
-      expect(validarMensaje({ tipoSala: 'global', contenido: 'foto', adjuntoUrl: grande }).adjuntoUrl).toBe(grande);
+      expect(() => validarMensaje({ tipoSala: 'global', contenido: 'foto', adjuntoUrl: grande })).toThrow(/demasiado pesada: puede pesar hasta 600 KB/);
     });
   });
 

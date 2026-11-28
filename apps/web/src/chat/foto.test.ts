@@ -89,12 +89,15 @@ describe('la pantalla del chat (criterios 1 a 3)', () => {
       expect(vista).toContain('<div className="chat-modal-content" onClick={(e) => e.stopPropagation()}>');
       expect(vista.match(/cerrarFoto\(\)/g)).toHaveLength(1);
     });
+    // HU-19 RF-05: la miniatura vive en FotoDelChat.tsx (pide la foto aparte del hilo) y le avisa a la vista con onAbrir
     it('la miniatura se puede enfocar y abrir con el teclado, y recuerda desde cuál se abrió', () => {
-      expect(vista).toContain('tabIndex={0}');
-      expect(vista).toContain('role="button"');
-      expect(vista).toContain('aria-label="Ver la foto ampliada"');
-      expect(vista).toContain("onClick={(e) => abrirFoto(m.adjuntoUrl ?? '', e.currentTarget)}");
-      expect(vista).toMatch(/if \(esTeclaDeAbrir\(e\.key\)\) \{\s*e\.preventDefault\(\);\s*abrirFoto\(m\.adjuntoUrl \?\? '', e\.currentTarget\);/);
+      const miniatura = leer('./FotoDelChat.tsx');
+      expect(miniatura).toContain('tabIndex={0}');
+      expect(miniatura).toContain('role="button"');
+      expect(miniatura).toContain('aria-label="Ver la foto ampliada"');
+      expect(miniatura).toContain('onClick={(e) => onAbrir(src, e.currentTarget)}');
+      expect(miniatura).toMatch(/if \(esTeclaDeAbrir\(e\.key\)\) \{\s*e\.preventDefault\(\);\s*onAbrir\(src, e\.currentTarget\);/);
+      expect(vista).toContain('onAbrir={abrirFoto}');
     });
     it('el foco se ve (para quien usa el teclado)', () => {
       expect(estilos).toMatch(/\.chat-modal-cerrar:focus-visible,\s*\.chat-globo-foto img:focus-visible\s*\{\s*outline: 3px solid/);

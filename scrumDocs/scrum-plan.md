@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T14:52:07.867Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T14:52:30.065Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -240,6 +240,7 @@ PR #130 contra dev. Arregla paradas.spec.ts, que falla en dev y en testing desde
 - Estimado: 4h
 
 ### RF-03 — [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera»
+PR #132 contra dev. El visor del backoffice (Secretaría › Monitoreo › Ver fotos e informe) rotulaba la foto del frente como «Frente del edificio», pero es la del frente de la cabina y la botonera (decisión del 23/11/2026, HU-17 RF-11), como la llaman el Portal Firmante y el celular del RT. Ahora dice «Frente de cabina y botonera»; «Cables» y «Cabina trabada» no cambian. El cambio es una línea en backoffice.logic.ts (el rótulo sale de la API y la pantalla lo muestra tal cual), más los dos lugares que esperaban el rótulo viejo: backoffice-acciones.spec.ts y el script de entrega de HU-05 RF-02. No se toca la «foto del frente del edificio» de HU-07 y HU-16: es otra foto, la de la fachada. Pruebas: npm run verify con tipos bien, API 1698/1698 (5 nuevas) y web 1049/1049; backoffice-fotos.e2e-spec.ts (nueva, por HTTP con roles reales); RF-03-entrega.sh 5 bien, 0 mal y con --carga 30, 0 fallidos (p95 20 ms); Playwright con un recorrido real (edificio de prueba → el RT cierra un informe con las dos fotos → Secretaría › Monitoreo › visor), que borra todo al terminar, 9 comprobaciones y 2 capturas. Hallazgo sin arreglar: RF-02-entrega.sh de HU-05 ya estaba roto (4 bien y 15 con error) porque prueba la API en vivo con las máquinas de ejemplo que HU-08 RF-06 retiró; otros 22 scripts de docs/pruebas nombran esas mismas máquinas y no se corrieron. Detalle en docs/pruebas/hu-05-hu-05-tablero-dinamico-de-moni/RF-03-entrega.md y guía con capturas en RF-03-rotulo-del-frente.md.
 - Estimado: 1h
 
 ### RF-07 — [FIX] La guía de Android incluye el mapa en las pantallas donde se usa

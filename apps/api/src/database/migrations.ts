@@ -1177,4 +1177,19 @@ export const MIGRATIONS: Migration[] = [
        ORDER BY m.destinatario_id, m.emisor_id, m.creado_en DESC, m.id DESC;
     `,
   },
+  {
+    id: '040_chat_edificio_nombre',
+    sql: `
+      -- HU-19 RF-07: la etiqueta de edificio es parte del mensaje. Se guarda el nombre que eligió quien escribió (dentro de su propia lista de
+      -- edificios), para que la vean todos los que pueden leer el mensaje: antes se armaba consultando consorcios con la seguridad por edificio
+      -- de quien LEE, y un Técnico o un Firmante no asignado a ese edificio veía el mensaje sin etiqueta.
+      ALTER TABLE chat_mensajes ADD COLUMN IF NOT EXISTS edificio_nombre text;
+
+      -- Los mensajes que ya tenían edificio se completan con su nombre actual.
+      UPDATE chat_mensajes m
+         SET edificio_nombre = c.nombre
+        FROM consorcios c
+       WHERE c.id = m.consorcio_id AND m.edificio_nombre IS NULL;
+    `,
+  },
 ];

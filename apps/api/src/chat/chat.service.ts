@@ -126,8 +126,10 @@ export class ChatService {
       }
     }
 
-    // HU-19 RF-04: el edificio con el que se etiqueta tiene que existir (y poder verlo quien escribe)
-    if (dto.consorcioId && !(await this.repo.existeConsorcio(dto.consorcioId))) {
+    // HU-19 RF-04: el edificio con el que se etiqueta tiene que existir (y poder verlo quien escribe).
+    // HU-19 RF-07: su nombre, tal como lo ve quien escribe, queda guardado con el mensaje: así la etiqueta la ven todos los que lo leen.
+    const edificioNombre = dto.consorcioId ? await this.repo.nombreDeConsorcio(dto.consorcioId) : null;
+    if (dto.consorcioId && !edificioNombre) {
       throw new BadRequestException('El edificio elegido no existe o no está disponible para vos.');
     }
 
@@ -137,7 +139,8 @@ export class ChatService {
       contenido: textoLimpio || '📷 Foto adjunta',
       adjuntoUrl: dto.adjuntoUrl ?? null,
       consorcioId: dto.consorcioId ?? null,
-      maquinaRef: dto.maquinaRef ?? null,
+      maquinaRef: dto.consorcioId ? dto.maquinaRef ?? null : null,
+      edificioNombre,
     };
 
     return this.repo.guardarMensaje(usuario.id, payload);

@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-28T14:25:12.308Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T14:29:59.803Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -82,6 +82,7 @@ graph TD
     REQ_1794842211977["RF-06: FIX: Descarga del remito t�cnico en formato PDF oficial en Portal ECA"]
     REQ_1795004203523["RF-07: FIX: Los símbolos del remito PDF salen como caracteres rotos"]
     REQ_1795527711177["RF-08: Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA"]
+    REQ_1795876195799["RF-09: [FIX] Las alertas dejan de llevar la foto adentro: el remito, el aviso y el backoffice la piden por la ruta"]
   end
   subgraph US_1791560829559["HU-11: HU-11: Avisos automáticos de fallas críticas al Firmante y a la ECA"]
     REQ_1794493273993["RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría"]
@@ -158,6 +159,7 @@ graph TD
     REQ_1795778247124["RF-08: Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada"]
     REQ_1795778247270["RF-09: El chat marca lo que no leíste: contador por conversación, en el menú y en el título de la pestaña"]
     REQ_1795778247416["RF-10: Avisos del navegador cuando llega un mensaje nuevo del chat"]
+    REQ_1795876195557["RF-11: [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada"]
   end
   REQ_1791560828605 --> REQ_1791909582859
   REQ_1791909582859 --> REQ_1791910394885
@@ -226,6 +228,7 @@ graph TD
   REQ_1791910396729 --> REQ_1795527711177
   REQ_1793980587652 --> REQ_1795527711177
   REQ_1795008148136 --> REQ_1795527711177
+  REQ_1795872287313 --> REQ_1795876195799
   REQ_1791910396553 --> REQ_1794493273993
   REQ_1794493273993 --> REQ_1794493274385
   REQ_1794493273993 --> REQ_1795263642081

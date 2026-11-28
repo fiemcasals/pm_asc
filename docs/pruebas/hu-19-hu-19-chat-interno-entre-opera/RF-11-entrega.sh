@@ -62,7 +62,9 @@ fi
 if git -C "$REPO_ROOT" rev-parse --verify -q origin/dev > /dev/null 2>&1; then
   BASE="$(git -C "$REPO_ROOT" merge-base origin/dev HEAD)"
   CAMBIOS="$(git -C "$REPO_ROOT" diff --name-only "$BASE" -- apps | tr '\n' ' ')"   # contra el árbol de trabajo: sirve antes y después de commitear
-  [ "$CAMBIOS" = "apps/api/test/chat-hilo.e2e-spec.ts " ] && pass "de apps/ sólo cambia apps/api/test/chat-hilo.e2e-spec.ts (ni la API, ni package.json, ni la configuración de Jest, ni create-test-app)" || fail "cambian otros archivos de apps/: $CAMBIOS"
+  # Antes de mergear cambia sólo ese archivo; ya mergeado en dev no hay diferencia contra dev. En los dos casos no puede haber ningún otro.
+  OTROS="$(printf '%s\n' $CAMBIOS | grep -v '^apps/api/test/chat-hilo.e2e-spec.ts$' | tr '\n' ' ')"
+  [ -z "$OTROS" ] && pass "de apps/ no cambia nada más que apps/api/test/chat-hilo.e2e-spec.ts (ni la API, ni package.json, ni la configuración de Jest, ni create-test-app)" || fail "cambian otros archivos de apps/: $OTROS"
   git -C "$REPO_ROOT" show "origin/dev:apps/api/test/chat-hilo.e2e-spec.ts" | grep -E "^\s+it(\.each)?\(" > "$TMP/pruebas-dev.txt"
   grep -E "^\s+it(\.each)?\(" "$SPEC" > "$TMP/pruebas-ahora.txt"
   if diff -q "$TMP/pruebas-dev.txt" "$TMP/pruebas-ahora.txt" > /dev/null; then

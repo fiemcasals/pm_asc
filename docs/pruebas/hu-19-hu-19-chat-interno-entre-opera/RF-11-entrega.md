@@ -48,6 +48,8 @@ Medido el 28/11/2026, en la misma PC:
 
 El tiempo de la primera prueba (~300 ms) incluye levantar la aplicación y crear las sesiones, que se hace antes de cada prueba.
 
+**Picos sueltos, sin explicar:** la prueba más lenta de cada corrida casi siempre está entre 280 y 410 ms, pero aparecieron picos: en una corrida de `--carga 5` hecha justo después de otro script pesado (un recorrido de Playwright) dio **1002 ms**, apenas sobre el límite de 1 s del script, y en otra tanda de 10 corridas el peor fue **849 ms**. No se identificó la causa (otros procesos de la PC, el antivirus o la sincronización de OneDrive son sospechas sin comprobar). En las otras tandas (15, 10 y 3 corridas) el máximo fue 392, 398 y 376 ms. Es un pico cada unas 40 corridas y queda a 5 veces del tope de 5 s de Jest, así que no es el «Exceeded timeout» que se quería evitar; el límite de 1 s del script se deja como está, en vez de aflojarlo para que pase: un pico que lo supere va a verse como error.
+
 | Condición de aprobación | ¿Cubierta? | Cómo se comprobó |
 |---|---|---|
 | 1. Con la máquina libre, cada prueba de `chat-hilo.e2e-spec` tarda menos de 1 s | Sí | Script paso 3 (3 corridas, la más lenta 376 ms) y `--carga` (peor 398 ms) |

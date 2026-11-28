@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T15:37:35.139Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T15:38:01.910Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -249,6 +249,7 @@ PR #133 contra dev. Es sólo documentación (nada de apps/). La guía de Android
 - Estimado: 2h
 
 ### RF-11 — [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada
+PR #134 contra dev. Un solo archivo de apps/ cambia: apps/api/test/chat-hilo.e2e-spec.ts. Las dos pruebas de 205 mensajes los escribían uno por uno por HTTP (205 pedidos seguidos); con la máquina libre tardaban 1,3 a 1,6 s y con la máquina ocupada se pasaban de los 5 s de Jest. Ahora los 205 mensajes se cargan con ChatRepository.guardarMensaje (el repositorio en memoria de la misma app de la prueba) y se leen por HTTP con la sesión del Firmante, como antes. Mismas aserciones, mismos títulos y mismas 12 pruebas; no se sube ningún tope ni se agregan reintentos. Resultados: con la máquina libre la prueba más lenta pasó de ~1,5 s a ~0,3 s (3 corridas) y en 10 corridas más el p95 fue de 398 ms con 0 fallos; con la máquina ocupada (estres-suite-api.sh, 8 procesos de CPU) la suite completa dio 1693/1693 con 0 «Exceeded timeout» y chat-hilo.e2e-spec en PASS (una sola corrida, 469 s: prueba que ya no depende de 205 pedidos seguidos, no que no pueda fallar; no se midió el tiempo por prueba bajo la carga); con 204 mensajes en vez de 205 las dos pruebas del límite fallan, o sea que la prueba sigue comprobando lo que dice. npm run verify: tipos bien, API 1693/1693. RF-11-entrega.sh --carga 10 --estres: 14 ok, 0 con error. No tiene pantalla, por eso no hay capturas. No resuelve RNF-03 (informes.e2e-spec), que sigue bloqueada porque no se reproduce; chat-hilo.int-spec.ts (PostgreSQL) no se tocó ni se volvió a correr. Detalle en docs/pruebas/hu-19-hu-19-chat-interno-entre-opera/RF-11-entrega.md.
 - Estimado: 2h
 
 ### RF-10 — [FIX] Los scripts de entrega que prueban la API en vivo con las máquinas de ejemplo (MAQ-CORRIENTES, MAQ-SANTAFE, MAQ-CALLAO) usan equipos que existen

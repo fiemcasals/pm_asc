@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T03:44:46.743Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T03:45:09.720Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -237,7 +237,7 @@ Pull Request #115 abierto hacia dev con implementacion completa y tests en verde
 - Estimado: 4h
 
 ### RF-06 — El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión
-Inicio de desarrollo: aviso de env�o fallido con Reintentar y estado real de la conexi�n en la cabecera del chat.
+Hecho: aviso debajo de la caja cuando el env�o falla (sin red o 5xx, con Reintentar y el texto conservado; 400 con el motivo de la API), cabecera con el estado real (Conectado / Sin conexi�n, reintentando�, vuelve sola) y un solo env�o a la vez. Solo pantalla. RF-06-entrega.sh --carga 3: 6 OK (Playwright 11/11 x3). paradas.spec.ts falla ya en dev (HU-10 RF-08), fuera de esta Tarea. PR #127.
 - Estimado: 4h
 
 ### RF-07 — La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen

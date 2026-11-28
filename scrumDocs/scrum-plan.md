@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T03:13:27.209Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T03:35:02.026Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -198,6 +198,7 @@ Datos de demo con demo.firmante y demo.eca; ternas repartidas entre dos Firmante
 - Estimado: 3
 
 ### RNF-03 — Evitar que informes.e2e-spec falle de forma intermitente
+28/11/2026 (germanG): se volvi� a intentar reproducir la falla sobre dev 8e34bd7. La suite completa de la API corri� 20 veces seguidas (1.643 pruebas cada vez, con la m�quina cargada por otro trabajo en paralelo): informes.e2e-spec pas� las 20. Sigue sin reproducirse, as� que no se puede encontrar la causa y el criterio 2 proh�be taparla con reintentos: la Tarea sigue bloqueada. En esas corridas aparecieron otras dos cosas, fuera del alcance de esta Tarea: (1) paradas.spec.ts falla en las 20 corridas en dev (�la lista no devuelve las im�genes�): la lista de paradas ahora trae fotoUrl con la imagen en base64 desde HU-10 RF-08 (dbed7f5); (2) chat-hilo.e2e-spec fall� 1 vez de 20 por pasar los 5 s de espera de Jest al escribir 205 mensajes con la m�quina cargada.
 - Estimado: 3
 
 ### RF-07 — FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión

@@ -126,7 +126,7 @@ Usuarios de demo (los carga `bash docs/pruebas/hu-04-hu-04-semaforo-de-control-m
 1. **Calles y nombres:** tienen que leerse al tamaño de la pantalla. Cuando dos nombres se pisan se oculta uno y se conserva el del estado más urgente (el rojo): acercá para ver los demás.
 2. **Gestos:** arrastrar con **un dedo** mueve el mapa y el **pellizco con dos dedos** lo acerca. Sólo la tarjeta de «Mapa sin conexión» pide dos dedos para mover el mapa (así la página no se queda trabada al desplazarla).
 3. **Ancho:** el mapa tiene que entrar en el ancho de la pantalla sin cortarse. Las excepciones conocidas son la **ficha del edificio** (1 y 2) y el **alta de consorcio** (3): esas pantallas ya eran más anchas que el celular antes del mapa nuevo, y el mapa queda cortado a la derecha y se desplaza con ellas (HU-16 RF-05; arreglar ese diseño no es de esta tarea). Monitoreo, la vista de mapa, el Semáforo y el Mapa del RT sí tienen que caber.
-4. **Tocar un pin:** en el **Mapa del RT** abre la tarjeta del edificio, con **Verificar ubicación**; en el **Semáforo**, un pin rojo abre el panel de ese edificio. En las demás pantallas el pin sólo muestra el nombre.
+4. **Tocar un pin:** en el **Mapa del RT** abre la tarjeta del edificio (dirección, estado, encargado y horarios, con **📞 Llamar al encargado**, **🧭 Cómo llegar** y **Verificar que estoy en el edificio**); en el **Semáforo**, un pin rojo abre el panel de reasignación de ese edificio. En las demás pantallas el pin sólo muestra el nombre.
 5. **Tema claro y oscuro:** si cambiás el tema de la app (el botón de la luna o el sol, arriba a la derecha), el mapa cambia con él.
 6. Anotá lo que no coincida con esta tabla: es lo que hay que corregir (en la guía o en la app).
 

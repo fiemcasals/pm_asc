@@ -75,6 +75,13 @@ for id in mapa-lectura-ficha mapa-editar-ficha mapa-alta-consorcio mapa-global-c
   grep -rq "testId=\"$id\"" "$WEB/src" --include=*.tsx || FALTAN="$FALTAN $id"
 done
 [ -z "$FALTAN" ] && pass "los 8 mapas están en la app (mapa-lectura-ficha, mapa-editar-ficha, mapa-alta-consorcio, mapa-global-consorcios, mapa-monitoreo, mapa-semaforo, mapa-rt-pines y mapa-sistema)" || fail "ya no están en la app:$FALTAN"
+SIN_PANTALLA=""
+for texto in "Verificar que estoy en el edificio" "Llamar al encargado" "Cómo llegar" "Descargar mapa para usar sin señal" "Editar Datos Operativos y Equipos" "Alta de Nuevo Consorcio" "Vista Mapa" "Punto PostGIS" "Sin conexión: los edificios son los últimos datos descargados" "Mapa guardado en este celular" "Abierto ahora" "A coordinar" "Pendiente del día 21 en adelante" "no tiene ubicación cargada y no aparece en el mapa"; do
+  grep -rqF "$texto" "$WEB/src" --include=*.ts --include=*.tsx || SIN_PANTALLA="$SIN_PANTALLA «$texto»"
+  # en la guía puede ir con la primera letra en minúscula (dentro de una frase)
+  { grep -qF "$texto" "$GUIA_ANDROID" || grep -qF "${texto,}" "$GUIA_ANDROID"; } || SIN_PANTALLA="$SIN_PANTALLA «$texto» (no está en la guía)"
+done
+[ -z "$SIN_PANTALLA" ] && pass "los 14 textos de botones, cartel y leyendas que cita la guía existen tal cual en la app" || fail "textos de la guía que no coinciden con la app o con la guía:$SIN_PANTALLA"
 if (cd "$WEB" && npx vitest run src/ui/navegacion.test.ts > "$TMP/nav.log" 2>&1); then
   pass "navegacion.test.ts (nombre de la pestaña): $(sed 's/\x1b\[[0-9;]*m//g' "$TMP/nav.log" | grep -E '^ +Tests ' | sed 's/^ *//')"
 else

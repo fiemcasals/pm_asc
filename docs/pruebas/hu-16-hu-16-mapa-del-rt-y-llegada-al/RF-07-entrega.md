@@ -40,11 +40,12 @@ Medido el 28/11/2026:
 
 | Qué | Resultado |
 |---|---|
-| `RF-07-entrega.sh --carga 20` | 15 ok, 0 con error |
+| `RF-07-entrega.sh --carga 20` | 16 ok, 0 con error |
 | Recorrido con Playwright (celular de 360 px) | 9 de 9 comprobaciones |
 | Carga: 20 aperturas del Mapa del RT | 0 fallos · promedio 749 ms · p95 759 ms · máx 767 ms (desde la sesión iniciada hasta el mapa dibujado) |
 | Mapa del RT recargado sin red | mapa con sus 2 pines en 1,4 a 1,7 s (en 4 corridas) |
-| Las comprobaciones sí fallan cuando la guía está mal | Con una copia de la guía con la ruta vieja, sin la sección 5.2 y sin las columnas del registro, el script marcó los 3 errores |
+| Las comprobaciones sí fallan cuando la guía está mal | Con una copia de la guía con la ruta vieja, sin la sección 5.2 y sin las columnas del registro, el script marcó los 3 errores; y con el botón mal nombrado («Verificar ubicación» en vez de «Verificar que estoy en el edificio») marcó el error |
+| Error encontrado antes de mergear | La guía decía que la tarjeta del Mapa del RT tiene «Verificar ubicación»; el botón real es «Verificar que estoy en el edificio». Se corrigió y el script ahora comprueba que 14 textos de botones, carteles y leyendas que cita la guía existen tal cual en la app |
 
 Recorrido por pantalla (`pines` y tiempo hasta que el mapa está dibujado, con la sesión iniciada): ficha en lectura 1 pin · 1,6 s; ficha en edición 1 pin · 1,5 s; alta de consorcio sin pin · 1,2 s; vista de mapa 4 pines; Monitoreo 4 pines; Semáforo 4 pines (3 rojos y 1 verde) · 1,4 s; Mapa del RT 2 pines · 4 s con el login incluido; Mapa sin conexión sin pines.
 

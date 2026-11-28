@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T15:15:28.612Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T15:15:54.660Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -244,6 +244,7 @@ PR #132 contra dev. El visor del backoffice (Secretaría › Monitoreo › Ver f
 - Estimado: 1h
 
 ### RF-07 — [FIX] La guía de Android incluye el mapa en las pantallas donde se usa
+PR #133 contra dev. Es sólo documentación (nada de apps/). La guía de Android mandaba a probar el mapa sin señal desde «Estado del Sistema», una pestaña que ya no existe (ahora es «Mapa sin conexión», «Sin conexión» en la barra del celular), y sólo cubría esa pantalla. Ahora tiene una sección 5.2 con las 8 pantallas donde está el mapa (ficha en lectura y edición, alta de consorcio, vista de mapa, Monitoreo, Semáforo, Mapa del RT y Mapa sin conexión), qué tiene que verse en cada una y cómo mirarlas en el celular; la prueba del Mapa del RT sin señal con el mapa ya bajado, paso a paso; y el registro de la prueba con una columna por pantalla más «RT sin señal». Pruebas: RF-07-entrega.sh 15 ok, 0 con error (con --carga 20: 0 fallos); recorrido con Playwright en un celular de 360 px con un usuario de cada rol, 9 de 9 (1 pin en la ficha, alta sin pin, 4 pines en la vista de mapa y Monitoreo, Semáforo con 3 rojos y 1 verde, Mapa del RT con 2 pines, y recargado sin red: mapa desde el celular, 2 pines y el cartel con la hora, en 1,4 a 1,7 s); con una copia de la guía mal hecha el script marca los 3 errores. 5 capturas. Límites que la guía declara: no se probó en un Android real, la ficha del edificio y el alta de consorcio desbordan el ancho del celular desde antes (HU-16 RF-05), y que el cartel desaparezca al volver la conexión quedó sin verificar. Detalle en docs/pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-07-entrega.md.
 - Estimado: 2h
 
 ### RF-11 — [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada

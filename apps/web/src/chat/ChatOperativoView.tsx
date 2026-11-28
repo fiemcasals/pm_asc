@@ -11,6 +11,8 @@ import { hora } from '../fechas/formato';
 import type { AvisosDelChat } from './useAvisosDelChat';
 import { fijarConversacionVista } from './visto';
 import { MAX_CARACTERES_MENSAJE } from './limites';
+import { actualizacionFallida, AvisoDeEnvio, avisoDeEnvio, EstadoConexion, falloDeRespuesta, textoDeConexion } from './envio';
+import { SesionRevocadaError } from '../auth/sesion';
 import { avisarCambioDeLecturas, INTERVALO_CANALES_MS, ordenarCanales, textoContador } from './noLeidos';
 import './chat.css';
 
@@ -87,6 +89,10 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
   const [mensajesNuevos, setMensajesNuevos] = useState<number>(0);
   // HU-19 RF-09: si se está mirando el final del hilo (lo que se ve ya está leído) y hasta qué mensaje se avisó al servidor de cada conversación
   const [enElFinal, setEnElFinal] = useState<boolean>(true);
+  // HU-19 RF-06: el estado real de la conexión (sale de la última actualización del hilo) y el aviso de un envío que falló
+  const [conexion, setConexion] = useState<EstadoConexion>('conectando');
+  const [avisoEnvio, setAvisoEnvio] = useState<AvisoDeEnvio | null>(null);
+  const enviandoRef = useRef<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -133,6 +139,8 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
     const sala = canalActivoId;
     try {
       const res = await fetchConSesion(`/api/chat/mensajes?sala=${encodeURIComponent(sala)}`);
+      // HU-19 RF-06: la cabecera dice si la última actualización salió bien o no (y vuelve a «Conectado» sola cuando vuelve la red)
+      setConexion(actualizacionFallida(res.status) ? 'sin_conexion' : 'conectado');
       if (!res.ok || canalRef.current !== sala) return;
       const data = (await res.json()) as MensajeChat[];
       if (canalRef.current !== sala) return; // se cambió de conversación mientras llegaba la respuesta
@@ -151,8 +159,9 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
         if (deOtros > 0) setMensajesNuevos((n) => n + deOtros);
       }
       setMensajes(lista);
-    } catch {
-      // Error de red
+    } catch (err) {
+      // Sin red: la cabecera lo dice y la próxima actualización vuelve a intentar
+      if (!(err instanceof SesionRevocadaError)) setConexion('sin_conexion');
     } finally {
       if (canalRef.current === sala) setCargando(false);
     }
@@ -354,8 +363,13 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
     if (e) e.preventDefault();
     const textoLimpio = texto.trim();
     if (!textoLimpio && !fotoBase64) return;
+    // HU-19 RF-06: mientras un envío está en curso no sale otro (ni con el botón, que queda deshabilitado, ni con Enter dos veces seguidas)
+    if (enviandoRef.current) return;
+    enviandoRef.current = true;
 
     setEnviando(true);
+    setAvisoEnvio(null);
+    let res: Response | null = null;
     try {
       const payload = {
         tipoSala: canalActivoId === 'global' ? 'global' : 'directo',
@@ -366,7 +380,7 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
         maquinaRef: maquinaRef || null,
       };
 
-      const res = await fetchConSesion('/api/chat/mensajes', {
+      res = await fetchConSesion('/api/chat/mensajes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -380,10 +394,16 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
         setTexto('');
         setFotoBase64(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
+      } else {
+        // HU-19 RF-06: el servidor no lo guardó: se dice por qué y el texto (y la foto) quedan para reintentar
+        const fallo = await falloDeRespuesta(res);
+        if (fallo) setAvisoEnvio(avisoDeEnvio(fallo));
       }
-    } catch {
-      // Manejar error de envío
+    } catch (err) {
+      // Sin red (o la sesión se cerró, que la aplicación ya resuelve llevando al ingreso)
+      if (!(err instanceof SesionRevocadaError) && !res) setAvisoEnvio(avisoDeEnvio({ tipo: 'red' }));
     } finally {
+      enviandoRef.current = false;
       setEnviando(false);
     }
   };
@@ -489,8 +509,8 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
             <h3 className="chat-header-titulo" data-testid="chat-header-titulo">
               {canalActivo.nombre}
             </h3>
-            <span className="chat-header-estado">
-              {canalActivo.tipo === 'global' ? 'Equipo conectado' : `${etiquetaDeRol(canalActivo.rol)} · En línea`}
+            <span className={`chat-header-estado ${conexion}`} data-testid="chat-estado-conexion" role="status">
+              {canalActivo.tipo === 'global' ? textoDeConexion(conexion) : `${etiquetaDeRol(canalActivo.rol)} · ${textoDeConexion(conexion)}`}
             </span>
           </div>
           <button
@@ -686,6 +706,18 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
               {enviando ? 'Enviando…' : 'Enviar'}
             </button>
           </form>
+
+          {/* HU-19 RF-06: el aviso de un envío que falló, debajo de la caja de texto */}
+          {avisoEnvio && (
+            <div className="chat-aviso-envio" role="alert" data-testid="chat-aviso-envio">
+              <span data-testid="chat-aviso-envio-texto">{avisoEnvio.texto}</span>
+              {avisoEnvio.reintentar && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleEnviar()} disabled={enviando} data-testid="chat-btn-reintentar">
+                  Reintentar
+                </button>
+              )}
+            </div>
+          )}
         </footer>
       </main>
 

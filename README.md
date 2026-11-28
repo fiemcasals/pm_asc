@@ -55,3 +55,9 @@ queda deshabilitado aunque la variable esté cargada. Nunca se usa `*`.
 ## Entregas y pruebas por tarea
 
 Cada tarea deja su entrega en `docs/pruebas/<historia>/`: documento, script y guía con capturas.
+
+## Decisiones
+
+Las decisiones de producto y de alcance que cambian el rumbo se registran en `docs/decisiones/<fecha>-<tema>/`, con qué se decidió, por qué y qué tarjetas salen de eso.
+
+- [28/11/2026 · Se retira WhatsApp: los avisos van por el chat interno](docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md)

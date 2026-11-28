@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-28T13:24:48.327Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T13:48:26.677Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 

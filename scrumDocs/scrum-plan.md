@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T03:11:09.517Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T03:13:27.209Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -24,7 +24,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 16 | RF-01 | Probar el envío real de WhatsApp con el celular de German | RO-02 | — | — | Hacer | germanG | — | — |
 | 17 | RF-03 | Mapa base de CABA propio, que se dibuja sin conexión | HU-16 | — | — | tested ✓ | germanG | — | — |
 | 18 | RF-03 | Cargar en los datos de demo un Firmante y un usuario de ECA con sesión | HU-14 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | dev-ma-2 | — | — |
+| 19 | RNF-03 | Evitar que informes.e2e-spec falle de forma intermitente | HU-01 | — | — | Bloqueada | germanG | — | — |
 | 20 | RF-07 | FIX: La lista «Edificios pendientes de hoy» del RT no se queda en «Cargando…» sin conexión | HU-07 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 21 | RF-03 | FIX: Mostrar las horas en formato de 24 horas en toda la app | HU-12 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 22 | RF-11 | Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso | HU-17 | — | — | tested ✓ | germanG | — | — |
@@ -35,8 +35,8 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 27 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 28 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 29 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 30 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
-| 31 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hacer | dev-ma-2 | — | — |
+| 30 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hacer | germanG | — | — |
+| 31 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hacer | germanG | — | — |
 | 32 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 33 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 34 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |
@@ -59,7 +59,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 51 | RF-13 | Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-10 | — |
 | 52 | RF-14 | Que el estado general de un aviso refleje un envío de WhatsApp que falla después | HU-11 | — | — | tested ✓ | dev-ma-2 | RF-09, RF-10 | — |
 | 53 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
-| 54 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hacer | germanG | RF-04 | — |
+| 54 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Haciendo | germanG | RF-04 | — |
 | 55 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-09 | — |
 | 56 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |
 | 57 | RF-05 | Datos operativos del edificio y del equipo para la calle | HU-01 | — | — | tested ✓ | gonza | RF-02 | — |
@@ -330,6 +330,7 @@ PR #94, apilado sobre #93 (base: la rama de RF-04): mergear primero RF-04. La fi
 - Estimado: 8h
 
 ### RF-05 — Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar
+Inicio de desarrollo: reducir la foto en el celular antes de enviarla y servir las fotos aparte del hilo.
 - Estimado: 1d
 
 ### RF-10 — Avisos del navegador cuando llega un mensaje nuevo del chat

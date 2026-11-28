@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-28T13:23:10.158Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T13:24:51.478Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -37,6 +37,7 @@ graph TD
   subgraph US_1791560829061["HU-05: HU-05: Tablero Dinámico de Monitoreo Backoffice"]
     REQ_1791910395565["RF-01: API de Monitoreo Backoffice y Acciones Comerciales"]
     REQ_1791910395676["RF-02: UI Tablero Dinámico de Monitoreo General (Backoffice)"]
+    REQ_1795872287370["RF-03: [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera»"]
   end
   subgraph US_1791560829152["HU-06: HU-06: Gestión de Fallas Críticas y Deslinde Legal"]
     REQ_1791910396411["RF-01: Recepción de Falla Crítica y Alerta Emergente en Secretaría"]
@@ -82,12 +83,16 @@ graph TD
     REQ_1795004203523["RF-07: FIX: Los símbolos del remito PDF salen como caracteres rotos"]
     REQ_1795527711177["RF-08: Que un equipo marcado Fuera de Servicio o con Reparación Urgente genere la alerta del Portal ECA"]
   end
-  subgraph US_1791560829559["HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA"]
+  subgraph US_1791560829559["HU-11: HU-11: Avisos automáticos de fallas críticas al Firmante y a la ECA"]
     REQ_1794493273993["RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría"]
-    REQ_1794493274385["RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días"]
+    REQ_1794493274385["RF-06: Link del aviso sin contraseña y válido por 7 días"]
     REQ_1795091473089["RF-07: FIX: Scripts de entrega desactualizados de HU-11, HU-15 y HU-18, y datos de demo de HU-04"]
     REQ_1795263642081["RF-11: Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio"]
-    REQ_1795608267360["RF-15: WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde"]
+    REQ_1795608267360["RF-15: Diagnóstico de seguridad con sesión: solo quien corresponde (las rutas de WhatsApp se retiraron)"]
+    REQ_1795872286993["RF-16: Los avisos aprobados por la Secretaría llegan al Firmante por el chat interno"]
+    REQ_1795872287077["RF-17: [FIX] Retirar el envío por WhatsApp de la API"]
+    REQ_1795872287159["RF-18: [FIX] Retirar WhatsApp de las pantallas"]
+    REQ_1795872287233["RF-19: [FIX] Retirar WhatsApp de la documentación, la configuración y los datos de demo"]
   end
   subgraph US_1794486885074["HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline"]
     REQ_1794486918351["RF-01: Shell Visual NEO Linear (Dark/Light), Sidebar Colapsable, Cobertura Neón y Buscador Global Inline"]
@@ -119,6 +124,7 @@ graph TD
     REQ_1795097971265["RF-04: Componente de mapa con pines por estado, zoom y nombres que no se pisan"]
     REQ_1795097971367["RF-05: Usar el mapa nuevo en las pantallas y retirar el dibujo anterior"]
     REQ_1795613107749["RF-06: Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta"]
+    REQ_1795872287430["RF-07: [FIX] La guía de Android incluye el mapa en las pantallas donde se usa"]
   end
   subgraph US_1794493998283["HU-17: HU-17: Inspección técnica por solapas"]
     REQ_1794494000545["RF-01: Motor del checklist configurable"]
@@ -133,6 +139,7 @@ graph TD
     REQ_1795263643334["RF-09: Guardar en PostgreSQL los reportes de parada de un equipo fuera de servicio"]
     REQ_1795263643622["RF-10: Que la Inspección Técnica arranque desde el inicio de visita y no desde un selector provisorio"]
     REQ_1795480710109["RF-11: Fotos obligatorias del frente de cabina y de los cables en cada equipo en uso"]
+    REQ_1795872287313["RF-12: [FIX] La lista de paradas vuelve a no traer las imágenes"]
   end
   subgraph US_1794493998373["HU-18: HU-18: Cierre, firma y envío del informe"]
     REQ_1794494002445["RF-01: Consolidación y firma en pantalla"]
@@ -223,6 +230,11 @@ graph TD
   REQ_1794493273993 --> REQ_1794493274385
   REQ_1794493273993 --> REQ_1795263642081
   REQ_1794493274385 --> REQ_1795263642081
+  REQ_1795778246963 --> REQ_1795872286993
+  REQ_1795872286993 --> REQ_1795872287077
+  REQ_1795872287077 --> REQ_1795872287159
+  REQ_1795872287077 --> REQ_1795872287233
+  REQ_1795872287159 --> REQ_1795872287233
   REQ_1794486918351 --> REQ_1794488168014
   REQ_1791560828605 --> REQ_1794493998753
   REQ_1794493998753 --> REQ_1794493998996

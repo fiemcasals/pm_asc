@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T14:10:56.625Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T14:11:19.759Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -232,6 +232,7 @@ Hecho: el edificio se elige para cada mensaje (el selector se vac�a al enviar)
 - Estimado: 3h
 
 ### RF-12 — [FIX] La lista de paradas vuelve a no traer las imágenes
+PR #130 contra dev. Arregla paradas.spec.ts, que falla en dev y en testing desde HU-10 RF-08 (commit dbed7f5): ese cambio puso en cada reporte de la lista la primera foto completa en base64 (fotoUrl) y rompió el criterio de HU-17 RF-03 («la lista no devuelve las imágenes, sólo cuántas hay»). No se tocó ninguna prueba existente: el arreglo es de código. GET /api/paradas, POST /api/paradas y POST /api/paradas/:id/confirmar|rechazar devuelven una vista sin la imagen, con la cantidad de fotos y fotoRuta; la imagen se sigue guardando con el reporte. Ruta nueva GET /api/paradas/:id/foto, como en el chat: con sesión (401 sin ella), sólo para quien puede ver el reporte (Secretaría y Administrador, el Firmante del edificio, la ECA del equipo y el RT que lo cargó; el resto 404, igual que un reporte inexistente) y con caché de un año. El Portal ECA pide la foto de su alerta por esa ruta, con la sesión y una sola vez (la guarda en memoria, sin mezclar usuarios); si no hay ruta o falla, usa la foto de siempre. Pruebas: npm run verify con tipos bien, API 1679/1679 (36 nuevas; en dev era 1642 de 1643) y web 991/991 (17 nuevas); contra PostgreSQL real, paradas 3/3 (1 nueva); RF-12-entrega.sh 11 bien, 0 mal y con --carga 30, 0 fallidos (lista p95 21 ms, foto p95 24 ms); Playwright como rt.beto y demo.eca, 12 comprobaciones y 2 capturas, y al terminar el Firmante rechaza el reporte y la demo queda como estaba. Límites: las alertas siguen llevando la imagen adentro (/api/eca/alertas, /api/eca/maquinas, /api/firmante/maquinas) porque el remito, el aviso con enlace y el backoffice la leen de ahí; sacarla es una tarea aparte que no está creada. memoriaDeFotos.ts duplica el caché del chat (PR #126, sin mergear). No pisa a los PRs #126, #127 ni #128 (ningún archivo en común, sin conflictos). Detalle en docs/pruebas/hu-17-hu-17-inspeccion-tecnica-por-s/RF-12-entrega.md y guía con capturas en RF-12-foto-de-la-parada.md.
 - Estimado: 4h
 
 ### RF-03 — [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera»

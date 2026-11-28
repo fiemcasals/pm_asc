@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T03:54:42.733Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T03:54:52.256Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -241,7 +241,7 @@ Hecho: aviso debajo de la caja cuando el env�o falla (sin red o 5xx, con Reint
 - Estimado: 4h
 
 ### RF-07 — La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen
-Inicio de desarrollo: el edificio se elige para cada mensaje y su etiqueta la ven todos los que leen el mensaje.
+Hecho: el edificio se elige para cada mensaje (el selector se vac�a al enviar), el nombre del edificio se guarda con el mensaje (migraci�n 040) y lo ven todos los que lo leen, tambi�n un T�cnico o Firmante no asignado; m�quina solo con edificio y hasta 40 caracteres. RF-07-entrega.sh --carga 30: 18 OK (Playwright 7/7). paradas.spec.ts falla ya en dev (HU-10 RF-08), fuera de esta Tarea.
 - Estimado: 4h
 
 ### RF-08 — Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada

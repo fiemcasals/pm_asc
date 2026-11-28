@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T14:31:26.806Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T14:31:38.096Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -57,7 +57,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 49 | RNF-01 | Row Level Security por ECA | HU-15 | — | — | tested ✓ | gonza | RF-01, RF-01 | — |
 | 50 | RF-01 | Asociar la ECA al usuario y exponerla en la sesión | HU-15 | — | — | tested ✓ | germanG | RF-01 | — |
 | 51 | RF-05 | Usar el mapa nuevo en las pantallas y retirar el dibujo anterior | HU-16 | — | — | tested ✓ | germanG | RF-04 | — |
-| 52 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hecho | germanG | RF-04 | — |
+| 52 | RF-05 | Las fotos del chat son livianas: se reducen antes de enviarlas y la actualización del hilo no las vuelve a bajar | HU-19 | — | — | Hecho ✓ dev | germanG | RF-04 | — |
 | 53 | RF-10 | Avisos del navegador cuando llega un mensaje nuevo del chat | HU-19 | — | — | tested ✓ | dev-ma-2 | RF-09 | — |
 | 54 | RF-17 | [FIX] Retirar el envío por WhatsApp de la API | HU-11 | — | — | Hacer | germanG | RF-16 | — |
 | 55 | RF-04 | Horarios de atención por edificio editables por la Secretaría | HU-01 | — | — | tested ✓ | germanG | RF-02 | — |

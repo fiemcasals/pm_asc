@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T14:31:38.096Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T14:31:44.179Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -32,7 +32,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 24 | RF-06 | Que los mapas se vean: el archivo del mapa va con el sitio y la app avisa cuando falta | HU-16 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 25 | RF-02 | El hilo del chat muestra siempre los mensajes más nuevos y deja leer los anteriores | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 26 | RF-03 | La Secretaría figura como contacto en el chat y sus mensajes privados se pueden leer y responder | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
-| 27 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hecho | germanG | — | — |
+| 27 | RF-06 | El chat avisa en pantalla cuando un mensaje no se envió y muestra el estado real de la conexión | HU-19 | — | — | Hecho ✓ dev | germanG | — | — |
 | 28 | RF-07 | La etiqueta de edificio del chat se elige para cada mensaje y la ven todos los que lo leen | HU-19 | — | — | Hecho | germanG | — | — |
 | 29 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 30 | RF-12 | [FIX] La lista de paradas vuelve a no traer las imágenes | HU-17 | — | — | Hecho ✓ dev | germanG | — | — |

@@ -1,0 +1,285 @@
+{
+  "nota": "Respaldo del 28/11/2026 de lo que se borró del tablero de Scrum Master AI al retirar WhatsApp. El tablero no tiene deshacer: esto es el único registro de los nombres, descripciones y condiciones. Las pruebas y la evidencia de cada tarea siguen en docs/pruebas/.",
+  "historia11_antes": {
+    "id": "US-1791560829559",
+    "nombre": "HU-11: Notificaciones Automáticas por WhatsApp a la ECA",
+    "descripcion": "Como Empresa Conservadora (ECA) quiero recibir mensajes instantáneos de WhatsApp (< 5 seg) ante fallas graves o clausuras con enlace directo a fotos e informe para actuar de inmediato.",
+    "condiciones": "1. Dado que el RT de calle consolida un informe con Alerta de Reparación Urgente o Fuera de Uso, cuando el servidor lo procesa, entonces en menos de 5 segundos envía un mensaje de WhatsApp a través de la API al celular del responsable de la ECA.\n2. Dado el mensaje de WhatsApp recibido, cuando el usuario abre el enlace adjunto, entonces puede visualizar de forma directa la fotografía de la falla y el informe técnico firmado."
+  },
+  "tareasBorradas": [
+    {
+      "id": "REQ-1791910396804",
+      "codigo": "RF-01",
+      "historia": "HU-11",
+      "nombre": "Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Implementar la integración con la API de WhatsApp y formateador de mensajes formales de MAICON S.R.L.",
+      "condiciones": "1. El servicio formatea el mensaje de alerta con plantilla formal (nombre ECA, consorcio, estado, equipo y detalle).\n2. El conector realiza el envio exitoso hacia la API de WhatsApp con manejo de errores y reintentos ante fallas de red.",
+      "estimada": "4h",
+      "real": "8m 35s",
+      "dependeDe": [
+        "REQ-1791910396729"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1791910396804-conector-de-api-de-whatsapp-y-plantilla",
+      "pullRequest": 10,
+      "tests": 4
+    },
+    {
+      "id": "REQ-1791910396892",
+      "codigo": "RF-02",
+      "historia": "HU-11",
+      "nombre": "Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Configurar el webhook/trigger que detecta informes con Reparación Urgente o Fuera de Servicio y despacha el mensaje en menos de 5 segundos con enlace seguro al remito.",
+      "condiciones": "1. Al consolidarse un informe critico, el disparo hacia WhatsApp se ejecuta en menos de 5 segundos comprobables.\n2. El mensaje incluye un enlace directo y funcional a las fotos y al informe tecnico firmado para visualizacion inmediata en el celular.",
+      "estimada": "3h",
+      "real": "6m 34s",
+      "dependeDe": [
+        "REQ-1791910396804"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1791910396892-disparo-automatico-inmediato-5s-de-whats",
+      "pullRequest": 11,
+      "tests": 4
+    },
+    {
+      "id": "REQ-1794155773535",
+      "codigo": "RF-03",
+      "historia": "HU-11",
+      "nombre": "No informar como entregado un WhatsApp que no se envió",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Sin un proveedor configurado, WhatsAppConnectorService simula el envío y devuelve ok con estado \"entregado\". El Portal ECA muestra entonces \"WhatsApp Despachado\" con un ID, aunque ningún mensaje salió. Quien lo ve puede creer que la ECA fue avisada de una falla crítica.",
+      "condiciones": "1. Sin proveedor de WhatsApp configurado, el envío de una alerta responde con error, informa que el envío no está configurado y no devuelve el estado \"entregado\".\n2. En el Portal ECA, cuando el envío no se realizó, el botón Despachar Alerta WhatsApp muestra el motivo y no muestra \"WhatsApp Despachado\".\n3. El disparo automático ante una alerta crítica registra el envío como no realizado cuando no hay proveedor configurado.",
+      "estimada": "0h",
+      "real": "14m 20s",
+      "dependeDe": [
+        "REQ-1791910396804",
+        "REQ-1791910396892"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1794155773535-no-informar-como-entregado-un-whatsapp-q",
+      "pullRequest": 21,
+      "tests": 6
+    },
+    {
+      "id": "REQ-1794155774018",
+      "codigo": "RF-04",
+      "historia": "HU-11",
+      "nombre": "Enviar las alertas por WhatsApp a través de un proveedor real",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Conectar WhatsAppConnectorService con un proveedor real (WhatsApp Cloud API de Meta o Twilio), empezando por su modo de prueba, y tomar el destino del teléfono de la ECA asignada al edificio en lugar del número fijo +5491144009988. El número remitente de producción depende de la respuesta de MAICON (P13.b).",
+      "condiciones": "1. Con las credenciales del proveedor cargadas en variables de entorno, una alerta crítica llega como mensaje de WhatsApp a un número registrado en el modo de prueba del proveedor.\n2. El destino es el teléfono de la ECA responsable del edificio asignada en la terna de roles; sin teléfono cargado, el envío no se hace y se informa el motivo.\n3. Si el proveedor rechaza el envío, la API informa el error que devolvió el proveedor y el envío queda registrado como fallido.\n4. Las credenciales del proveedor no quedan en el repositorio.",
+      "estimada": "0h",
+      "real": "5m 59s",
+      "dependeDe": [
+        "REQ-1794155773535",
+        "REQ-1791910396804",
+        "REQ-1791910395002"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1794155774018-enviar-las-alertas-por-whatsapp-a-traves",
+      "pullRequest": 83,
+      "tests": 8
+    },
+    {
+      "id": "REQ-1795097860369",
+      "codigo": "RF-08",
+      "historia": "HU-11",
+      "nombre": "Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Hoy el conector manda el aviso como texto libre (type \"text\" en Meta, Body en Twilio). Meta solo permite texto libre dentro de las 24 horas posteriores a un mensaje del destinatario, y Twilio tiene la misma restricción fuera del sandbox: una alerta que inicia el sistema tiene que salir como mensaje de plantilla, aprobada de antemano por el proveedor, con parámetros. Se cambia el envío para que use la plantilla y se deja escrito el texto que hay que registrar en el panel del proveedor. No cambia quién recibe el aviso ni cuándo sale (eso sigue siendo después de que la Secretaría lo aprueba).",
+      "condiciones": "1. Con WHATSAPP_PROVIDER=meta, el envío manda type \"template\" con template.name tomado de WHATSAPP_META_TEMPLATE_NAME, language.code de WHATSAPP_META_TEMPLATE_LANG (por defecto es_AR) y los parámetros del cuerpo en este orden: edificio, equipo, estado, detalle y enlace del informe; el receptor HTTP de prueba recibe ese cuerpo exacto y ningún campo de texto libre.\n2. Con WHATSAPP_PROVIDER=twilio, el envío manda ContentSid tomado de WHATSAPP_TWILIO_CONTENT_SID y ContentVariables con esos mismos 5 valores, y no manda Body de texto libre.\n3. Si falta el nombre de la plantilla (Meta) o el ContentSid (Twilio), no sale ningún mensaje: el envío queda no_realizado con estadoEntrega no_configurado y el motivo dice que falta la plantilla; no cae a texto libre.\n4. Los valores de los parámetros se limpian de saltos de línea, tabulaciones y de más de 4 espacios seguidos, y se recortan a 1024 caracteres, porque Meta rechaza los parámetros con esos caracteres; una prueba automática lo verifica con un detalle de falla de varias líneas.\n5. El texto de la plantilla, con sus 5 variables y un ejemplo de cada una, queda en un documento bajo docs/pruebas/hu-11-hu-11-notificaciones-automatic/ listo para copiar al panel del proveedor.\n6. Las pruebas automáticas de apps/api/test/whatsapp-proveedor.e2e-spec.ts cubren los casos 1 a 4, y npm run verify y npm run test:int siguen en verde.",
+      "estimada": "4h",
+      "real": "0s",
+      "dependeDe": [],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1795097860369-enviar-el-aviso-de-falla-critica-con-una",
+      "pullRequest": 90,
+      "tests": 12
+    },
+    {
+      "id": "REQ-1795097860589",
+      "codigo": "RF-09",
+      "historia": "HU-11",
+      "nombre": "Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Hoy un envío figura \"entregado\" apenas el proveedor acepta el pedido (respuesta 2xx): eso no prueba que el mensaje haya llegado al celular. Meta y Twilio avisan a una URL del sistema cuando el mensaje se envía, se entrega, se lee o falla. Se agregan esas dos entradas públicas, con validación de la firma del proveedor para que nadie pueda inventar estados, y el historial pasa a distinguir \"aceptado por el proveedor\" de \"entregado\". Es la regla de HU-11 RF-03 (no informar como entregado lo que no se entregó) llevada hasta el final.",
+      "condiciones": "1. GET /api/whatsapp/webhook/meta devuelve el valor de hub.challenge solo cuando hub.verify_token coincide con WHATSAPP_META_VERIFY_TOKEN; con cualquier otro valor responde 403.\n2. POST /api/whatsapp/webhook/meta valida la cabecera X-Hub-Signature-256 (HMAC-SHA256 del cuerpo sin modificar con WHATSAPP_META_APP_SECRET); sin firma o con firma inválida responde 401 y no cambia ningún registro.\n3. POST /api/whatsapp/webhook/twilio valida X-Twilio-Signature con WHATSAPP_TWILIO_AUTH_TOKEN y la URL pública configurada; con firma inválida responde 401 y no cambia ningún registro.\n4. Cada evento válido actualiza el registro del historial que tiene ese id de mensaje (wamid o SM): sent pasa a enviado, delivered a entregado, read a leido y failed a fallido con el código y el mensaje de error del proveedor.\n5. El estado nunca retrocede y los eventos repetidos son inofensivos: un delivered que llega después de un read, o el mismo evento dos veces, no cambia el registro ni crea filas nuevas.\n6. Un evento de un mensaje que el sistema no conoce responde 200 sin crear nada, para que el proveedor no lo reintente.\n7. El historial distingue aceptado (el proveedor recibió el pedido) de entregado (el proveedor confirmó la entrega): un envío cuya respuesta fue 2xx figura aceptado y solo pasa a entregado con el evento correspondiente.\n8. Los secretos de firma salen solo de variables de entorno y GET /api/whatsapp/estado no los expone; las pruebas de HU-11 RF-03 y RF-04 siguen en verde con la nueva distinción.",
+      "estimada": "8h",
+      "real": "0s",
+      "dependeDe": [],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1795097860589-confirmar-la-entrega-real-de-cada-whatsa",
+      "pullRequest": 91,
+      "tests": 16
+    },
+    {
+      "id": "REQ-1795097860686",
+      "codigo": "RF-10",
+      "historia": "HU-11",
+      "nombre": "Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "El API ya informa si hay un proveedor de WhatsApp activo (GET /api/whatsapp/estado), pero la pantalla de Secretaría no lo muestra: si no hay proveedor, la Secretaría aprueba un aviso y recién después ve «Falló el envío», sin saber por qué. La bandeja tiene que avisar de entrada si WhatsApp está activo y mostrar, por cada aviso, el estado real que confirma el proveedor (RF de confirmación de entrega).",
+      "condiciones": "1. La bandeja de avisos muestra un cartel con el estado de WhatsApp tomado de GET /api/whatsapp/estado: «WhatsApp activo: Meta», «WhatsApp activo: Twilio» o «WhatsApp no configurado: los avisos aprobados no salen por WhatsApp»; no muestra credenciales ni números de teléfono.\n2. Con WhatsApp no configurado, el botón «Aprobar y enviar» sigue funcionando y el aviso queda «Falló el envío» como hoy, pero el cartel ya lo explicaba antes de apretarlo.\n3. Cada aviso muestra el estado de su envío con lo que confirmó el proveedor: Enviado, Entregado, Leído o Falló con el motivo que informó.\n4. Si GET /api/whatsapp/estado no responde, el cartel dice que no se pudo consultar el estado y la bandeja sigue usable.\n5. Las pruebas de la web cubren los tres estados del cartel (no configurado, Meta y Twilio) y el caso en que no se puede consultar, y la guía visual tiene capturas sacadas con Playwright de la bandeja con y sin WhatsApp activo.",
+      "estimada": "4h",
+      "real": "0s",
+      "dependeDe": [
+        "REQ-1795097860589"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1795097860686-mostrar-en-la-bandeja-de-avisos-si-whats",
+      "pullRequest": 92,
+      "tests": 10
+    },
+    {
+      "id": "REQ-1795263642415",
+      "codigo": "RF-12",
+      "historia": "HU-11",
+      "nombre": "Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "El historial de envíos de WhatsApp y su estado real (aceptado, enviado, entregado, leído, fallido) vive en memoria de WhatsAppConnectorService. Con un reinicio se pierde, y los avisos del proveedor (webhook) que llegan después no encuentran el envío al que corresponden. Esta Tarea lo guarda en la base.",
+      "condiciones": "- 1. Dado un envío con su estado, cuando se reinicia la API, entonces la bandeja de avisos sigue mostrando el envío y su estado real.\n- 2. Dado un envío «Aceptado» antes del reinicio, cuando el proveedor avisa después que fue entregado o leído, entonces el estado se actualiza en el envío correcto.\n- 3. Un aviso viejo del proveedor no hace retroceder el estado de un envío (aceptado → enviado → entregado → leído; fallido se mantiene), antes y después del reinicio.\n- 4. Las pruebas existentes de WhatsApp siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 y 2.",
+      "estimada": "6",
+      "real": "0s",
+      "dependeDe": [
+        "REQ-1795097860589",
+        "REQ-1795097860686"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1795263642415-guardar-en-postgresql-el-historial-de-en",
+      "pullRequest": 103,
+      "tests": 8
+    },
+    {
+      "id": "REQ-1795263642719",
+      "codigo": "RF-13",
+      "historia": "HU-11",
+      "nombre": "Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "GET /api/whatsapp/historial es público y devuelve los teléfonos de los destinatarios. Solo la Secretaría y el Administrador lo necesitan (la bandeja de avisos).",
+      "condiciones": "- 1. Dado un pedido sin sesión, cuando se consulta el historial de WhatsApp, entonces responde 401.\n- 2. Dado un usuario RT de Calle, Firmante o ECA, cuando consulta el historial, entonces responde 403.\n- 3. Dada la Secretaría o el Administrador, cuando consultan el historial, entonces responde 200 y la bandeja de avisos sigue mostrando los envíos.",
+      "estimada": "2",
+      "real": "0s",
+      "dependeDe": [
+        "REQ-1795097860686"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1795263642719-pedir-sesion-de-la-secretaria-para-ver-e",
+      "pullRequest": 101,
+      "tests": 6
+    },
+    {
+      "id": "REQ-1795263643018",
+      "codigo": "RF-14",
+      "historia": "HU-11",
+      "nombre": "Que el estado general de un aviso refleje un envío de WhatsApp que falla después",
+      "tipo": "funcional",
+      "estado": "tested",
+      "descripcion": "Un aviso que ya figura «Enviado» sigue diciéndolo aunque WhatsApp informe después que alguno de sus envíos falló; el motivo solo se ve en la lista de envíos. La Secretaría debería enterarse sin abrir cada aviso.",
+      "condiciones": "- 1. Dado un aviso «Enviado» con un envío que el proveedor informa luego como fallido, cuando la Secretaría abre la bandeja, entonces el aviso muestra que falló un envío y ofrece «Reintentar envío».\n- 2. Dado ese aviso, cuando el reintento sale bien, entonces el aviso vuelve a figurar «Enviado» y el historial conserva el fallo anterior.\n- 3. Un aviso con todos sus envíos entregados o leídos sigue figurando «Enviado», y las pruebas existentes de la bandeja siguen en verde.",
+      "estimada": "4",
+      "real": "0s",
+      "dependeDe": [
+        "REQ-1795097860589",
+        "REQ-1795097860686"
+      ],
+      "rama": "feature/hu-11-hu-11-notificaciones-automatic/req-1795263643018-que-el-estado-general-de-un-aviso-reflej",
+      "pullRequest": 102,
+      "tests": 6
+    }
+  ],
+  "contenedoresBorrados": [
+    {
+      "id": "US-1795097860829",
+      "codigo": "RO-02",
+      "nombre": "Probar el envío real de WhatsApp con el celular de German",
+      "tipo": "operacional",
+      "descripcion": "Hasta ahora el conector con Meta y Twilio solo se probó contra un receptor falso local; nunca salió un mensaje real. Con una cuenta de prueba (el sandbox de Twilio o el número de prueba de Meta Cloud API, que no piden verificar una empresa) se manda un aviso real al celular de German para ver cómo llega, cuánto tarda y qué muestra el enlace. Sirve para decidir con datos antes de desarrollar las tareas de plantilla y confirmación. Las credenciales se cargan solo en el .env local o en la terminal.",
+      "condiciones": "1. Hay un entorno de prueba de WhatsApp activo (el sandbox de Twilio o el número de prueba de Meta Cloud API) con el celular de German autorizado como destinatario.\n2. Las credenciales del proveedor están solo en el .env local, que git ignora, y en ningún archivo del repositorio: buscar el token con git grep no encuentra nada.\n3. GET /api/whatsapp/estado responde configurado true y el proveedor elegido, y no incluye ninguna credencial.\n4. Al apretar «Aprobar y enviar» sobre un aviso de falla crítica de prueba en la bandeja de Secretaría, el WhatsApp llega al celular de German en menos de 5 segundos, con el edificio, el equipo, el estado y el enlace al informe.\n5. El enlace del mensaje abre el informe en el celular sin pedir contraseña.\n6. El envío figura en la bandeja de Secretaría y en GET /api/whatsapp/historial con el id de mensaje que devolvió el proveedor.\n7. Queda anotado en un documento bajo docs/ lo que se observó en el celular (qué llegó, cuánto tardó, qué mostró el enlace) y lo que no funcionó.",
+      "tareas": [
+        {
+          "id": "REQ-1795097860837",
+          "codigo": "RF-01",
+          "historia": "RO-02",
+          "nombre": "Probar el envío real de WhatsApp con el celular de German",
+          "tipo": "funcional",
+          "estado": "to_do",
+          "descripcion": "Hasta ahora el conector con Meta y Twilio solo se probó contra un receptor falso local; nunca salió un mensaje real. Con una cuenta de prueba (el sandbox de Twilio o el número de prueba de Meta Cloud API, que no piden verificar una empresa) se manda un aviso real al celular de German para ver cómo llega, cuánto tarda y qué muestra el enlace. Sirve para decidir con datos antes de desarrollar las tareas de plantilla y confirmación. Las credenciales se cargan solo en el .env local o en la terminal.",
+          "condiciones": "1. Hay un entorno de prueba de WhatsApp activo (el sandbox de Twilio o el número de prueba de Meta Cloud API) con el celular de German autorizado como destinatario.\n2. Las credenciales del proveedor están solo en el .env local, que git ignora, y en ningún archivo del repositorio: buscar el token con git grep no encuentra nada.\n3. GET /api/whatsapp/estado responde configurado true y el proveedor elegido, y no incluye ninguna credencial.\n4. Al apretar «Aprobar y enviar» sobre un aviso de falla crítica de prueba en la bandeja de Secretaría, el WhatsApp llega al celular de German en menos de 5 segundos, con el edificio, el equipo, el estado y el enlace al informe.\n5. El enlace del mensaje abre el informe en el celular sin pedir contraseña.\n6. El envío figura en la bandeja de Secretaría y en GET /api/whatsapp/historial con el id de mensaje que devolvió el proveedor.\n7. Queda anotado en un documento bajo docs/ lo que se observó en el celular (qué llegó, cuánto tardó, qué mostró el enlace) y lo que no funcionó.",
+          "estimada": "2h",
+          "real": "-",
+          "dependeDe": [],
+          "rama": null,
+          "pullRequest": null
+        }
+      ]
+    },
+    {
+      "id": "US-1795097860904",
+      "codigo": "RO-03",
+      "nombre": "Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso",
+      "tipo": "operacional",
+      "descripcion": "Para que los avisos salgan en producción hace falta un número de WhatsApp Business de MAICON, con la empresa verificada por el proveedor y la plantilla del aviso aprobada. Es un trámite con el cliente y con el proveedor que puede llevar días, por eso conviene empezarlo cuanto antes. Depende de que la tarea de plantilla deje escrito el texto final.",
+      "condiciones": "1. MAICON confirmó por escrito qué número de WhatsApp se usa como remitente y quién es la persona de guardia que recibe las alertas; los números no se guardan en el repositorio.\n2. En el panel del proveedor existe una cuenta de WhatsApp Business a nombre de MAICON con la verificación de empresa completa.\n3. La plantilla del aviso, con el texto que dejó la tarea de plantilla, figura como Aprobada en el panel del proveedor.\n4. Un envío de prueba desde ese número llega al celular de la persona de guardia de MAICON.\n5. Las credenciales de producción se cargan solo en las variables de entorno del servidor: ninguna en el repositorio.\n6. Queda un documento breve bajo docs/ con los pasos que se hicieron y a nombre de quién está la cuenta, sin credenciales ni números.",
+      "tareas": [
+        {
+          "id": "REQ-1795097860908",
+          "codigo": "RF-01",
+          "historia": "RO-03",
+          "nombre": "Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso",
+          "tipo": "funcional",
+          "estado": "to_do",
+          "descripcion": "Para que los avisos salgan en producción hace falta un número de WhatsApp Business de MAICON, con la empresa verificada por el proveedor y la plantilla del aviso aprobada. Es un trámite con el cliente y con el proveedor que puede llevar días, por eso conviene empezarlo cuanto antes. Depende de que la tarea de plantilla deje escrito el texto final.",
+          "condiciones": "1. MAICON confirmó por escrito qué número de WhatsApp se usa como remitente y quién es la persona de guardia que recibe las alertas; los números no se guardan en el repositorio.\n2. En el panel del proveedor existe una cuenta de WhatsApp Business a nombre de MAICON con la verificación de empresa completa.\n3. La plantilla del aviso, con el texto que dejó la tarea de plantilla, figura como Aprobada en el panel del proveedor.\n4. Un envío de prueba desde ese número llega al celular de la persona de guardia de MAICON.\n5. Las credenciales de producción se cargan solo en las variables de entorno del servidor: ninguna en el repositorio.\n6. Queda un documento breve bajo docs/ con los pasos que se hicieron y a nombre de quién está la cuenta, sin credenciales ni números.",
+          "estimada": "4h",
+          "real": "-",
+          "dependeDe": [
+            "REQ-1795097860369"
+          ],
+          "rama": null,
+          "pullRequest": null
+        }
+      ]
+    }
+  ],
+  "tareasConservadas": [
+    {
+      "id": "REQ-1794493273993",
+      "codigo": "RF-05",
+      "nombre": "Enviar los avisos a la ECA solo después de la revisión de la Secretaría",
+      "estado": "tested",
+      "dependeDe": [
+        "REQ-1794155773535",
+        "REQ-1791910396892",
+        "REQ-1791910396553"
+      ]
+    },
+    {
+      "id": "REQ-1794493274385",
+      "codigo": "RF-06",
+      "nombre": "Link del aviso de WhatsApp sin contraseña y válido por 7 días",
+      "estado": "tested",
+      "dependeDe": [
+        "REQ-1794493273993"
+      ]
+    },
+    {
+      "id": "REQ-1795263642081",
+      "codigo": "RF-11",
+      "nombre": "Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio",
+      "estado": "tested",
+      "dependeDe": [
+        "REQ-1794493273993",
+        "REQ-1794493274385"
+      ]
+    },
+    {
+      "id": "REQ-1795608267360",
+      "codigo": "RF-15",
+      "nombre": "WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde",
+      "estado": "tested",
+      "dependeDe": []
+    }
+  ]
+}

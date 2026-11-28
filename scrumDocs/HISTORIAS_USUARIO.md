@@ -1,6 +1,6 @@
 # Historias de Usuario -- mant_asc
 
-_Generado automaticamente el 2026-11-28T13:23:07.377Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T13:24:48.327Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -86,14 +86,17 @@ Como Empresa Conservadora (ECA) quiero ver carteles prominentes ante equipos Fue
 1. Dado un ascensor marcado como NO, FUERA DE SERVICIO o con Reparación Urgente, cuando la ECA entra al portal, entonces se visualiza una alerta parpadeante en la parte superior con fotos y detalle de la anomalía.
 2. Dado que la ECA presiona Descargar Remito de Notificación, cuando se descarga el documento, entonces el sistema registra fecha y hora del acuse de recibo legal para MAICON S.R.L.
 
-## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
+## HU-11: HU-11: Avisos automáticos de fallas críticas al Firmante y a la ECA
 
-Como Empresa Conservadora (ECA) quiero recibir mensajes instantáneos de WhatsApp (< 5 seg) ante fallas graves o clausuras con enlace directo a fotos e informe para actuar de inmediato.
+Como Secretaría quiero revisar y aprobar el aviso de una falla crítica (reparación urgente o equipo fuera de servicio) y que le llegue de inmediato al Firmante del edificio por el chat interno de la aplicación, y a la ECA por su Portal y por correo con el informe, para que actúen sin demora. Desde el 28/11/2026 la aplicación no usa WhatsApp: los avisos van por el chat interno (HU-19). La ECA no usa el chat (HU-19, criterio 7): la ECA recibe el aviso en su Portal ECA y por correo. Decisión y detalle: docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md
 
 ### Criterios de Aceptacion
 
-1. Dado que el RT de calle consolida un informe con Alerta de Reparación Urgente o Fuera de Uso, cuando el servidor lo procesa, entonces en menos de 5 segundos envía un mensaje de WhatsApp a través de la API al celular del responsable de la ECA.
-2. Dado el mensaje de WhatsApp recibido, cuando el usuario abre el enlace adjunto, entonces puede visualizar de forma directa la fotografía de la falla y el informe técnico firmado.
+1. Dado que el RT de calle consolida un informe con Alerta de Reparación Urgente o Fuera de Servicio, cuando el servidor lo procesa, entonces crea un aviso «Pendiente de revisión» en la bandeja de la Secretaría y todavía no sale ningún mensaje.
+2. Dado un aviso pendiente, cuando la Secretaría o el Administrador lo aprueba, entonces el Firmante del edificio recibe en el chat interno un mensaje con el edificio, el equipo, el detalle de la falla y el enlace al informe, y queda registrado quién aprobó y cuándo.
+3. Dado un aviso aprobado, cuando se envía, entonces la ECA lo recibe en su Portal ECA (alerta con acuse de recibo) y por correo con el PDF legal y el enlace; la ECA no usa el chat interno.
+4. Dado el enlace del aviso, cuando el Firmante o la ECA lo abre, entonces ve la fotografía de la falla y el informe técnico firmado sin pedir contraseña, hasta 7 días después del envío.
+5. Dado que el mensaje del chat o el correo no se pudo enviar, cuando la Secretaría mira la bandeja de avisos, entonces el aviso figura «Falló el envío» con el motivo y puede reintentarlo sin duplicar lo que ya salió.
 
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 

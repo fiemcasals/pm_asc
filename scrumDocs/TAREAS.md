@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-28T13:23:07.770Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T13:24:49.994Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -254,6 +254,15 @@ Implementar la tabla interactiva debajo del mapa con filtros en tiempo real, vis
 
 1. La tabla dinamica muestra las columnas de direccion, inspector, estado de visita, fecha/hora, checklist, firmante AGC y acciones.
 2. Permite abrir el visor de fotos e informe y ejecutar Enviar Remito a ECA o Reclamar a Admin segun el estado de la visita.
+
+### RF-03: [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera» (Funcional)
+
+En el detalle de una visita del backoffice la foto `frente` se rotula «Frente del edificio» (backoffice.logic.ts), mientras que el Portal Firmante y HU-17 RF-11 la llaman «Frente de cabina y botonera» (decisión del 23/11/2026: la foto es de la cabina, no del edificio). Hay que unificar el nombre para que nadie busque la fachada.
+
+**Condiciones de aprobación**
+
+1. Dado el detalle de una visita en el backoffice, cuando tiene la foto del frente, entonces se rotula «Frente de cabina y botonera» y no «Frente del edificio».
+2. Las pruebas del backoffice (backoffice-acciones.spec.ts y las que nombran la etiqueta) se actualizan y siguen en verde, y ninguna parte de la aplicación vuelve a llamar «del edificio» a esa foto.
 
 ## HU-06: HU-06: Gestión de Fallas Críticas y Deslinde Legal
 
@@ -655,12 +664,14 @@ Hallazgo de QA del 24/11/2026 al medir HU-08 RF-06 (rama testing, 6220a60). En t
 5. Dada esa alerta, cuando se reinicia la API, entonces sigue figurando: sale de lo que ya se guarda en la base (los reportes de parada) y no de la memoria.
 6. Los scripts de entrega de HU-10 (RF-03 a RF-07), HU-11 (RF-04 y RF-06) y HU-15 (RF-02), que hoy dependen de ALT-CP-001, ALT-MAICON-001 y ALT-MAICON-002, crean su alerta por este camino y pasan sin las máquinas de ejemplo; la entrega informa cuántas comprobaciones pasan antes y después de cada script.
 
-## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
+## HU-11: HU-11: Avisos automáticos de fallas críticas al Firmante y a la ECA
 
 ### RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría (Funcional)
 
 El cliente pidió que ningún aviso salga automático: WhatsApp y PDF a la ECA se envían recién cuando la Secretaría revisa la falla y aprueba el envío (P4 y cuestionario 06/11). Hoy el disparo es automático e inmediato (< 5 s, POST /api/whatsapp/trigger-alerta-critica). Hay que reemplazarlo por una bandeja "Pendiente de revisión" en la Secretaría con la acción "Aprobar y enviar". El aviso va a la ECA y también al RT Firmante del edificio.
 Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+Nota del 28/11/2026: la aplicación ya no usa WhatsApp; los avisos van por el chat interno (docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md). Lo que esta Tarea dice de WhatsApp es historia: el aviso sigue sin salir hasta que la Secretaría lo aprueba, pero ahora sale por el chat (RF-16 de HU-11) y el código viejo se retira en RF-17.
 
 **Condiciones de aprobación**
 
@@ -669,10 +680,12 @@ Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario
 3. El endpoint de disparo automático ya no envía nada sin aprobación: un pedido de envío de un aviso no aprobado responde 409 con el motivo.
 4. El historial de envíos registra quién aprobó cada aviso y la fecha y hora de la aprobación.
 
-### RF-06: Link del aviso de WhatsApp sin contraseña y válido por 7 días (Funcional)
+### RF-06: Link del aviso sin contraseña y válido por 7 días (Funcional)
 
-El cliente aceptó que el link del WhatsApp abra el informe sin pedir contraseña, con vencimiento de 7 días (cuestionario 06/11). El link tiene que ser imposible de adivinar y mostrar solo el informe de ese aviso.
+El cliente aceptó que el link del aviso abra el informe sin pedir contraseña, con vencimiento de 7 días (cuestionario 06/11). El link tiene que ser imposible de adivinar y mostrar solo el informe de ese aviso.
 Fuente: respuestas de MAICON en DEFINICIONES-CLIENTE (12/11/2026) y cuestionario MAICON del 06/11/2026.
+
+Nota del 28/11/2026: la aplicación ya no usa WhatsApp; los avisos van por el chat interno (docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md). El enlace viaja ahora en el mensaje del chat al Firmante y en el correo a la ECA.
 
 **Condiciones de aprobación**
 
@@ -700,6 +713,8 @@ Seis scripts de entrega fallan hoy aunque la app anda bien, porque se escribiero
 
 Los avisos de falla crítica (pendientes de revisión, aprobados, con sus envíos) y los enlaces sin contraseña válidos 7 días están en memoria de AvisosService. Un reinicio borra los avisos que la Secretaría todavía no revisó y deja sin efecto los enlaces que ya llegaron por WhatsApp. Esta Tarea los guarda en la base.
 
+Nota del 28/11/2026: la aplicación ya no usa WhatsApp; los avisos van por el chat interno (docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md). Los envíos de WhatsApp que guarda se retiran en RF-17; el aviso y su enlace siguen guardándose.
+
 **Condiciones de aprobación**
 
 - 1. Dado un aviso «Pendiente de revisión», cuando se reinicia la API, entonces sigue pendiente en la bandeja de la Secretaría y se puede aprobar.
@@ -707,9 +722,11 @@ Los avisos de falla crítica (pendientes de revisión, aprobados, con sus envío
 - 3. Dado un aviso ya aprobado y enviado, cuando se reinicia la API, entonces no se vuelve a enviar y conserva el estado de cada envío.
 - 4. Las pruebas existentes de avisos y del enlace siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 a 3.
 
-### RF-15: WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde (Funcional)
+### RF-15: Diagnóstico de seguridad con sesión: solo quien corresponde (las rutas de WhatsApp se retiraron) (Funcional)
 
 Hoy las rutas que mandan WhatsApp (POST /api/whatsapp/enviar-alerta y trigger-alerta-critica), el formateador (formatear), el estado del proveedor (GET /api/whatsapp/estado) y el diagnóstico de RLS (GET /api/seguridad/rls) no piden sesión: cualquiera puede hacer que el número de la empresa mande un WhatsApp a un teléfono que elija (spam y costo por mensaje de Meta) y ver si hay proveedor configurado y cuál. Pedir sesión: enviar, disparar, formatear y ver el estado, solo Secretaría y Administrador; el diagnóstico de RLS, solo Administrador. Los webhooks de Meta y Twilio siguen sin sesión porque los llaman los proveedores, y ya rechazan lo que no viene firmado: se fija con pruebas. En el portal de la ECA, el botón manual de WhatsApp pasa a mostrarse solo a quien puede usarlo y a mandar con la sesión. Fuera de alcance, para otra tarjeta: ese botón manda a un teléfono fijo y con una dirección localhost fija. Fuente: revisión de seguridad del 18/11/2026 (serie que empezó con el Portal ECA).
+
+Nota del 28/11/2026: la aplicación ya no usa WhatsApp; los avisos van por el chat interno (docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md). Las rutas de WhatsApp que esta Tarea protegía se retiran en RF-17; el diagnóstico de seguridad (GET /api/seguridad/rls) sigue.
 
 **Condiciones de aprobación**
 
@@ -718,6 +735,55 @@ Hoy las rutas que mandan WhatsApp (POST /api/whatsapp/enviar-alerta y trigger-al
 3. Los webhooks de WhatsApp siguen sin sesión (los llaman Meta y Twilio) y rechazan todo lo que no viene firmado: queda fijado con pruebas.
 4. En el portal de la ECA, el botón «Despachar Alerta WhatsApp» solo aparece para la Secretaría y el Administrador, y el pedido lleva la sesión.
 5. La bandeja de Avisos sigue mostrando el estado del proveedor y el historial de envíos a la Secretaría y al Administrador.
+
+### RF-16: Los avisos aprobados por la Secretaría llegan al Firmante por el chat interno (Funcional)
+
+Hoy, al aprobar un aviso de falla crítica, salen un WhatsApp a la ECA, un WhatsApp al Firmante y un correo con el PDF legal a la ECA. El cliente quiere usar el chat interno de la aplicación (HU-19) y no WhatsApp. Esta Tarea pone el chat en lugar de los WhatsApp: al aprobar, la Secretaría (o el Administrador) le manda al Firmante del edificio un mensaje privado desde su propio usuario, con la etiqueta del edificio y del equipo que ya usa el chat (HU-19 RF-07), el detalle de la falla y el enlace al informe. La ECA queda fuera del chat (HU-19, criterio 7: las ECA y los ajenos no tienen acceso): sigue recibiendo el aviso en su Portal ECA (alerta con acuse, HU-10) y por correo con el PDF legal, que ya existen. El estado del aviso es «Enviado» cuando el mensaje del chat y el correo salieron y «Falló el envío» si alguno no, con el motivo y el reintento que ya existen. Es el reemplazo del canal; retirar el código de WhatsApp es la Tarea siguiente. Decisión y diseño: docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md. A confirmar por el cliente: que la ECA reciba el aviso por Portal y correo y no por el chat.
+
+**Condiciones de aprobación**
+
+1. Dado un aviso pendiente, cuando la Secretaría o el Administrador lo aprueba, entonces el Firmante del edificio recibe en el chat un mensaje privado de quien aprobó, con la etiqueta del edificio y del equipo, el detalle de la falla y el enlace al informe, y queda registrado quién aprobó y cuándo.
+2. Dado un edificio cuyo Firmante no tiene usuario en el chat, cuando se aprueba el aviso, entonces el aviso queda «Falló el envío» con el motivo escrito («el Firmante no tiene usuario en el chat»), el aviso no se pierde y la Secretaría puede reintentar cuando se corrija.
+3. Dado un aviso aprobado, cuando la ECA lo necesita, entonces lo recibe por su Portal ECA y por el correo con el PDF legal, como hasta ahora; ningún mensaje del aviso va a la ECA por el chat.
+4. Dado un reintento de un aviso cuyo correo falló pero cuyo mensaje del chat ya salió, cuando la Secretaría reintenta, entonces no se manda de nuevo el mensaje del chat y el aviso pasa a «Enviado» si el correo sale.
+5. Dado el mensaje del chat, cuando el Firmante abre el enlace, entonces ve la foto de la falla y el informe firmado sin pedir contraseña, y el enlace vence a los 7 días del envío.
+6. Las pruebas de avisos y del chat siguen en verde y hay pruebas nuevas, unitarias, por HTTP y contra PostgreSQL real, de los criterios 1, 2 y 4.
+
+### RF-17: [FIX] Retirar el envío por WhatsApp de la API (Funcional)
+
+La aplicación ya no usa WhatsApp (decisión del 28/11/2026, docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md). Cuando los avisos salen por el chat interno, el módulo de WhatsApp de la API sobra y es un riesgo: tiene rutas públicas de webhook, variables de entorno de proveedor y una tabla de historial de envíos. Esta Tarea retira del servidor todo lo de WhatsApp: la carpeta apps/api/src/whatsapp (conector, proveedor Meta y Twilio, formateador, disparador, webhook, historial), las rutas /api/whatsapp/*, sus variables de entorno, lo que AvisosService, el tipo CanalAviso y la configuración le piden, y sus pruebas. Los avisos que ya se guardaron con envíos de WhatsApp se siguen leyendo: esos envíos pasan a figurar como un canal histórico y no se envía nada más. Se hace después de que los avisos salgan por el chat.
+
+**Condiciones de aprobación**
+
+1. Dado el servidor, cuando se piden las rutas /api/whatsapp/estado, /api/whatsapp/enviar-alerta, /api/whatsapp/trigger-alerta-critica y los webhooks de Meta y de Twilio, entonces responden 404 y la carpeta apps/api/src/whatsapp ya no existe.
+2. Dado un aviso que se aprueba, cuando se envía, entonces no se llama a ningún proveedor de WhatsApp: los canales del aviso son sólo el chat al Firmante y el correo a la ECA, y el tipo CanalAviso ya no tiene canales de WhatsApp (salvo el histórico del criterio 3).
+3. Dado un aviso guardado antes con envíos de WhatsApp, cuando se lo lee, se lo lista o se lo reintenta, entonces se lee igual y sus envíos viejos figuran con el canal histórico «whatsapp_retirado»; una migración de datos reescribe esos canales y elimina la tabla del historial de envíos de WhatsApp (whatsapp_envios), y una prueba con la base real lo comprueba.
+4. Dada la configuración, cuando se mira config.ts y .env.example, entonces no hay variables WHATSAPP_*, ni de Meta ni de Twilio; y si un .env viejo todavía las trae, la API arranca igual y las ignora, avisándolo una sola vez en el registro.
+5. Las pruebas propias de WhatsApp (whatsapp*.spec y e2e/int) se retiran junto con el código; el resto de las pruebas de la API (npm run verify y npm run test:int) sigue en verde, y apps/api no menciona WhatsApp salvo el canal histórico y la prueba de la migración.
+
+### RF-18: [FIX] Retirar WhatsApp de las pantallas (Funcional)
+
+Las pantallas todavía hablan de WhatsApp: la bandeja de avisos de la Secretaría («WhatsApp activo», el estado de cada envío y el historial), el Portal ECA y las alertas críticas, el menú y los estilos. Esta Tarea las pone al día con el canal nuevo: por cada aviso se ve el estado del mensaje al Firmante por el chat y el del correo a la ECA, y los envíos viejos de WhatsApp se muestran como «WhatsApp (retirado)», sólo para leer. Se hace después de retirar WhatsApp de la API. Decisión: docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md
+
+**Condiciones de aprobación**
+
+1. Dada la bandeja de avisos de la Secretaría, cuando se la abre, entonces cada aviso muestra el estado del mensaje al Firmante por el chat interno y el del correo a la ECA, y no aparece «WhatsApp activo» ni el estado ni el historial de envíos de WhatsApp.
+2. Dado un aviso con envíos viejos de WhatsApp, cuando se lo mira, entonces esos envíos figuran como «WhatsApp (retirado)», sin botón de reintento.
+3. Dado el Portal ECA y las alertas críticas, cuando se los mira, entonces ningún texto ni ícono nombra WhatsApp (donde decía que el aviso llegaba por WhatsApp, dice que llega por el Portal y por correo).
+4. Dado el menú, el buscador y las hojas de estilo, cuando se revisan, entonces no ofrecen nada de WhatsApp ni quedan clases de WhatsApp sin uso.
+5. La web compila, sus pruebas siguen en verde y una prueba con Playwright, en un celular de 360 px, recorre la bandeja de avisos con un aviso nuevo y uno viejo, con capturas.
+
+### RF-19: [FIX] Retirar WhatsApp de la documentación, la configuración y los datos de demo (Funcional)
+
+Después de retirar WhatsApp del servidor y de las pantallas, quedan menciones en la documentación (el manual de uso, el README, unos 40 documentos de entrega en docs/pruebas), en la configuración de ejemplo y en los scripts de demo. Esta Tarea las deja al día: lo que documentaba tareas que ya no existen se archiva (con un índice que explica por qué), lo que sigue vigente se corrige, y el manual de uso explica cómo llega un aviso ahora (chat interno al Firmante; Portal y correo a la ECA). Se hace al final. Decisión: docs/decisiones/2026-11-28-retiro-de-whatsapp/README.md
+
+**Condiciones de aprobación**
+
+1. Dado el repositorio, cuando se busca «whatsapp» sin distinguir mayúsculas, entonces sólo aparece en docs/archivo/whatsapp/ (lo archivado), en docs/decisiones/2026-11-28-retiro-de-whatsapp/ y en la migración que retira el historial.
+2. Dados los documentos de entrega, guías y scripts de docs/pruebas que describían tareas borradas, cuando se mira docs/pruebas, entonces están en docs/archivo/whatsapp/ con un README que dice qué eran y por qué se archivaron, y los que siguen vigentes (revisión de la Secretaría, enlace, persistencia de avisos, seguridad) ya no nombran WhatsApp.
+3. Dado el manual de uso, cuando se lee la parte de avisos de fallas críticas, entonces explica cómo llega un aviso al Firmante (chat interno) y a la ECA (Portal ECA y correo), con las pantallas actuales.
+4. Dados el README, .env.example y los scripts de demo (scripts/visual-run.mjs y los de datos de demo), cuando se los lee, entonces no piden credenciales ni números de WhatsApp.
+5. Los scripts de entrega que siguen vigentes corren sin errores después del cambio.
 
 ## HU-12: HU-12: Interfaz NEO Linear, Sidebar Colapsable y Buscador Global Inline
 
@@ -978,6 +1044,16 @@ Hoy ningún mapa de la aplicación se dibuja en el sitio desplegado: el archivo 
 4. El script que genera el mapa sigue funcionando, la guía de HU-16 RF-03 explica que el archivo va en el repositorio y cómo actualizarlo (generar de nuevo y subirlo), y la atribución «© OpenStreetMap contributors» sigue visible en el mapa.
 5. El sitio desplegado sirve el archivo: pidiendo los primeros bytes del mapa con Range responde 206 y empieza con «PMTiles», y sus mapas se dibujan.
 
+### RF-07: [FIX] La guía de Android incluye el mapa en las pantallas donde se usa (Funcional)
+
+La guía docs/android/INSTALAR-Y-PROBAR-EN-ANDROID.md se escribió el 19/11/2026, cuando el mapa nuevo sólo estaba en Estado del sistema. Desde HU-16 RF-04 y RF-05 el mapa también está en la ficha del consorcio, el alta de consorcio, la Secretaría, el semáforo y el Mapa del RT, con pines por estado. La guía no dice cómo probar eso en el celular. Esta Tarea la completa, sin cambiar código.
+
+**Condiciones de aprobación**
+
+1. Dada la guía, cuando se lee la parte de qué probar, entonces lista las pantallas donde está el mapa y qué se mira en cada una (calles con nombre, pines por estado, abrir un pin).
+2. Dada la prueba sin señal, cuando se la sigue paso a paso, entonces incluye una pantalla con pines, además de Estado del sistema, y qué se espera ver con la red cortada y con el mapa guardado.
+3. El registro de la prueba (tabla al final de la guía) tiene una columna por pantalla del mapa, y los enlaces de la guía siguen funcionando.
+
 ## HU-17: HU-17: Inspección técnica por solapas
 
 ### RF-01: Motor del checklist configurable (Funcional)
@@ -1105,6 +1181,17 @@ Decisión de producto del 23/11/2026 (German): para que cada visita quede audita
 4. Dado un equipo fuera de servicio, cuando el RT consolida, entonces no se le piden estas fotos; y si lo vuelve a poner en uso, se le piden. Dado un cambio de tipo de equipo (por ejemplo de tracción a hidráulico), la foto de cables deja de exigirse.
 5. Dada una visita sin señal, cuando el RT saca las fotos y cierra la app, entonces al volver a abrirla las fotos siguen ahí, con el resto del borrador, y el informe las lleva al enviarse.
 6. Las pruebas existentes del checklist y del informe siguen en verde y hay pruebas nuevas de la regla (qué fotos exige cada tipo de equipo y cuándo se puede consolidar).
+
+### RF-12: [FIX] La lista de paradas vuelve a no traer las imágenes (Funcional)
+
+Desde HU-10 RF-08 cada parada de la lista trae fotoUrl, la primera foto completa en base64, para mostrarla en la alerta del Portal ECA. Eso rompió el criterio de HU-17 RF-03 («la lista no devuelve las imágenes, sólo cuántas hay»): paradas.spec.ts falla en dev y en testing y npm run verify de la API no pasa. Además repite el problema de peso que el chat resolvió en HU-19 RF-05: cada consulta de la lista baja una foto entera por parada. Esta Tarea devuelve a la lista sólo la cantidad de fotos y hace que la foto de la alerta del Portal ECA se pida aparte, con sesión, a quien corresponde. Es un arreglo de un cambio de otra Tarea que quedó `tested` con una prueba en rojo.
+
+**Condiciones de aprobación**
+
+1. Dada la lista de reportes de parada, cuando se la pide, entonces cada reporte trae la cantidad de fotos y ninguna imagen (ni base64 ni data URL), y paradas.spec.ts vuelve a pasar completo.
+2. Dada una alerta del Portal ECA generada por una parada, cuando la ECA la abre, entonces ve la foto de la cabina, pedida con una ruta aparte que exige sesión, sólo la sirve a quien puede ver esa alerta (401 sin sesión, 404 a un tercero) y no cambia lo que ve hoy.
+3. Dados 5 reportes con una foto de 500 KB cada uno, cuando se pide la lista, entonces la respuesta pesa menos de 10 KB (medido).
+4. npm run verify de la API termina sin fallas en dev, con pruebas nuevas por HTTP y contra PostgreSQL real de los criterios 1 y 2.
 
 ### RNF-01: Visita en curso sin señal (No funcional)
 

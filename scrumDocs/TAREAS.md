@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-28T15:16:23.897Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T15:23:16.528Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -553,6 +553,17 @@ Hallazgo de QA del 24/11/2026 sobre HU-08 RF-07 (rama testing, 6220a60). Al cerr
 3. Dado el informe del criterio 1, cuando la API responde, entonces rechaza con 400, nombra el equipo que no es del edificio y no guarda ningún informe (la fila no existe en la base).
 4. Los criterios 1 a 5 de HU-08 RF-07 siguen pasando: informe firmado → «Recorrida», «Sin firma» sin autorizar, equipo fuera de servicio fuera de «Recorrida», reenvío sin duplicar ni pisar una firma autorizada, y la visita sigue después de reiniciar la API.
 5. Hay una prueba automática por HTTP y otra contra PostgreSQL real que reproducen el caso «M9» del criterio 1 y fallan con el código actual de testing.
+
+### RF-10: [FIX] Los scripts de entrega que prueban la API en vivo con las máquinas de ejemplo (MAQ-CORRIENTES, MAQ-SANTAFE, MAQ-CALLAO) usan equipos que existen (Funcional)
+
+HU-08 RF-06 retiró las máquinas de ejemplo de la API en vivo, pero 21 scripts RF-0X-entrega.sh de docs/pruebas (HU-05, HU-06, HU-08, HU-10, HU-11 y HU-17) siguen nombrando MAQ-CORRIENTES, MAQ-SANTAFE o MAQ-CALLAO. Se comprobó uno: RF-02-entrega.sh de HU-05 da 4 bien y 15 con error («Equipo no encontrado», 404), con o sin los cambios de HU-05 RF-03 (28/11/2026). Los otros 20 no se corrieron: puede que algunos prueben sólo con la aplicación en memoria y no dependan de eso. Esta Tarea corre cada uno contra la API en vivo con los datos de demo (RF-02-datos-demo.sh de HU-04), separa los que fallan por esa causa de los que no, y a los primeros les cambia el equipo con el que prueban (uno de los datos de demo, o uno que crean y borran al terminar). No cambia lo que cada script verifica.
+
+**Condiciones de aprobación**
+
+1. Dado cada script de docs/pruebas que nombra MAQ-CORRIENTES, MAQ-SANTAFE o MAQ-CALLAO, cuando se corre contra la API en vivo con los datos de demo cargados, entonces termina con 0 errores; el que no pueda terminar así tiene en su RF-0X-entrega.md el motivo por escrito.
+2. Los scripts usan un equipo que existe: uno de los datos de demo, o uno que el propio script crea y borra al terminar, sin dejar datos ni depender de que otro script haya corrido antes.
+3. No se quita ninguna comprobación ni se baja una condición para que pase: lo único que cambia es el equipo con el que se prueba, y el RF-0X-entrega.md de cada script lo dice.
+4. Hay una tabla con cada script y su resultado antes (bien / con error) y después, en docs/decisiones/ o en el README de la Tarea, y la lista de los que ya no nombran equipos retirados (git grep de los tres nombres en docs/pruebas no devuelve scripts).
 
 ## HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras
 

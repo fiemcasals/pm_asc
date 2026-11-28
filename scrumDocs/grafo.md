@@ -1,6 +1,6 @@
 # Grafo de Dependencias -- mant_asc
 
-_Generado automaticamente el 2026-11-28T15:16:25.514Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T15:23:18.155Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ```mermaid
 graph TD
@@ -68,6 +68,7 @@ graph TD
     REQ_1795266849123["RF-07: Que el informe cerrado por el RT cree la visita en el Portal Firmante"]
     REQ_1795480710843["RF-08: El Portal Firmante pide la foto de cables sólo a los equipos con cables de tracción"]
     REQ_1795527710974["RF-09: Que el informe cerrado sólo cree visitas en las máquinas de su propio edificio"]
+    REQ_1795879393954["RF-10: [FIX] Los scripts de entrega que prueban la API en vivo con las máquinas de ejemplo (MAQ-CORRIENTES, MAQ-SANTAFE, MAQ-CALLAO) usan equipos que existen"]
   end
   subgraph US_1791560829397["HU-09: HU-09: Portal de Monitoreo de Cobertura para Empresas Conservadoras"]
     REQ_1791910396167["RF-01: API de Cobertura de Flota por Empresa Conservadora"]

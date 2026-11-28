@@ -3,7 +3,7 @@
 Guía para abrir la app que corre en una PC de desarrollo desde el Chrome de un celular Android, instalarla como app y probar lo que el RT necesita en la calle: **que funcione sin wifi y sin señal**.
 
 - **Para quién:** quien vaya a probar en un celular (desarrollo y QA). No hace falta saber de Android.
-- **Última revisión:** 19/11/2026, con la app que incluye el mapa de CABA sin conexión (HU-16 RF-03).
+- **Última revisión:** 28/11/2026, con el mapa de CABA sin conexión (HU-16 RF-03) y el mapa nuevo en las 8 pantallas donde se usa (HU-16 RF-04 y RF-05). En el 5.1 se corrigió la ruta a la pantalla del mapa: «Estado del Sistema» ya no existe, ahora es **Mapa sin conexión**.
 - **Estado:** todo lo de esta guía se probó en Chromium de escritorio con Playwright. **Todavía no se corrió en un Android real**: los pasos del celular (certificado, `adb`, gestos táctiles) están escritos a partir de cómo funciona Android y hay que confirmarlos en la primera prueba. Al final hay una tabla para anotar el resultado.
 
 ## 1. Por qué hay que hacer todo esto
@@ -92,7 +92,7 @@ Usuario de desarrollo: `admin` / `Admin-Desarrollo-2026` (solo existe en la base
 
 ### 5.1 Mapa de CABA sin señal (RF-03)
 
-1. Entrá a la app e iniciá sesión. Andá a **Estado del Sistema** y bajá hasta **«Mapa de CABA para usar sin señal»**.
+1. Entrá a la app e iniciá sesión. Andá a la pestaña **Mapa sin conexión** (en el menú de la izquierda; en el celular, la barra de abajo la llama **Sin conexión**): ahí está la tarjeta **«Mapa de CABA para usar sin señal»**.
 2. **Mapa en línea:** tiene que dibujarse con calles, parques y nombres. Un dedo mueve la página; **dos dedos** mueven y acercan el mapa («Usá dos dedos para mover el mapa»). Probá el pellizco para acercar hasta ver una cuadra.
 3. Tocá **«Descargar mapa para usar sin señal»** (~11 MB). Tiene que mostrar la barra de avance y terminar en **«Mapa guardado»**. Si se corta, **Cancelar** y reintentar tiene que dejar todo consistente.
 4. **Cortá la conexión de verdad:**
@@ -102,7 +102,45 @@ Usuario de desarrollo: `admin` / `Admin-Desarrollo-2026` (solo existe en la base
 5. **Sin mapa guardado y sin red:** en Chrome, Ajustes del sitio › Borrar datos de `localhost`; sin red, abrí otra vez la pantalla. Tiene que decir **«Mapa sin descargar: conectate a una red para bajarlo»**. Al volver la conexión, el mapa se dibuja solo.
 6. Anotá: fluidez del zoom y del desplazamiento, si las calles se leen al tamaño de la pantalla, si se calienta o se pone lento, si se cierra el navegador.
 
-### 5.2 Instalarla como app (PWA)
+### 5.2 El mapa en las demás pantallas (HU-16 RF-04 y RF-05)
+
+El mismo mapa (el mismo archivo, sin pedirle nada a Internet) está en **8 pantallas**. Esta tabla dice dónde está cada una y qué tiene que verse. Se recorrió entera, con un usuario de cada rol, en un navegador de escritorio que emula un celular de 360 px (Playwright, HU-16 RF-07: [RF-07-navegador.cjs](../pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/RF-07-navegador.cjs)). **En un Android real queda por confirmar.**
+
+Usuarios de demo (los carga `bash docs/pruebas/hu-04-hu-04-semaforo-de-control-mens/RF-02-datos-demo.sh`), todos con clave `Demo-Clave-2026`: `demo.secretaria` para las pantallas 1 a 6 y `rt.beto` para la 7.
+
+| # | Pantalla y cómo se llega | Qué tiene que verse |
+|---|---|---|
+| 1 | **Ficha del edificio, en lectura.** Secretaría › elegir «DEMO Santa Fe 3200» en la lista | El mapa de la zona, con 1 pin: el edificio |
+| 2 | **Ficha, en edición.** En la ficha, **✏️ Editar Datos Operativos y Equipos** | El mapa con 1 pin que se puede arrastrar; abajo, «Punto PostGIS: …» cambia con el pin. **No guardes** |
+| 3 | **Alta de consorcio.** Secretaría › **+ Alta de Nuevo Consorcio** | El mapa de CABA **sin pin**; al tocarlo se fija un pin y aparece el punto. **No guardes** |
+| 4 | **Vista de mapa.** Secretaría › **🗺️ Vista Mapa** | Un pin por edificio con su nombre (con los datos de demo, 4), y un aviso de los edificios sin ubicación |
+| 5 | **Monitoreo.** Secretaría › solapa **Monitoreo** | El mismo mapa (4 pines) arriba de la tabla de visitas |
+| 6 | **Semáforo.** Secretaría › solapa **Semáforo**, fecha **25/11/2026** | 4 pines con su nombre: **3 rojos y 1 verde** (DEMO Santa Fe 3200). Leyenda: **verde** = inspeccionado este mes, o pendiente del día 1 al 10; **amarillo** = pendiente del día 11 al 20; **rojo** = pendiente del día 21 en adelante. Abajo: «1 edificio no tiene ubicación cargada y no aparece en el mapa, pero sí en la lista» |
+| 7 | **Mapa del RT.** Entrá como `rt.beto` (es la pantalla inicial; con el GPS prendido) | 2 pines, DEMO Cabildo 1540 y DEMO Corrientes 100, pintados según el horario del edificio y la hora del celular: **verde** abierto ahora, **rojo** cerrado, **amarillo** a coordinar (leyenda abajo). El sábado 28/11 a mediodía los dos salieron en rojo, «Cerrado» |
+| 8 | **Mapa sin conexión.** Barra de abajo: **Sin conexión** | El mapa base solo (sin pines) y el botón **«Descargar mapa para usar sin señal»** (la prueba del 5.1) |
+
+![Semáforo en un celular de 360 px: leyenda de colores, mapa con tres pines rojos y uno verde con sus nombres, y el aviso de un edificio sin ubicación](../pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/imagenes/RF-07-semaforo.png)
+
+**Cómo mirarlos en el celular**
+
+1. **Calles y nombres:** tienen que leerse al tamaño de la pantalla. Cuando dos nombres se pisan se oculta uno y se conserva el del estado más urgente (el rojo): acercá para ver los demás.
+2. **Gestos:** arrastrar con **un dedo** mueve el mapa y el **pellizco con dos dedos** lo acerca. Sólo la tarjeta de «Mapa sin conexión» pide dos dedos para mover el mapa (así la página no se queda trabada al desplazarla).
+3. **Ancho:** el mapa tiene que entrar en el ancho de la pantalla sin cortarse. Las excepciones conocidas son la **ficha del edificio** (1 y 2) y el **alta de consorcio** (3): esas pantallas ya eran más anchas que el celular antes del mapa nuevo, y el mapa queda cortado a la derecha y se desplaza con ellas (HU-16 RF-05; arreglar ese diseño no es de esta tarea). Monitoreo, la vista de mapa, el Semáforo y el Mapa del RT sí tienen que caber.
+4. **Tocar un pin:** en el **Mapa del RT** abre la tarjeta del edificio, con **Verificar ubicación**; en el **Semáforo**, un pin rojo abre el panel de ese edificio. En las demás pantallas el pin sólo muestra el nombre.
+5. **Tema claro y oscuro:** si cambiás el tema de la app (el botón de la luna o el sol, arriba a la derecha), el mapa cambia con él.
+6. Anotá lo que no coincida con esta tabla: es lo que hay que corregir (en la guía o en la app).
+
+**La prueba importante: el Mapa del RT sin señal, con el mapa ya bajado**
+
+1. Con conexión, entrá como `rt.beto` y esperá a que se dibuje el mapa con sus pines. Tocá **«Descargar mapa para usar sin señal»** (debajo del mapa) hasta ver **«✓ Mapa guardado en este celular · 10,7 MB · …»**.
+2. **Cortá la conexión de verdad** (el paso 4 del 5.1: frená el `preview` o desenchufá el cable; el modo avión solo no alcanza con el USB) y **recargá la página**.
+3. Tiene que verse el cartel amarillo **«Sin conexión: los edificios son los últimos datos descargados, de las HH:MM del DD/MM/AAAA.»**, el **mapa dibujado desde el celular** con las calles y los **pines con sus nombres**, y la leyenda. El color de cada pin se calcula con la hora que marca el celular.
+
+![Mapa del RT en un celular de 360 px sin conexión: cartel amarillo «Sin conexión: los edificios son los últimos datos descargados…», mapa con los pines de DEMO Cabildo 1540 y DEMO Corrientes 100, «Mapa guardado en este celular» y la leyenda](../pruebas/hu-16-hu-16-mapa-del-rt-y-llegada-al/imagenes/RF-07-mapa-rt-sin-conexion.png)
+
+4. Al volver la conexión, el cartel tiene que desaparecer. **Sin verificar:** esto último no está comprobado en un celular, sólo escrito a partir de cómo funciona la pantalla.
+
+### 5.3 Instalarla como app (PWA)
 
 1. En Chrome, menú ⋮ › **Instalar app** (o «Agregar a la pantalla principal»).
 2. Abrila desde el ícono: tiene que abrir a pantalla completa, sin la barra del navegador.
@@ -110,7 +148,7 @@ Usuario de desarrollo: `admin` / `Admin-Desarrollo-2026` (solo existe en la base
 
 **Sin verificar:** el manifest tiene un único ícono SVG (`icon.svg`, tamaño `any`). Si Chrome no ofrece «Instalar app», es un hallazgo a registrar (probablemente haya que sumar íconos PNG de 192 y 512 px); el uso sin conexión funciona igual desde una pestaña común.
 
-### 5.3 Resto de la app
+### 5.4 Resto de la app
 
 Con el mismo cable, recorré las pantallas del RT (recorrido, checklist, firma) con el celular en vertical y apaisado, y fijate en: tamaño de los botones al tacto, texto cortado, teclado que tapa campos y rendimiento.
 
@@ -161,6 +199,8 @@ Para la prueba sin conexión por Wi-Fi alcanza con frenar el `preview` o apagar 
 - **Es la primera vez que se corre en un Android real.** Si algún paso de esta guía no coincide con lo que se ve en el celular, corregir la guía en la misma tarea.
 - **No se probó en Safari ni en iPhone.** Esta guía es solo de Android.
 - **No se midió la memoria ni la batería** con el mapa abierto un rato largo.
+- **Las 8 pantallas del mapa (5.2) se recorrieron en un navegador de escritorio que emula 360 px, no en un Android real**: la tabla dice qué tiene que verse, pero el tacto (arrastrar el pin de la ficha, tocar el mapa del alta, el pellizco) y la fluidez en un celular concreto siguen sin confirmar.
+- **El Mapa del RT sin señal con el mapa ya bajado** (5.2) anda en el navegador de escritorio (recargando sin red, el mapa con sus pines se dibujó entre 1,4 y 1,7 s en 4 de 4 corridas), pero no se midió en un celular. Es el tiempo que más conviene anotar en el registro.
 - El mapa llega hasta el zoom 15: acercando más se agranda, no agrega calles ni números de puerta.
 - Si el celular se queda sin espacio, Chrome puede borrar el mapa guardado. La app lo detecta y vuelve a ofrecer la descarga.
 - Las pruebas contra `testing` y producción (los entornos reales) todavía no están configuradas: esta guía sirve solo para la PC de desarrollo.
@@ -169,6 +209,8 @@ Para la prueba sin conexión por Wi-Fi alcanza con frenar el `preview` o apagar 
 
 Completar una fila por celular:
 
-| Fecha | Celular y Android | Versión de Chrome | Camino (USB / Wi-Fi) | Mapa en línea | Descarga | Sin señal (recarga) | Instalar como app | Observaciones |
-|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | |
+Las columnas **1 a 8** son las pantallas de la tabla del 5.2 (poné ✔ si se ve como dice la tabla, o qué falló). **RT sin señal** es el Mapa del RT del 5.2 recargado sin conexión: anotá si se ven el mapa y los pines, y cuántos segundos tarda.
+
+| Fecha | Celular y Android | Versión de Chrome | Camino (USB / Wi-Fi) | Mapa en línea | Descarga | Sin señal (recarga) | 1 Ficha (lectura) | 2 Ficha (edición) | 3 Alta | 4 Vista Mapa | 5 Monitoreo | 6 Semáforo | 7 Mapa del RT | 8 Mapa sin conexión | RT sin señal | Instalar como app | Observaciones |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | | | | | | | | | | |

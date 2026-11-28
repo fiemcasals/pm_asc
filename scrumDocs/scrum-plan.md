@@ -1,6 +1,6 @@
 # Plan de Tareas — mant_asc
 
-_Generado automáticamente el 2026-11-28T14:52:30.065Z — no editar a mano, se sobreescribe en cada publicación._
+_Generado automáticamente el 2026-11-28T14:52:44.551Z — no editar a mano, se sobreescribe en cada publicación._
 
 Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indica de qué Tareas depende, si tiene.
 
@@ -37,7 +37,7 @@ Orden sugerido de desarrollo (respeta dependencias entre Tareas). Cada fila indi
 | 29 | RF-08 | Detalles del chat: hora en 24 horas con el día, y Escape cierra la foto agrandada | HU-19 | — | — | tested ✓ | dev-ma-2 | — | — |
 | 30 | RF-12 | [FIX] La lista de paradas vuelve a no traer las imágenes | HU-17 | — | — | Hecho ✓ dev | germanG | — | — |
 | 31 | RF-03 | [FIX] El backoffice rotula la foto del frente como «Frente de cabina y botonera» | HU-05 | — | — | Hecho | germanG | — | — |
-| 32 | RF-07 | [FIX] La guía de Android incluye el mapa en las pantallas donde se usa | HU-16 | — | — | Hacer | germanG | — | — |
+| 32 | RF-07 | [FIX] La guía de Android incluye el mapa en las pantallas donde se usa | HU-16 | — | — | Haciendo | germanG | — | — |
 | 33 | RF-11 | [FIX] chat-hilo.e2e-spec carga los 205 mensajes directo en el repositorio y no se pasa del tope con la máquina ocupada | HU-19 | — | — | Hacer | germanG | — | — |
 | 34 | RF-01 | API y Modelo de Datos de Consorcios y Máquinas | HU-01 | — | — | tested ✓ | germanG | RF-01 | — |
 | 35 | RF-01 | API de autenticación y roles | HU-14 | — | — | tested ✓ | germanG | RF-01 | — |

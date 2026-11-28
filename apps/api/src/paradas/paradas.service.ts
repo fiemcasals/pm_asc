@@ -3,10 +3,14 @@ import { randomUUID } from 'node:crypto';
 import { FirmanteService } from '../firmante/firmante.service';
 import { MaquinaAsignada, TipoAlertaCritica } from '../firmante/firmante.types';
 import { ParadasRepository } from './paradas.repository';
-import { ESTADOS_ANORMALES, EstadoAnormal, ReporteParada } from './paradas.types';
+import { UsuarioAutenticado } from '../auth/auth.types';
+import { mismaEca } from '../eca/eca.service';
+import { ESTADOS_ANORMALES, EstadoAnormal, FotoDeReporte, ReporteParada, ReporteParadaVista } from './paradas.types';
 
 const MAX_CAUSA = 1000;
 const MAX_FOTOS = 10;
+/** Una foto que se puede servir: una imagen en data URL (jpeg, png o webp). Lo demás (una dirección web, un texto) no se sirve desde acá. */
+const FOTO_DATA_URL = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+=*)$/;
 
 /**
  * Estado anormal de los equipos (HU-17 RF-03 y HU-06 RF-05): el RT de Calle marca «Fuera de Servicio» o «Reparación Urgente» con la
@@ -77,6 +81,7 @@ export class ParadasService {
         titulo,
         motivo: ultimo.causa,
         fotografiaCabinaTrabada: ultimo.fotoUrl ?? null,
+        fotoRuta: this.rutaDeFoto(ultimo),
         fechaDeteccion: ultimo.fecha,
         remitoUrl: `/api/eca/remito/${alertaId}`,
         acuseRecibo: acusePrevio,
@@ -88,13 +93,13 @@ export class ParadasService {
     }
   }
 
-  async registrar(body: unknown, reportadoPor: string): Promise<ReporteParada> {
+  async registrar(body: unknown, reportadoPor: string): Promise<ReporteParadaVista> {
     const b = (body ?? {}) as Record<string, unknown>;
     // HU-17 RF-09: el reintento del mismo reporte desde el celular devuelve el que ya estaba, sin duplicarlo.
     const clientReportId = typeof b.clientReportId === 'string' ? b.clientReportId.trim().slice(0, 100) : '';
     if (clientReportId) {
       const yaRecibido = this.reportes.find((r) => r.clientReportId === clientReportId);
-      if (yaRecibido) return structuredClone(yaRecibido);
+      if (yaRecibido) return this.vista(yaRecibido);
     }
     const errores: string[] = [];
     const maquinaId = typeof b.maquinaId === 'string' ? b.maquinaId.trim() : '';
@@ -159,6 +164,7 @@ export class ParadasService {
       titulo,
       motivo: causa,
       fotografiaCabinaTrabada: fotoUrl,
+      fotoRuta: this.rutaDeFoto(reporte),
       fechaDeteccion: reporte.fecha,
       remitoUrl: `/api/eca/remito/${alertaId}`,
       acuseRecibo: null,
@@ -174,14 +180,58 @@ export class ParadasService {
       throw err;
     }
     this.reportes.push(reporte);
-    return structuredClone(reporte);
+    return this.vista(reporte);
   }
 
   /** Los reportes: lo que ven la Secretaría y el Firmante (un Firmante, los de sus edificios). */
-  listar(para?: { usuario: string; rol: string }): ReporteParada[] {
+  listar(para?: { usuario: string; rol: string }): ReporteParadaVista[] {
     return this.reportes
       .filter((r) => para?.rol !== 'firmante' || this.firmanteDe(r.maquinaId) === para.usuario.toLowerCase())
-      .map((r) => structuredClone(r));
+      .map((r) => this.vista(r));
+  }
+
+  /**
+   * HU-17 RF-12: el reporte como sale por la API, sin la imagen. La foto se pide aparte (`obtenerFoto`): si viajara adentro de la lista, cada
+   * consulta bajaría una foto entera por reporte.
+   */
+  private vista(r: ReporteParada): ReporteParadaVista {
+    const { fotoUrl: _imagen, ...resto } = structuredClone(r);
+    return { ...resto, fotoRuta: this.rutaDeFoto(r) };
+  }
+
+  /** La ruta para pedir la foto del reporte, o null si no tiene una que se pueda servir. */
+  private rutaDeFoto(r: ReporteParada): string | null {
+    return r.fotoUrl && FOTO_DATA_URL.test(r.fotoUrl) ? `/api/paradas/${r.id}/foto` : null;
+  }
+
+  /**
+   * HU-17 RF-12: la foto de un reporte, para quien puede verlo: la Secretaría y el Administrador, todos; el Firmante, los de sus edificios;
+   * la ECA, los de su empresa; el RT de Calle, los que cargó él. Para cualquier otro (o si el reporte no existe, o no tiene una foto que se
+   * pueda servir) la respuesta es la misma, 404: no se revela que el reporte existe.
+   */
+  obtenerFoto(id: string, usuario: UsuarioAutenticado): FotoDeReporte {
+    const r = this.reportes.find((x) => x.id === id);
+    const nada = new NotFoundException('No hay una foto para ese reporte.');
+    if (!r || !this.puedeVer(r, usuario)) throw nada;
+    const m = r.fotoUrl ? FOTO_DATA_URL.exec(r.fotoUrl) : null;
+    if (!m) throw nada;
+    return { tipo: m[1], datos: Buffer.from(m[2], 'base64') };
+  }
+
+  private puedeVer(r: ReporteParada, u: UsuarioAutenticado): boolean {
+    switch (u.rol) {
+      case 'secretaria':
+      case 'administrador':
+        return true;
+      case 'firmante':
+        return this.firmanteDe(r.maquinaId) === u.usuario.toLowerCase();
+      case 'eca':
+        return mismaEca(r.eca, u.eca);
+      case 'rt_calle':
+        return r.reportadoPor === u.usuario;
+      default:
+        return false;
+    }
   }
 
   /**
@@ -189,7 +239,7 @@ export class ParadasService {
    * (lo ven la ficha de la máquina y el portal de la ECA); rechazar devuelve el equipo a «Normal». Otro rol, o un Firmante de otro
    * edificio, recibe 403.
    */
-  async resolver(id: string, decision: 'confirmar' | 'rechazar', usuario: { usuario: string; rol: string }, motivo?: unknown): Promise<ReporteParada> {
+  async resolver(id: string, decision: 'confirmar' | 'rechazar', usuario: { usuario: string; rol: string }, motivo?: unknown): Promise<ReporteParadaVista> {
     const reporte = this.reportes.find((r) => r.id === id);
     if (!reporte) throw new NotFoundException(`No existe el reporte ${id}`);
     if (usuario.rol !== 'firmante' || this.firmanteDe(reporte.maquinaId) !== usuario.usuario.toLowerCase()) {
@@ -231,7 +281,7 @@ export class ParadasService {
       maquina.alertaCritica = antes.alertaCritica;
       throw err;
     }
-    return structuredClone(reporte);
+    return this.vista(reporte);
   }
 
   /**

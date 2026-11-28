@@ -15,6 +15,8 @@ export interface AlertaCritica {
   titulo: string;
   motivo: string;
   fotografiaCabinaTrabada?: string | null;
+  /** Si la alerta viene de un reporte de parada: la ruta para pedir su foto aparte, con sesión (HU-17 RF-12). */
+  fotoRuta?: string | null;
   checklist?: ChecklistItemCritico[];
   fechaDeteccion: string;
   remitoUrl?: string;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { fechaHora as formatearFechaHora, hora as formatearHora } from '../fechas/formato';
+import { FotoDeAlerta } from './FotoDeAlerta';
 import {
   descargarRemitoTecnico,
   enviarAlertaWhatsApp,
@@ -370,11 +371,12 @@ export function AlertasCriticas({ maquinas, onAcuseRegistrado, puedeAcusar = tru
                 data-testid="contenedor-foto-cabina-trabada"
               >
                 <div className="foto-frame">
-                  <img
-                    src={foto}
+                  <FotoDeAlerta
+                    ruta={alerta?.fotoRuta}
+                    respaldo={foto}
                     alt="Fotografía de la cabina trabada"
                     className="foto-cabina-trabada"
-                    data-testid="foto-cabina-trabada"
+                    testId="foto-cabina-trabada"
                   />
                 </div>
               </div>

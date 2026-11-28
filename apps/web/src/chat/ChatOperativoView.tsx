@@ -4,7 +4,9 @@ import { etiquetaDeRol } from './etiquetaRol';
 import { estaAlFinal, fusionarVentana, sumarAnteriores, sumarPropio } from './hilo';
 import { ayudaDeEstado, textoDeEstado } from './avisos';
 import { conSeparadores, horaOFecha } from './dias';
-import { esTeclaDeAbrir, esTeclaDeCerrar } from './foto';
+import { esTeclaDeCerrar } from './foto';
+import { reducirFoto } from './fotoReducida';
+import { FotoDelChat } from './FotoDelChat';
 import { hora } from '../fechas/formato';
 import type { AvisosDelChat } from './useAvisosDelChat';
 import { fijarConversacionVista } from './visto';
@@ -69,6 +71,9 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
   const [enviando, setEnviando] = useState<boolean>(false);
   const [texto, setTexto] = useState<string>('');
   const [fotoBase64, setFotoBase64] = useState<string | null>(null);
+  // HU-19 RF-05: mientras se reduce la foto elegida, y el motivo si no se pudo usar (no es una imagen o, reducida, sigue pasando el tope)
+  const [preparandoFoto, setPreparandoFoto] = useState<boolean>(false);
+  const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const [consorcios, setConsorcios] = useState<ConsorcioOpcion[]>([]);
   const [consorcioSeleccionado, setConsorcioSeleccionado] = useState<string>('');
   const [maquinaRef, setMaquinaRef] = useState<string>('');
@@ -325,18 +330,23 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
     return () => document.removeEventListener('keydown', alTeclear);
   }, [fotoModal, cerrarFoto]);
 
-  // Manejo de adjuntar foto
-  const handleSeleccionarFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Manejo de adjuntar foto. HU-19 RF-05: se reduce en el dispositivo (lado mayor 1.600 px, JPEG, menos de 500 KB) antes de quedar lista para enviar
+  const handleSeleccionarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setFotoBase64(reader.result);
+    setErrorFoto(null);
+    setFotoBase64(null);
+    setPreparandoFoto(true);
+    try {
+      const foto = await reducirFoto(file);
+      if (foto.ok) setFotoBase64(foto.dataUrl);
+      else {
+        setErrorFoto(foto.motivo);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
-    };
-    reader.readAsDataURL(file);
+    } finally {
+      setPreparandoFoto(false);
+    }
   };
 
   // Enviar mensaje
@@ -550,24 +560,15 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
 
                     {m.adjuntoUrl && (
                       <div className="chat-globo-foto">
-                        <img
-                          src={m.adjuntoUrl}
-                          alt="Adjunto del chat"
-                          tabIndex={0}
-                          role="button"
-                          aria-label="Ver la foto ampliada"
-                          onClick={(e) => abrirFoto(m.adjuntoUrl ?? '', e.currentTarget)}
-                          onKeyDown={(e) => {
-                            if (esTeclaDeAbrir(e.key)) {
-                              e.preventDefault();
-                              abrirFoto(m.adjuntoUrl ?? '', e.currentTarget);
-                            }
-                          }}
-                          onLoad={() => {
+                        {/* HU-19 RF-05: el hilo trae la ruta de la foto; la miniatura la pide una vez y la guarda */}
+                        <FotoDelChat
+                          ruta={m.adjuntoUrl}
+                          usuarioId={usuario.id}
+                          onAbrir={abrirFoto}
+                          onCargada={() => {
                             // Al cargarse una foto el hilo crece: si se estaba al final, se sigue al final
                             if (alFinalRef.current && scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                           }}
-                          data-testid="chat-foto-mensaje"
                         />
                       </div>
                     )}
@@ -632,6 +633,18 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                 </button>
               </div>
             )}
+
+            {preparandoFoto && (
+              <div className="chat-preview-adjunto" data-testid="chat-preparando-foto">
+                <span>📷 Preparando foto…</span>
+              </div>
+            )}
+
+            {errorFoto && (
+              <div className="chat-error-foto" role="alert" data-testid="chat-error-foto">
+                {errorFoto}
+              </div>
+            )}
           </div>
 
           {/* Formulario de texto y botones */}
@@ -667,7 +680,7 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
             <button
               type="submit"
               className="chat-btn-enviar"
-              disabled={enviando || (!texto.trim() && !fotoBase64)}
+              disabled={enviando || preparandoFoto || (!texto.trim() && !fotoBase64)}
               data-testid="chat-btn-enviar"
             >
               {enviando ? 'Enviando…' : 'Enviar'}

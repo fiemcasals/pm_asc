@@ -70,7 +70,8 @@ describe('Chat API (e2e)', () => {
 
     expect(res.body.tipoSala).toBe('directo');
     expect(res.body.destinatarioId).toBe(firmanteCanal.id);
-    expect(res.body.adjuntoUrl).toContain('data:image/png;base64');
+    // HU-19 RF-05: el mensaje lleva la ruta de la foto, que se pide aparte
+    expect(res.body.adjuntoUrl).toBe(`/api/chat/mensajes/${res.body.id}/foto`);
   });
 
   it('POST /api/chat/mensajes rechaza mensajes vacíos con HTTP 400', async () => {

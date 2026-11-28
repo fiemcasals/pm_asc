@@ -71,7 +71,9 @@ describe('ChatService', () => {
         usuarioRt,
       );
 
-      expect(msg.adjuntoUrl).toBe('data:image/jpeg;base64,samplephoto123');
+      // HU-19 RF-05: el mensaje lleva la ruta de la foto; la foto se pide aparte
+      expect(msg.adjuntoUrl).toBe(`/api/chat/mensajes/${msg.id}/foto`);
+      expect(await service.obtenerFoto(msg.id, usuarioRt)).toEqual({ tipo: 'image/jpeg', datos: Buffer.from('samplephoto123', 'base64') });
       expect(msg.maquinaRef).toBe('M1');
     });
 

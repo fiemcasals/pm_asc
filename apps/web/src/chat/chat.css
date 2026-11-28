@@ -305,6 +305,34 @@
   transform: scale(1.02);
 }
 
+/* HU-19 RF-05: la foto se pide aparte del hilo; mientras llega, o si no llegó */
+.chat-foto-cargando,
+.chat-foto-reintentar {
+  display: block;
+  width: 100%;
+  padding: 18px 10px;
+  border-radius: 6px;
+  background: rgba(46, 52, 64, 0.6);
+  color: rgba(236, 239, 244, 0.75);
+  font-size: 0.8rem;
+  text-align: center;
+  border: 1px dashed rgba(236, 239, 244, 0.25);
+}
+
+.chat-foto-reintentar {
+  cursor: pointer;
+  color: #ebcb8b;
+}
+
+.chat-error-foto {
+  background: rgba(191, 97, 106, 0.15);
+  border: 1px solid #bf616a;
+  color: #f2c4c8;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
 .chat-globo-meta {
   display: flex;
   justify-content: flex-end;

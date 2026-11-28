@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UsuarioAutenticado } from '../auth/auth.types';
 import { ChatRepository } from './chat.repository';
 import { CanalChat, ConversacionNoLeida, CrearMensajeDto, LIMITE_HILO, MensajeChat, OpcionesHilo, PaginaMensajes, ResultadoLectura, ResumenNoLeidos } from './chat.types';
-import { esUuid } from './chat.validacion';
+import { decodificarImagen, esUuid } from './chat.validacion';
 
 @Injectable()
 export class ChatService {
@@ -102,6 +102,18 @@ export class ChatService {
       throw new BadRequestException(`La cantidad de mensajes tiene que ser un número entre 1 y ${LIMITE_HILO}.`);
     }
     return this.repo.listarMensajes(salaNorm, usuario.id, { antes, limite });
+  }
+
+  /**
+   * La foto de un mensaje, para quien puede leerlo (HU-19 RF-05): en el grupo, cualquiera del chat; en un privado, sus dos participantes. A un tercero
+   * se le contesta lo mismo que si la foto no existiera (404), para no confirmarle que ese mensaje existe.
+   */
+  async obtenerFoto(mensajeId: string, usuario: UsuarioAutenticado): Promise<{ tipo: string; datos: Buffer }> {
+    if (!esUuid(mensajeId)) throw new BadRequestException('El mensaje pedido no es un identificador válido.');
+    const guardada = await this.repo.obtenerFoto(mensajeId.toLowerCase(), usuario.id);
+    const foto = guardada ? decodificarImagen(guardada) : null;
+    if (!foto) throw new NotFoundException('La foto no existe o no podés verla.');
+    return foto;
   }
 
   /** Envío de un mensaje de texto, foto o enlace. */

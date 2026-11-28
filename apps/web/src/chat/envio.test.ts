@@ -86,7 +86,8 @@ describe('criterios 1, 2 y 4 en la pantalla', () => {
     expect(enviar.indexOf("setTexto('')")).toBeLessThan(enviar.indexOf('} else {'));
   });
   it('criterio 4: mientras se envía, Enviar queda deshabilitado y un segundo envío no sale', () => {
-    expect(vista).toContain('disabled={enviando || (!texto.trim() && !fotoBase64)}');
+    // El botón Enviar se deshabilita mientras `enviando` (otras condiciones, como la foto que se está preparando de RF-05, pueden sumarse)
+    expect(vista).toMatch(/disabled=\{enviando \|\| [^}]*\}\s*data-testid="chat-btn-enviar"/);
     expect(vista).toMatch(/if \(enviandoRef\.current\) return;\s*enviandoRef\.current = true;/);
     expect(vista).toMatch(/finally \{\s*enviandoRef\.current = false;\s*setEnviando\(false\);/);
   });

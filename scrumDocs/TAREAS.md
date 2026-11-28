@@ -1,6 +1,6 @@
 # Tareas -- mant_asc
 
-_Generado automaticamente el 2026-11-28T03:54:54.862Z -- no editar a mano, se sobreescribe en cada publicacion._
+_Generado automaticamente el 2026-11-28T13:23:07.770Z -- no editar a mano, se sobreescribe en cada publicacion._
 
 ## HU-01: HU-01: Gestión y Alta de ECA y Máquinas
 
@@ -657,45 +657,6 @@ Hallazgo de QA del 24/11/2026 al medir HU-08 RF-06 (rama testing, 6220a60). En t
 
 ## HU-11: HU-11: Notificaciones Automáticas por WhatsApp a la ECA
 
-### RF-01: Conector de API de WhatsApp y Plantilla Formal de Alerta Crítica (Funcional)
-
-Implementar la integración con la API de WhatsApp y formateador de mensajes formales de MAICON S.R.L.
-
-**Condiciones de aprobación**
-
-1. El servicio formatea el mensaje de alerta con plantilla formal (nombre ECA, consorcio, estado, equipo y detalle).
-2. El conector realiza el envio exitoso hacia la API de WhatsApp con manejo de errores y reintentos ante fallas de red.
-
-### RF-02: Disparo Automático Inmediato (< 5s) de WhatsApp con Link Directo (Funcional)
-
-Configurar el webhook/trigger que detecta informes con Reparación Urgente o Fuera de Servicio y despacha el mensaje en menos de 5 segundos con enlace seguro al remito.
-
-**Condiciones de aprobación**
-
-1. Al consolidarse un informe critico, el disparo hacia WhatsApp se ejecuta en menos de 5 segundos comprobables.
-2. El mensaje incluye un enlace directo y funcional a las fotos y al informe tecnico firmado para visualizacion inmediata en el celular.
-
-### RF-03: No informar como entregado un WhatsApp que no se envió (Funcional)
-
-Sin un proveedor configurado, WhatsAppConnectorService simula el envío y devuelve ok con estado "entregado". El Portal ECA muestra entonces "WhatsApp Despachado" con un ID, aunque ningún mensaje salió. Quien lo ve puede creer que la ECA fue avisada de una falla crítica.
-
-**Condiciones de aprobación**
-
-1. Sin proveedor de WhatsApp configurado, el envío de una alerta responde con error, informa que el envío no está configurado y no devuelve el estado "entregado".
-2. En el Portal ECA, cuando el envío no se realizó, el botón Despachar Alerta WhatsApp muestra el motivo y no muestra "WhatsApp Despachado".
-3. El disparo automático ante una alerta crítica registra el envío como no realizado cuando no hay proveedor configurado.
-
-### RF-04: Enviar las alertas por WhatsApp a través de un proveedor real (Funcional)
-
-Conectar WhatsAppConnectorService con un proveedor real (WhatsApp Cloud API de Meta o Twilio), empezando por su modo de prueba, y tomar el destino del teléfono de la ECA asignada al edificio en lugar del número fijo +5491144009988. El número remitente de producción depende de la respuesta de MAICON (P13.b).
-
-**Condiciones de aprobación**
-
-1. Con las credenciales del proveedor cargadas en variables de entorno, una alerta crítica llega como mensaje de WhatsApp a un número registrado en el modo de prueba del proveedor.
-2. El destino es el teléfono de la ECA responsable del edificio asignada en la terna de roles; sin teléfono cargado, el envío no se hace y se informa el motivo.
-3. Si el proveedor rechaza el envío, la API informa el error que devolvió el proveedor y el envío queda registrado como fallido.
-4. Las credenciales del proveedor no quedan en el repositorio.
-
 ### RF-05: Enviar los avisos a la ECA solo después de la revisión de la Secretaría (Funcional)
 
 El cliente pidió que ningún aviso salga automático: WhatsApp y PDF a la ECA se envían recién cuando la Secretaría revisa la falla y aprueba el envío (P4 y cuestionario 06/11). Hoy el disparo es automático e inmediato (< 5 s, POST /api/whatsapp/trigger-alerta-critica). Hay que reemplazarlo por una bandeja "Pendiente de revisión" en la Secretaría con la acción "Aprobar y enviar". El aviso va a la ECA y también al RT Firmante del edificio.
@@ -735,46 +696,6 @@ Seis scripts de entrega fallan hoy aunque la app anda bien, porque se escribiero
 7. Desde una base con los datos de demo recién cargados, los 12 scripts de entrega de HU-11 (RF-03 a RF-06), HU-15 (RF-01, RF-02, RNF-01, RNF-02 y RNF-03) y HU-18 (RF-01, RNF-01 y RNF-02), corridos uno tras otro, terminan con 0 fallas.
 8. El diff del Pull Request toca solamente archivos bajo docs/pruebas/: ningún archivo de apps/ cambia.
 
-### RF-08: Enviar el aviso de falla crítica con una plantilla de WhatsApp aprobada (Funcional)
-
-Hoy el conector manda el aviso como texto libre (type "text" en Meta, Body en Twilio). Meta solo permite texto libre dentro de las 24 horas posteriores a un mensaje del destinatario, y Twilio tiene la misma restricción fuera del sandbox: una alerta que inicia el sistema tiene que salir como mensaje de plantilla, aprobada de antemano por el proveedor, con parámetros. Se cambia el envío para que use la plantilla y se deja escrito el texto que hay que registrar en el panel del proveedor. No cambia quién recibe el aviso ni cuándo sale (eso sigue siendo después de que la Secretaría lo aprueba).
-
-**Condiciones de aprobación**
-
-1. Con WHATSAPP_PROVIDER=meta, el envío manda type "template" con template.name tomado de WHATSAPP_META_TEMPLATE_NAME, language.code de WHATSAPP_META_TEMPLATE_LANG (por defecto es_AR) y los parámetros del cuerpo en este orden: edificio, equipo, estado, detalle y enlace del informe; el receptor HTTP de prueba recibe ese cuerpo exacto y ningún campo de texto libre.
-2. Con WHATSAPP_PROVIDER=twilio, el envío manda ContentSid tomado de WHATSAPP_TWILIO_CONTENT_SID y ContentVariables con esos mismos 5 valores, y no manda Body de texto libre.
-3. Si falta el nombre de la plantilla (Meta) o el ContentSid (Twilio), no sale ningún mensaje: el envío queda no_realizado con estadoEntrega no_configurado y el motivo dice que falta la plantilla; no cae a texto libre.
-4. Los valores de los parámetros se limpian de saltos de línea, tabulaciones y de más de 4 espacios seguidos, y se recortan a 1024 caracteres, porque Meta rechaza los parámetros con esos caracteres; una prueba automática lo verifica con un detalle de falla de varias líneas.
-5. El texto de la plantilla, con sus 5 variables y un ejemplo de cada una, queda en un documento bajo docs/pruebas/hu-11-hu-11-notificaciones-automatic/ listo para copiar al panel del proveedor.
-6. Las pruebas automáticas de apps/api/test/whatsapp-proveedor.e2e-spec.ts cubren los casos 1 a 4, y npm run verify y npm run test:int siguen en verde.
-
-### RF-09: Confirmar la entrega real de cada WhatsApp con las notificaciones del proveedor (Funcional)
-
-Hoy un envío figura "entregado" apenas el proveedor acepta el pedido (respuesta 2xx): eso no prueba que el mensaje haya llegado al celular. Meta y Twilio avisan a una URL del sistema cuando el mensaje se envía, se entrega, se lee o falla. Se agregan esas dos entradas públicas, con validación de la firma del proveedor para que nadie pueda inventar estados, y el historial pasa a distinguir "aceptado por el proveedor" de "entregado". Es la regla de HU-11 RF-03 (no informar como entregado lo que no se entregó) llevada hasta el final.
-
-**Condiciones de aprobación**
-
-1. GET /api/whatsapp/webhook/meta devuelve el valor de hub.challenge solo cuando hub.verify_token coincide con WHATSAPP_META_VERIFY_TOKEN; con cualquier otro valor responde 403.
-2. POST /api/whatsapp/webhook/meta valida la cabecera X-Hub-Signature-256 (HMAC-SHA256 del cuerpo sin modificar con WHATSAPP_META_APP_SECRET); sin firma o con firma inválida responde 401 y no cambia ningún registro.
-3. POST /api/whatsapp/webhook/twilio valida X-Twilio-Signature con WHATSAPP_TWILIO_AUTH_TOKEN y la URL pública configurada; con firma inválida responde 401 y no cambia ningún registro.
-4. Cada evento válido actualiza el registro del historial que tiene ese id de mensaje (wamid o SM): sent pasa a enviado, delivered a entregado, read a leido y failed a fallido con el código y el mensaje de error del proveedor.
-5. El estado nunca retrocede y los eventos repetidos son inofensivos: un delivered que llega después de un read, o el mismo evento dos veces, no cambia el registro ni crea filas nuevas.
-6. Un evento de un mensaje que el sistema no conoce responde 200 sin crear nada, para que el proveedor no lo reintente.
-7. El historial distingue aceptado (el proveedor recibió el pedido) de entregado (el proveedor confirmó la entrega): un envío cuya respuesta fue 2xx figura aceptado y solo pasa a entregado con el evento correspondiente.
-8. Los secretos de firma salen solo de variables de entorno y GET /api/whatsapp/estado no los expone; las pruebas de HU-11 RF-03 y RF-04 siguen en verde con la nueva distinción.
-
-### RF-10: Mostrar en la bandeja de avisos si WhatsApp está activo y el estado real de cada envío (Funcional)
-
-El API ya informa si hay un proveedor de WhatsApp activo (GET /api/whatsapp/estado), pero la pantalla de Secretaría no lo muestra: si no hay proveedor, la Secretaría aprueba un aviso y recién después ve «Falló el envío», sin saber por qué. La bandeja tiene que avisar de entrada si WhatsApp está activo y mostrar, por cada aviso, el estado real que confirma el proveedor (RF de confirmación de entrega).
-
-**Condiciones de aprobación**
-
-1. La bandeja de avisos muestra un cartel con el estado de WhatsApp tomado de GET /api/whatsapp/estado: «WhatsApp activo: Meta», «WhatsApp activo: Twilio» o «WhatsApp no configurado: los avisos aprobados no salen por WhatsApp»; no muestra credenciales ni números de teléfono.
-2. Con WhatsApp no configurado, el botón «Aprobar y enviar» sigue funcionando y el aviso queda «Falló el envío» como hoy, pero el cartel ya lo explicaba antes de apretarlo.
-3. Cada aviso muestra el estado de su envío con lo que confirmó el proveedor: Enviado, Entregado, Leído o Falló con el motivo que informó.
-4. Si GET /api/whatsapp/estado no responde, el cartel dice que no se pudo consultar el estado y la bandeja sigue usable.
-5. Las pruebas de la web cubren los tres estados del cartel (no configurado, Meta y Twilio) y el caso en que no se puede consultar, y la guía visual tiene capturas sacadas con Playwright de la bandeja con y sin WhatsApp activo.
-
 ### RF-11: Guardar en PostgreSQL los avisos de falla con su revisión y sus enlaces para que sobrevivan a un reinicio (Funcional)
 
 Los avisos de falla crítica (pendientes de revisión, aprobados, con sus envíos) y los enlaces sin contraseña válidos 7 días están en memoria de AvisosService. Un reinicio borra los avisos que la Secretaría todavía no revisó y deja sin efecto los enlaces que ya llegaron por WhatsApp. Esta Tarea los guarda en la base.
@@ -785,37 +706,6 @@ Los avisos de falla crítica (pendientes de revisión, aprobados, con sus envío
 - 2. Dado un enlace de aviso enviado por WhatsApp, cuando se reinicia la API, entonces el enlace sigue abriendo el informe y vence a los 7 días de creado, no del reinicio.
 - 3. Dado un aviso ya aprobado y enviado, cuando se reinicia la API, entonces no se vuelve a enviar y conserva el estado de cada envío.
 - 4. Las pruebas existentes de avisos y del enlace siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 a 3.
-
-### RF-12: Guardar en PostgreSQL el historial de envíos de WhatsApp para que sobreviva a un reinicio (Funcional)
-
-El historial de envíos de WhatsApp y su estado real (aceptado, enviado, entregado, leído, fallido) vive en memoria de WhatsAppConnectorService. Con un reinicio se pierde, y los avisos del proveedor (webhook) que llegan después no encuentran el envío al que corresponden. Esta Tarea lo guarda en la base.
-
-**Condiciones de aprobación**
-
-- 1. Dado un envío con su estado, cuando se reinicia la API, entonces la bandeja de avisos sigue mostrando el envío y su estado real.
-- 2. Dado un envío «Aceptado» antes del reinicio, cuando el proveedor avisa después que fue entregado o leído, entonces el estado se actualiza en el envío correcto.
-- 3. Un aviso viejo del proveedor no hace retroceder el estado de un envío (aceptado → enviado → entregado → leído; fallido se mantiene), antes y después del reinicio.
-- 4. Las pruebas existentes de WhatsApp siguen en verde, y una prueba de integración con la base real reinicia el servicio y comprueba los criterios 1 y 2.
-
-### RF-13: Pedir sesión de la Secretaría para ver el historial de envíos de WhatsApp (Funcional)
-
-GET /api/whatsapp/historial es público y devuelve los teléfonos de los destinatarios. Solo la Secretaría y el Administrador lo necesitan (la bandeja de avisos).
-
-**Condiciones de aprobación**
-
-- 1. Dado un pedido sin sesión, cuando se consulta el historial de WhatsApp, entonces responde 401.
-- 2. Dado un usuario RT de Calle, Firmante o ECA, cuando consulta el historial, entonces responde 403.
-- 3. Dada la Secretaría o el Administrador, cuando consultan el historial, entonces responde 200 y la bandeja de avisos sigue mostrando los envíos.
-
-### RF-14: Que el estado general de un aviso refleje un envío de WhatsApp que falla después (Funcional)
-
-Un aviso que ya figura «Enviado» sigue diciéndolo aunque WhatsApp informe después que alguno de sus envíos falló; el motivo solo se ve en la lista de envíos. La Secretaría debería enterarse sin abrir cada aviso.
-
-**Condiciones de aprobación**
-
-- 1. Dado un aviso «Enviado» con un envío que el proveedor informa luego como fallido, cuando la Secretaría abre la bandeja, entonces el aviso muestra que falló un envío y ofrece «Reintentar envío».
-- 2. Dado ese aviso, cuando el reintento sale bien, entonces el aviso vuelve a figurar «Enviado» y el historial conserva el fallo anterior.
-- 3. Un aviso con todos sus envíos entregados o leídos sigue figurando «Enviado», y las pruebas existentes de la bandeja siguen en verde.
 
 ### RF-15: WhatsApp y diagnóstico de seguridad con sesión: solo quien corresponde (Funcional)
 
@@ -1415,34 +1305,3 @@ Inicializar el monorepo (web React+Vite PWA, API NestJS, PostgreSQL+PostGIS en D
 3. Con la configuración de producción, la API no devuelve encabezados CORS.
 4. docker compose up levanta PostgreSQL con PostGIS, y /api/health informa la versión de PostGIS.
 5. https://localhost:8050 carga la app web y registra el service worker.
-
-## RO-02: Probar el envío real de WhatsApp con el celular de German
-
-### RF-01: Probar el envío real de WhatsApp con el celular de German (Funcional)
-
-Hasta ahora el conector con Meta y Twilio solo se probó contra un receptor falso local; nunca salió un mensaje real. Con una cuenta de prueba (el sandbox de Twilio o el número de prueba de Meta Cloud API, que no piden verificar una empresa) se manda un aviso real al celular de German para ver cómo llega, cuánto tarda y qué muestra el enlace. Sirve para decidir con datos antes de desarrollar las tareas de plantilla y confirmación. Las credenciales se cargan solo en el .env local o en la terminal.
-
-**Condiciones de aprobación**
-
-1. Hay un entorno de prueba de WhatsApp activo (el sandbox de Twilio o el número de prueba de Meta Cloud API) con el celular de German autorizado como destinatario.
-2. Las credenciales del proveedor están solo en el .env local, que git ignora, y en ningún archivo del repositorio: buscar el token con git grep no encuentra nada.
-3. GET /api/whatsapp/estado responde configurado true y el proveedor elegido, y no incluye ninguna credencial.
-4. Al apretar «Aprobar y enviar» sobre un aviso de falla crítica de prueba en la bandeja de Secretaría, el WhatsApp llega al celular de German en menos de 5 segundos, con el edificio, el equipo, el estado y el enlace al informe.
-5. El enlace del mensaje abre el informe en el celular sin pedir contraseña.
-6. El envío figura en la bandeja de Secretaría y en GET /api/whatsapp/historial con el id de mensaje que devolvió el proveedor.
-7. Queda anotado en un documento bajo docs/ lo que se observó en el celular (qué llegó, cuánto tardó, qué mostró el enlace) y lo que no funcionó.
-
-## RO-03: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso
-
-### RF-01: Dar de alta WhatsApp Business a nombre de MAICON y aprobar la plantilla del aviso (Funcional)
-
-Para que los avisos salgan en producción hace falta un número de WhatsApp Business de MAICON, con la empresa verificada por el proveedor y la plantilla del aviso aprobada. Es un trámite con el cliente y con el proveedor que puede llevar días, por eso conviene empezarlo cuanto antes. Depende de que la tarea de plantilla deje escrito el texto final.
-
-**Condiciones de aprobación**
-
-1. MAICON confirmó por escrito qué número de WhatsApp se usa como remitente y quién es la persona de guardia que recibe las alertas; los números no se guardan en el repositorio.
-2. En el panel del proveedor existe una cuenta de WhatsApp Business a nombre de MAICON con la verificación de empresa completa.
-3. La plantilla del aviso, con el texto que dejó la tarea de plantilla, figura como Aprobada en el panel del proveedor.
-4. Un envío de prueba desde ese número llega al celular de la persona de guardia de MAICON.
-5. Las credenciales de producción se cargan solo en las variables de entorno del servidor: ninguna en el repositorio.
-6. Queda un documento breve bajo docs/ con los pasos que se hicieron y a nombre de quién está la cuenta, sin credenciales ni números.

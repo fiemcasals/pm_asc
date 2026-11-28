@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from
 import { fetchConSesion, Usuario } from '../auth/sesion';
 import { etiquetaDeRol } from './etiquetaRol';
 import { estaAlFinal, fusionarVentana, sumarAnteriores, sumarPropio } from './hilo';
+import { MAX_CARACTERES_MAQUINA, textoDeEtiqueta } from './etiquetaEdificio';
 import { ayudaDeEstado, textoDeEstado } from './avisos';
 import { conSeparadores, horaOFecha } from './dias';
 import { esTeclaDeCerrar } from './foto';
@@ -391,6 +392,9 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
         modoScrollRef.current = 'fondo';
         setMensajes((prev) => sumarPropio(prev, nuevo));
         setMensajesNuevos(0);
+        // HU-19 RF-07: el edificio se elige para cada mensaje: después de enviar, el selector vuelve a «(Opcional) Vincular Edificio…»
+        setConsorcioSeleccionado('');
+        setMaquinaRef('');
         setTexto('');
         setFotoBase64(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -570,9 +574,9 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                       </div>
                     )}
 
-                    {m.edificioNombre && (
+                    {textoDeEtiqueta(m.edificioNombre, m.maquinaRef) && (
                       <div className="chat-globo-tag-edificio" data-testid="chat-tag-edificio">
-                        📍 {m.edificioNombre} {m.maquinaRef ? `· Ascensor ${m.maquinaRef}` : ''}
+                        {textoDeEtiqueta(m.edificioNombre, m.maquinaRef)}
                       </div>
                     )}
 
@@ -616,7 +620,11 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
             <select
               className="chat-select-consorcio"
               value={consorcioSeleccionado}
-              onChange={(e) => setConsorcioSeleccionado(e.target.value)}
+              onChange={(e) => {
+                setConsorcioSeleccionado(e.target.value);
+                if (!e.target.value) setMaquinaRef(''); // sin edificio no hay máquina (HU-19 RF-07)
+              }}
+              aria-label="Vincular el mensaje a un edificio"
               data-testid="chat-select-consorcio"
             >
               <option value="">(Opcional) Vincular Edificio…</option>
@@ -633,6 +641,9 @@ export function ChatOperativoView({ usuario, avisos, conversacionPedida }: ChatO
                 placeholder="Máquina (ej. M1)"
                 value={maquinaRef}
                 onChange={(e) => setMaquinaRef(e.target.value)}
+                maxLength={MAX_CARACTERES_MAQUINA}
+                aria-label="Máquina del edificio"
+                data-testid="chat-input-maquina"
                 style={{
                   background: '#252a34',
                   border: '1px solid #3b4252',

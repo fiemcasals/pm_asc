@@ -46,6 +46,8 @@ export interface CrearMensajeDto {
   adjuntoUrl?: string | null;
   consorcioId?: string | null;
   maquinaRef?: string | null;
+  /** El nombre del edificio, tal como lo ve quien escribe: se guarda con el mensaje (HU-19 RF-07). Lo completa ChatService, no viene del pedido. */
+  edificioNombre?: string | null;
 }
 
 /** Cuántos mensajes trae el hilo de una conversación por vez (HU-19 RF-02). */

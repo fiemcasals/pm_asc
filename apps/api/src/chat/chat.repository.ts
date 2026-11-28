@@ -41,6 +41,8 @@ export abstract class ChatRepository {
   abstract esContacto(usuarioId: string, destinatarioId: string): Promise<boolean>;
   /** ¿Existe el edificio, para quien lo pide? Con el RLS, un Técnico o un Firmante solo ve los que tiene asignados. (HU-19 RF-04) */
   abstract existeConsorcio(consorcioId: string): Promise<boolean>;
+  /** El nombre del edificio, para quien lo pide (con el RLS: un Técnico o un Firmante, solo de los que tiene asignados); null si no lo ve. HU-19 RF-07. */
+  abstract nombreDeConsorcio(consorcioId: string): Promise<string | null>;
   abstract obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null>;
 }
 
@@ -74,11 +76,12 @@ export class PgChatRepository extends ChatRepository {
     const maquinaRef = dto.maquinaRef || null;
     const adjuntoUrl = dto.adjuntoUrl || null;
 
+    // HU-19 RF-07: el nombre del edificio se guarda con el mensaje, para que la etiqueta la vean todos los que lo leen
     const filas = await this.db.query<{ id: string; creado_en: Date }>(
-      `INSERT INTO chat_mensajes (emisor_id, destinatario_id, tipo_sala, contenido, adjunto_url, consorcio_id, maquina_ref)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO chat_mensajes (emisor_id, destinatario_id, tipo_sala, contenido, adjunto_url, consorcio_id, maquina_ref, edificio_nombre)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, creado_en`,
-      [emisorId, destId, dto.tipoSala, dto.contenido, adjuntoUrl, consorcioId, maquinaRef],
+      [emisorId, destId, dto.tipoSala, dto.contenido, adjuntoUrl, consorcioId, maquinaRef, consorcioId ? dto.edificioNombre ?? null : null],
     );
 
     const guardado = filas[0];
@@ -90,7 +93,7 @@ export class PgChatRepository extends ChatRepository {
          FROM chat_mensajes m
          JOIN usuarios u ON u.id = m.emisor_id
          LEFT JOIN usuarios ud ON ud.id = m.destinatario_id
-         LEFT JOIN consorcios c ON c.id = m.consorcio_id
+         LEFT JOIN LATERAL (SELECT COALESCE(m.edificio_nombre, (SELECT cc.nombre FROM consorcios cc WHERE cc.id = m.consorcio_id)) AS nombre) c ON true
         WHERE m.id = $1`,
       [guardado.id],
     );
@@ -128,7 +131,7 @@ export class PgChatRepository extends ChatRepository {
          FROM chat_mensajes m
          JOIN usuarios u ON u.id = m.emisor_id
          LEFT JOIN usuarios ud ON ud.id = m.destinatario_id
-         LEFT JOIN consorcios c ON c.id = m.consorcio_id
+         LEFT JOIN LATERAL (SELECT COALESCE(m.edificio_nombre, (SELECT cc.nombre FROM consorcios cc WHERE cc.id = m.consorcio_id)) AS nombre) c ON true
         WHERE ${donde}
         ORDER BY m.creado_en DESC, m.id DESC
         LIMIT $${params.length}`,
@@ -247,6 +250,11 @@ export class PgChatRepository extends ChatRepository {
     return filas.length > 0;
   }
 
+  async nombreDeConsorcio(consorcioId: string): Promise<string | null> {
+    const filas = await this.db.query<{ nombre: string }>('SELECT nombre FROM consorcios WHERE id = $1', [consorcioId]);
+    return filas[0]?.nombre ?? null;
+  }
+
   async obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null> {
     let filas: Array<{ contenido: string; creado_en: Date }>;
     if (sala === 'global') {
@@ -303,7 +311,8 @@ export class InMemoryChatRepository extends ChatRepository {
     { id: '00000000-0000-4000-8000-0000000000c4', usuario: 'secretaria', nombre: 'Secretaría', rol: 'secretaria' },
   ];
 
-  private consorcios = new Set<string>();
+  /** Los edificios que existen, con su nombre (HU-19 RF-07). */
+  private consorcios = new Map<string, string>();
   /** Hasta qué mensaje leyó cada usuario cada conversación: «usuario|sala» → id del mensaje. */
   private lecturas = new Map<string, string>();
 
@@ -312,8 +321,9 @@ export class InMemoryChatRepository extends ChatRepository {
   }
 
   /** Los edificios que existen, para probar el etiquetado de un mensaje. */
-  setConsorcios(ids: string[]) {
-    this.consorcios = new Set(ids);
+  setConsorcios(edificios: string[] | Record<string, string>) {
+    const pares = Array.isArray(edificios) ? edificios.map((id) => [id, `Edificio ${id.slice(0, 8)}`] as const) : Object.entries(edificios);
+    this.consorcios = new Map(pares);
   }
 
   async guardarMensaje(emisorId: string, dto: CrearMensajeDto): Promise<MensajeChat> {
@@ -331,7 +341,7 @@ export class InMemoryChatRepository extends ChatRepository {
       contenido: dto.contenido,
       adjuntoUrl: dto.adjuntoUrl ? rutaDeFoto(id) : null,
       consorcioId: dto.consorcioId ?? null,
-      edificioNombre: null,
+      edificioNombre: dto.consorcioId ? dto.edificioNombre ?? null : null,
       maquinaRef: dto.maquinaRef ?? null,
       creadoEn: new Date().toISOString(),
     };
@@ -412,6 +422,10 @@ export class InMemoryChatRepository extends ChatRepository {
 
   async existeConsorcio(consorcioId: string): Promise<boolean> {
     return this.consorcios.has(consorcioId);
+  }
+
+  async nombreDeConsorcio(consorcioId: string): Promise<string | null> {
+    return this.consorcios.get(consorcioId) ?? null;
   }
 
   async obtenerUltimoMensaje(sala: string, usuarioId: string): Promise<{ contenido: string; creadoEn: string } | null> {

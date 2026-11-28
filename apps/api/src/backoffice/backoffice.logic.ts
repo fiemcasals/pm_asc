@@ -6,7 +6,7 @@ export function fotosDe(m: MaquinaAsignada): { etiqueta: string; url: string }[]
   const f: { etiqueta: string; url: string }[] = [];
   const o = m.visita?.fotosObligatorias;
   if (o?.cables?.trim()) f.push({ etiqueta: 'Cables', url: o.cables.trim() });
-  if (o?.frente?.trim()) f.push({ etiqueta: 'Frente del edificio', url: o.frente.trim() });
+  if (o?.frente?.trim()) f.push({ etiqueta: 'Frente de cabina y botonera', url: o.frente.trim() });
   if (m.alertaCritica?.fotografiaCabinaTrabada?.trim()) f.push({ etiqueta: 'Cabina trabada', url: m.alertaCritica.fotografiaCabinaTrabada.trim() });
   return f;
 }

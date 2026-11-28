@@ -21,7 +21,7 @@ describe('Acciones del tablero de monitoreo (HU-05 RF-02)', () => {
       expect(d).toMatchObject({ id: 'VIS-2026-11-101', direccion: 'Av. Corrientes 1234, CABA', eca: 'Conservación Porteña S.R.L.', inspector: 'dev-ma-2', estadoVisita: 'Recorrida', fecha: '2026-11-04T10:30:00.000Z', nombreEncargado: 'Carlos Rodríguez (Encargado)' });
       expect(d.fotos).toEqual([
         { etiqueta: 'Cables', url: 'https://storage.nuestrocamino.cloud/fotos/cables-maq-101.jpg' },
-        { etiqueta: 'Frente del edificio', url: 'https://storage.nuestrocamino.cloud/fotos/frente-maq-101.jpg' },
+        { etiqueta: 'Frente de cabina y botonera', url: 'https://storage.nuestrocamino.cloud/fotos/frente-maq-101.jpg' },
       ]);
       expect(d.checklist).toEqual([]);
     });
@@ -36,7 +36,7 @@ describe('Acciones del tablero de monitoreo (HU-05 RF-02)', () => {
     });
 
     it('la foto de la cabina trabada se suma a las obligatorias y las fotos vacías no cuentan (Santa Fe M2 tiene vacía la de cables)', () => {
-      expect(service.detalle('MAQ-SANTAFE-M2').fotos.map((f) => f.etiqueta)).toEqual(['Frente del edificio', 'Cabina trabada']);
+      expect(service.detalle('MAQ-SANTAFE-M2').fotos.map((f) => f.etiqueta)).toEqual(['Frente de cabina y botonera', 'Cabina trabada']);
       expect(service.detalle('MAQ-CORRIENTES-M2').fotos.map((f) => f.etiqueta)).toEqual(['Cabina trabada']);
     });
 

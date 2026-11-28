@@ -56,7 +56,7 @@ La causa es de la propia prueba: el tiempo crece con la carga de la máquina, y 
 | **C. Bajar el volumen** | Menos de 205 mensajes | — | **No se puede sin cambiar el límite de 200**: la prueba existe justamente para pasarlo |
 
 ### Recomendación: B
-Es la que resuelve la causa (la prueba escribe de más, por un camino lento) y no esconde nada. Es un arreglo de una hora: una tarea `[FIX]` de HU-19, una rama, la prueba reescrita y su script de entrega. **No está creada en el tablero**: no estaba pedida.
+Es la que resuelve la causa (la prueba escribe de más, por un camino lento) y no esconde nada. Es un arreglo de una hora: una tarea `[FIX]` de HU-19, una rama, la prueba reescrita y su script de entrega. **Está en el tablero como HU-19 RF-11 (`REQ-1795876195557`), de 2 h.**
 
 Si se prefiere lo más rápido, A alcanza para hoy.
 
